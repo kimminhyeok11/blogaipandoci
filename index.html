@@ -653,11 +653,10 @@
         }
 
         // =================================================================================
-        // --- GEMINI API & IMAGE HANDLING ---
+        // --- GEMINI API & IMAGE HANDLING (SECURE PROXY) ---
         // =================================================================================
         async function generateText(topic, isInitial = true, draft = null, instruction = null) { 
-            const apiKey = ""; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`; 
+            const proxyUrl = '/api/generate';
             const systemPromptContent = `당신은 'InsureLog'의 수석 보험 분석가입니다. 복잡한 보험 상품과 금융 기술 주제를 명확하고, 깊이 있으며, 실용적인 방식으로 설명하는 전문가입니다. 독자들이 '무엇'을 선택해야 하는지 뿐만 아니라 '왜' 그것이 최선인지를 이해할 수 있도록 도와주세요. 다음과 같은 스타일로 글을 작성합니다.
             1. **구조:** 서론(문제 제기 및 중요성) -> 본론(핵심 원리 분석, 상품 비교, 각 선택의 근거 설명) -> 결론(결과 요약 및 추천)의 명확한 구조를 따릅니다.
             2. **내용:** 시장 동향과 데이터에 기반한 분석을 반드시 포함하여 깊이를 더합니다.
@@ -693,14 +692,41 @@
                     } 
                 } 
             }; 
-            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
+
+            const response = await fetch(proxyUrl, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ type: 'text', payload: payload })
+            }); 
+            
             if (!response.ok) throw new Error(`Gemini API 오류: ${response.statusText}`); 
             const result = await response.json(); 
             const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text; 
             if (!textContent) throw new Error("Gemini API로부터 유효한 콘텐츠를 받지 못했습니다."); 
             return JSON.parse(textContent); 
         }
-        async function generateImage(title) { const apiKey = ""; const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`; const prompt = `A minimalist, flat design, vector-style abstract illustration about "${title}". Featuring a simple faceless human character illustration relevant to the topic. Use a light background (#FFFFFF) with a simple grayscale palette. Clean, modern style. No text.`; const payload = { instances: [{ prompt }], parameters: { "sampleCount": 1 } }; const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error(`Imagen API 오류: ${response.statusText}`); const result = await response.json(); const base64Data = result.predictions?.[0]?.bytesBase64Encoded; if (!base64Data) throw new Error("Imagen API로부터 유효한 이미지 데이터를 받지 못했습니다."); return base64Data; }
+
+        async function generateImage(title) { 
+            const proxyUrl = '/api/generate';
+            const payload = { 
+                instances: [{ 
+                    prompt: `A minimalist, flat design, vector-style abstract illustration about "${title}". Featuring a simple faceless human character illustration relevant to the topic. Use a light background (#FFFFFF) with a simple grayscale palette. Clean, modern style. No text.` 
+                }], 
+                parameters: { "sampleCount": 1 } 
+            }; 
+
+            const response = await fetch(proxyUrl, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ type: 'image', payload: payload })
+            }); 
+
+            if (!response.ok) throw new Error(`Imagen API 오류: ${response.statusText}`); 
+            const result = await response.json(); 
+            const base64Data = result.predictions?.[0]?.bytesBase64Encoded; 
+            if (!base64Data) throw new Error("Imagen API로부터 유효한 이미지 데이터를 받지 못했습니다."); 
+            return base64Data; 
+        }
         async function uploadBase64Image(base64Data, title) { if (!base64Data) throw new Error("이미지 데이터가 없습니다."); const imageBlob = base64ToBlob(base64Data); const fileName = `${state.user.id}/${Date.now()}.webp`; const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, imageBlob); if (error) throw new Error(`이미지 업로드 실패: ${error.message}`); const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName); return data.publicUrl; }
 
         // =================================================================================
@@ -780,7 +806,10 @@
             const title = $('#title').value;
             const summary = $('#summary').value;
             const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
-            let refined_content = state.quill.root.innerHTML;
+            
+            const htmlEditor = $('#html-editor');
+            const isHtmlVisible = htmlEditor.style.display !== 'none';
+            const refined_content = isHtmlVisible ? htmlEditor.value : state.quill.root.innerHTML;
             
             if (!title.trim() || !summary.trim()) {
                 showToast('제목과 요약은 필수 항목입니다.', true);
@@ -870,12 +899,11 @@
             } 
         }
         function handleToggleHtmlEditor() {
-            const quillContainer = $('#editor .ql-container');
-            const quillToolbar = $('#editor .ql-toolbar');
+            const editorDiv = $('#editor');
             const htmlEditor = $('#html-editor');
             const toggleBtn = document.querySelector('[data-action="toggle-html"]');
 
-            if (!quillContainer || !htmlEditor || !toggleBtn) return;
+            if (!editorDiv || !htmlEditor || !toggleBtn) return;
 
             const isHtmlVisible = htmlEditor.style.display !== 'none';
 
@@ -883,14 +911,12 @@
                 // Switch from HTML to Quill
                 state.quill.root.innerHTML = htmlEditor.value;
                 htmlEditor.style.display = 'none';
-                quillContainer.style.display = 'block';
-                quillToolbar.style.display = 'block';
+                editorDiv.style.display = 'block';
                 toggleBtn.textContent = 'HTML 보기';
             } else {
                 // Switch from Quill to HTML
                 htmlEditor.value = state.quill.root.innerHTML;
-                quillContainer.style.display = 'none';
-                quillToolbar.style.display = 'none';
+                editorDiv.style.display = 'none';
                 htmlEditor.style.display = 'block';
                 toggleBtn.textContent = '에디터 보기';
             }
