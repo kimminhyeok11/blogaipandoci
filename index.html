@@ -1,8 +1,16 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- AdSense Script: This script should be included only once in the head. -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KQ8THNV2');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- AdSense Script -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-523R9497835591112" crossorigin="anonymous"></script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -132,7 +140,7 @@
         /* Table of Contents Styles */
         #toc-container {
             position: sticky;
-            top: 100px; /* Adjust based on your header height */
+            top: 100px;
             align-self: start;
             max-height: calc(100vh - 120px);
             overflow-y: auto;
@@ -163,6 +171,58 @@
         .tag-item { background-color: #F3F4F6; color: #4B5563; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; transition: background-color 0.2s; }
         .tag-item:hover { background-color: #E5E7EB; color: #1F2937; }
 
+        /* Author Box Styles */
+        .author-box {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            background-color: var(--bg-content);
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .author-box img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .author-box .name {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .author-box .bio {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Search Overlay */
+        #search-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(249, 250, 251, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 4rem 1rem;
+        }
+        #search-container { width: 100%; max-width: 640px; }
+        #search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1.25rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 9999px;
+        }
+        #search-results { max-height: calc(100vh - 200px); overflow-y: auto; }
+
         @media (max-width: 1024px) {
             #toc-container { display: none; }
         }
@@ -174,6 +234,11 @@
     </style>
 </head>
 <body class="antialiased">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KQ8THNV2"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
     <div id="app-loader"><div class="loader-spinner"></div></div>
     <div id="refiner-loader">
         <div class="loader-spinner"></div>
@@ -195,6 +260,15 @@
             개발 및 문의사항은 <a href="https://www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-700 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
         </p>
     </footer>
+    <div id="search-overlay">
+        <div id="search-container">
+            <input type="search" id="search-input" placeholder="검색어를 입력하세요..." autocomplete="off">
+            <div id="search-results" class="mt-6 space-y-4"></div>
+        </div>
+        <button id="close-search-btn" class="absolute top-8 right-8 text-gray-500 hover:text-black">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
     <div id="structured-data-container"></div>
     <div id="modal-container"></div>
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-3"></div>
@@ -229,7 +303,7 @@
             tocObserver: null,
         };
         const $ = (selector) => document.querySelector(selector);
-
+        
         // =================================================================================
         // --- SEO & META TAGS ---
         // =================================================================================
@@ -396,6 +470,13 @@
         function handleRouting() {
             if (!state.isAuthReady) return;
             const path = window.location.pathname;
+            // GTM page_view event
+            window.dataLayer.push({
+                event: 'page_view',
+                page_path: path,
+                page_title: document.title
+            });
+
             const parts = path.substring(1).split('/');
             let route = parts[0] || 'library';
             let param = parts[1] || null;
@@ -431,7 +512,16 @@
         // --- CORE RENDER FUNCTIONS ---
         // =================================================================================
         function renderNav() {
-            $('#main-nav-container').innerHTML = `<nav class="w-full max-w-7xl flex items-center justify-between py-2.5 px-4 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl shadow-sm"><a href="/" class="brand-logo" data-action="route">InsureLog</a><div class="flex items-center space-x-2">${state.user ? `<a href="/dashboard" class="btn" data-action="route">대시보드</a><button data-action="logout" class="btn">로그아웃</button>` : `<button data-action="show-auth" class="btn btn-primary">로그인 / 가입</button>`}</div></nav>`;
+            $('#main-nav-container').innerHTML = `
+                <nav class="w-full max-w-7xl flex items-center justify-between py-2.5 px-4 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl shadow-sm">
+                    <a href="/" class="brand-logo" data-action="route">InsureLog</a>
+                    <div class="flex items-center space-x-2">
+                        <button data-action="show-search" class="btn p-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </button>
+                        ${state.user ? `<a href="/dashboard" class="btn" data-action="route">대시보드</a><button data-action="logout" class="btn">로그아웃</button>` : `<button data-action="show-auth" class="btn btn-primary">로그인 / 가입</button>`}
+                    </div>
+                </nav>`;
         }
         
         async function renderLibraryView(container, page = 1) {
@@ -453,7 +543,7 @@
         async function renderPostView(container, slug) {
             $('#app-container').className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
             if (!slug) { navigateTo('/'); return; }
-            const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
+            const { data: post, error } = await supabase.from('posts').select('*, profiles(*)').eq('slug', slug).single();
             if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; }
             
             updateMetaTags(post);
@@ -484,6 +574,7 @@
                                 <div id="post-content">${post.refined_content || ''}</div>
                                 <div class="border-t border-gray-200 mt-12 pt-4">${renderTags(post.tags)}</div>
                             </article>
+                            ${renderAuthorProfile(post.profiles)}
                             <div class="my-12"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
                             ${allPostsError ? '' : createRelatedPostsHtml(findRelatedPosts(post, allOtherPosts))}
                             ${createShareButtonsHtml(`${SITE_URL}/post/${post.slug}`, post.title)}
@@ -564,6 +655,20 @@
         function createShareButtonsHtml(url, title) { return `<div class="mt-12 py-8 mb-12 border-t border-gray-200"><h3 class="text-center text-sm font-bold text-gray-500 mb-4 tracking-wider">공유하기</h3><div class="flex justify-center items-center gap-4"><a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg><span>X</span></a><a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4z"></path></svg><span>Facebook</span></a><button class="btn" data-action="copy-link" data-url="${url}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>링크 복사</span></button></div></div>`; }
         function createRelatedPostsHtml(relatedPosts) { if (relatedPosts.length === 0) return ''; return `<div class="mt-8 pt-8 border-t border-gray-200"><h3 class="text-xl font-bold font-heading mb-6">관련 글</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6">${relatedPosts.map(p => `<a href="/post/${p.slug}" data-action="route" class="block p-5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl transition-all duration-300 group"><h4 class="font-semibold text-gray-800 group-hover:text-black transition-colors">${p.title}</h4><p class="text-gray-500 text-sm mt-1">${p.summary}</p></a>`).join('')}</div></div>`; }
         function renderTags(tags) { if (!tags || tags.length === 0) return ''; return `<div class="tag-list">${tags.map(tag => `<a href="/tag/${encodeURIComponent(tag)}" class="tag-item" data-action="route">#${tag}</a>`).join('')}</div>`; }
+        function renderAuthorProfile(profile) {
+            if (!profile) return '';
+            const avatarUrl = profile.avatar_url || 'https://placehold.co/120x120/f9fafb/6b7280?text=User';
+            const authorName = profile.full_name || '익명';
+            const authorBio = profile.bio || '작성자 정보가 없습니다.';
+            return `
+                <div class="author-box">
+                    <img src="${avatarUrl}" alt="${authorName}" class="w-16 h-16 rounded-full object-cover">
+                    <div>
+                        <p class="name">${authorName}</p>
+                        <p class="bio">${authorBio}</p>
+                    </div>
+                </div>`;
+        }
         function initQuillEditor(initialContent) { if (state.quill) state.quill = null; const BlockEmbed = Quill.import('blots/block/embed'); class VideoEmbedBlot extends BlockEmbed { static create(value) { let node = super.create(); node.innerHTML = value; node.setAttribute('contenteditable', 'false'); return node; } static value(node) { return node.innerHTML; } } VideoEmbedBlot.blotName = 'video-embed'; VideoEmbedBlot.tagName = 'div'; VideoEmbedBlot.className = 'ql-video-embed-wrapper'; Quill.register(VideoEmbedBlot); state.quill = new Quill('#editor', { theme: 'snow', modules: { toolbar: [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link', 'image'], ['clean']] } }); const Delta = Quill.import('delta'); const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:(?:m|www)\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/; state.quill.clipboard.addMatcher(Node.TEXT_NODE, (node, delta) => { const text = node.data; const match = text.match(youtubeRegex); if (match && match[1]) { const embedHtml = `<div class="youtube-embed-container"><iframe src="https://www.youtube.com/embed/${match[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`; return new Delta().insert({ 'video-embed': embedHtml }).insert('\n'); } return delta; }); state.quill.root.innerHTML = initialContent; }
         function base64ToBlob(base64, contentType = 'image/webp') { const byteCharacters = atob(base64); const byteArrays = []; for (let offset = 0; offset < byteCharacters.length; offset += 512) { const slice = byteCharacters.slice(offset, offset + 512); const byteNumbers = new Array(slice.length); for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i); byteArrays.push(new Uint8Array(byteNumbers)); } return new Blob(byteArrays, { type: contentType }); }
         
@@ -746,7 +851,10 @@
                     break; 
                 case 'show-auth': 
                     showAuthModal(); 
-                    break; 
+                    break;
+                case 'show-search':
+                    toggleSearch(true);
+                    break;
                 case 'close-modal-backdrop': 
                     closeModal(); 
                     break; 
@@ -964,6 +1072,60 @@
         async function deletePostAndAssociatedImages(postId) { const { data: post, error: fetchError } = await supabase.from('posts').select('refined_content').eq('id', postId).single(); if (fetchError) throw new Error(`삭제할 글을 찾지 못했습니다: ${fetchError.message}`); const content = post.refined_content || ''; const imageUrls = content.match(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g) || []; const imagePaths = imageUrls.map(url => url.split('/thought-images/')[1] || '').filter(Boolean); if (imagePaths.length > 0) { const { error: storageError } = await supabase.storage.from(IMAGE_BUCKET_NAME).remove(imagePaths); if (storageError) throw new Error(`스토리지 이미지 삭제 실패: ${storageError.message}`); } const { error: dbError } = await supabase.from('posts').delete().eq('id', postId); if (dbError) throw new Error(`데이터베이스 글 삭제 실패: ${dbError.message}`); }
         
         // =================================================================================
+        // --- SEARCH ---
+        // =================================================================================
+        function toggleSearch(show) {
+            const overlay = $('#search-overlay');
+            if (show) {
+                overlay.style.display = 'flex';
+                anime({ targets: overlay, opacity: [0, 1], duration: 300, easing: 'easeOutCubic' });
+                $('#search-input').focus();
+            } else {
+                anime({ 
+                    targets: overlay, 
+                    opacity: [1, 0], 
+                    duration: 300, 
+                    easing: 'easeInCubic',
+                    complete: () => overlay.style.display = 'none' 
+                });
+            }
+        }
+        
+        async function performSearch(query) {
+            const resultsContainer = $('#search-results');
+            if (!query) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            resultsContainer.innerHTML = '<div class="loader-spinner mx-auto"></div>';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('posts')
+                    .select('title, summary, slug')
+                    .textSearch('fts', query, { type: 'websearch', config: 'simple' })
+                    .limit(10);
+                
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    resultsContainer.innerHTML = `<p class="text-center text-gray-500">검색 결과가 없습니다.</p>`;
+                } else {
+                    const resultsHtml = data.map(post => `
+                        <a href="/post/${post.slug}" data-action="route" class="block p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
+                            <h3 class="font-semibold text-gray-800">${post.title}</h3>
+                            <p class="text-sm text-gray-600 mt-1">${post.summary}</p>
+                        </a>
+                    `).join('');
+                    resultsContainer.innerHTML = resultsHtml;
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsContainer.innerHTML = `<p class="text-center text-red-500">검색 중 오류가 발생했습니다.</p>`;
+            }
+        }
+
+        // =================================================================================
         // --- AI REFINER WORKFLOW & DRAFT MANAGEMENT ---
         // =================================================================================
         function renderRefinerView(container) {
@@ -1004,6 +1166,17 @@
             });
             document.addEventListener('submit', (e) => { const formId = e.target.id; if (formId === 'writer-form') { e.preventDefault(); handleWriterSubmit(); } else if (['ai-writer-form', 'auth-form', 'refiner-chat-form'].includes(formId)) { e.preventDefault(); } });
             
+            // Search listeners
+            const searchInput = $('#search-input');
+            let searchTimeout;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    performSearch(searchInput.value);
+                }, 300); // Debounce search
+            });
+            $('#close-search-btn').addEventListener('click', () => toggleSearch(false));
+
             supabase.auth.onAuthStateChange(async (_event, session) => {
                 const userJustChanged = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
