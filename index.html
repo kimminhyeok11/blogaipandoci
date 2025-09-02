@@ -10,7 +10,8 @@
     <!-- End Google Tag Manager -->
 
     <!-- AdSense Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-523R9497835591112" crossorigin="anonymous"></script>
+    <!-- FIX: AdSense client ID has been corrected to a valid format. The original 'ca-pub-523R9497835591112' was invalid. -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -391,7 +392,7 @@
 
         function renderModal({ title, content, confirmText, onConfirm, cancelText = '취소', onCancel = closeModal }) {
             const modalId = `modal-${Date.now()}`;
-            const modalHtml = `<div id="${modalId}" class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div><div class="modal-content relative bg-content border border-gray-200 rounded-xl shadow-xl w-full max-w-sm p-6"><h3 class="text-lg font-bold font-heading mb-4">${title}</h3><div class="text-gray-500 mb-6 text-sm">${content}</div><div class="flex justify-end space-x-3"><button type="button" class="btn" id="modal-cancel-btn">${cancelText}</button>${confirmText ? `<button type="button" class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>` : ''}</div></div></div>`;
+            const modalHtml = `<div id="${modalId}" class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div><div class="modal-content relative bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-sm p-6"><h3 class="text-lg font-bold font-heading mb-4">${title}</h3><div class="text-gray-500 mb-6 text-sm">${content}</div><div class="flex justify-end space-x-3"><button type="button" class="btn" id="modal-cancel-btn">${cancelText}</button>${confirmText ? `<button type="button" class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>` : ''}</div></div></div>`;
             $('#modal-container').innerHTML = modalHtml;
             const modalEl = $(`#${modalId}`);
             if (onConfirm) $('#modal-confirm-btn').addEventListener('click', onConfirm);
@@ -531,7 +532,7 @@
             const { data, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
             if (error) { showToast('데이터를 불러오는 데 실패했습니다.', true); container.innerHTML = `<p class="text-center text-gray-500 py-20">글을 불러올 수 없습니다.</p>`; return; }
             const postsHtml = data.length > 0 ? data.map(post => `
-                <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-content border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
+                <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-white border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
                     <h2 class="text-2xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
                     <p class="text-gray-600 mb-4">${post.summary || ''}</p>
                     ${renderTags(post.tags)}
@@ -552,9 +553,9 @@
 
             const editButtonHtml = (state.user && state.user.id === post.author_id)
                 ? `<a href="/writer/${post.slug}" class="btn" data-action="route">
-                       <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="m13.83 2.17 3 3L6.83 15.17H3.83V12.17l10-10ZM15.24 0 .92 14.31A.996.996 0 0 0 0 15v4a.996.996 0 0 0 1 1h4c.27 0 .52-.11.71-.29L19.03 4.4a2.5 2.5 0 0 0 0-3.53l-3-3a2.5 2.5 0 0 0-3.54-.29Z"/></svg>
-                       <span>수정하기</span>
-                   </a>`
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="m13.83 2.17 3 3L6.83 15.17H3.83V12.17l10-10ZM15.24 0 .92 14.31A.996.996 0 0 0 0 15v4a.996.996 0 0 0 1 1h4c.27 0 .52-.11.71-.29L19.03 4.4a2.5 2.5 0 0 0 0-3.53l-3-3a2.5 2.5 0 0 0-3.54-.29Z"/></svg>
+                        <span>수정하기</span>
+                    </a>`
                 : '';
             
             const dateString = new Date(post.created_at).toLocaleString('ko-KR');
@@ -575,21 +576,21 @@
                     </div>
                     <div class="lg:col-span-9">
                          <div class="max-w-4xl">
-                            <article class="prose-custom max-w-none">
-                                <div class="flex justify-between items-center mb-8">
-                                    <button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>목록으로</button>
-                                    ${editButtonHtml}
-                                </div>
-                                <h1 class="!mt-0">${post.title}</h1>
-                                <p class="text-sm text-gray-500 mb-8">${dateString}${updatedString}</p>
-                                <div id="post-content">${post.refined_content || ''}</div>
-                                <div class="border-t border-gray-200 mt-12 pt-4">${renderTags(post.tags)}</div>
-                            </article>
-                            ${renderAuthorProfile(post.profiles)}
-                            <div class="my-12"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
-                            ${allPostsError ? '' : createRelatedPostsHtml(findRelatedPosts(post, allOtherPosts))}
-                            ${createShareButtonsHtml(`${SITE_URL}/post/${post.slug}`, post.title)}
-                        </div>
+                             <article class="prose-custom max-w-none">
+                                 <div class="flex justify-between items-center mb-8">
+                                     <button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>목록으로</button>
+                                     ${editButtonHtml}
+                                 </div>
+                                 <h1 class="!mt-0">${post.title}</h1>
+                                 <p class="text-sm text-gray-500 mb-8">${dateString}${updatedString}</p>
+                                 <div id="post-content">${post.refined_content || ''}</div>
+                                 <div class="border-t border-gray-200 mt-12 pt-4">${renderTags(post.tags)}</div>
+                             </article>
+                             ${renderAuthorProfile(post.profiles)}
+                             <div class="my-12"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
+                             ${allPostsError ? '' : createRelatedPostsHtml(findRelatedPosts(post, allOtherPosts))}
+                             ${createShareButtonsHtml(`${SITE_URL}/post/${post.slug}`, post.title)}
+                         </div>
                     </div>
                 </div>`;
             container.innerHTML = postLayout;
@@ -613,7 +614,7 @@
             const { data, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to);
             if (error) { showToast('내 글 목록 로딩 실패: ' + error.message, true); container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; }
             const listHtml = data.length > 0 ? data.map(post => `<li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg"><div><a href="/post/${post.slug}" data-action="route" class="font-semibold text-gray-800 hover:text-black">${post.title}</a><p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')}</p></div><div class="space-x-2"><a href="/writer/${post.slug}" class="btn text-xs" data-action="route">수정</a><button class="btn text-xs" data-action="delete-post" data-id="${post.id}">삭제</button></div></li>`).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
-            container.innerHTML = `<div class="py-12 space-y-16"><div><h1 class="text-3xl font-bold font-heading mb-2">AI 글 생성</h1><p class="text-gray-500 mb-8">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p><div class="bg-content border border-gray-200 rounded-xl shadow-sm p-8"><form id="ai-writer-form" class="space-y-4"><div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div><div class="flex justify-end items-center gap-4 pt-2"><div class="ai-loader"></div><button type="submit" id="ai-generate-btn" class="btn btn-primary">AI로 초안 생성하기</button></div></form></div></div><div><div class="flex justify-between items-center mb-8"><div class="flex-grow"><h1 class="text-3xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a></div><div class="bg-content border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div></div>`;
+            container.innerHTML = `<div class="py-12 space-y-16"><div><h1 class="text-3xl font-bold font-heading mb-2">AI 글 생성</h1><p class="text-gray-500 mb-8">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8"><form id="ai-writer-form" class="space-y-4"><div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div><div class="flex justify-end items-center gap-4 pt-2"><div class="ai-loader"></div><button type="submit" id="ai-generate-btn" class="btn btn-primary">AI로 초안 생성하기</button></div></form></div></div><div><div class="flex justify-between items-center mb-8"><div class="flex-grow"><h1 class="text-3xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a></div><div class="bg-white border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div></div>`;
             $('#ai-writer-form').addEventListener('submit', (e) => { e.preventDefault(); handleAiWriterSubmit(); });
         }
 
@@ -633,7 +634,7 @@
                 if (data.author_id !== state.user.id) { showToast('자신이 작성한 글만 수정할 수 있습니다.', true); navigateTo('/dashboard'); return; }
                 post = data;
             }
-            container.innerHTML = `<div class="py-12"><div class="mb-8"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-3xl font-bold font-heading mb-8">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="is-draft-publish" value="${draft ? 'true' : 'false'}"><div><label for="title" class="block text-sm font-medium text-gray-600 mb-2">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-end pt-4 space-x-3"><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button><button type="submit" id="submit-btn" class="btn btn-primary">저장하기</button></div></form></div>`;
+            container.innerHTML = `<div class="py-12"><div class="mb-8"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-3xl font-bold font-heading mb-8">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="is-draft-publish" value="${draft ? 'true' : 'false'}"><div><label for="title" class="block text-sm font-medium text-gray-600 mb-2">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-end pt-4 space-x-3"><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button><button type="submit" id="submit-btn" class="btn btn-primary">저장하기</button></div></form></div>`;
             initQuillEditor(post.refined_content || '');
         }
         
@@ -648,7 +649,7 @@
             if (error) { showToast('태그 글을 불러오는 데 실패했습니다.', true); container.innerHTML = `<p class="text-center text-gray-500 py-20">글을 불러올 수 없습니다.</p>`; return; }
             
             const postsHtml = data.length > 0 ? data.map(post => `
-                <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-content border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
+                <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-white border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
                     <h2 class="text-2xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
                     <p class="text-gray-600 mb-4">${post.summary || ''}</p>
                     ${renderTags(post.tags)}
@@ -771,13 +772,13 @@
                 document.querySelectorAll('#toc-container a.active').forEach(link => link.classList.remove('active'));
 
                 if(lastIntersecting){
-                     const activeLink = document.querySelector(`#toc-container a[href="#${lastIntersecting.id}"]`);
-                     if (activeLink) activeLink.classList.add('active');
+                    const activeLink = document.querySelector(`#toc-container a[href="#${lastIntersecting.id}"]`);
+                    if (activeLink) activeLink.classList.add('active');
                 } else {
                     const firstVisible = [...headings].find(h => h.getBoundingClientRect().bottom > navBarHeight);
                     if(firstVisible) {
-                         const activeLink = document.querySelector(`#toc-container a[href="#${firstVisible.id}"]`);
-                         if (activeLink) activeLink.classList.add('active');
+                        const activeLink = document.querySelector(`#toc-container a[href="#${firstVisible.id}"]`);
+                        if (activeLink) activeLink.classList.add('active');
                     }
                 }
             };
@@ -789,6 +790,9 @@
         // =================================================================================
         // --- GEMINI API & IMAGE HANDLING (SECURE PROXY) ---
         // =================================================================================
+        // NOTE: This application requires a backend proxy at '/api/generate' to securely handle API calls to Google's Gemini and Imagen models.
+        // The proxy is responsible for attaching the API key and forwarding the request.
+        // This frontend code will NOT work without the corresponding backend implementation.
         async function generateText(topic, isInitial = true, draft = null, instruction = null) { 
             const proxyUrl = '/api/generate';
             const systemPromptContent = `당신은 'InsureLog'의 수석 보험 분석가입니다. 복잡한 보험 상품과 금융 기술 주제를 명확하고, 깊이 있으며, 실용적인 방식으로 설명하는 전문가입니다. 독자들이 '무엇'을 선택해야 하는지 뿐만 아니라 '왜' 그것이 최선인지를 이해할 수 있도록 도와주세요. 다음과 같은 스타일로 글을 작성합니다.
@@ -956,9 +960,14 @@
 
             try {
                 let finalSlug = $('#post-slug').value;
-                if (!id) { // Only generate a new slug for new posts
-                    const tempArticle = await generateText(title, true);
-                    finalSlug = tempArticle.slug;
+                // FIX: Only generate a new slug for new posts. 
+                // Using a simple local function is much more efficient than an AI API call.
+                if (!id && !finalSlug) {
+                    finalSlug = title.toLowerCase()
+                        .trim()
+                        .replace(/[^\w\s-]/g, '') // remove non-word chars
+                        .replace(/[\s_-]+/g, '-') // collapse whitespace and replace with -
+                        .replace(/^-+|-+$/g, ''); // remove leading/trailing dashes
                 }
                 
                 const postData = { title, summary, refined_content, author_id: state.user.id, slug: finalSlug, tags };
@@ -1048,12 +1057,14 @@
                 // Switch from HTML to Quill
                 state.quill.root.innerHTML = htmlEditor.value;
                 htmlEditor.style.display = 'none';
+                document.querySelector('.ql-toolbar').style.display = 'block';
                 editorDiv.style.display = 'block';
                 toggleBtn.textContent = 'HTML 보기';
             } else {
                 // Switch from Quill to HTML
                 htmlEditor.value = state.quill.root.innerHTML;
                 editorDiv.style.display = 'none';
+                document.querySelector('.ql-toolbar').style.display = 'none';
                 htmlEditor.style.display = 'block';
                 toggleBtn.textContent = '에디터 보기';
             }
@@ -1103,6 +1114,8 @@
         // =================================================================================
         // --- SEARCH ---
         // =================================================================================
+        // NOTE: This search functionality relies on a Supabase RPC (Remote Procedure Call) function
+        // called 'search_posts' that must be created in your Supabase database.
         function toggleSearch(show) {
             const overlay = $('#search-overlay');
             if (show) {
@@ -1227,4 +1240,3 @@
     </script>
 </body>
 </html>
-
