@@ -1182,45 +1182,40 @@
             }
         }
         async function handleRegenerateImage() { const btn = $('#regenerate-image-btn'); btn.disabled = true; btn.innerHTML = '<div class="image-loader" style="display: block;"></div>'; try { showToast('새 이미지를 생성하고 있습니다...'); const newImageBase64 = await generateImage(state.draftArticle.title); state.draftArticle.imageBase64 = newImageBase64; saveDraft(state.draftArticle); renderRefinerPreview(); showToast('이미지가 교체되었습니다.'); } catch (error) { console.error("Image Regeneration Error:", error); showToast(`이미지 재생성 실패: ${error.message}`, true); } finally { btn.disabled = false; btn.textContent = '이미지 재생성'; } }
-        async function handleDirectPublish() { 
-            if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true); 
-            showToast("글 발행을 시작합니다..."); 
-            try { 
-                let imageHtml = '';
-                // Only upload image if there's new image data.
-                if (state.draftArticle.imageBase64) {
-                    showToast("이미지를 업로드하고 있습니다...");
-                    const imageUrl = await uploadBase64Image(state.draftArticle.imageBase64, state.draftArticle.title); 
-                    imageHtml = `<img src="${imageUrl}" alt="${state.draftArticle.title}" loading="lazy">`; 
+        
+        async function handleDirectPublish() {
+            if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true);
+            showToast("글 발행을 시작합니다...");
+            try {
+                const { postId, imageBase64, title, summary, slug, tags, body } = state.draftArticle;
+                let refined_content = body;
+
+                // Only if a new base64 image exists, upload it and prepend it to the content.
+                if (imageBase64) {
+                    showToast("대표 이미지를 업로드하고 있습니다...");
+                    const imageUrl = await uploadBase64Image(imageBase64, title);
+                    const imageHtml = `<img src="${imageUrl}" alt="${title}" loading="lazy">`;
+                    refined_content = imageHtml + body;
                 }
-
-                const postId = state.draftArticle.postId;
-
-                // Prepare the data payload for the database.
-                const postData = {
-                    title: state.draftArticle.title,
-                    summary: state.draftArticle.summary,
-                    slug: state.draftArticle.slug,
-                    tags: state.draftArticle.tags,
-                    refined_content: imageHtml + state.draftArticle.body,
-                    author_id: state.user.id
-                };
                 
-                // CORE FIX: Check if postId exists. If so, update the existing post. Otherwise, insert a new one.
+                const postData = { title, summary, slug, tags, refined_content, author_id: state.user.id };
+
+                // Decide whether to UPDATE an existing post or INSERT a new one.
                 const { error } = postId
                     ? await supabase.from('posts').update(postData).eq('id', postId)
                     : await supabase.from('posts').insert(postData);
 
-                if (error) throw error; 
+                if (error) throw error;
 
-                clearDraft(); 
-                showToast(postId ? "글이 성공적으로 수정되었습니다!" : "글이 성공적으로 발행되었습니다!"); 
-                navigateTo('/dashboard'); 
-            } catch (error) { 
-                console.error("Direct publish error:", error); 
-                showToast(`발행 실패: ${error.message}`, true); 
-            } 
+                clearDraft();
+                showToast(postId ? "글이 성공적으로 수정되었습니다!" : "글이 성공적으로 발행되었습니다!");
+                navigateTo('/dashboard');
+            } catch (error) {
+                console.error("Direct publish error:", error);
+                showToast(`발행 실패: ${error.message}`, true);
+            }
         }
+
         async function handleMoveToEditor() { 
             if (!state.draftArticle) return showToast("편집할 초안이 없습니다.", true); 
             const imageHtml = state.draftArticle.imageBase64 ? `<img src="data:image/webp;base64,${state.draftArticle.imageBase64}" alt="${state.draftArticle.title}" loading="lazy">` : '';
@@ -1358,5 +1353,4 @@
     </script>
 </body>
 </html>
-
 
