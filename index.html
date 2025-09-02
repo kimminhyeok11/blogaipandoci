@@ -302,6 +302,7 @@
             <div id="view-writer" class="app-view"></div>
             <div id="view-refiner" class="app-view"></div>
             <div id="view-tag" class="app-view"></div>
+            <div id="view-settings" class="app-view"></div>
         </main>
     </div>
     <footer class="text-center py-8 px-4 border-t border-gray-200 mt-16">
@@ -542,7 +543,7 @@
                 route = 'library';
             }
 
-            if (!state.user && ['dashboard', 'writer', 'refiner'].includes(route)) {
+            if (!state.user && ['dashboard', 'writer', 'refiner', 'settings'].includes(route)) {
                 showToast('이 기능을 사용하려면 로그인이 필요합니다.', true);
                 navigateTo('/');
                 return;
@@ -554,6 +555,7 @@
                 case 'writer': switchView('view-writer', (el) => renderWriterView(el, param)); break;
                 case 'refiner': switchView('view-refiner', (el) => renderRefinerView(el)); break;
                 case 'tag': switchView('view-tag', (el) => renderTagView(el, param)); break;
+                case 'settings': switchView('view-settings', (el) => renderSettingsView(el)); break;
                 default: switchView('view-library', (el) => renderLibraryView(el, page));
             }
         }
@@ -570,7 +572,9 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
                         ${state.user 
-                            ? `<a href="/dashboard" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm" data-action="route">대시보드</a><button data-action="logout" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm">로그아웃</button>` 
+                            ? `<a href="/settings" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm" data-action="route">설정</a>
+                               <a href="/dashboard" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm" data-action="route">대시보드</a>
+                               <button data-action="logout" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm">로그아웃</button>` 
                             : `<button data-action="show-auth" class="btn btn-primary px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm">로그인 / 가입</button>`
                         }
                     </div>
@@ -582,7 +586,7 @@
             $('#app-container').className = 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8';
             const { from, to } = getPaginationRange(page);
             
-            const { data: posts, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+            const { data: posts, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
             
             if (error) { 
                 console.error("Error fetching posts:", error);
@@ -627,7 +631,7 @@
             
             updateMetaTags(post);
             
-            const { data: allOtherPosts, error: allPostsError } = await supabase.from('posts').select('id, title, summary, slug').neq('id', post.id);
+            const { data: allOtherPosts, error: allPostsError } = await supabase.from('posts').select('id, title, summary, slug').neq('id', post.id).eq('status', 'published');
 
             const editButtonHtml = (state.user && state.user.id === post.author_id)
                 ? `<a href="/writer/${post.slug}" class="btn" data-action="route">
@@ -690,7 +694,20 @@
             const { from, to } = getPaginationRange(page);
             const { data, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to);
             if (error) { showToast('내 글 목록 로딩 실패: ' + error.message, true); container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; }
-            const listHtml = data.length > 0 ? data.map(post => `<li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg"><div><a href="/post/${post.slug}" data-action="route" class="font-semibold text-gray-800 hover:text-black">${post.title}</a><p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')}</p></div><div class="space-x-2"><a href="/writer/${post.slug}" class="btn text-xs" data-action="route">수정</a><button class="btn text-xs" data-action="delete-post" data-id="${post.id}">삭제</button></div></li>`).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
+            const listHtml = data.length > 0 ? data.map(post => {
+                const statusBadge = post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : '';
+                return `<li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg">
+                            <div>
+                                <a href="/post/${post.slug}" data-action="route" class="font-semibold text-gray-800 hover:text-black">${post.title}</a>${statusBadge}
+                                <p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')}</p>
+                            </div>
+                            <div class="space-x-2">
+                                <a href="/writer/${post.slug}" class="btn text-xs" data-action="route">수정</a>
+                                <button class="btn text-xs" data-action="delete-post" data-id="${post.id}">삭제</button>
+                            </div>
+                         </li>`;
+            }).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
+
             container.innerHTML = `<div class="py-12 space-y-16"><div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-2">AI 글 생성</h1><p class="text-gray-500 mb-8">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8"><form id="ai-writer-form" class="space-y-4"><div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div><div class="flex justify-end items-center gap-4 pt-2"><div class="flex items-center gap-2"><label for="ai-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><label class="toggle-switch"><input type="checkbox" id="ai-image-toggle" checked><span class="slider"></span></label></div><div class="ai-loader"></div><button type="submit" id="ai-generate-btn" class="btn btn-primary">AI로 초안 생성하기</button></div></form></div></div><div><div class="flex justify-between items-center mb-8"><div class="flex-grow"><h1 class="text-2xl sm:text-3xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a></div><div class="bg-white border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div></div>`;
             $('#ai-writer-form').addEventListener('submit', (e) => { e.preventDefault(); handleAiWriterSubmit(); });
         }
@@ -712,8 +729,12 @@
                 if (data.author_id !== state.user.id) { showToast('자신이 작성한 글만 수정할 수 있습니다.', true); navigateTo('/dashboard'); return; }
                 post = data;
             }
-            container.innerHTML = `<div class="py-12"><div class="mb-8"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-3xl font-bold font-heading mb-8">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="is-draft-publish" value="${draft ? 'true' : 'false'}"><div><label for="title" class="block text-sm font-medium text-gray-600 mb-2">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-end items-center pt-4 space-x-3"><button type="submit" id="submit-btn" class="btn btn-primary">저장하기</button><div class="border-l border-gray-300 h-6"></div><div class="flex items-center gap-2"><label for="writer-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><label class="toggle-switch"><input type="checkbox" id="writer-image-toggle" checked><span class="slider"></span></label></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></form></div>`;
+            container.innerHTML = `<div class="py-12"><div class="mb-8"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-3xl font-bold font-heading mb-8">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label for="writer-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><label class="toggle-switch"><input type="checkbox" id="writer-image-toggle" checked><span class="slider"></span></label></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
             initQuillEditor(post.refined_content || '');
+            
+            $('#save-draft-btn').addEventListener('click', () => handlePostSave('draft'));
+            $('#publish-btn').addEventListener('click', () => handlePostSave('published'));
+            $('[data-action="get-seo-suggestions"]').addEventListener('click', handleSeoSuggestion);
         }
         
         async function renderTagView(container, tag) {
@@ -722,7 +743,7 @@
             updateMetaTags(null, decodedTag);
             $('#app-container').className = 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8';
             
-            const { data, error } = await supabase.from('posts').select('*').contains('tags', [decodedTag]).order('created_at', { ascending: false });
+            const { data, error } = await supabase.from('posts').select('*').contains('tags', [decodedTag]).eq('status', 'published').order('created_at', { ascending: false });
             
             if (error) { showToast('태그 글을 불러오는 데 실패했습니다.', true); container.innerHTML = `<p class="text-center text-gray-500 py-20">글을 불러올 수 없습니다.</p>`; return; }
             
@@ -736,6 +757,75 @@
             
             container.innerHTML = `<div class="py-16"><h1 class="text-4xl font-extrabold text-center font-heading mb-4">#${decodedTag}</h1><p class="text-center text-gray-500 text-lg mb-12">'${decodedTag}' 태그가 포함된 글 목록입니다.</p><div class="space-y-6">${postsHtml}</div></div>`;
         }
+
+        async function renderSettingsView(container) {
+            $('#app-container').className = 'max-w-3xl mx-auto px-4 sm:px-6 lg:px-8';
+            updateMetaTags();
+            
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('full_name, bio, avatar_url')
+                .eq('id', state.user.id)
+                .single();
+
+            if (error) {
+                showToast('프로필 정보를 불러오는 데 실패했습니다.', true);
+                console.error(error);
+                return;
+            }
+
+            const avatarUrl = profile.avatar_url || 'https://placehold.co/128x128/f9fafb/6b7280?text=User';
+            
+            container.innerHTML = `
+                <div class="py-12">
+                    <h1 class="text-3xl font-bold font-heading mb-8">프로필 설정</h1>
+                    <form id="settings-form" class="bg-white border border-gray-200 rounded-xl shadow-sm p-8 space-y-6">
+                        <div class="flex items-center gap-6">
+                            <img id="avatar-preview" src="${avatarUrl}" alt="Profile" class="w-24 h-24 rounded-full object-cover bg-gray-100">
+                            <div>
+                                <label for="avatar-upload" class="btn cursor-pointer">
+                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9 4V1c0-.55-.45-1-1-1H1c-.55 0-1 .45-1 1v18c0 .55.45 1 1 1h8c.55 0 1-.45 1-1v-3h4.08c.34 0 .66-.17.84-.44l5-6c.25-.3.25-.71 0-1.01l-5-6C13.74 4.17 13.42 4 13.08 4H9Zm-1 2h4.08l3.34 4-3.34 4H8V6Z"/></svg>
+                                    <span>사진 변경</span>
+                                </label>
+                                <input type="file" id="avatar-upload" accept="image/*" class="hidden">
+                                <p class="text-xs text-gray-500 mt-2">파일 형식: JPG, PNG, GIF</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="full_name" class="block text-sm font-medium text-gray-600 mb-2">이름</label>
+                            <input type="text" id="full_name" class="form-input" required value="${profile.full_name || ''}">
+                        </div>
+                        <div>
+                            <label for="bio" class="block text-sm font-medium text-gray-600 mb-2">자기소개</label>
+                            <textarea id="bio" class="form-textarea" rows="3">${profile.bio || ''}</textarea>
+                        </div>
+                        <div class="flex justify-end pt-4">
+                            <button type="submit" id="save-settings-btn" class="btn btn-primary">
+                                <span>변경사항 저장</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            $('#avatar-upload').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        $('#avatar-preview').src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            $('#settings-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleProfileUpdateSubmit();
+            });
+        }
+
 
         // =================================================================================
         // --- HELPER & UTILITY FUNCTIONS ---
@@ -1060,6 +1150,39 @@
             if (!base64Data) throw new Error("Imagen API로부터 유효한 이미지 데이터를 받지 못했습니다."); 
             return base64Data; 
         }
+
+        async function generateSeoSuggestions(title, content) {
+            const proxyUrl = '/api/generate';
+            const systemPrompt = `You are an expert SEO copywriter. Based on the provided blog post title and content, generate a JSON object with three alternative SEO-friendly titles (under 60 characters and in Korean), one optimized meta description (under 160 characters and in Korean). The JSON schema must be: { "titles": ["...", "...", "..."], "description": "..." }`;
+            const userQuery = `{"title": "${title}", "content": "${content.replace(/"/g, '\\"')}"}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "titles": { "type": "ARRAY", "items": { "type": "STRING" } },
+                            "description": { "type": "STRING" }
+                        },
+                        required: ["titles", "description"]
+                    }
+                }
+            };
+            const response = await fetch(proxyUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'text', payload: payload })
+            });
+            if (!response.ok) throw new Error(`Gemini API 오류: ${response.statusText}`);
+            const result = await response.json();
+            const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!textContent) throw new Error("Gemini API로부터 유효한 SEO 제안을 받지 못했습니다.");
+            return JSON.parse(textContent);
+        }
+
         async function uploadBase64Image(base64Data, title) { if (!base64Data) throw new Error("이미지 데이터가 없습니다."); const imageBlob = base64ToBlob(base64Data); const fileName = `${state.user.id}/${Date.now()}.webp`; const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, imageBlob); if (error) throw new Error(`이미지 업로드 실패: ${error.message}`); const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName); return data.publicUrl; }
 
         // =================================================================================
@@ -1137,21 +1260,76 @@
                     break; 
             } 
         }
-        async function handleWriterSubmit() {
+
+        async function handleProfileUpdateSubmit() {
+            const saveBtn = $('#save-settings-btn');
+            const originalBtnText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
+
+            try {
+                const fullName = $('#full_name').value;
+                const bio = $('#bio').value;
+                const avatarFile = $('#avatar-upload').files[0];
+
+                let avatarUrl = null;
+                if (avatarFile) {
+                    showToast('프로필 사진을 업로드 중입니다...');
+                    const webpBlob = await convertToWebP(avatarFile);
+                    const filePath = `${state.user.id}/avatar.webp`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('thought-images')
+                        .upload(filePath, webpBlob, { upsert: true });
+                    
+                    if (uploadError) throw uploadError;
+
+                    const { data } = supabase.storage.from('thought-images').getPublicUrl(filePath);
+                    avatarUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
+                }
+
+                const updates = {
+                    id: state.user.id,
+                    full_name: fullName,
+                    bio: bio,
+                    updated_at: new Date(),
+                };
+                if (avatarUrl) {
+                    updates.avatar_url = avatarUrl;
+                }
+
+                const { error } = await supabase.from('profiles').upsert(updates);
+                if (error) throw error;
+                showToast('프로필이 성공적으로 업데이트되었습니다.');
+                
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showToast(`프로필 업데이트 실패: ${error.message}`, true);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnText;
+            }
+        }
+
+        async function handlePostSave(status) {
             const id = $('#post-id').value;
-            const title = $('#title').value;
-            const summary = $('#summary').value;
+            const title = $('#title').value.trim();
+            const summary = $('#summary').value.trim();
             const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
             
             const htmlEditor = $('#html-editor');
             const isHtmlVisible = htmlEditor.style.display !== 'none';
             const refined_content = isHtmlVisible ? htmlEditor.value : state.quill.root.innerHTML;
             
-            if (!title.trim() || !summary.trim()) {
+            if (!title || !summary) {
                 showToast('제목과 요약은 필수 항목입니다.', true);
                 return;
             }
-            $('#submit-btn').disabled = true;
+
+            const buttonId = status === 'published' ? '#publish-btn' : '#save-draft-btn';
+            const button = $(buttonId);
+            const originalBtnText = button.textContent;
+            button.disabled = true;
+            button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
 
             try {
                 let finalSlug = $('#post-slug').value;
@@ -1163,7 +1341,8 @@
                         .replace(/^-+|-+$/g, '');
                 }
                 
-                const postData = { title, summary, refined_content, author_id: state.user.id, slug: finalSlug, tags };
+                const postData = { title, summary, refined_content, author_id: state.user.id, slug: finalSlug, tags, status };
+                
                 const { error } = id 
                     ? await supabase.from('posts').update(postData).eq('id', id)
                     : await supabase.from('posts').insert(postData);
@@ -1171,15 +1350,18 @@
                 if (error) throw error;
 
                 clearDraft();
-                showToast(id ? '글이 수정되었습니다!' : '글이 생성되었습니다!');
+                showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
                 navigateTo('/dashboard');
+
             } catch (error) {
-                console.error("Publish Error:", error);
-                showToast(`발행 실패: ${error.message}`, true);
+                console.error("Save/Publish Error:", error);
+                showToast(`저장 실패: ${error.message}`, true);
             } finally {
-                $('#submit-btn').disabled = false;
+                button.disabled = false;
+                button.textContent = originalBtnText;
             }
         }
+        
         async function handleAiWriterSubmit() { 
             const topic = $('#ai-topic').value; 
             if (!topic.trim()) { 
@@ -1314,6 +1496,68 @@
         }
         async function handleRegenerateImage() { const btn = $('#regenerate-image-btn'); btn.disabled = true; btn.innerHTML = '<div class="image-loader" style="display: block;"></div>'; try { showToast('새 이미지를 생성하고 있습니다...'); const newImageBase64 = await generateImage(state.draftArticle.title); state.draftArticle.imageBase64 = newImageBase64; saveDraft(state.draftArticle); renderRefinerPreview(); showToast('이미지가 교체되었습니다.'); } catch (error) { console.error("Image Regeneration Error:", error); showToast(`이미지 재생성 실패: ${error.message}`, true); } finally { btn.disabled = false; btn.textContent = '이미지 재생성'; } }
         
+        async function handleSeoSuggestion() {
+            const title = $('#title').value.trim();
+            const content = state.quill.getText();
+            if (!title || !content.trim()) {
+                showToast('SEO 제안을 받으려면 제목과 본문 내용이 필요합니다.', true);
+                return;
+            }
+            
+            const btn = document.querySelector('[data-action="get-seo-suggestions"]');
+            const originalBtnText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
+
+            try {
+                const suggestions = await generateSeoSuggestions(title, content);
+                
+                const modalContent = `
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-sm mb-2 text-gray-800">추천 제목 (클릭하여 적용)</h4>
+                            <ul class="space-y-2 text-sm">
+                                ${suggestions.titles.map(t => `<li><button type="button" class="text-left w-full p-2 bg-gray-50 hover:bg-gray-100 rounded-md" data-type="title" data-value="${t.replace(/"/g, '&quot;')}">${t}</button></li>`).join('')}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-sm mb-2 text-gray-800">추천 요약 (클릭하여 적용)</h4>
+                             <p><button type="button" class="text-left w-full p-2 bg-gray-50 hover:bg-gray-100 rounded-md text-sm" data-type="summary" data-value="${suggestions.description.replace(/"/g, '&quot;')}">${suggestions.description}</button></p>
+                        </div>
+                    </div>
+                `;
+                
+                renderModal({
+                    title: 'AI SEO 제안',
+                    content: modalContent,
+                    confirmText: '닫기',
+                    onConfirm: closeModal
+                });
+                
+                $('#modal-container').addEventListener('click', (e) => {
+                    const target = e.target.closest('button[data-type]');
+                    if (target) {
+                        const type = target.dataset.type;
+                        const value = target.dataset.value;
+                        if (type === 'title') {
+                            $('#title').value = value;
+                        } else if (type === 'summary') {
+                            $('#summary').value = value;
+                        }
+                        showToast(`${type === 'title' ? '제목' : '요약'}이 적용되었습니다.`);
+                        closeModal();
+                    }
+                });
+
+            } catch (error) {
+                console.error("SEO Suggestion Error:", error);
+                showToast(`SEO 제안 생성 실패: ${error.message}`, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnText;
+            }
+        }
+        
         async function handleDirectPublish() {
             if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true);
             showToast("글 발행을 시작합니다...");
@@ -1328,7 +1572,7 @@
                     refined_content = imageHtml + body;
                 }
                 
-                const postData = { title, summary, slug, tags, refined_content, author_id: state.user.id };
+                const postData = { title, summary, slug, tags, refined_content, author_id: state.user.id, status: 'published' };
 
                 const { error } = postId
                     ? await supabase.from('posts').update(postData).eq('id', postId)
@@ -1444,7 +1688,7 @@
                     handleGlobalClick(e, target); 
                 } 
             });
-            document.addEventListener('submit', (e) => { const formId = e.target.id; if (formId === 'writer-form') { e.preventDefault(); handleWriterSubmit(); } else if (['ai-writer-form', 'auth-form', 'refiner-chat-form'].includes(formId)) { e.preventDefault(); } });
+            document.addEventListener('submit', (e) => { const formId = e.target.id; if (['ai-writer-form', 'auth-form', 'refiner-chat-form', 'settings-form'].includes(formId)) { e.preventDefault(); } });
             
             // Search listeners
             const searchInput = $('#search-input');
