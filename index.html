@@ -224,6 +224,47 @@
         }
         #search-results { max-height: calc(100vh - 200px); overflow-y: auto; }
 
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--accent);
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
         @media (max-width: 1024px) {
             #toc-container { display: none; }
         }
@@ -614,7 +655,7 @@
             const { data, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to);
             if (error) { showToast('내 글 목록 로딩 실패: ' + error.message, true); container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; }
             const listHtml = data.length > 0 ? data.map(post => `<li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg"><div><a href="/post/${post.slug}" data-action="route" class="font-semibold text-gray-800 hover:text-black">${post.title}</a><p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')}</p></div><div class="space-x-2"><a href="/writer/${post.slug}" class="btn text-xs" data-action="route">수정</a><button class="btn text-xs" data-action="delete-post" data-id="${post.id}">삭제</button></div></li>`).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
-            container.innerHTML = `<div class="py-12 space-y-16"><div><h1 class="text-3xl font-bold font-heading mb-2">AI 글 생성</h1><p class="text-gray-500 mb-8">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8"><form id="ai-writer-form" class="space-y-4"><div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div><div class="flex justify-end items-center gap-4 pt-2"><div class="ai-loader"></div><button type="submit" id="ai-generate-btn" class="btn btn-primary">AI로 초안 생성하기</button></div></form></div></div><div><div class="flex justify-between items-center mb-8"><div class="flex-grow"><h1 class="text-3xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a></div><div class="bg-white border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div></div>`;
+            container.innerHTML = `<div class="py-12 space-y-16"><div><h1 class="text-3xl font-bold font-heading mb-2">AI 글 생성</h1><p class="text-gray-500 mb-8">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8"><form id="ai-writer-form" class="space-y-4"><div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div><div class="flex justify-end items-center gap-4 pt-2"><div class="flex items-center gap-2"><label for="ai-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><label class="toggle-switch"><input type="checkbox" id="ai-image-toggle" checked><span class="slider"></span></label></div><div class="ai-loader"></div><button type="submit" id="ai-generate-btn" class="btn btn-primary">AI로 초안 생성하기</button></div></form></div></div><div><div class="flex justify-between items-center mb-8"><div class="flex-grow"><h1 class="text-3xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a></div><div class="bg-white border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div></div>`;
             $('#ai-writer-form').addEventListener('submit', (e) => { e.preventDefault(); handleAiWriterSubmit(); });
         }
 
@@ -634,7 +675,7 @@
                 if (data.author_id !== state.user.id) { showToast('자신이 작성한 글만 수정할 수 있습니다.', true); navigateTo('/dashboard'); return; }
                 post = data;
             }
-            container.innerHTML = `<div class="py-12"><div class="mb-8"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-3xl font-bold font-heading mb-8">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="is-draft-publish" value="${draft ? 'true' : 'false'}"><div><label for="title" class="block text-sm font-medium text-gray-600 mb-2">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-end pt-4 space-x-3"><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button><button type="submit" id="submit-btn" class="btn btn-primary">저장하기</button></div></form></div>`;
+            container.innerHTML = `<div class="py-12"><div class="mb-8"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-3xl font-bold font-heading mb-8">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="is-draft-publish" value="${draft ? 'true' : 'false'}"><div><label for="title" class="block text-sm font-medium text-gray-600 mb-2">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-end items-center pt-4 space-x-3"><button type="submit" id="submit-btn" class="btn btn-primary">저장하기</button><div class="border-l border-gray-300 h-6"></div><div class="flex items-center gap-2"><label for="writer-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><label class="toggle-switch"><input type="checkbox" id="writer-image-toggle" checked><span class="slider"></span></label></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></form></div>`;
             initQuillEditor(post.refined_content || '');
         }
         
@@ -1000,8 +1041,12 @@
             try { 
                 showToast('AI가 글 초안을 작성하고 있습니다...'); 
                 const article = await generateText(topic); 
-                showToast('AI가 대표 이미지를 생성하고 있습니다...'); 
-                const imageBase64 = await generateImage(article.title); 
+                let imageBase64 = null;
+                const generateImageToggle = $('#ai-image-toggle');
+                if (generateImageToggle && generateImageToggle.checked) {
+                    showToast('AI가 대표 이미지를 생성하고 있습니다...'); 
+                    imageBase64 = await generateImage(article.title); 
+                }
                 state.draftArticle = { ...article, imageBase64 }; 
                 saveDraft(state.draftArticle); 
                 showToast('초안 생성 완료! 글 다듬기 화면으로 이동합니다.'); 
@@ -1090,7 +1135,12 @@
             try {
                 showToast('AI 글 다듬기를 위해 초안을 준비 중입니다...');
                 const { slug } = await generateText(title, true);
-                const imageBase64 = await generateImage(title);
+                let imageBase64 = null;
+                const generateImageToggle = $('#writer-image-toggle');
+                if (generateImageToggle && generateImageToggle.checked) {
+                    showToast('AI가 대표 이미지를 생성하고 있습니다...'); 
+                    imageBase64 = await generateImage(title);
+                }
                 
                 state.draftArticle = { title, summary, body, imageBase64, slug, tags };
                 saveDraft(state.draftArticle);
@@ -1240,3 +1290,4 @@
     </script>
 </body>
 </html>
+
