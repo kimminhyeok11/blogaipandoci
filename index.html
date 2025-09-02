@@ -597,12 +597,12 @@
             
             const postsHtml = posts.length > 0 ? posts.map(post => `
                 <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-white border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
-                    <h2 class="text-xl sm:text-2xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
+                    <h2 class="text-lg sm:text-xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
                     <p class="text-gray-600 mb-4">${post.summary || ''}</p>
                     <p class="text-sm text-gray-400 mt-4 text-right">${new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
                 </a>`).join('') : `<p class="text-center text-gray-500 py-20">아직 작성된 글이 없습니다.</p>`;
 
-            container.innerHTML = `<div class="py-16"><h1 class="text-4xl font-extrabold text-center font-heading mb-4">Insurance Insights</h1><p class="text-center text-gray-500 text-base mb-16">AI, 기술, 그리고 보험에 대한 기록들</p><div class="space-y-6">${postsHtml}</div>${renderPaginationControls(page, count, '/page/')}</div>`;
+            container.innerHTML = `<div class="py-16"><h1 class="text-3xl sm:text-4xl font-extrabold text-center font-heading mb-4">Insurance Insights</h1><p class="text-center text-gray-500 text-base mb-16">AI, 기술, 그리고 보험에 대한 기록들</p><div class="space-y-6">${postsHtml}</div>${renderPaginationControls(page, count, '/page/')}</div>`;
         }
 
 
@@ -710,7 +710,7 @@
 
             container.innerHTML = `<div class="py-12 space-y-16">
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold font-heading mb-2">AI 글감 제안</h1>
+                    <h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글감 제안</h1>
                     <p class="text-gray-500 mb-8">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p>
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
                         <div id="topic-suggestions-container">
@@ -723,7 +723,7 @@
                     </div>
                 </div>
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold font-heading mb-2">AI 글 생성</h1>
+                    <h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글 생성</h1>
                     <p class="text-gray-500 mb-8">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p>
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
                         <form id="ai-writer-form" class="space-y-4">
@@ -737,7 +737,7 @@
                 </div>
                 <div>
                     <div class="flex justify-between items-center mb-8">
-                        <div class="flex-grow"><h1 class="text-2xl sm:text-3xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div>
+                        <div class="flex-grow"><h1 class="text-xl sm:text-2xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div>
                         <a href="/writer" class="btn px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a>
                     </div>
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}
@@ -764,7 +764,7 @@
                 if (data.author_id !== state.user.id) { showToast('자신이 작성한 글만 수정할 수 있습니다.', true); navigateTo('/dashboard'); return; }
                 post = data;
             }
-            container.innerHTML = `<div class="py-12"><div class="mb-8"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-3xl font-bold font-heading mb-8">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label for="writer-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><label class="toggle-switch"><input type="checkbox" id="writer-image-toggle" checked><span class="slider"></span></label></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
+            container.innerHTML = `<div class="py-12"><div class="mb-8"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-8">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label for="writer-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><label class="toggle-switch"><input type="checkbox" id="writer-image-toggle" checked><span class="slider"></span></label></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
             initQuillEditor(post.refined_content || '');
             
             $('#save-draft-btn').addEventListener('click', () => handlePostSave('draft'));
@@ -784,13 +784,13 @@
             
             const postsHtml = data.length > 0 ? data.map(post => `
                 <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-white border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
-                    <h2 class="text-xl sm:text-2xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
+                    <h2 class="text-lg sm:text-xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
                     <p class="text-gray-600 mb-4">${post.summary || ''}</p>
                     ${renderTags(post.tags)}
                     <p class="text-sm text-gray-400 mt-4">${new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
                 </a>`).join('') : `<p class="text-center text-gray-500 py-20">이 태그가 붙은 글이 없습니다.</p>`;
             
-            container.innerHTML = `<div class="py-16"><h1 class="text-4xl font-extrabold text-center font-heading mb-4">#${decodedTag}</h1><p class="text-center text-gray-500 text-lg mb-12">'${decodedTag}' 태그가 포함된 글 목록입니다.</p><div class="space-y-6">${postsHtml}</div></div>`;
+            container.innerHTML = `<div class="py-16"><h1 class="text-3xl sm:text-4xl font-extrabold text-center font-heading mb-4">#${decodedTag}</h1><p class="text-center text-gray-500 text-lg mb-12">'${decodedTag}' 태그가 포함된 글 목록입니다.</p><div class="space-y-6">${postsHtml}</div></div>`;
         }
 
         async function renderSettingsView(container) {
@@ -813,7 +813,7 @@
             
             container.innerHTML = `
                 <div class="py-12">
-                    <h1 class="text-3xl font-bold font-heading mb-8">프로필 설정</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold font-heading mb-8">프로필 설정</h1>
                     <form id="settings-form" class="bg-white border border-gray-200 rounded-xl shadow-sm p-8 space-y-6">
                         <div class="flex items-center gap-6">
                             <img id="avatar-preview" src="${avatarUrl}" alt="Profile" class="w-24 h-24 rounded-full object-cover bg-gray-100">
@@ -1221,13 +1221,16 @@
 
         async function generateTopicSuggestions() {
             const proxyUrl = '/api/generate';
-            const systemPrompt = `You are a helpful AI assistant and trend analyst for the 'InsureLog' blog, which covers AI, technology, and insurance. Your task is to use Google Search to find the latest news and trends in these fields and suggest 5 compelling blog post topics in Korean. CRITICAL: Your entire response must be ONLY a valid JSON array of strings, with no other text, formatting, or markdown. Example format: ["주제 1", "주제 2", "주제 3", "주제 4", "주제 5"]`;
-            const userQuery = `Find the latest news and trends about AI, technology, and insurance.`;
+            const systemPrompt = `You are a helpful AI assistant and trend analyst for the 'InsureLog' blog, which covers AI, technology, and insurance. Your task is to use Google Search to find the latest news and trends in these fields and suggest 5 compelling blog post topics in Korean. Your entire response must be ONLY a valid JSON array of strings, with no other text, formatting, or markdown. Example format: ["주제 1", "주제 2", "주제 3", "주제 4", "주제 5"]`;
+            const userQuery = `Find the latest news and trends about AI, technology, and insurance and suggest 5 blog post topics.`;
             
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: { parts: [{ text: systemPrompt }] },
-                tools: [{ "google_search": {} }]
+                tools: [{ "google_search": {} }],
+                 generationConfig: {
+                    responseMimeType: "application/json",
+                }
             };
 
             const response = await fetch(proxyUrl, {
@@ -1240,7 +1243,14 @@
             const result = await response.json();
             const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!textContent) throw new Error("Gemini API로부터 유효한 주제 제안을 받지 못했습니다.");
-            return JSON.parse(textContent);
+             try {
+                // The response might come with markdown, clean it.
+                const cleanedText = textContent.replace(/^```json\s*|```\s*$/g, '');
+                return JSON.parse(cleanedText);
+            } catch (e) {
+                console.error("Failed to parse topic suggestions:", textContent);
+                throw new Error("주제 제안의 형식이 잘못되었습니다.");
+            }
         }
 
         async function uploadBase64Image(base64Data, title) { if (!base64Data) throw new Error("이미지 데이터가 없습니다."); const imageBlob = base64ToBlob(base64Data); const fileName = `${state.user.id}/${Date.now()}.webp`; const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, imageBlob); if (error) throw new Error(`이미지 업로드 실패: ${error.message}`); const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName); return data.publicUrl; }
