@@ -585,10 +585,9 @@
         async function renderPostView(container, slug) {
             $('#app-container').className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
             if (!slug) { navigateTo('/'); return; }
-            
-            // --- DIAGNOSTIC CHANGE ---
-            // Temporarily removed the profile join ('profiles(*)') to isolate the issue.
-            // If this works, the problem is with the relationship query.
+
+            // FINAL FIX: Fetch post data first, then profile data separately.
+            // This robustly handles potential issues with complex join queries.
             const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
 
             if (error || !post) { 
@@ -598,8 +597,6 @@
                 return; 
             }
 
-            // Since we are not fetching the profile with the post, we need to fetch it separately.
-            // This is a robust workaround if the join query fails.
             let profile = null;
             if(post.author_id) {
                 const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', post.author_id).single();
@@ -626,7 +623,6 @@
             if (post.updated_at) {
                 const createdDate = new Date(post.created_at);
                 const updatedDate = new Date(post.updated_at);
-                // Only show updated date if it's different from created date by more than a minute
                 if (updatedDate.getTime() - createdDate.getTime() > 60000) {
                      updatedString = ` (수정: ${updatedDate.toLocaleString('ko-KR')})`;
                 }
