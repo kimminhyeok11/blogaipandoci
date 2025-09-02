@@ -10,7 +10,6 @@
     <!-- End Google Tag Manager -->
 
     <!-- AdSense Script -->
-    <!-- FIX: AdSense client ID has been corrected to a valid format. The original 'ca-pub-523R9497835591112' was invalid. -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
     
     <meta charset="UTF-8">
@@ -586,8 +585,6 @@
             $('#app-container').className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
             if (!slug) { navigateTo('/'); return; }
 
-            // FINAL FIX: Fetch post data first, then profile data separately.
-            // This robustly handles potential issues with complex join queries.
             const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
 
             if (error || !post) { 
@@ -682,9 +679,12 @@
             updateMetaTags();
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [] };
             if (draft) {
+                // FIX: When loading a draft, preserve the original post ID if it exists.
+                post.id = draft.postId || null;
                 post.title = draft.title;
                 post.summary = draft.summary;
-                post.refined_content = `${draft.imageHtml}${draft.body}`;
+                // Ensure imageHtml exists before concatenating to avoid 'undefined' string.
+                post.refined_content = `${draft.imageHtml || ''}${draft.body}`;
                 post.slug = draft.slug;
                 post.tags = draft.tags || [];
             } else if (slug) {
@@ -1136,13 +1136,16 @@
             const title = $('#title').value.trim();
             const summary = $('#summary').value.trim();
             const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
+            // FIX: Capture the existing post's ID and slug from the hidden form fields.
+            const postId = $('#post-id').value || null;
+            const postSlug = $('#post-slug').value || null;
             
             const htmlEditor = $('#html-editor');
             const isHtmlVisible = htmlEditor.style.display !== 'none';
             const body = isHtmlVisible ? htmlEditor.value : state.quill.root.innerHTML;
 
             if (!title) {
-                showToast('AI가 이미지를 생성하려면 제목이 필요합니다.', true);
+                showToast('AI로 다듬기 위해서는 제목이 필요합니다.', true);
                 return;
             }
 
@@ -1152,7 +1155,10 @@
 
             try {
                 showToast('AI 글 다듬기를 위해 초안을 준비 중입니다...');
-                const { slug } = await generateText(title, true);
+                
+                // FIX: Use the existing slug for edits; only generate a new one for new posts.
+                const slug = postSlug || (await generateText(title, true)).slug;
+                
                 let imageBase64 = null;
                 const generateImageToggle = $('#writer-image-toggle');
                 if (generateImageToggle && generateImageToggle.checked) {
@@ -1160,7 +1166,8 @@
                     imageBase64 = await generateImage(title);
                 }
                 
-                state.draftArticle = { title, summary, body, imageBase64, slug, tags };
+                // FIX: Add the postId to the draft object to preserve it.
+                state.draftArticle = { postId, title, summary, body, imageBase64, slug, tags };
                 saveDraft(state.draftArticle);
                 
                 showToast('준비 완료! 글 다듬기 화면으로 이동합니다.');
@@ -1175,8 +1182,51 @@
             }
         }
         async function handleRegenerateImage() { const btn = $('#regenerate-image-btn'); btn.disabled = true; btn.innerHTML = '<div class="image-loader" style="display: block;"></div>'; try { showToast('새 이미지를 생성하고 있습니다...'); const newImageBase64 = await generateImage(state.draftArticle.title); state.draftArticle.imageBase64 = newImageBase64; saveDraft(state.draftArticle); renderRefinerPreview(); showToast('이미지가 교체되었습니다.'); } catch (error) { console.error("Image Regeneration Error:", error); showToast(`이미지 재생성 실패: ${error.message}`, true); } finally { btn.disabled = false; btn.textContent = '이미지 재생성'; } }
-        async function handleDirectPublish() { if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true); showToast("이미지를 업로드하고 글을 발행합니다..."); try { const imageUrl = await uploadBase64Image(state.draftArticle.imageBase64, state.draftArticle.title); const imageHtml = `<img src="${imageUrl}" alt="${state.draftArticle.title}" loading="lazy">`; const postData = { ...state.draftArticle, refined_content: imageHtml + state.draftArticle.body, author_id: state.user.id }; delete postData.imageBase64; delete postData.body; const { error } = await supabase.from('posts').insert(postData); if (error) throw error; clearDraft(); showToast("글이 성공적으로 발행되었습니다!"); navigateTo('/dashboard'); } catch (error) { console.error("Direct publish error:", error); showToast(`발행 실패: ${error.message}`, true); } }
-        async function handleMoveToEditor() { if (!state.draftArticle) return showToast("편집할 초안이 없습니다.", true); const finalDraftForEditor = { ...state.draftArticle, imageHtml: `<img src="data:image/webp;base64,${state.draftArticle.imageBase64}" alt="${state.draftArticle.title}" loading="lazy">`, }; switchView('view-writer', (el) => renderWriterView(el, null, finalDraftForEditor)); }
+        async function handleDirectPublish() { 
+            if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true); 
+            showToast("글 발행을 시작합니다..."); 
+            try { 
+                let imageHtml = '';
+                // Only upload image if there's new image data.
+                if (state.draftArticle.imageBase64) {
+                    showToast("이미지를 업로드하고 있습니다...");
+                    const imageUrl = await uploadBase64Image(state.draftArticle.imageBase64, state.draftArticle.title); 
+                    imageHtml = `<img src="${imageUrl}" alt="${state.draftArticle.title}" loading="lazy">`; 
+                }
+
+                const postId = state.draftArticle.postId;
+
+                // Prepare the data payload for the database.
+                const postData = {
+                    title: state.draftArticle.title,
+                    summary: state.draftArticle.summary,
+                    slug: state.draftArticle.slug,
+                    tags: state.draftArticle.tags,
+                    refined_content: imageHtml + state.draftArticle.body,
+                    author_id: state.user.id
+                };
+                
+                // CORE FIX: Check if postId exists. If so, update the existing post. Otherwise, insert a new one.
+                const { error } = postId
+                    ? await supabase.from('posts').update(postData).eq('id', postId)
+                    : await supabase.from('posts').insert(postData);
+
+                if (error) throw error; 
+
+                clearDraft(); 
+                showToast(postId ? "글이 성공적으로 수정되었습니다!" : "글이 성공적으로 발행되었습니다!"); 
+                navigateTo('/dashboard'); 
+            } catch (error) { 
+                console.error("Direct publish error:", error); 
+                showToast(`발행 실패: ${error.message}`, true); 
+            } 
+        }
+        async function handleMoveToEditor() { 
+            if (!state.draftArticle) return showToast("편집할 초안이 없습니다.", true); 
+            const imageHtml = state.draftArticle.imageBase64 ? `<img src="data:image/webp;base64,${state.draftArticle.imageBase64}" alt="${state.draftArticle.title}" loading="lazy">` : '';
+            const finalDraftForEditor = { ...state.draftArticle, imageHtml }; 
+            switchView('view-writer', (el) => renderWriterView(el, null, finalDraftForEditor)); 
+        }
         async function deletePostAndAssociatedImages(postId) { const { data: post, error: fetchError } = await supabase.from('posts').select('refined_content').eq('id', postId).single(); if (fetchError) throw new Error(`삭제할 글을 찾지 못했습니다: ${fetchError.message}`); const content = post.refined_content || ''; const imageUrls = content.match(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g) || []; const imagePaths = imageUrls.map(url => url.split('/thought-images/')[1] || '').filter(Boolean); if (imagePaths.length > 0) { const { error: storageError } = await supabase.storage.from(IMAGE_BUCKET_NAME).remove(imagePaths); if (storageError) throw new Error(`스토리지 이미지 삭제 실패: ${storageError.message}`); } const { error: dbError } = await supabase.from('posts').delete().eq('id', postId); if (dbError) throw new Error(`데이터베이스 글 삭제 실패: ${dbError.message}`); }
         
         // =================================================================================
@@ -1308,4 +1358,5 @@
     </script>
 </body>
 </html>
+
 
