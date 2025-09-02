@@ -1221,16 +1221,13 @@
 
         async function generateTopicSuggestions() {
             const proxyUrl = '/api/generate';
-            const systemPrompt = `You are a helpful AI assistant and trend analyst for the 'InsureLog' blog, which covers AI, technology, and insurance. Your task is to use Google Search to find the latest news and trends in these fields and suggest 5 compelling blog post topics in Korean. Your entire response must be ONLY a valid JSON array of strings, with no other text, formatting, or markdown. Example format: ["주제 1", "주제 2", "주제 3", "주제 4", "주제 5"]`;
-            const userQuery = `Find the latest news and trends about AI, technology, and insurance and suggest 5 blog post topics.`;
+            const systemPrompt = `You are a helpful AI assistant and trend analyst for the 'InsureLog' blog, which covers AI, technology, and insurance. Your task is to use Google Search to find the latest news and trends in these fields and then suggest 5 compelling blog post topics in Korean. CRITICAL: Your entire response must be ONLY a valid JSON array of strings, with no other text, formatting, or markdown. Example format: ["주제 1", "주제 2", "주제 3", "주제 4", "주제 5"]`;
+            const userQuery = `Find the latest news and trends about AI, technology, and insurance. Based on the search results, suggest 5 blog post topics.`;
             
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: { parts: [{ text: systemPrompt }] },
-                tools: [{ "google_search": {} }],
-                 generationConfig: {
-                    responseMimeType: "application/json",
-                }
+                tools: [{ "google_search": {} }]
             };
 
             const response = await fetch(proxyUrl, {
