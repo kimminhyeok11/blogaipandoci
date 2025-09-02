@@ -956,9 +956,9 @@
 
             try {
                 let finalSlug = $('#post-slug').value;
-                if (!finalSlug) { // Create a slug for a new post
-                    const { slug } = await generateText(title, true);
-                    finalSlug = slug;
+                if (!id) { // Only generate a new slug for new posts
+                    const tempArticle = await generateText(title, true);
+                    finalSlug = tempArticle.slug;
                 }
                 
                 const postData = { title, summary, refined_content, author_id: state.user.id, slug: finalSlug, tags };
