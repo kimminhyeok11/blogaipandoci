@@ -590,54 +590,13 @@
                 container.innerHTML = `<p class="text-center text-gray-500 py-20">글을 불러올 수 없습니다.</p>`; 
                 return; 
             }
-
-            if (posts.length === 0) {
-                container.innerHTML = `<div class="py-16"><h1 class="text-4xl font-extrabold text-center font-heading mb-4">Insurance Insights</h1><p class="text-center text-gray-500 text-base mb-16">AI, 기술, 그리고 보험에 대한 기록들</p><div class="space-y-6"><p class="text-center text-gray-500 py-20">아직 작성된 글이 없습니다.</p></div></div>`;
-                return;
-            }
-
-            const authorIds = [...new Set(posts.map(post => post.author_id).filter(id => id))];
-            let profilesMap = new Map();
-
-            if (authorIds.length > 0) {
-                const { data: profiles, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('id, full_name, avatar_url, updated_at')
-                    .in('id', authorIds);
-
-                if (profileError) {
-                    console.error("Error fetching profiles for list:", profileError);
-                } else {
-                    profiles.forEach(profile => profilesMap.set(profile.id, profile));
-                }
-            }
             
-            const postsHtml = posts.map(post => {
-                const profile = profilesMap.get(post.author_id);
-                let authorHtml = '';
-
-                if (profile && profile.avatar_url) {
-                    let avatarUrl = profile.avatar_url;
-                    if (profile.updated_at) {
-                         avatarUrl += `?t=${new Date(profile.updated_at).getTime()}`;
-                    }
-                    const authorName = profile.full_name || '작성자';
-                    authorHtml = `<img class="w-6 h-6 rounded-full" src="${avatarUrl}" alt="${authorName}">`;
-                }
-
-                return `
+            const postsHtml = posts.length > 0 ? posts.map(post => `
                 <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-white border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
                     <h2 class="text-xl sm:text-2xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
                     <p class="text-gray-600 mb-4">${post.summary || ''}</p>
-                    <div class="mt-4 flex justify-between items-center text-sm">
-                        <div class="flex items-center flex-wrap gap-2">
-                             ${authorHtml}
-                             ${renderTags(post.tags, false)}
-                        </div>
-                        <p class="text-gray-400 shrink-0">${new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
-                    </div>
-                </a>`;
-            }).join('');
+                    <p class="text-sm text-gray-400 mt-4 text-right">${new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
+                </a>`).join('') : `<p class="text-center text-gray-500 py-20">아직 작성된 글이 없습니다.</p>`;
 
             container.innerHTML = `<div class="py-16"><h1 class="text-4xl font-extrabold text-center font-heading mb-4">Insurance Insights</h1><p class="text-center text-gray-500 text-base mb-16">AI, 기술, 그리고 보험에 대한 기록들</p><div class="space-y-6">${postsHtml}</div>${renderPaginationControls(page, count, '/page/')}</div>`;
         }
