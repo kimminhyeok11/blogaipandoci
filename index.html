@@ -566,7 +566,7 @@
                 <nav class="w-full max-w-7xl flex items-center justify-between py-2.5 px-4 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl shadow-sm">
                     <a href="/" class="brand-logo" data-action="route">InsureLog</a>
                     <div class="flex items-center space-x-2">
-                        <button data-action="show-search" class="btn p-1.5">
+                        <button data-action="show-search" class="btn p-1 sm:p-1.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
                         ${state.user 
@@ -582,7 +582,6 @@
             $('#app-container').className = 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8';
             const { from, to } = getPaginationRange(page);
             
-            // FIX: Fetch posts first, then profiles separately to avoid join issues.
             const { data: posts, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
             
             if (error) { 
@@ -603,7 +602,7 @@
             if (authorIds.length > 0) {
                 const { data: profiles, error: profileError } = await supabase
                     .from('profiles')
-                    .select('id, full_name, avatar_url')
+                    .select('id, full_name, avatar_url, updated_at')
                     .in('id', authorIds);
 
                 if (profileError) {
@@ -615,15 +614,24 @@
             
             const postsHtml = posts.map(post => {
                 const profile = profilesMap.get(post.author_id);
-                const avatarUrl = profile?.avatar_url || 'https://placehold.co/24x24/f9fafb/6b7280?text=A';
-                const authorName = profile?.full_name || '작성자';
+                let authorHtml = '';
+
+                if (profile && profile.avatar_url) {
+                    let avatarUrl = profile.avatar_url;
+                    if (profile.updated_at) {
+                         avatarUrl += `?t=${new Date(profile.updated_at).getTime()}`;
+                    }
+                    const authorName = profile.full_name || '작성자';
+                    authorHtml = `<img class="w-6 h-6 rounded-full" src="${avatarUrl}" alt="${authorName}">`;
+                }
+
                 return `
                 <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-white border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
                     <h2 class="text-xl sm:text-2xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
                     <p class="text-gray-600 mb-4">${post.summary || ''}</p>
                     <div class="mt-4 flex justify-between items-center text-sm">
                         <div class="flex items-center flex-wrap gap-2">
-                             <img class="w-6 h-6 rounded-full" src="${avatarUrl}" alt="${authorName}">
+                             ${authorHtml}
                              ${renderTags(post.tags, false)}
                         </div>
                         <p class="text-gray-400 shrink-0">${new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
@@ -633,6 +641,7 @@
 
             container.innerHTML = `<div class="py-16"><h1 class="text-4xl font-extrabold text-center font-heading mb-4">Insurance Insights</h1><p class="text-center text-gray-500 text-base mb-16">AI, 기술, 그리고 보험에 대한 기록들</p><div class="space-y-6">${postsHtml}</div>${renderPaginationControls(page, count, '/page/')}</div>`;
         }
+
 
         async function renderPostView(container, slug) {
             $('#app-container').className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
