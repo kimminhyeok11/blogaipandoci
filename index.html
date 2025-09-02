@@ -585,8 +585,30 @@
         async function renderPostView(container, slug) {
             $('#app-container').className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
             if (!slug) { navigateTo('/'); return; }
-            const { data: post, error } = await supabase.from('posts').select('*, profiles(*)').eq('slug', slug).single();
-            if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; }
+            
+            // --- DIAGNOSTIC CHANGE ---
+            // Temporarily removed the profile join ('profiles(*)') to isolate the issue.
+            // If this works, the problem is with the relationship query.
+            const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
+
+            if (error || !post) { 
+                console.error("Error fetching post:", error);
+                showToast('글을 찾을 수 없습니다.', true); 
+                navigateTo('/'); 
+                return; 
+            }
+
+            // Since we are not fetching the profile with the post, we need to fetch it separately.
+            // This is a robust workaround if the join query fails.
+            let profile = null;
+            if(post.author_id) {
+                const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', post.author_id).single();
+                if (profileError) {
+                    console.error("Error fetching profile:", profileError);
+                } else {
+                    profile = profileData;
+                }
+            }
             
             updateMetaTags(post);
             
@@ -627,7 +649,7 @@
                                  <div id="post-content">${post.refined_content || ''}</div>
                                  <div class="border-t border-gray-200 mt-12 pt-4">${renderTags(post.tags)}</div>
                              </article>
-                             ${renderAuthorProfile(post.profiles)}
+                             ${renderAuthorProfile(profile)}
                              <div class="my-12"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
                              ${allPostsError ? '' : createRelatedPostsHtml(findRelatedPosts(post, allOtherPosts))}
                              ${createShareButtonsHtml(`${SITE_URL}/post/${post.slug}`, post.title)}
