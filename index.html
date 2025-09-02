@@ -566,8 +566,8 @@
                 <nav class="w-full max-w-7xl flex items-center justify-between py-2.5 px-4 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl shadow-sm">
                     <a href="/" class="brand-logo" data-action="route">InsureLog</a>
                     <div class="flex items-center space-x-2">
-                        <button data-action="show-search" class="btn p-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <button data-action="show-search" class="btn p-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
                         ${state.user 
                             ? `<a href="/dashboard" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm" data-action="route">대시보드</a><button data-action="logout" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm">로그아웃</button>` 
@@ -581,14 +581,19 @@
             updateMetaTags();
             $('#app-container').className = 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8';
             const { from, to } = getPaginationRange(page);
-            const { data, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+            const { data, error, count } = await supabase.from('posts').select('*, profiles(full_name, avatar_url)', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
             if (error) { showToast('데이터를 불러오는 데 실패했습니다.', true); container.innerHTML = `<p class="text-center text-gray-500 py-20">글을 불러올 수 없습니다.</p>`; return; }
             const postsHtml = data.length > 0 ? data.map(post => `
                 <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-white border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
                     <h2 class="text-xl sm:text-2xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
                     <p class="text-gray-600 mb-4">${post.summary || ''}</p>
-                    ${renderTags(post.tags)}
-                    <p class="text-sm text-gray-400 mt-4">${new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
+                    <div class="mt-4 flex justify-between items-center text-sm">
+                        <div class="flex items-center flex-wrap gap-2">
+                             <img class="w-6 h-6 rounded-full" src="${post.profiles?.avatar_url || 'https://placehold.co/24x24/f9fafb/6b7280?text=A'}" alt="${post.profiles?.full_name || '작성자'}">
+                             ${renderTags(post.tags, false)}
+                        </div>
+                        <p class="text-gray-400 shrink-0">${new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
+                    </div>
                 </a>`).join('') : `<p class="text-center text-gray-500 py-20">아직 작성된 글이 없습니다.</p>`;
             container.innerHTML = `<div class="py-16"><h1 class="text-4xl font-extrabold text-center font-heading mb-4">Insurance Insights</h1><p class="text-center text-gray-500 text-base mb-16">AI, 기술, 그리고 보험에 대한 기록들</p><div class="space-y-6">${postsHtml}</div>${renderPaginationControls(page, count, '/page/')}</div>`;
         }
@@ -736,7 +741,16 @@
         function findRelatedPosts(currentPost, otherPosts, count = 2) { const currentTitleWords = currentPost.title.toLowerCase().split(/\s+/); const scoredPosts = otherPosts.map(post => { let score = 0; const targetTitle = post.title.toLowerCase(); currentTitleWords.forEach(word => { if (word.length > 1 && targetTitle.includes(word)) score++; }); return { ...post, score }; }); return scoredPosts.filter(post => post.score > 0).sort((a, b) => b.score - a.score).slice(0, count); }
         function createShareButtonsHtml(url, title) { return `<div class="mt-12 py-8 mb-12 border-t border-gray-200"><h3 class="text-center text-sm font-bold text-gray-500 mb-4 tracking-wider">공유하기</h3><div class="flex justify-center items-center gap-4"><a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg><span>X</span></a><a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4z"></path></svg><span>Facebook</span></a><button class="btn" data-action="copy-link" data-url="${url}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>링크 복사</span></button></div></div>`; }
         function createRelatedPostsHtml(relatedPosts) { if (relatedPosts.length === 0) return ''; return `<div class="mt-8 pt-8 border-t border-gray-200"><h3 class="text-xl font-bold font-heading mb-6">관련 글</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6">${relatedPosts.map(p => `<a href="/post/${p.slug}" data-action="route" class="block p-5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl transition-all duration-300 group"><h4 class="font-semibold text-gray-800 group-hover:text-black transition-colors">${p.title}</h4><p class="text-gray-500 text-sm mt-1">${p.summary}</p></a>`).join('')}</div></div>`; }
-        function renderTags(tags) { if (!tags || tags.length === 0) return ''; return `<div class="tag-list">${tags.map(tag => `<a href="/tag/${encodeURIComponent(tag)}" class="tag-item" data-action="route">#${tag}</a>`).join('')}</div>`; }
+        
+        function renderTags(tags, withWrapper = true) {
+            if (!tags || tags.length === 0) return '';
+            const tagsHtml = tags.map(tag => `<a href="/tag/${encodeURIComponent(tag)}" class="tag-item" data-action="route">#${tag}</a>`).join(' ');
+            if (withWrapper) {
+                return `<div class="tag-list">${tagsHtml}</div>`;
+            }
+            return tagsHtml;
+        }
+
         function renderAuthorProfile(profile) {
             if (!profile) return '';
             const avatarUrl = profile.avatar_url || 'https://placehold.co/120x120/f9fafb/6b7280?text=User';
