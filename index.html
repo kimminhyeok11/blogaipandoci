@@ -353,10 +353,10 @@
                     "headline": data.title,
                     "description": data.summary,
                     "image": imageUrl,
-                    "author": { "@type": "Person", "name": "InsureLog Admin" },
+                    "author": { "@type": "Person", "name": data.profiles?.full_name || "InsureLog Admin" },
                     "publisher": { "@type": "Organization", "name": "InsureLog", "logo": { "@type": "ImageObject", "url": defaultMeta.image } },
                     "datePublished": new Date(data.created_at).toISOString(),
-                    "dateModified": new Date(data.created_at).toISOString() 
+                    "dateModified": new Date(data.updated_at || data.created_at).toISOString() 
                 };
             }
             let script = document.getElementById('json-ld-structured-data');
@@ -557,6 +557,17 @@
                    </a>`
                 : '';
             
+            const dateString = new Date(post.created_at).toLocaleString('ko-KR');
+            let updatedString = '';
+            if (post.updated_at) {
+                const createdDate = new Date(post.created_at);
+                const updatedDate = new Date(post.updated_at);
+                // Only show updated date if it's different from created date by more than a minute
+                if (updatedDate.getTime() - createdDate.getTime() > 60000) {
+                     updatedString = ` (수정: ${updatedDate.toLocaleString('ko-KR')})`;
+                }
+            }
+            
             const postLayout = `
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pt-8 pb-12">
                     <div class="lg:col-span-3">
@@ -570,7 +581,7 @@
                                     ${editButtonHtml}
                                 </div>
                                 <h1 class="!mt-0">${post.title}</h1>
-                                <p class="text-sm text-gray-500 mb-8">${new Date(post.created_at).toLocaleString('ko-KR')}</p>
+                                <p class="text-sm text-gray-500 mb-8">${dateString}${updatedString}</p>
                                 <div id="post-content">${post.refined_content || ''}</div>
                                 <div class="border-t border-gray-200 mt-12 pt-4">${renderTags(post.tags)}</div>
                             </article>
@@ -584,6 +595,7 @@
             container.innerHTML = postLayout;
             
             buildTableOfContents();
+            lazyLoadImages();
 
             setTimeout(() => {
                 try {
@@ -662,7 +674,7 @@
             const authorBio = profile.bio || '작성자 정보가 없습니다.';
             return `
                 <div class="author-box">
-                    <img src="${avatarUrl}" alt="${authorName}" class="w-16 h-16 rounded-full object-cover">
+                    <img src="${avatarUrl}" alt="${authorName}" loading="lazy">
                     <div>
                         <p class="name">${authorName}</p>
                         <p class="bio">${authorBio}</p>
@@ -671,7 +683,24 @@
         }
         function initQuillEditor(initialContent) { if (state.quill) state.quill = null; const BlockEmbed = Quill.import('blots/block/embed'); class VideoEmbedBlot extends BlockEmbed { static create(value) { let node = super.create(); node.innerHTML = value; node.setAttribute('contenteditable', 'false'); return node; } static value(node) { return node.innerHTML; } } VideoEmbedBlot.blotName = 'video-embed'; VideoEmbedBlot.tagName = 'div'; VideoEmbedBlot.className = 'ql-video-embed-wrapper'; Quill.register(VideoEmbedBlot); state.quill = new Quill('#editor', { theme: 'snow', modules: { toolbar: [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link', 'image'], ['clean']] } }); const Delta = Quill.import('delta'); const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:(?:m|www)\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/; state.quill.clipboard.addMatcher(Node.TEXT_NODE, (node, delta) => { const text = node.data; const match = text.match(youtubeRegex); if (match && match[1]) { const embedHtml = `<div class="youtube-embed-container"><iframe src="https://www.youtube.com/embed/${match[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`; return new Delta().insert({ 'video-embed': embedHtml }).insert('\n'); } return delta; }); state.quill.root.innerHTML = initialContent; }
         function base64ToBlob(base64, contentType = 'image/webp') { const byteCharacters = atob(base64); const byteArrays = []; for (let offset = 0; offset < byteCharacters.length; offset += 512) { const slice = byteCharacters.slice(offset, offset + 512); const byteNumbers = new Array(slice.length); for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i); byteArrays.push(new Uint8Array(byteNumbers)); } return new Blob(byteArrays, { type: contentType }); }
-        
+        function lazyLoadImages() {
+            const images = document.querySelectorAll('#post-content img');
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        // To prevent re-triggering, we can check if it's already loaded
+                        if (!img.getAttribute('data-loaded')) {
+                            img.src = img.src; // Browser will fetch if it hasn't already
+                            img.setAttribute('data-loaded', 'true');
+                        }
+                        observer.unobserve(img);
+                    }
+                });
+            }, { rootMargin: '0px 0px 200px 0px' });
+            images.forEach(image => observer.observe(image));
+        }
+
         // =================================================================================
         // --- TABLE OF CONTENTS ---
         // =================================================================================
@@ -1067,8 +1096,8 @@
             }
         }
         async function handleRegenerateImage() { const btn = $('#regenerate-image-btn'); btn.disabled = true; btn.innerHTML = '<div class="image-loader" style="display: block;"></div>'; try { showToast('새 이미지를 생성하고 있습니다...'); const newImageBase64 = await generateImage(state.draftArticle.title); state.draftArticle.imageBase64 = newImageBase64; saveDraft(state.draftArticle); renderRefinerPreview(); showToast('이미지가 교체되었습니다.'); } catch (error) { console.error("Image Regeneration Error:", error); showToast(`이미지 재생성 실패: ${error.message}`, true); } finally { btn.disabled = false; btn.textContent = '이미지 재생성'; } }
-        async function handleDirectPublish() { if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true); showToast("이미지를 업로드하고 글을 발행합니다..."); try { const imageUrl = await uploadBase64Image(state.draftArticle.imageBase64, state.draftArticle.title); const imageHtml = `<img src="${imageUrl}" alt="${state.draftArticle.title}">`; const postData = { ...state.draftArticle, refined_content: imageHtml + state.draftArticle.body, author_id: state.user.id }; delete postData.imageBase64; delete postData.body; const { error } = await supabase.from('posts').insert(postData); if (error) throw error; clearDraft(); showToast("글이 성공적으로 발행되었습니다!"); navigateTo('/dashboard'); } catch (error) { console.error("Direct publish error:", error); showToast(`발행 실패: ${error.message}`, true); } }
-        async function handleMoveToEditor() { if (!state.draftArticle) return showToast("편집할 초안이 없습니다.", true); const finalDraftForEditor = { ...state.draftArticle, imageHtml: `<img src="data:image/webp;base64,${state.draftArticle.imageBase64}" alt="${state.draftArticle.title}">`, }; switchView('view-writer', (el) => renderWriterView(el, null, finalDraftForEditor)); }
+        async function handleDirectPublish() { if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true); showToast("이미지를 업로드하고 글을 발행합니다..."); try { const imageUrl = await uploadBase64Image(state.draftArticle.imageBase64, state.draftArticle.title); const imageHtml = `<img src="${imageUrl}" alt="${state.draftArticle.title}" loading="lazy">`; const postData = { ...state.draftArticle, refined_content: imageHtml + state.draftArticle.body, author_id: state.user.id }; delete postData.imageBase64; delete postData.body; const { error } = await supabase.from('posts').insert(postData); if (error) throw error; clearDraft(); showToast("글이 성공적으로 발행되었습니다!"); navigateTo('/dashboard'); } catch (error) { console.error("Direct publish error:", error); showToast(`발행 실패: ${error.message}`, true); } }
+        async function handleMoveToEditor() { if (!state.draftArticle) return showToast("편집할 초안이 없습니다.", true); const finalDraftForEditor = { ...state.draftArticle, imageHtml: `<img src="data:image/webp;base64,${state.draftArticle.imageBase64}" alt="${state.draftArticle.title}" loading="lazy">`, }; switchView('view-writer', (el) => renderWriterView(el, null, finalDraftForEditor)); }
         async function deletePostAndAssociatedImages(postId) { const { data: post, error: fetchError } = await supabase.from('posts').select('refined_content').eq('id', postId).single(); if (fetchError) throw new Error(`삭제할 글을 찾지 못했습니다: ${fetchError.message}`); const content = post.refined_content || ''; const imageUrls = content.match(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g) || []; const imagePaths = imageUrls.map(url => url.split('/thought-images/')[1] || '').filter(Boolean); if (imagePaths.length > 0) { const { error: storageError } = await supabase.storage.from(IMAGE_BUCKET_NAME).remove(imagePaths); if (storageError) throw new Error(`스토리지 이미지 삭제 실패: ${storageError.message}`); } const { error: dbError } = await supabase.from('posts').delete().eq('id', postId); if (dbError) throw new Error(`데이터베이스 글 삭제 실패: ${dbError.message}`); }
         
         // =================================================================================
@@ -1100,11 +1129,7 @@
             resultsContainer.innerHTML = '<div class="loader-spinner mx-auto"></div>';
             
             try {
-                const { data, error } = await supabase
-                    .from('posts')
-                    .select('title, summary, slug')
-                    .textSearch('fts', query, { type: 'websearch', config: 'simple' })
-                    .limit(10);
+                const { data, error } = await supabase.rpc('search_posts', { search_term: query });
                 
                 if (error) throw error;
 
@@ -1145,7 +1170,7 @@
             const previewContainer = $('#refiner-preview-container');
             if (!previewContainer || !state.draftArticle) return;
             const { title, summary, body, imageBase64 } = state.draftArticle;
-            const imageHtml = imageBase64 ? `<img src="data:image/webp;base64,${imageBase64}" alt="${title}">` : '';
+            const imageHtml = imageBase64 ? `<img src="data:image/webp;base64,${imageBase64}" alt="${title}" loading="lazy">` : '';
             previewContainer.innerHTML = `<div class="prose-custom max-w-none"><h1>${title}</h1><p class="text-gray-500 italic">${summary}</p>${imageHtml}${body}</div>`;
         }
         function saveDraft(draft) { localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft)); }
