@@ -34,16 +34,17 @@ export default async function handler(req, res) {
       body: JSON.stringify(apiPayload),
     });
 
+    const responseData = await response.json();
+
     if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('Google AI API Error:', errorBody);
-      return res.status(response.status).json({ error: `AI API error: ${response.statusText}` });
+      console.error('Google AI API Error:', responseData);
+      return res.status(response.status).json({ error: `AI API error: ${responseData.error?.message || response.statusText}` });
     }
 
-    const data = await response.json();
-    return res.status(200).json(data);
+    return res.status(200).json(responseData);
   } catch (error) {
     console.error('Proxy function error:', error);
     return res.status(500).json({ error: 'Internal Server Error in proxy function.' });
   }
 }
+
