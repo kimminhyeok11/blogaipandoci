@@ -54,9 +54,9 @@
     <!-- Main Styles -->
     <style>
         :root {
-            --bg-main: #F9FAFB;
+            --bg-main: #FFFFFF; /* Changed to pure white for minimal look */
             --bg-content: #FFFFFF;
-            --border-color: #F3F4F6;
+            --border-color: #F0F0F0;
             --text-primary: #111827;
             --text-secondary: #6B7280;
             --accent: #111827;
@@ -65,32 +65,32 @@
             --font-body: 'Open Sans', sans-serif;
         }
         html { scroll-behavior: smooth; }
-        body { font-family: var(--font-body); background-color: var(--bg-main); color: var(--text-primary); font-size: 16px; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        body { font-family: var(--font-body); background-color: var(--bg-main); color: var(--text-primary); font-size: 15px; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
         
         #app-loader, #refiner-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background-color: var(--bg-main); display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         #refiner-loader { z-index: 200; background-color: rgba(249, 250, 251, 0.8); backdrop-filter: blur(4px); display: none; flex-direction: column; gap: 1rem; }
         
-        .loader-spinner { width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        .loader-spinner { width: 32px; height: 32px; border: 3px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         .ai-loader, .image-loader { display: none; width: 1rem; height: 1rem; border: 2px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
         .app-view { display: none; } .app-view.active { display: block; }
-        .brand-logo { font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem; color: var(--text-primary); letter-spacing: -0.5px; }
+        .brand-logo { font-family: var(--font-heading); font-weight: 800; font-size: 1.125rem; color: var(--text-primary); letter-spacing: -0.5px; }
         
-        .btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; border-radius: 8px; transition: all 0.25s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; border: 1px solid #D1D5DB; background-color: var(--bg-content); color: #374151; cursor: pointer; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .btn { padding: 0.25rem 0.75rem; font-size: 0.8rem; font-weight: 500; border-radius: 6px; transition: all 0.25s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; border: 1px solid #D1D5DB; background-color: var(--bg-content); color: #374151; cursor: pointer; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
         .btn:hover { background-color: #F9FAFB; color: var(--text-primary); transform: translateY(-1px); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
         .btn-primary { background-color: var(--accent); color: white; border-color: var(--accent); }
         .btn-primary:hover { background-color: var(--accent-hover); border-color: var(--accent-hover); color: white; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background-color: var(--bg-content) !important; color: var(--text-secondary) !important; }
         
-        .form-input, .form-textarea { font-size: 0.95rem; padding: 0.75rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; width: 100%; background-color: var(--bg-content); color: var(--text-primary); transition: all 0.2s ease; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .form-input, .form-textarea { font-size: 0.9rem; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px; width: 100%; background-color: var(--bg-content); color: var(--text-primary); transition: all 0.2s ease; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
         .form-input:focus, .form-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1); }
         
-        .prose-custom { color: #374151; line-height: 1.8; font-size: 1rem; }
-        .prose-custom > *:not(:first-child) { margin-top: 1.5em; }
-        .prose-custom p { margin-bottom: 1.5em; }
-        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-family: var(--font-heading); font-weight: 700; margin-top: 2.2em; margin-bottom: 1em; }
-        .prose-custom h1 { font-size: 2.25rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.4em; }
+        .prose-custom { color: #374151; line-height: 1.7; font-size: 0.95rem; }
+        .prose-custom > *:not(:first-child) { margin-top: 1.25em; }
+        .prose-custom p { margin-bottom: 1.25em; }
+        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-family: var(--font-heading); font-weight: 700; margin-top: 2em; margin-bottom: 0.8em; }
+        .prose-custom h1 { font-size: 1.75rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.3em; }
         .prose-custom h2, .prose-custom h3 {
             font-size: 1em;
             font-weight: 600;
@@ -100,181 +100,97 @@
             color: var(--text-primary);
             display: block;
         }
-        .prose-custom a { color: var(--text-primary); text-decoration: none; font-weight: 500; border-bottom: 2px solid #D1D5DB; transition: all 0.2s ease; }
+        .prose-custom a { color: var(--text-primary); text-decoration: none; font-weight: 500; border-bottom: 1px solid #D1D5DB; transition: all 0.2s ease; }
         .prose-custom a:hover { border-bottom-color: var(--accent); }
-        .prose-custom pre, .prose-custom blockquote { margin-top: 2.5em; margin-bottom: 2.5em; }
-        /* Removed conflicting pre style */
-        .prose-custom code { background-color: #E5E7EB; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; color: #4B5563; }
+        .prose-custom pre, .prose-custom blockquote { margin-top: 2em; margin-bottom: 2em; }
+        .prose-custom code { background-color: #E5E7EB; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.85em; color: #4B5563; }
         .prose-custom pre code { background-color: transparent; padding: 0; }
-        .prose-custom blockquote { border-left: 3px solid #9CA3AF; padding-left: 1.5rem; color: var(--text-secondary); font-style: normal; }
-        .prose-custom img { border-radius: 12px; max-width: 100%; height: auto; margin-top: 3em; margin-bottom: 3em; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
+        .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         
-        .pagination-controls a, .pagination-controls span { padding: 0.5rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.875rem; transition: all 0.2s ease; }
-        .pagination-controls a:hover { background-color: var(--bg-content); }
-        .pagination-controls .active { background-color: var(--accent); color: white; border-color: var(--accent); }
-        .pagination-controls .disabled { opacity: 0.5; pointer-events: none; }
+        .pagination-controls a, .pagination-controls span { padding: 0.4rem 0.8rem; border: 1px solid #D1D5DB; border-radius: 6px; font-size: 0.8rem; }
         
         .ql-toolbar { border: 1px solid #D1D5DB !important; border-top-left-radius: 8px; border-top-right-radius: 8px; background: #F9FAFB; }
         .ql-container { border: 1px solid #D1D5DB !important; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; font-family: var(--font-body) !important; background: var(--bg-content); }
-        .ql-editor { color: var(--text-primary); min-height: 350px; font-size: 1rem; line-height: 1.8; }
-        .ql-editor p { margin-bottom: 1rem; }
-        .ql-snow .ql-stroke { stroke: var(--text-secondary); } .ql-snow .ql-picker-label { color: var(--text-secondary) !important; }
+        .ql-editor { color: var(--text-primary); min-height: 300px; font-size: 0.95rem; line-height: 1.7; }
         
-        .youtube-embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; margin: 2em 0; border-radius: 12px; }
-        .youtube-embed-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #view-refiner .refiner-grid { height: calc(100vh - 110px); }
         
-        #view-refiner .refiner-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.5rem; height: calc(100vh - 140px); }
-        #refiner-preview-container { height: 100%; overflow-y: auto; padding: 1.2rem; border: 1px solid #E5E7EB; background: var(--bg-content); border-radius: 12px; }
-        #refiner-chat-container { display: flex; flex-direction: column; height: 100%; }
-        #chat-history { flex-grow: 1; overflow-y: auto; padding: 1rem; space-y: 1rem; display: flex; flex-direction: column;}
-        .chat-message { max-width: 90%; padding: 0.6rem 1rem; border-radius: 16px; line-height: 1.6; font-size: 0.9rem;}
-        .chat-message.user { background-color: var(--accent); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .chat-message.ai { background-color: #F3F4F6; border: 1px solid #E5E7EB; align-self: flex-start; border-bottom-left-radius: 4px; }
-        .chat-message.system { font-size: 0.75rem; text-align: center; color: var(--text-secondary); align-self: center; }
-        #refiner-chat-form { border-top: 1px solid #E5E7EB; padding-top: 1rem; display: flex; gap: 0.5rem; }
-        
-        /* Table of Contents Styles */
-        #toc-container {
-            position: sticky;
-            top: 100px;
-            align-self: start;
-            max-height: calc(100vh - 120px);
+        #toc-container li a { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
+        /* Command Palette Styles */
+        #command-palette {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(249, 250, 251, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 15vh;
+        }
+        #command-palette-content {
+            width: 100%;
+            max-width: 640px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            border: 1px solid var(--border-color);
+        }
+        #command-input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            background: transparent;
+            outline: none;
+        }
+        #command-results {
+            max-height: 400px;
             overflow-y: auto;
         }
-        #toc-container h4 {
-            font-family: var(--font-heading);
-            font-weight: 600;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #E5E7EB;
-        }
-        #toc-container ul { list-style: none; padding-left: 0; margin: 0; }
-        #toc-container li a {
-            display: block;
-            padding: 0.5rem 1rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            border-left: 2px solid #E5E7EB;
-            transition: all 0.2s ease;
-            font-size: 0.875rem;
-        }
-        #toc-container li a:hover { color: var(--text-primary); background-color: #F3F4F6; }
-        #toc-container li a.active { color: var(--text-primary); font-weight: 600; border-left-color: var(--accent); }
-        #toc-container li.toc-h3 a { padding-left: 2rem; }
-        
-        /* Tag Styles */
-        .tag-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
-        .tag-item { background-color: #F3F4F6; color: #4B5563; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; transition: background-color 0.2s; }
-        .tag-item:hover { background-color: #E5E7EB; color: #1F2937; }
-
-        /* Author Box Styles */
-        .author-box {
-            margin-top: 3rem;
-            padding: 1.5rem;
-            background-color: var(--bg-content);
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
+        .command-item {
+            padding: 0.75rem 1rem;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 1rem;
-        }
-        .author-box img {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        .author-box .name {
-            font-family: var(--font-heading);
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        .author-box .bio {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        /* Search Overlay */
-        #search-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(249, 250, 251, 0.95);
-            backdrop-filter: blur(8px);
-            z-index: 50;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            padding: 4rem 1rem;
-        }
-        #search-container { width: 100%; max-width: 640px; }
-        #search-input {
-            width: 100%;
-            padding: 1rem 1.5rem;
-            font-size: 1.25rem;
-            border: 2px solid #E5E7EB;
-            border-radius: 9999px;
-        }
-        #search-results { max-height: calc(100vh - 200px); overflow-y: auto; }
-
-        /* Toggle Switch Styles */
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-        }
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
+            border-bottom: 1px solid var(--border-color);
         }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+        .command-item:hover, .command-item.active {
+            background-color: #F9FAFB;
         }
-        input:checked + .slider {
-            background-color: var(--accent);
+        .command-item:last-child {
+            border-bottom: none;
         }
-        input:checked + .slider:before {
-            transform: translateX(20px);
+        .command-item .title {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+         .command-item .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+        .command-item .kbd {
+            background-color: #F3F4F6;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            border: 1px solid #E5E7EB;
         }
 
-        @media (max-width: 1024px) {
-            #toc-container { display: none; }
-        }
+
         @media (max-width: 768px) {
-            .prose-custom h1 { font-size: 1.875rem; }
-            #view-refiner .refiner-grid { 
-                grid-template-columns: 1fr; 
-                height: calc(100vh - 120px); 
-                gap: 1.5rem; 
-                flex-direction: column;
-                display: flex;
-            }
-            #refiner-preview-wrapper { flex: 3; overflow-y: hidden; display: flex; flex-direction: column; }
-            #refiner-preview-container { flex-grow: 1; height: 100%; }
-            #refiner-chat-container { flex: 2; min-height: 0; }
+            body { font-size: 14px; }
+            .prose-custom h1 { font-size: 1.5rem; }
+            #view-refiner .refiner-grid { height: calc(100vh - 100px); }
+            .btn { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
+            .brand-logo { font-size: 1rem; }
+            header { padding-top: 0.5rem; padding-bottom: 0.5rem;}
+            #command-palette { padding-top: 5vh; }
         }
     </style>
 </head>
@@ -289,7 +205,7 @@
         <div class="loader-spinner"></div>
         <p class="text-gray-600 font-semibold">AI가 글을 수정하고 있습니다...</p>
     </div>
-    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center px-4 py-2.5"></header>
+    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center px-4 py-2"></header>
     <div id="app-container" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <main id="main-content">
             <div id="view-library" class="app-view"></div>
@@ -301,23 +217,22 @@
             <div id="view-settings" class="app-view"></div>
         </main>
     </div>
-    <footer class="text-center py-8 px-4 border-t border-gray-200 mt-16">
-        <p class="text-sm text-gray-500">
+    <footer class="text-center py-6 px-4 border-t border-gray-200 mt-12">
+        <p class="text-xs text-gray-500">
             개발 및 문의사항은 <a href="https://www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-700 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
         </p>
     </footer>
-    <div id="search-overlay">
-        <div id="search-container">
-            <input type="search" id="search-input" placeholder="검색어를 입력하세요..." autocomplete="off">
-            <div id="search-results" class="mt-6 space-y-4"></div>
+    
+    <div id="command-palette">
+        <div id="command-palette-content">
+            <input type="text" id="command-input" placeholder="'전체 글' 입력 또는 검색...">
+            <div id="command-results"></div>
         </div>
-        <button id="close-search-btn" class="absolute top-8 right-8 text-gray-500 hover:text-black">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
     </div>
+    
     <div id="structured-data-container"></div>
     <div id="modal-container"></div>
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-3"></div>
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
     
     <!-- Code Highlighting (Prettify) Script -->
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=css"></script>
@@ -561,49 +476,34 @@
         // =================================================================================
         function renderNav() {
             $('#main-nav-container').innerHTML = `
-                <nav class="w-full max-w-7xl flex items-center justify-between py-2.5 px-4 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl shadow-sm">
+                <nav class="w-full max-w-7xl flex items-center justify-between py-2 px-4 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl shadow-sm">
                     <a href="/" class="brand-logo" data-action="route">InsureLog</a>
                     <div class="flex items-center space-x-2">
-                        <button data-action="show-search" class="btn p-1 sm:p-1.5">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <button data-action="show-command-palette" class="btn !p-1.5 !text-xs">
+                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9 3.5a.75.75 0 0 1 .75.75v1.5h4.5a.75.75 0 0 1 0 1.5h-4.5v1.5a.75.75 0 0 1-1.5 0v-1.5H5a.75.75 0 0 1 0-1.5h4.5V4.25A.75.75 0 0 1 9 3.5ZM5.5 10a.75.75 0 0 0 0 1.5h9a.75.75 0 0 0 0-1.5h-9Z" /></svg>
+                            <span class="hidden sm:inline">메뉴/검색</span>
                         </button>
                         ${state.user 
-                            ? `<a href="/settings" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm" data-action="route">설정</a>
-                               <a href="/dashboard" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm" data-action="route">대시보드</a>
-                               <button data-action="logout" class="btn px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm">로그아웃</button>` 
-                            : `<button data-action="show-auth" class="btn btn-primary px-2 py-1 text-xs sm:px-4 sm:py-1.5 sm:text-sm">로그인 / 가입</button>`
+                            ? `<a href="/settings" class="btn !px-2 !py-1 !text-xs" data-action="route">설정</a>
+                               <a href="/dashboard" class="btn !px-2 !py-1 !text-xs" data-action="route">대시보드</a>
+                               <button data-action="logout" class="btn !px-2 !py-1 !text-xs">로그아웃</button>` 
+                            : `<button data-action="show-auth" class="btn btn-primary !px-2 !py-1 !text-xs">로그인 / 가입</button>`
                         }
                     </div>
                 </nav>`;
         }
         
-        async function renderLibraryView(container, page = 1) {
-            updateMetaTags();
-            $('#app-container').className = 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8';
-            const { from, to } = getPaginationRange(page);
-            
-            const { data: posts, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
-            
-            if (error) { 
-                console.error("Error fetching posts:", error);
-                showToast('데이터를 불러오는 데 실패했습니다.', true); 
-                container.innerHTML = `<p class="text-center text-gray-500 py-20">글을 불러올 수 없습니다.</p>`; 
-                return; 
+        async function renderLibraryView(container) {
+            const { data, error } = await supabase.from('posts').select('*').eq('status', 'published').order('created_at', { ascending: false }).limit(1).single();
+            if (error || !data) {
+                container.innerHTML = `<div class="py-16 text-center"><h1 class="text-2xl font-bold font-heading mb-2">아직 작성된 글이 없습니다.</h1><p class="text-gray-500">대시보드에서 첫 글을 작성해보세요.</p></div>`;
+                return;
             }
-            
-            const postsHtml = posts.length > 0 ? posts.map(post => `
-                <a href="/post/${post.slug}" data-action="route" class="block p-6 bg-white border border-gray-200 hover:border-gray-300 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group">
-                    <h2 class="text-lg sm:text-xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
-                    <p class="text-gray-600 mb-4">${post.summary || ''}</p>
-                    <p class="text-sm text-gray-400 mt-4 text-right">${new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
-                </a>`).join('') : `<p class="text-center text-gray-500 py-20">아직 작성된 글이 없습니다.</p>`;
-
-            container.innerHTML = `<div class="py-16"><h1 class="text-3xl sm:text-4xl font-extrabold text-center font-heading mb-4">Insurance Insights</h1><p class="text-center text-gray-500 text-base mb-16">AI, 기술, 그리고 보험에 대한 기록들</p><div class="space-y-6">${postsHtml}</div>${renderPaginationControls(page, count, '/page/')}</div>`;
+            await renderPostView(container, data.slug);
         }
 
-
         async function renderPostView(container, slug) {
-            $('#app-container').className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
+            $('#app-container').className = 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8';
             if (!slug) { navigateTo('/'); return; }
 
             const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
@@ -614,6 +514,12 @@
                 navigateTo('/'); 
                 return; 
             }
+             if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) {
+                showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true);
+                navigateTo('/');
+                return;
+            }
+
 
             let profile = null;
             if(post.author_id) {
@@ -647,32 +553,23 @@
             }
             
             const postLayout = `
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pt-8 pb-12">
-                    <div class="lg:col-span-3">
-                        <aside id="toc-container"></aside>
-                    </div>
-                    <div class="lg:col-span-9">
-                         <div class="max-w-4xl">
-                             <article class="prose-custom max-w-none">
-                                 <div class="flex justify-between items-center mb-8">
-                                     <button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>목록으로</button>
-                                     ${editButtonHtml}
-                                 </div>
-                                 <h1 class="!mt-0">${post.title}</h1>
-                                 <p class="text-sm text-gray-500 mb-8">${dateString}${updatedString}</p>
-                                 <div id="post-content">${post.refined_content || ''}</div>
-                                 <div class="border-t border-gray-200 mt-12 pt-4">${renderTags(post.tags)}</div>
-                             </article>
-                             ${renderAuthorProfile(profile)}
-                             <div class="my-12"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
-                             ${allPostsError ? '' : createRelatedPostsHtml(findRelatedPosts(post, allOtherPosts))}
-                             ${createShareButtonsHtml(`${SITE_URL}/post/${post.slug}`, post.title)}
+                <div class="py-12">
+                     <article class="prose-custom max-w-none">
+                         <div class="flex justify-between items-center mb-6">
+                            <div class="text-sm text-gray-500">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div>
+                             ${editButtonHtml}
                          </div>
-                    </div>
+                         <h1 class="!mt-0">${post.title}</h1>
+                         <div id="post-content">${post.refined_content || ''}</div>
+                         <div class="border-t border-gray-200 mt-12 pt-4">${renderTags(post.tags)}</div>
+                     </article>
+                     ${renderAuthorProfile(profile)}
+                     <div class="my-12"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
+                     ${allPostsError ? '' : createRelatedPostsHtml(findRelatedPosts(post, allOtherPosts))}
+                     ${createShareButtonsHtml(`${SITE_URL}/post/${post.slug}`, post.title)}
                 </div>`;
             container.innerHTML = postLayout;
             
-            buildTableOfContents();
             lazyLoadImages();
 
             setTimeout(() => {
@@ -704,11 +601,11 @@
                          </li>`;
             }).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
 
-            container.innerHTML = `<div class="py-12 space-y-16">
+            container.innerHTML = `<div class="py-12 space-y-12">
                 <div>
                     <h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글감 제안</h1>
-                    <p class="text-gray-500 mb-8">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p>
-                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
+                    <p class="text-gray-500 mb-6">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p>
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
                         <div id="topic-suggestions-container">
                              <button id="get-topic-suggestions-btn" class="btn btn-primary w-full">
                                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm0 1.5a9.5 9.5 0 1 0 0-19 9.5 9.5 0 0 0 0 19Z" clip-rule="evenodd" /></svg>
@@ -720,8 +617,8 @@
                 </div>
                 <div>
                     <h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글 생성</h1>
-                    <p class="text-gray-500 mb-8">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p>
-                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
+                    <p class="text-gray-500 mb-6">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p>
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
                         <form id="ai-writer-form" class="space-y-4">
                             <div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div>
                             <div class="flex justify-end items-center gap-4 pt-2">
@@ -732,7 +629,7 @@
                     </div>
                 </div>
                 <div>
-                    <div class="flex justify-between items-center mb-8">
+                    <div class="flex justify-between items-center mb-6">
                         <div class="flex-grow"><h1 class="text-xl sm:text-2xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div>
                         <a href="/writer" class="btn px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a>
                     </div>
@@ -760,7 +657,7 @@
                 if (data.author_id !== state.user.id) { showToast('자신이 작성한 글만 수정할 수 있습니다.', true); navigateTo('/dashboard'); return; }
                 post = data;
             }
-            container.innerHTML = `<div class="py-12"><div class="mb-8"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-8">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label for="writer-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><label class="toggle-switch"><input type="checkbox" id="writer-image-toggle" checked><span class="slider"></span></label></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
+            container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-4"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-600">본문</label><button type="button" class="btn text-xs" data-action="toggle-html">HTML 보기</button></div><div id="editor"></div><textarea id="html-editor" class="form-textarea" style="display: none; min-height: 350px; font-family: monospace;"></textarea></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label for="writer-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><label class="toggle-switch"><input type="checkbox" id="writer-image-toggle" checked><span class="slider"></span></label></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
             initQuillEditor(post.refined_content || '');
             
             $('#save-draft-btn').addEventListener('click', () => handlePostSave('draft'));
@@ -786,7 +683,7 @@
                     <p class="text-sm text-gray-400 mt-4">${new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
                 </a>`).join('') : `<p class="text-center text-gray-500 py-20">이 태그가 붙은 글이 없습니다.</p>`;
             
-            container.innerHTML = `<div class="py-16"><h1 class="text-3xl sm:text-4xl font-extrabold text-center font-heading mb-4">#${decodedTag}</h1><p class="text-center text-gray-500 text-lg mb-12">'${decodedTag}' 태그가 포함된 글 목록입니다.</p><div class="space-y-6">${postsHtml}</div></div>`;
+            container.innerHTML = `<div class="py-12"><h1 class="text-3xl sm:text-4xl font-extrabold text-center font-heading mb-4">#${decodedTag}</h1><p class="text-center text-gray-500 text-lg mb-12">'${decodedTag}' 태그가 포함된 글 목록입니다.</p><div class="space-y-6">${postsHtml}</div></div>`;
         }
 
         async function renderSettingsView(container) {
@@ -1137,6 +1034,7 @@
     - 모든 소제목은 '<h2>' 또는 '<h3>' 태그로 감싸주세요.
     - 가독성을 위해 p, blockquote, pre, code 태그를 적극적으로 사용해주세요.
     - **코드 블록은 반드시 <pre class="prettyprint linenums"> 태그로 감싸주세요.**
+    - 내용과 관련된 신뢰도 있는 외부 자료(뉴스 기사, 공식 문서 등)가 있다면, 관련 텍스트에 하이퍼링크를 추가해주세요.
 - **가독성:** 문단과 문단 사이에는 충분한 간격을 두어 읽기 편하게 작성해주세요. 각 문단은 <p> 태그로 명확하게 구분하고, 너무 길지 않게 작성하여 모바일 가독성을 높여주세요.`;
             
             const editorSystemPrompt = `당신은 'InsureLog' 블로그의 유능한 편집자입니다. 당신의 임무는 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글 전체를 수정하고 완성된 결과물을 JSON 형식으로 반환하는 것입니다.
@@ -1293,8 +1191,8 @@
                 case 'show-auth': 
                     showAuthModal(); 
                     break;
-                case 'show-search':
-                    toggleSearch(true);
+                case 'show-command-palette':
+                    toggleCommandPalette(true);
                     break;
                 case 'close-modal-backdrop': 
                     closeModal(); 
@@ -1567,7 +1465,7 @@
                 const generateImageToggle = $('#writer-image-toggle');
                 if (generateImageToggle && generateImageToggle.checked) {
                     showToast('AI가 대표 이미지를 생성하고 있습니다...'); 
-                    imageBase64 = await generateImage(title);
+                    imageBase64 = await generateImage(title); 
                 }
                 
                 state.draftArticle = { postId, title, summary, body, imageBase64, slug, tags };
@@ -1733,16 +1631,15 @@
         async function deletePostAndAssociatedImages(postId) { const { data: post, error: fetchError } = await supabase.from('posts').select('refined_content').eq('id', postId).single(); if (fetchError) throw new Error(`삭제할 글을 찾지 못했습니다: ${fetchError.message}`); const content = post.refined_content || ''; const imageUrls = content.match(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g) || []; const imagePaths = imageUrls.map(url => url.split('/thought-images/')[1] || '').filter(Boolean); if (imagePaths.length > 0) { const { error: storageError } = await supabase.storage.from(IMAGE_BUCKET_NAME).remove(imagePaths); if (storageError) throw new Error(`스토리지 이미지 삭제 실패: ${storageError.message}`); } const { error: dbError } = await supabase.from('posts').delete().eq('id', postId); if (dbError) throw new Error(`데이터베이스 글 삭제 실패: ${dbError.message}`); }
         
         // =================================================================================
-        // --- SEARCH ---
+        // --- SEARCH & COMMAND PALETTE ---
         // =================================================================================
-        // NOTE: This search functionality relies on a Supabase RPC (Remote Procedure Call) function
-        // called 'search_posts' that must be created in your Supabase database.
-        function toggleSearch(show) {
-            const overlay = $('#search-overlay');
+        function toggleCommandPalette(show) {
+            const overlay = $('#command-palette');
             if (show) {
                 overlay.style.display = 'flex';
                 anime({ targets: overlay, opacity: [0, 1], duration: 300, easing: 'easeOutCubic' });
-                $('#search-input').focus();
+                $('#command-input').focus();
+                renderCommandList('');
             } else {
                 anime({ 
                     targets: overlay, 
@@ -1754,63 +1651,64 @@
             }
         }
         
-        async function performSearch(query) {
-            const resultsContainer = $('#search-results');
-            if (!query) {
-                resultsContainer.innerHTML = '';
-                return;
-            }
-            resultsContainer.innerHTML = '<div class="loader-spinner mx-auto"></div>';
+        async function renderCommandList(query) {
+            const resultsContainer = $('#command-results');
+            resultsContainer.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">불러오는 중...</div>';
             
-            try {
-                const { data, error } = await supabase.rpc('search_posts', { search_term: query });
-                
-                if (error) throw error;
+            const defaultCommands = [
+                { title: '모든 글 보기', type: 'action', action: 'list-all-posts' },
+                { title: '대시보드', type: 'link', href: '/dashboard' },
+                { title: '설정', type: 'link', href: '/settings' },
+            ];
 
-                if (data.length === 0) {
-                    resultsContainer.innerHTML = `<p class="text-center text-gray-500">검색 결과가 없습니다.</p>`;
-                } else {
-                    const resultsHtml = data.map(post => `
-                        <a href="/post/${post.slug}" data-action="route" class="block p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
-                            <h3 class="font-semibold text-gray-800">${post.title}</h3>
-                            <p class="text-sm text-gray-600 mt-1">${post.summary}</p>
-                        </a>
-                    `).join('');
-                    resultsContainer.innerHTML = resultsHtml;
+            let commands = [];
+
+            if (!query) {
+                commands = defaultCommands;
+                const { data: recentPosts, error } = await supabase.from('posts').select('title, slug').eq('status', 'published').order('created_at', { ascending: false }).limit(3);
+                if (!error && recentPosts) {
+                    const postCommands = recentPosts.map(p => ({ title: p.title, subtitle: '게시글', type: 'link', href: `/post/${p.slug}`}));
+                    commands = [...commands, ...postCommands];
                 }
-            } catch (error) {
-                console.error('Search error:', error);
-                resultsContainer.innerHTML = `<p class="text-center text-red-500">검색 중 오류가 발생했습니다.</p>`;
+            } else {
+                const { data, error } = await supabase.rpc('search_posts', { search_term: query });
+                if (!error && data) {
+                    commands = data.map(p => ({ title: p.title, subtitle: '게시글', type: 'link', href: `/post/${p.slug}`}));
+                }
             }
+            
+            if (commands.length === 0) {
+                 resultsContainer.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">결과가 없습니다.</div>';
+                 return;
+            }
+
+            resultsContainer.innerHTML = commands.map(cmd => `
+                <div class="command-item" data-type="${cmd.type}" data-href="${cmd.href || ''}" data-action="${cmd.action || ''}">
+                    <div>
+                        <div class="title">${cmd.title}</div>
+                        ${cmd.subtitle ? `<div class="subtitle">${cmd.subtitle}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // =================================================================================
-        // --- AI REFINER WORKFLOW & DRAFT MANAGEMENT ---
-        // =================================================================================
-        function renderRefinerView(container) {
-            $('#app-container').className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
-            if (!state.draftArticle) {
-                showToast("초안 정보가 없습니다. 대시보드에서 다시 시작해주세요.", true);
-                navigateTo('/dashboard');
+        async function renderAllPostsInPalette() {
+            const resultsContainer = $('#command-results');
+            resultsContainer.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">모든 글을 불러오는 중...</div>';
+            const { data, error } = await supabase.from('posts').select('title, slug').eq('status', 'published').order('created_at', { ascending: false });
+            if (error || !data) {
+                resultsContainer.innerHTML = '<div class="p-4 text-center text-sm text-red-500">글을 불러올 수 없습니다.</div>';
                 return;
             }
-            container.innerHTML = `<div class="py-8"><div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"><div><h1 class="text-2xl font-bold font-heading">AI 글 다듬기</h1><p class="text-gray-500 text-base mt-1">AI 초안을 확인하고, 채팅으로 수정을 요청하여 글을 완성하세요.</p></div><div class="flex gap-2 w-full sm:w-auto"><button class="btn w-full" data-action="finalize-draft">수동 편집</button><button class="btn btn-primary w-full" data-action="publish-draft">발행하기</button></div></div><div class="refiner-grid"><div id="refiner-preview-wrapper"><div class="flex justify-between items-center mb-4"><h2 class="font-bold text-base">미리보기</h2><button id="regenerate-image-btn" class="btn text-xs">이미지 재생성</button></div><div id="refiner-preview-container"></div></div><div id="refiner-chat-container"><div id="chat-history"><div class="chat-message ai">초안이 완성되었습니다. 어떤 부분을 수정할까요?</div></div><form id="refiner-chat-form"><input type="text" id="refiner-input" class="form-input" placeholder="수정 요청사항을 입력하세요..."><button type="submit" class="btn btn-primary">전송</button></form></div></div></div>`;
-            renderRefinerPreview();
-            $('#refiner-chat-form').addEventListener('submit', handleRefinerChatSubmit);
-            $('#regenerate-image-btn').addEventListener('click', handleRegenerateImage);
+             resultsContainer.innerHTML = data.map(p => `
+                <div class="command-item" data-type="link" data-href="/post/${p.slug}">
+                    <div>
+                        <div class="title">${p.title}</div>
+                        <div class="subtitle">게시글</div>
+                    </div>
+                </div>
+            `).join('');
         }
-
-        function renderRefinerPreview() {
-            const previewContainer = $('#refiner-preview-container');
-            if (!previewContainer || !state.draftArticle) return;
-            const { title, summary, body, imageBase64 } = state.draftArticle;
-            const imageHtml = imageBase64 ? `<img src="data:image/webp;base64,${imageBase64}" alt="${title}" loading="lazy">` : '';
-            previewContainer.innerHTML = `<div class="prose-custom max-w-none"><h1>${title}</h1><p class="text-gray-500 italic">${summary}</p>${imageHtml}${body}</div>`;
-        }
-        function saveDraft(draft) { localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft)); }
-        function loadDraft() { const draftJson = localStorage.getItem(DRAFT_STORAGE_KEY); return draftJson ? JSON.parse(draftJson) : null; }
-        function clearDraft() { localStorage.removeItem(DRAFT_STORAGE_KEY); state.draftArticle = null; }
-        function checkForUnsavedDraft() { const savedDraft = loadDraft(); if (savedDraft) { renderModal({ title: '미완성 초안 발견', content: '작업을 중단했던 AI 글 초안이 있습니다. 이어서 작성하시겠습니까?', confirmText: '이어쓰기', onConfirm: () => { state.draftArticle = savedDraft; navigateTo('/refiner'); closeModal(); }, cancelText: '삭제', onCancel: () => { clearDraft(); closeModal(); } }); } }
 
         // =================================================================================
         // --- INITIALIZATION ---
@@ -1825,16 +1723,44 @@
             });
             document.addEventListener('submit', (e) => { const formId = e.target.id; if (['ai-writer-form', 'auth-form', 'refiner-chat-form', 'settings-form'].includes(formId)) { e.preventDefault(); } });
             
-            // Search listeners
-            const searchInput = $('#search-input');
-            let searchTimeout;
-            searchInput.addEventListener('input', () => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    performSearch(searchInput.value);
-                }, 300); // Debounce search
+            // Command Palette Listeners
+            const palette = $('#command-palette');
+            const commandInput = $('#command-input');
+            let commandTimeout;
+
+            commandInput.addEventListener('input', () => {
+                clearTimeout(commandTimeout);
+                commandTimeout = setTimeout(() => {
+                    renderCommandList(commandInput.value);
+                }, 200);
             });
-            $('#close-search-btn').addEventListener('click', () => toggleSearch(false));
+            
+            palette.addEventListener('click', (e) => {
+                const item = e.target.closest('.command-item');
+                if (item) {
+                    const type = item.dataset.type;
+                    if (type === 'link') {
+                        navigateTo(item.dataset.href);
+                        toggleCommandPalette(false);
+                    } else if (type === 'action' && item.dataset.action === 'list-all-posts') {
+                       renderAllPostsInPalette();
+                    }
+                } else if (e.target === palette) { // Close on backdrop click
+                    toggleCommandPalette(false);
+                }
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    const isVisible = palette.style.display === 'flex';
+                    toggleCommandPalette(!isVisible);
+                }
+                if (e.key === 'Escape' && palette.style.display === 'flex') {
+                    toggleCommandPalette(false);
+                }
+            });
+
 
             supabase.auth.onAuthStateChange(async (_event, session) => {
                 const userJustChanged = state.user?.id !== session?.user?.id;
