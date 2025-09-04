@@ -69,7 +69,7 @@
             font-family: var(--font-body); 
             background-color: var(--bg-main); 
             color: var(--text-primary); 
-            font-size: 15px; 
+            font-size: 16px; 
             overflow-x: hidden; 
             -webkit-font-smoothing: antialiased; 
             -moz-osx-font-smoothing: grayscale;
@@ -132,9 +132,34 @@
         .ql-container { border: 1px solid #D1D5DB !important; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; font-family: var(--font-body) !important; background: var(--bg-content); }
         .ql-editor { color: var(--text-primary); min-height: 300px; font-size: 0.95rem; line-height: 1.7; }
         
-        #view-refiner .refiner-grid { height: calc(100vh - 110px); }
+        #view-refiner .refiner-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.5rem; height: calc(100vh - 120px); }
         
         #toc-container li a { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
+        /* Author Box Styles */
+        .author-box {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .author-box img {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .author-box .name {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .author-box .bio {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
 
         /* Search Overlay Styles */
         #search-overlay {
@@ -627,12 +652,12 @@
                     <h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글감 제안</h1>
                     <p class="text-gray-500 mb-6">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p>
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-                        <div id="topic-suggestions-container">
-                             <button id="get-topic-suggestions-btn" class="btn btn-primary w-full">
-                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm0 1.5a9.5 9.5 0 1 0 0-19 9.5 9.5 0 0 0 0 19Z" clip-rule="evenodd" /></svg>
-                                <span>최신 트렌드 분석 & 제안 받기</span>
+                        <form id="topic-suggestion-form" class="flex items-center gap-2 mb-4">
+                            <input type="text" id="topic-keyword" class="form-input" placeholder="키워드 입력 (선택 사항)">
+                            <button type="submit" id="get-topic-suggestions-btn" class="btn btn-primary whitespace-nowrap">
+                                <span>제안 받기</span>
                             </button>
-                        </div>
+                        </form>
                         <div id="topic-suggestions" class="mt-6 space-y-3"></div>
                     </div>
                 </div>
@@ -658,7 +683,7 @@
                 </div>
             </div>`;
             $('#ai-writer-form').addEventListener('submit', (e) => { e.preventDefault(); handleAiWriterSubmit(); });
-            $('#get-topic-suggestions-btn').addEventListener('click', handleTopicSuggestion);
+            $('#topic-suggestion-form').addEventListener('submit', (e) => { e.preventDefault(); handleTopicSuggestion(); });
         }
 
         async function renderWriterView(container, slug, draft = null) {
@@ -1744,7 +1769,7 @@
                     handleGlobalClick(e, target); 
                 } 
             });
-            document.addEventListener('submit', (e) => { const formId = e.target.id; if (['ai-writer-form', 'auth-form', 'refiner-chat-form', 'settings-form'].includes(formId)) { e.preventDefault(); } });
+            document.addEventListener('submit', (e) => { const formId = e.target.id; if (['ai-writer-form', 'auth-form', 'refiner-chat-form', 'settings-form', 'topic-suggestion-form'].includes(formId)) { e.preventDefault(); } });
             
             // Search & Command Palette Listeners
             const searchOverlay = $('#search-overlay');
