@@ -54,7 +54,7 @@
     <!-- Main Styles -->
     <style>
         :root {
-            --bg-main: #FFFFFF; /* Changed to pure white for minimal look */
+            --bg-main: #FFFFFF;
             --bg-content: #FFFFFF;
             --border-color: #F0F0F0;
             --text-primary: #111827;
@@ -69,7 +69,7 @@
             font-family: var(--font-body); 
             background-color: var(--bg-main); 
             color: var(--text-primary); 
-            font-size: 15px; 
+            font-size: 14px; 
             overflow-x: hidden; 
             -webkit-font-smoothing: antialiased; 
             -moz-osx-font-smoothing: grayscale;
@@ -89,34 +89,34 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         
         .app-view { display: none; } .app-view.active { display: block; }
-        .brand-logo { font-family: var(--font-heading); font-weight: 800; font-size: 1.125rem; color: var(--text-primary); letter-spacing: -0.5px; }
+        .brand-logo { font-family: var(--font-heading); font-weight: 800; font-size: 1rem; color: var(--text-primary); letter-spacing: -0.5px; }
         
-        .btn { padding: 0.25rem 0.75rem; font-size: 0.8rem; font-weight: 500; border-radius: 6px; transition: all 0.25s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; border: 1px solid #D1D5DB; background-color: var(--bg-content); color: #374151; cursor: pointer; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .btn { padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 500; border-radius: 6px; transition: all 0.25s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; border: 1px solid #D1D5DB; background-color: var(--bg-content); color: #374151; cursor: pointer; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
         .btn:hover { background-color: #F9FAFB; color: var(--text-primary); transform: translateY(-1px); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
         .btn-primary { background-color: var(--accent); color: white; border-color: var(--accent); }
         .btn-primary:hover { background-color: var(--accent-hover); border-color: var(--accent-hover); color: white; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background-color: var(--bg-content) !important; color: var(--text-secondary) !important; }
         
-        .form-input, .form-textarea { font-size: 0.9rem; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px; width: 100%; background-color: var(--bg-content); color: var(--text-primary); transition: all 0.2s ease; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .form-input, .form-textarea { font-size: 0.85rem; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px; width: 100%; background-color: var(--bg-content); color: var(--text-primary); transition: all 0.2s ease; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
         .form-input:focus, .form-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1); }
         
-        .prose-custom { color: #374151; line-height: 1.8; font-size: 1.05rem; }
-        .prose-custom > *:not(:first-child) { margin-top: 1.5em; }
-        .prose-custom p { margin-bottom: 1.5em; }
-        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-family: var(--font-heading); font-weight: 700; margin-top: 2.2em; margin-bottom: 1em; }
-        .prose-custom h1 { font-size: 1.75rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.4em; }
+        .prose-custom { color: #374151; line-height: 1.7; font-size: 0.9rem; }
+        .prose-custom > *:not(:first-child) { margin-top: 1.25em; }
+        .prose-custom p { margin-bottom: 1.25em; }
+        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-family: var(--font-heading); font-weight: 600; margin-top: 2em; margin-bottom: 0.8em; }
+        .prose-custom h1 { font-size: 1.5rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.3em; }
         .prose-custom h2 {
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             background-color: var(--accent);
             color: white;
-            padding: 0.4rem 0.9rem;
+            padding: 0.3rem 0.8rem;
             border-radius: 9999px;
             display: inline-block;
         }
         .prose-custom h3 { 
-            font-size: 1.25rem;
-            border-bottom: 2px solid #E5E7EB;
-            padding-bottom: 0.4em;
+            font-size: 1.05rem;
+            border-bottom: 1px solid #E5E7EB;
+            padding-bottom: 0.3em;
         }
         .prose-custom a { color: var(--text-primary); text-decoration: none; font-weight: 500; border-bottom: 1px solid #D1D5DB; transition: all 0.2s ease; }
         .prose-custom a:hover { border-bottom-color: var(--accent); }
@@ -136,7 +136,32 @@
         
         #toc-container li a { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
 
-        /* Command Palette Styles */
+        /* Author Box Styles */
+        .author-box {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .author-box img {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .author-box .name {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .author-box .bio {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Search Overlay Styles */
         #search-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -1030,20 +1055,20 @@
         async function generateText(topic, isInitial = true, draft = null, instruction = null) { 
             const proxyUrl = '/api/generate';
             const systemPromptContent = `## Persona (글쓴이 설정)
-당신은 AI를 활용해 혼자서 서비스를 만드는 1인 창업가 입니다. 전문 개발자는 아니지만, AI 코딩 툴을 적극적으로 활용해 아이디어를 빠르게 구현하고 MVP를 검증하는 과정에 있습니다. 성공 경험뿐만 아니라 실패한 경험도 솔직하게 공유하며, 특히 초보자나 비개발자들이 겪을 수 있는 어려움에 깊이 공감합니다. 당신의 목표는 기술적인 지식을 뽐내는 것이 아니라, 경험을 통해 얻은 현실적인 교훈을 공유하여 다른 사람들이 같은 실수를 반복하지 않도록 돕는 것입니다.
+당신은 혼자서 서비스를 만드는 1인 창업가 입니다. 전문 개발자는 아니지만, 아이디어를 빠르게 구현하고 MVP를 검증하는 과정에 있습니다. 성공 경험뿐만 아니라 실패한 경험도 솔직하게 공유하며, 특히 초보자나 비개발자들이 겪을 수 있는 어려움에 깊이 공감합니다. 당신의 목표는 기술적인 지식을 뽐내는 것뿐만 아니라, 경험을 통해 얻은 현실적인 교훈을 공유하여 다른 사람들이 같은 실수를 반복하지 않도록 돕는 것입니다.
 
 ## Tone & Style (말투 및 스타일)
-- **솔직하고 인간적인 톤:** 성공담보다는 실패담을 중심으로 이야기합니다. 구체적인 비용과 시간을 언급하며 솔직하게 어려움을 드러냅니다.
-- **스토리텔링 형식:** 딱딱한 정보 나열이 아닌, 시간 순서에 따라 개인적인 경험과 감정 변화(기대 → 문제 발생 → 좌절 → 깨달음)를 담아 이야기처럼 풀어냅니다.
+- **솔직하고 인간적인 톤:** 성공담보다는 실패담을 중심으로 이야기합니다.
+- **스토리텔링 형식:** 딱딱한 정보 나열이 아닌, 시간 순서에 따라 개인적인 경험과 감정 변화(도전 → 문제 발생 → 좌절 → 깨달음)를 담아 이야기처럼 풀어냅니다.
 - **대화체 사용:** 독자에게 직접 말을 거는 듯한 친근한 말투를 사용합니다. "~했어요", "~하더라고요", "~ 수 있습니다", "~하셨으면 해요" 등의 어미를 사용합니다.
 - **전문 용어의 쉬운 설명:** 전문용어가 등장하면 어떤것인지 간단하게 설명하고, 자신의 경험에 빗대어 비전문가도 이해할 수 있도록 쉽게 설명합니다.
 - **강조와 감정 표현:** "가장 황당했던 건", "뼈저리게 느꼈습니다"처럼 감정이 담긴 표현으로 독자의 몰입을 유도합니다. 이모지는 사용하지 않습니다.
 
 ## Structure (글의 구조)
-- **제목:** '[핵심 키워드]로 [기간] 만에 [비용/노력]을 날리며 깨달은 것'과 같이 실패 경험과 교훈을 암시하는 구체적이고 흥미로운 제목을 사용합니다.
-- **도입부:** 독자가 겪었을 어려움으로 시작해 호기심을 자극하고, 자신의 구체적인 상황과 실패 결과(비용, 시간), 핵심 교훈을 요약하여 제시합니다. 이 글을 통해 독자가 무엇을 얻어갈 수 있는지 명확히 밝힙니다.
+- **제목:** '[핵심 키워드]로 [방법] 깨달은 것'과 같이 실패 경험과 교훈을 암시하는 구체적이고 흥미로운 제목을 사용합니다.
+- **도입부:** 독자가 겪었을 어려움으로 시작해 호기심을 자극하고, 자신의 구체적인 상황과 실패 결과, 핵심 방법을 요약하여 제시합니다. 이 글을 통해 독자가 무엇을 얻어갈 수 있는지 명확히 밝힙니다.
 - **본문:** 깨달은 점들을 '1. [주제]'와 같이 번호를 붙여 명확하게 구분합니다. 각 소주제마다 자신의 실패 경험담, 원인 분석, 현재의 해결책을 구체적으로 서술합니다.
-- **결론:** 전체 내용을 관통하는 핵심 메시지를 다시 한번 강조하고, 실천 가능한 조언을 3가지 내외로 요약합니다. 다음 글을 예고하고 감사 인사와 함께 마무리합니다.
+- **결론:** 마무리, 결과, 결론이라는 단어는 사용하지 않습니다. 사용전체 내용을 관통하는 핵심 메시지를 다시 한번 강조하고, 실천 가능한 조언을 3가지 내외로 요약합니다. 다음 글을 예고하고 감사 인사와 함께 마무리합니다.
 
 ## Technical Output Rules (기술적 출력 규칙)
 - **응답 형식:** 생성물은 반드시 제목(title), 한두 문장의 요약(summary), SEO 친화적인 영어 URL 슬러그(slug), 글의 핵심 키워드를 담은 태그 배열(tags), 그리고 HTML 형식의 본문(body)을 포함한 단일 JSON 객체여야 합니다.
@@ -1055,7 +1080,7 @@
     - 모든 소제목은 '<h2>' 또는 '<h3>' 태그로 감싸주세요.
     - 가독성을 위해 p, blockquote, pre, code 태그를 적극적으로 사용해주세요.
     - **코드 블록은 반드시 <pre class="prettyprint linenums"> 태그로 감싸주세요.**
-    - 내용과 관련된 신뢰도 있는 외부 자료(뉴스 기사, 공식 문서 등)가 있다면, 관련 텍스트에 하이퍼링크를 추가해주세요.
+    - 내용과 관련된 신뢰도 있는 외부 자료(뉴스 기사, 공식 문서 등)나 블로그의 다른 글 주제가 될 만한 키워드가 나오면, 관련 텍스트에 하이퍼링크를 자연스럽게 추가해주세요. 블로그 내부 링크는 반드시 '/post/seo-friendly-slug-in-english' 형식이어야 합니다.
 - **가독성:** 문단과 문단 사이에는 충분한 간격을 두어 읽기 편하게 작성해주세요. 각 문단은 <p> 태그로 명확하게 구분하고, 너무 길지 않게 작성하여 모바일 가독성을 높여주세요.`;
             
             const editorSystemPrompt = `당신은 'InsureLog' 블로그의 유능한 편집자입니다. 당신의 임무는 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글 전체를 수정하고 완성된 결과물을 JSON 형식으로 반환하는 것입니다.
