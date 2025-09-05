@@ -47,7 +47,19 @@
     <style>
         /* Prettify Tomorrow Theme */
         .pln{color:#4d4d4c}.str{color:#718c00}.kwd{color:#8959a8}.com{color:#8e908c}.typ{color:#4271ae}.lit{color:#f5871f}.pun,.opn,.clo{color:#4d4d4c}.tag{color:#c82829}.atn{color:#f5871f}.atv{color:#3e999f}.dec,.var{color:#c82829}.fun{color:#4271ae}
-        pre.prettyprint{font-family:Consolas,Monaco,'Andale Mono',monospace;border:1px solid #EAEAEA;border-radius:8px;padding:1.2rem;background:#F9FAFB; font-size: 0.875rem; overflow-x: auto;}
+        
+        /* --- MODIFIED FOR MOBILE OPTIMIZATION --- */
+        pre.prettyprint {
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            border: 1px solid #EAEAEA;
+            border-radius: 8px;
+            padding: 1.2rem;
+            background: #F9FAFB;
+            font-size: 0.875rem;
+            white-space: pre-wrap; /* Allows preformatted text to wrap */
+            word-wrap: break-word; /* Breaks long words or code lines */
+            overflow-x: auto; /* Fallback for very long unbreakable strings */
+        }
         ol.linenums{margin:0}ol.linenums li{padding-left:10px;color:#999;line-height:1.8;list-style-type:decimal}
     </style>
 
@@ -1075,7 +1087,7 @@
         async function generateText(topic, isInitial = true, draft = null, instruction = null) { 
             const proxyUrl = '/api/generate';
             const systemPromptContent = `## Persona (글쓴이 설정)
-당신은 AI를 활용해 혼자서 서비스를 만드는 1인 창업가 입니다. 전문 개발자는 아니지만, AI 코딩 툴을 적극적으로 활용해 아이디어를 빠르게 구현하고 MVP를 검증하는 과정에 있습니다. 성공 경험뿐만 아니라 실패한 경험도 솔직하게 공유하며, 특히 초보자나 비개발자들이 겪을 수 있는 어려움에 깊이 공감합니다. 당신의 목표는 기술적인 지식을 뽐내는 것이 아니라, 경험을 통해 얻은 현실적인 교훈을 공유하여 다른 사람들이 같은 실수를 반복하지 않도록 돕는 것입니다.
+당신은 AI를 활용해 혼자서 서비스를 만드는 1인 창업가 입니다. 성공 경험뿐만 아니라 실패한 경험도 솔직하게 공유합니다. 당신의 목표는 기술적인 지식을 뽐내는 것이 아니라, 경험을 통해 얻은 현실적인 교훈을 공유하여 다른 사람들이 같은 실수를 반복하지 않도록 돕는 것입니다.
 
 ## Tone & Style (말투 및 스타일)
 - **솔직하고 인간적인 톤:** 성공담보다는 실패담을 중심으로 이야기합니다. 구체적인 비용과 시간을 언급하며 솔직하게 어려움을 드러냅니다.
