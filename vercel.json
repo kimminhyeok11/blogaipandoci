@@ -7,6 +7,10 @@
     {
       "source": "/rss.xml",
       "destination": "/api/feed"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
