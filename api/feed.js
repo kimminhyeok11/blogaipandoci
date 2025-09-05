@@ -12,12 +12,26 @@ const SITE_URL = 'https://blogaipandoci.vercel.app';
 const BLOG_TITLE = 'InsureLog';
 const BLOG_DESCRIPTION = 'AI, 기술, 그리고 보험에 대한 깊이 있는 인사이트를 탐험하는 공간';
 
+// FIX: Function to escape special XML characters to prevent feed errors.
+const escapeXml = (unsafe) => {
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+    }
+  });
+};
+
 export default async function handler(req, res) {
   try {
-    // Fetch the latest 10 posts
+    // Fetch the latest 10 published posts
     const { data: posts, error } = await supabase
       .from('posts')
-      .select('title, summary, slug, created_at')
+      .select('title, summary, slug, created_at, updated_at')
+      .eq('status', 'published') // ADDED: Only fetch published posts
       .order('created_at', { ascending: false })
       .limit(10);
 
@@ -26,20 +40,23 @@ export default async function handler(req, res) {
     }
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>`;
-    xml += `<rss version="2.0">`;
+    xml += `<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">`; // Added Atom namespace
     xml += `<channel>`;
-    xml += `<title>${BLOG_TITLE}</title>`;
+    xml += `<title>${escapeXml(BLOG_TITLE)}</title>`;
     xml += `<link>${SITE_URL}</link>`;
-    xml += `<description>${BLOG_DESCRIPTION}</description>`;
+    xml += `<description>${escapeXml(BLOG_DESCRIPTION)}</description>`;
     xml += `<language>ko</language>`;
+    xml += `<lastBuildDate>${new Date().toUTCString()}</lastBuildDate>`;
+    xml += `<atom:link href="${SITE_URL}/rss.xml" rel="self" type="application/rss+xml" />`;
     
     posts.forEach(post => {
+      const lastModified = post.updated_at || post.created_at;
       xml += `
         <item>
-          <title>${post.title}</title>
+          <title>${escapeXml(post.title)}</title>
           <link>${SITE_URL}/post/${post.slug}</link>
-          <guid>${SITE_URL}/post/${post.slug}</guid>
-          <pubDate>${new Date(post.created_at).toUTCString()}</pubDate>
+          <guid isPermaLink="true">${SITE_URL}/post/${post.slug}</guid>
+          <pubDate>${new Date(lastModified).toUTCString()}</pubDate>
           <description><![CDATA[${post.summary}]]></description>
         </item>`;
     });
@@ -47,7 +64,7 @@ export default async function handler(req, res) {
     xml += `</channel>`;
     xml += `</rss>`;
 
-    res.setHeader('Content-Type', 'application/rss+xml');
+    res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8');
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate'); // Cache for 1 hour
     res.status(200).send(xml);
 
