@@ -1,4 +1,9 @@
 {
+  "dependencies": {
+    "@supabase/supabase-js": "^2.44.4"
+  }
+}
+{
   "rewrites": [
     {
       "source": "/sitemap.xml",
