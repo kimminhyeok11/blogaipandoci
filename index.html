@@ -47,7 +47,7 @@
     <style>
         /* Prettify Tomorrow Theme */
         .pln{color:#4d4d4c}.str{color:#718c00}.kwd{color:#8959a8}.com{color:#8e908c}.typ{color:#4271ae}.lit{color:#f5871f}.pun,.opn,.clo{color:#4d4d4c}.tag{color:#c82829}.atn{color:#f5871f}.atv{color:#3e999f}.dec,.var{color:#c82829}.fun{color:#4271ae}
-        pre.prettyprint{font-family:Consolas,Monaco,'Andale Mono',monospace;border:1px solid #EAEAEA;border-radius:8px;padding:1.2rem;background:#F9FAFB; font-size: 0.875rem;}
+        pre.prettyprint{font-family:Consolas,Monaco,'Andale Mono',monospace;border:1px solid #EAEAEA;border-radius:8px;padding:1.2rem;background:#F9FAFB; font-size: 0.875rem; overflow-x: auto;}
         ol.linenums{margin:0}ol.linenums li{padding-left:10px;color:#999;line-height:1.8;list-style-type:decimal}
     </style>
 
@@ -126,6 +126,26 @@
         .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
         .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         
+        /* Responsive YouTube Embed Styles */
+        .youtube-embed-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+            margin: 2em 0;
+            border-radius: 8px;
+        }
+        .youtube-embed-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
         .pagination-controls a, .pagination-controls span { padding: 0.4rem 0.8rem; border: 1px solid #D1D5DB; border-radius: 6px; font-size: 0.8rem; }
         
         .ql-toolbar { border: 1px solid #D1D5DB !important; border-top-left-radius: 8px; border-top-right-radius: 8px; background: #F9FAFB; }
@@ -1081,14 +1101,16 @@
     - 가독성을 위해 p, blockquote, pre, code 태그를 적극적으로 사용해주세요.
     - **코드 블록은 반드시 <pre class="prettyprint linenums"> 태그로 감싸주세요.**
     - 내용과 관련된 신뢰도 있는 외부 자료(뉴스 기사, 공식 문서 등)나 블로그의 다른 글 주제가 될 만한 키워드가 나오면, 관련 텍스트에 하이퍼링크를 자연스럽게 추가해주세요. 실존하는 링크만 첨부해. 블로그 내부 링크는 반드시 '/post/seo-friendly-slug-in-english' 형식이어야 합니다.
-- **가독성:** 문단과 문단 사이에는 충분한 간격을 두어 읽기 편하게 작성해주세요. 각 문단은 <p> 태그로 명확하게 구분해 주세요.`;
+- **가독성:** 문단과 문단 사이에는 충분한 간격을 두어 읽기 편하게 작성해주세요. 각 문단은 <p> 태그로 명확하게 구분해 주세요.
+- **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`;
             
             const editorSystemPrompt = `당신은 유능한 블로그 편집자입니다. 당신의 임무는 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글 전체를 수정하고 완성된 결과물을 JSON 형식으로 반환하는 것입니다.
 수정 시에는 아래의 'Tone & Style'을 반드시 유지해야 합니다.
 - **Tone & Style:** 솔직하고 인간적인 대화체를 사용합니다. "~했어요", "~하더라고요", "하시면 됩니다" 같은 친근한 말투를 유지하고, 어려운 용어는 쉽게 설명합니다.
 - **응답 형식:** 응답은 반드시 제목(title), 요약(summary), SEO 친화적인 영어 슬러그(slug), 태그 배열(tags), 본문(body) 필드를 포함한 단일 JSON 객체여야 합니다.
 - **중복 방지:** 본문(body)에는 제목(title) 필드의 내용이 중복으로 포함되지 않도록 해주세요.
-- **가독성:** 원본의 HTML 구조를 최대한 유지하되, 문단 구분을 명확히 해주세요.`; 
+- **가독성:** 원본의 HTML 구조를 최대한 유지하되, 문단 구분을 명확히 해주세요.
+- **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`; 
             
             let systemPrompt, userQuery; 
             if (isInitial) { 
@@ -1840,4 +1862,3 @@
     </script>
 </body>
 </html>
-
