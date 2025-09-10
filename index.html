@@ -464,14 +464,19 @@
         }
 
 
+        // === MODIFIED FUNCTION START ===
         async function renderPostView(container, slug) {
             if (!slug) { navigateTo('/'); return; }
 
-            // Step 1: Fetch the post data first
-            const { data: post, error: postError } = await supabase.from('posts').select('*').eq('slug', slug).single();
+            // MODIFICATION: Fetch post and related profile data in one query for efficiency.
+            const { data: post, error } = await supabase
+                .from('posts')
+                .select('*, profiles(*)') // Fetches all post columns and all related profile columns
+                .eq('slug', slug)
+                .single();
 
-            if (postError || !post) {
-                console.error("Error fetching post:", postError);
+            if (error || !post) {
+                console.error("Error fetching post:", error);
                 showToast('글을 찾을 수 없습니다.', true);
                 navigateTo('/');
                 return;
@@ -482,19 +487,7 @@
                 navigateTo('/');
                 return;
             }
-
-            // Step 2: Fetch the profile data separately
-            let profile = null;
-            if (post.author_id) {
-                const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', post.author_id).single();
-                if (profileError) {
-                    console.error("Could not fetch profile:", profileError);
-                } else {
-                    profile = profileData;
-                }
-            }
-            post.profiles = profile; // Attach profile data to the post object
-
+            
             updateMetaTags(post);
             
             const { data: allOtherPosts } = await supabase.from('posts').select('id, title, summary, slug').neq('id', post.id).eq('status', 'published');
@@ -505,6 +498,7 @@
             lazyLoadImages();
             setTimeout(() => { try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("AdSense push warning:", e.message); } }, 100);
         }
+        // === MODIFIED FUNCTION END ===
 
         async function renderDashboardView(container, page = 1) {
             updateMetaTags();
@@ -525,13 +519,21 @@
             $('#topic-suggestion-form').addEventListener('submit', (e) => { e.preventDefault(); handleTopicSuggestion(); });
         }
 
+        // === MODIFIED FUNCTION START ===
         async function renderWriterView(container, slug, draft = null) {
             updateMetaTags();
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [] };
+            
             if (draft) {
                 post = { ...post, ...draft, refined_content: `${draft.imageHtml || ''}${draft.body}` };
             } else if (slug) {
-                const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
+                // MODIFICATION: Fetch post and profile data in one go for consistency and to fix the auth check issue.
+                const { data, error } = await supabase
+                    .from('posts')
+                    .select('*') // No need for profile here, just the post data for editing.
+                    .eq('slug', slug)
+                    .single();
+
                 if (error || !data || data.author_id !== state.user.id) {
                     showToast(error ? '글 정보를 가져오지 못했습니다.' : '자신이 작성한 글만 수정할 수 있습니다.', true);
                     navigateTo('/dashboard');
@@ -545,6 +547,7 @@
             $('#publish-btn').addEventListener('click', () => handlePostSave('published'));
             $('[data-action="get-seo-suggestions"]').addEventListener('click', handleSeoSuggestion);
         }
+        // === MODIFIED FUNCTION END ===
         
         async function renderTagView(container, tag) {
             if (!tag) { navigateTo('/'); return; }
@@ -1095,5 +1098,4 @@
     </script>
 </body>
 </html>
-
 
