@@ -134,6 +134,16 @@
         #tiptap-toolbar button:hover { background-color: #e5e7eb; }
         #tiptap-toolbar button.is-active { background-color: var(--accent); color: white; }
         .ProseMirror { min-height: 300px; padding: 0.5rem 0.75rem; outline: none; line-height: 1.7; font-size: 0.95rem; }
+        
+        /* === FIX: Added explicit styles for images inside the editor === */
+        .ProseMirror img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 1em 0;
+        }
+        
         .ProseMirror > *:first-child { margin-top: 0; }
         .ProseMirror > *:last-child { margin-bottom: 0; }
         .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: #adb5bd; pointer-events: none; height: 0; }
@@ -593,8 +603,6 @@
             const { Editor } = await import('https://esm.sh/@tiptap/core');
             const { StarterKit } = await import('https://esm.sh/@tiptap/starter-kit');
             const { Link } = await import('https://esm.sh/@tiptap/extension-link');
-            // FIX: Removed standalone Image import, as StarterKit includes it.
-            // const { Image } = await import('https://esm.sh/@tiptap/extension-image'); 
             const { Placeholder } = await import('https://esm.sh/@tiptap/extension-placeholder');
 
             const editorElement = document.querySelector('#editor');
@@ -606,8 +614,6 @@
                 extensions: [
                     StarterKit,
                     Link.configure({ openOnClick: false }),
-                    // FIX: Removed standalone Image extension from the array.
-                    // Image,
                     Placeholder.configure({ placeholder: '여기에 글을 작성하세요...' })
                 ],
                 content: initialContent,
@@ -670,7 +676,10 @@
             if (!imageFile) throw new Error("이미지 파일이 없습니다.");
             const fileName = `${state.user.id}/${Date.now()}.webp`;
             const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, imageFile, { contentType: 'image/webp' });
-            if (error) throw new Error(`이미지 업로드 실패: ${error.message}`);
+            if (error) {
+                console.error('Supabase Storage Error:', error);
+                throw new Error(`이미지 업로드 실패: ${error.message}`);
+            }
             const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName);
             return data.publicUrl;
         }
@@ -1086,4 +1095,5 @@
     </script>
 </body>
 </html>
+
 
