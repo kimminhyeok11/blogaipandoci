@@ -593,7 +593,8 @@
             const { Editor } = await import('https://esm.sh/@tiptap/core');
             const { StarterKit } = await import('https://esm.sh/@tiptap/starter-kit');
             const { Link } = await import('https://esm.sh/@tiptap/extension-link');
-            const { Image } = await import('https://esm.sh/@tiptap/extension-image');
+            // FIX: Removed standalone Image import, as StarterKit includes it.
+            // const { Image } = await import('https://esm.sh/@tiptap/extension-image'); 
             const { Placeholder } = await import('https://esm.sh/@tiptap/extension-placeholder');
 
             const editorElement = document.querySelector('#editor');
@@ -605,7 +606,8 @@
                 extensions: [
                     StarterKit,
                     Link.configure({ openOnClick: false }),
-                    Image,
+                    // FIX: Removed standalone Image extension from the array.
+                    // Image,
                     Placeholder.configure({ placeholder: '여기에 글을 작성하세요...' })
                 ],
                 content: initialContent,
