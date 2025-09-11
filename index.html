@@ -444,9 +444,7 @@
         
         async function renderLibraryView(container, page = 1) {
             updateMetaTags();
-
             supabase.from('site_visits').insert({}).then();
-
             const { from, to } = getPaginationRange(page);
             const [
                 { count: totalVisits }, 
@@ -483,35 +481,18 @@
             </div>`;
         }
 
-        // === MODIFIED SECTION START ===
+        // === MODIFIED FUNCTION START ===
         async function renderPostView(container, slug) {
             if (!slug) { navigateTo('/'); return; }
 
-            // FIX: Prevent view count increase on refresh using sessionStorage
-            try {
-                const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || [];
-                if (!viewedPosts.includes(slug)) {
-                    // Call the DB function and only if it succeeds, update sessionStorage
-                    const { error } = await supabase.rpc('increment_post_view', { post_slug: slug });
-                    if (error) {
-                        // Log the error but don't block the user from seeing the post
-                        console.error('Failed to increment view count:', error.message);
-                    } else {
-                        viewedPosts.push(slug);
-                        sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts));
-                    }
-                }
-            } catch (e) {
-                console.error("Could not process session storage for views:", e);
-            }
-
-            // Fetch post data. The query is simplified and more robust.
+            // 1. 글 내용 먼저 가져오기 (핵심 기능)
             const { data: post, error } = await supabase
                 .from('posts')
-                .select('*, profiles(*)') // `view_count` is included in `*`
+                .select('*, profiles(*)')
                 .eq('slug', slug)
                 .single();
 
+            // 2. 글이 없는 경우 에러 처리
             if (error || !post) {
                 console.error("Error fetching post:", error);
                 showToast('글을 찾을 수 없습니다.', true);
@@ -519,6 +500,27 @@
                 return;
             }
 
+            // 3. 글을 성공적으로 가져온 후에, 조회수 증가 시도 (부가 기능)
+            // 즉시실행함수(IIFE)를 사용해 백그라운드에서 실행하고, 에러가 나도 글 보기에 영향 없음
+            (async () => {
+                try {
+                    const viewedPostsKey = 'viewed_posts';
+                    const viewedPosts = JSON.parse(sessionStorage.getItem(viewedPostsKey)) || [];
+                    if (!viewedPosts.includes(post.id)) { // slug 대신 고유 ID로 체크
+                        const { error: rpcError } = await supabase.rpc('increment_post_view', { post_slug: slug });
+                        if (rpcError) {
+                            console.error('조회수 증가 실패:', rpcError.message);
+                        } else {
+                            viewedPosts.push(post.id);
+                            sessionStorage.setItem(viewedPostsKey, JSON.stringify(viewedPosts));
+                        }
+                    }
+                } catch (e) {
+                    console.error("세션 스토리지 처리 중 오류:", e);
+                }
+            })();
+
+            // 4. 권한 확인 및 화면 렌더링
             if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) {
                 showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true);
                 navigateTo('/');
@@ -551,7 +553,7 @@
             lazyLoadImages();
             setTimeout(() => { try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("AdSense push warning:", e.message); } }, 100);
         }
-        // === MODIFIED SECTION END ===
+        // === MODIFIED FUNCTION END ===
 
         async function renderDashboardView(container, page = 1) {
             updateMetaTags();
@@ -560,7 +562,7 @@
             if (error) { showToast('내 글 목록 로딩 실패: ' + error.message, true); container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; }
             const listHtml = data.length > 0 ? data.map(post => {
                 const statusBadge = post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : '';
-                return `<li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg"><div><a href="/post/${post.slug}" data-action="route" class="font-semibold text-gray-800 hover:text-black">${post.title}</a>${statusBadge}<p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')} / 조회수 ${post.view_count.toLocaleString()}</p></div><div class="space-x-2"><a href="/writer/${post.slug}" class="btn text-xs" data-action="route">수정</a><button class="btn text-xs" data-action="delete-post" data-id="${post.id}">삭제</button></div></li>`;
+                return `<li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg"><div><a href="/post/${post.slug}" data-action="route" class="font-semibold text-gray-800 hover:text-black">${post.title}</a>${statusBadge}<p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')} / 조회수 ${(post.view_count || 0).toLocaleString()}</p></div><div class="space-x-2"><a href="/writer/${post.slug}" class="btn text-xs" data-action="route">수정</a><button class="btn text-xs" data-action="delete-post" data-id="${post.id}">삭제</button></div></li>`;
             }).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
 
             container.innerHTML = `<div class="py-12 space-y-12">
