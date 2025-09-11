@@ -442,21 +442,18 @@
                 </nav>`;
         }
         
-        // === MODIFIED FUNCTION START (Visitor Counter) ===
         async function renderLibraryView(container, page = 1) {
             updateMetaTags();
 
-            // 방문자 기능: 1. 현재 방문을 기록합니다. (결과를 기다리지 않음)
             supabase.from('site_visits').insert({}).then();
 
-            // 방문자 기능: 2. 총 방문자 수와 게시글 목록을 동시에 가져옵니다.
             const { from, to } = getPaginationRange(page);
             const [
                 { count: totalVisits }, 
                 { data: posts, error, count: totalPosts }
             ] = await Promise.all([
                 supabase.from('site_visits').select('*', { count: 'exact', head: true }),
-                supabase.from('posts').select('*, view_count', { count: 'exact' })
+                supabase.from('posts').select('*', { count: 'exact' })
                     .eq('status', 'published')
                     .order('created_at', { ascending: false })
                     .range(from, to)
@@ -477,7 +474,6 @@
                     </div>
                 </a>`).join('') : `<p class="text-center text-gray-500 py-16">아직 작성된 글이 없습니다.</p>`;
 
-            // 방문자 기능: 3. 가져온 총 방문자 수를 화면에 표시합니다.
             container.innerHTML = `<div class="py-12">
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-center font-heading mb-2">Insurance Insights</h1>
                 <p class="text-center text-gray-500 text-sm mb-4">AI, 기술, 그리고 보험에 대한 기록들</p>
@@ -486,19 +482,33 @@
                 ${renderPaginationControls(page, totalPosts, '/page/')}
             </div>`;
         }
-        // === MODIFIED FUNCTION END ===
 
-        // === MODIFIED FUNCTION START (Post View Counter) ===
+        // === MODIFIED SECTION START ===
         async function renderPostView(container, slug) {
             if (!slug) { navigateTo('/'); return; }
 
-            // 조회수 기능: 1. 페이지가 로드될 때 조회수 증가 함수를 호출합니다. (결과를 기다리지 않음)
-            supabase.rpc('increment_post_view', { post_slug: slug }).then();
+            // FIX: Prevent view count increase on refresh using sessionStorage
+            try {
+                const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || [];
+                if (!viewedPosts.includes(slug)) {
+                    // Call the DB function and only if it succeeds, update sessionStorage
+                    const { error } = await supabase.rpc('increment_post_view', { post_slug: slug });
+                    if (error) {
+                        // Log the error but don't block the user from seeing the post
+                        console.error('Failed to increment view count:', error.message);
+                    } else {
+                        viewedPosts.push(slug);
+                        sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts));
+                    }
+                }
+            } catch (e) {
+                console.error("Could not process session storage for views:", e);
+            }
 
-            // 조회수 기능: 2. 게시글 정보와 함께 'view_count'를 가져옵니다.
+            // Fetch post data. The query is simplified and more robust.
             const { data: post, error } = await supabase
                 .from('posts')
-                .select('*, view_count, profiles(*)')
+                .select('*, profiles(*)') // `view_count` is included in `*`
                 .eq('slug', slug)
                 .single();
 
@@ -520,7 +530,6 @@
             const { data: allOtherPosts } = await supabase.from('posts').select('id, title, summary, slug').neq('id', post.id).eq('status', 'published');
             const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" class="btn" data-action="route"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="m13.83 2.17 3 3L6.83 15.17H3.83V12.17l10-10ZM15.24 0 .92 14.31A.996.996 0 0 0 0 15v4a.996.996 0 0 0 1 1h4c.27 0 .52-.11.71-.29L19.03 4.4a2.5 2.5 0 0 0 0-3.53l-3-3a2.5 2.5 0 0 0-3.54-.29Z"/></svg><span>수정하기</span></a>` : '';
             
-            // 조회수 기능: 3. 날짜 옆에 조회수를 표시합니다.
             container.innerHTML = `<div class="py-12">
                 <article class="prose-custom max-w-none">
                     <div class="flex justify-between items-center mb-6">
@@ -542,16 +551,16 @@
             lazyLoadImages();
             setTimeout(() => { try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("AdSense push warning:", e.message); } }, 100);
         }
-        // === MODIFIED FUNCTION END ===
+        // === MODIFIED SECTION END ===
 
         async function renderDashboardView(container, page = 1) {
             updateMetaTags();
             const { from, to } = getPaginationRange(page);
-            const { data, error, count } = await supabase.from('posts').select('*', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to);
+            const { data, error, count } = await supabase.from('posts').select('*, view_count', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to);
             if (error) { showToast('내 글 목록 로딩 실패: ' + error.message, true); container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; }
             const listHtml = data.length > 0 ? data.map(post => {
                 const statusBadge = post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : '';
-                return `<li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg"><div><a href="/post/${post.slug}" data-action="route" class="font-semibold text-gray-800 hover:text-black">${post.title}</a>${statusBadge}<p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')}</p></div><div class="space-x-2"><a href="/writer/${post.slug}" class="btn text-xs" data-action="route">수정</a><button class="btn text-xs" data-action="delete-post" data-id="${post.id}">삭제</button></div></li>`;
+                return `<li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg"><div><a href="/post/${post.slug}" data-action="route" class="font-semibold text-gray-800 hover:text-black">${post.title}</a>${statusBadge}<p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')} / 조회수 ${post.view_count.toLocaleString()}</p></div><div class="space-x-2"><a href="/writer/${post.slug}" class="btn text-xs" data-action="route">수정</a><button class="btn text-xs" data-action="delete-post" data-id="${post.id}">삭제</button></div></li>`;
             }).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
 
             container.innerHTML = `<div class="py-12 space-y-12">
