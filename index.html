@@ -112,7 +112,7 @@
         
         .form-input, .form-textarea { font-size: 0.85rem; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px; width: 100%; background-color: var(--bg-content); color: var(--text-primary); transition: all 0.2s ease; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
         .form-input:focus, .form-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1); }
-        .form-input:disabled { background-color: #F9FAFB; cursor: not-allowed; }
+        .form-input:disabled { background-color: #F9FAFB; cursor: not-allowed; color: #6B7280;}
         
         .prose-custom { color: #374151; line-height: 1.7; font-size: 0.9rem; }
         .prose-custom > *:not(:first-child) { margin-top: 1.25em; }
@@ -128,7 +128,8 @@
         .prose-custom pre code { background-color: transparent; padding: 0; }
         .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
         .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
-        
+        .prose-custom ul { list-style-type: disc; padding-left: 1.5rem; }
+
         .youtube-embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; margin: 2em 0; border-radius: 8px; }
         .youtube-embed-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
 
@@ -503,10 +504,8 @@
         }
         
         async function renderPostView(container, slug) {
-            if (!slug) {
-                navigateTo('/');
-                return;
-            }
+            if (!slug) { navigateTo('/'); return; }
+            
             const decodedSlug = decodeURIComponent(slug);
 
             const { data: post, error: postError } = await supabase
@@ -528,16 +527,13 @@
                     const viewedPosts = JSON.parse(sessionStorage.getItem(viewedPostsKey)) || [];
                     if (!viewedPosts.includes(post.id)) {
                         const { error: rpcError } = await supabase.rpc('increment_post_view', { post_slug: decodedSlug });
-                        if (rpcError) {
-                            console.error('조회수 증가 실패:', rpcError.message);
-                        } else {
+                        if (rpcError) console.error('조회수 증가 실패:', rpcError.message);
+                        else {
                             viewedPosts.push(post.id);
                             sessionStorage.setItem(viewedPostsKey, JSON.stringify(viewedPosts));
                         }
                     }
-                } catch (e) {
-                    console.error("세션 스토리지 처리 중 오류:", e);
-                }
+                } catch (e) { console.error("세션 스토리지 처리 중 오류:", e); }
             })();
 
             if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) {
@@ -598,7 +594,8 @@
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [] };
             
             if (draft) {
-                post = { ...post, ...draft, refined_content: `${draft.imageHtml || ''}${draft.body}` };
+                post = { ...post, ...draft };
+                if (draft.body) post.refined_content = `${draft.imageHtml || ''}${draft.body}`;
             } else if (slug) {
                 const { data, error } = await supabase
                     .from('posts')
@@ -613,7 +610,7 @@
                 }
                 post = data;
             }
-            container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-4"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="slug-input" class="block text-sm font-medium text-gray-600">URL 주소 (영문, 숫자, 하이픈(-)만 가능)</label><input type="text" id="slug-input" class="form-input mt-2" required value="${post.slug}" ${post.id ? 'disabled' : ''}><p class="text-xs text-gray-500 mt-1">${post.id ? '발행된 글의 URL 주소는 변경할 수 없습니다.' : '새 글 작성 시 영문으로 자동 변환됩니다.'}</p></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-600 mb-2">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="writer-image-toggle"></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
+            container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-4"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="slug-input" class="block text-sm font-medium text-gray-600">URL 주소 (영문, 숫자, 하이픈(-)만 가능)</label><input type="text" id="slug-input" class="form-input mt-2" required value="${post.slug}" ${post.id ? 'disabled' : ''}><p class="text-xs text-gray-500 mt-1">${post.id ? '발행된 글의 URL 주소는 변경할 수 없습니다.' : '새 글 작성 시 영문으로 입력해주세요.'}</p></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-600 mb-2">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="writer-image-toggle"></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
             initQuillEditor(post.refined_content || '');
             $('#save-draft-btn').addEventListener('click', () => handlePostSave('draft'));
             $('#publish-btn').addEventListener('click', () => handlePostSave('published'));
@@ -642,7 +639,6 @@
             });
             $('#settings-form').addEventListener('submit', (e) => { e.preventDefault(); handleProfileUpdateSubmit(); });
         }
-
 
         // =================================================================================
         // --- HELPER & UTILITY FUNCTIONS ---
@@ -701,30 +697,22 @@
         }
         
         function quillImageHandler() {
-            if (!state.user) {
-                showToast('이미지를 업로드하려면 로그인이 필요합니다.', true);
-                return;
-            }
+            if (!state.user) { showToast('이미지를 업로드하려면 로그인이 필요합니다.', true); return; }
             const input = document.createElement('input');
             input.setAttribute('type', 'file');
             input.setAttribute('accept', 'image/*');
             input.click();
 
             input.onchange = async () => {
-                const file = input.files[0];
-                if (!file) return;
-
+                const file = input.files[0]; if (!file) return;
                 showToast('이미지 업로드 중...');
                 const originalEditorContent = state.quill.getContents();
-
                 try {
                     const webpBlob = await convertToWebP(file);
                     const imageUrl = await uploadImageFile(webpBlob);
-                    
                     const range = state.quill.getSelection(true);
                     state.quill.insertEmbed(range.index, 'image', imageUrl, 'user');
                     state.quill.setSelection(range.index + 1, 'silent');
-                    
                     showToast('이미지 업로드 완료!');
                 } catch (error) {
                     showToast(`이미지 업로드 실패: ${error.message}`, true);
@@ -739,10 +727,7 @@
             if (!imageFile) throw new Error("이미지 파일이 없습니다.");
             const fileName = `${state.user.id}/${Date.now()}.webp`;
             const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, imageFile, { contentType: 'image/webp' });
-            if (error) {
-                console.error('Supabase Storage Error:', error);
-                throw new Error(`이미지 업로드 실패: ${error.message}`);
-            }
+            if (error) { console.error('Supabase Storage Error:', error); throw new Error(`이미지 업로드 실패: ${error.message}`); }
             const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName);
             return data.publicUrl;
         }
@@ -769,10 +754,7 @@
 
         function lazyLoadImages() {
             const images = document.querySelectorAll('#post-content img');
-            if (!('IntersectionObserver' in window)) {
-                images.forEach(img => { if(img.dataset.src) img.src = img.dataset.src; });
-                return;
-            }
+            if (!('IntersectionObserver' in window)) { images.forEach(img => { if(img.dataset.src) img.src = img.dataset.src; }); return; }
             const observer = new IntersectionObserver((entries, obs) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) { const img = entry.target; img.src = img.dataset.src; obs.unobserve(img); }
@@ -784,56 +766,52 @@
         // =================================================================================
         // --- GEMINI API & IMAGE HANDLING ---
         // =================================================================================
-        async function generateText(topic, isInitial = true, draft = null, instruction = null, internalLinksContext = null) { 
-            const systemPromptContent = `## Persona (글쓴이 설정)
-당신은 특정 주제에 대해 깊이 있는 지식을 가진 전문 작가입니다. 당신의 목표는 사용자가 제공한 주제에 대해 명확하고, 유익하며, 매력적인 고품질 블로그 게시물을 작성하는 것입니다.
-## Technical Output Rules (기술적 출력 규칙)
-- **응답 형식:** 생성물은 반드시 제목(title), URL용 영문 제목(english_title), 요약(summary), 태그 배열(tags), 그리고 HTML 형식의 본문(body)을 포함한 단일 JSON 객체여야 합니다.
-- **URL용 영문 제목:** 한국어 제목을 기반으로, URL에 사용하기 좋은 짧고 모든 문자가 소문자인 영문 슬러그(english_title)를 생성합니다. (예: 'ai-insurance-trends-2025').
-- **태그:** 한국어로 3~5개 생성합니다.
-- **본문 HTML 규칙:** 유효한 HTML이어야 하며, 제목(title)을 중복 포함하지 마세요. 소제목은 '<h2>' 또는 '<h3>'를 사용하고, 코드 블록은 <pre class="prettyprint linenums">로 감싸주세요.
-- **[중요] 내부 링크 규칙:** 만약 내부 링크 컨텍스트가 제공되면, 본문 내용과 가장 관련성이 높은 2~3개의 링크를 선택하여 자연스럽게 삽입해야 합니다. 링크 형식은 반드시 <a href="/post/SLUG_VALUE">TITLE_VALUE</a> 이어야 합니다.
+        async function generateText(topic, isInitial = true, draft = null, instruction = null) { 
+            const systemPromptContent = `## Persona
+You are an expert writer with deep knowledge on a specific topic. Your goal is to write a clear, informative, and engaging high-quality blog post based on the user's topic.
+## Content Rule
+You MUST use the provided Google Search results to inform your writing and ensure factual accuracy. At the end of the article, add a '출처' (Sources) section using an <h3> heading and an unordered list (<ul>) of links to the websites you used.
+## Technical Output Rules
+- **Response Format:** Your output must be a single JSON object containing: title, english_title (for URL), summary, tags (array), and body (HTML).
+- **english_title:** Create a short, all-lowercase, hyphenated English slug based on the Korean title (e.g., 'ai-insurance-trends-2025').
+- **Tags:** Generate 3-5 relevant tags in Korean.
+- **Body HTML:** Must be valid HTML. Do not repeat the main title. Use <h2> or <h3> for subheadings. Use <pre class="prettyprint linenums"> for code blocks.
 - **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`;
             
-            const editorSystemPrompt = `당신은 유능한 블로그 편집자입니다. 당신의 임무는 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글 전체를 수정하고 완성된 결과물을 JSON 형식으로 반환하는 것입니다.
-- **글쓰기 원칙:** 명확성, 정확성, 간결성을 최우선으로 합니다. 전문적이고 신뢰감 있는 톤을 유지해주세요.
-- **응답 형식:** 응답은 반드시 제목(title), URL용 영문 제목(english_title), 요약(summary), 태그 배열(tags), 본문(body) 필드를 포함한 단일 JSON 객체여야 합니다.
-- **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`; 
+            const editorSystemPrompt = `## Persona
+You are a skilled blog editor. Your task is to revise a draft based on the user's instructions and return the complete, polished article as a JSON object.
+## Principles
+Prioritize clarity, accuracy, and conciseness. Maintain a professional and trustworthy tone.
+## Technical Output Rules
+- **Response Format:** Your output must be a single JSON object containing: title, english_title, summary, tags, and body.
+- **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object.`; 
             
-            let systemPrompt, userQuery, responseSchema; 
-            const baseSchema = {
+            let systemPrompt, userQuery, payload;
+            const responseSchema = {
                 type: "OBJECT",
-                properties: {
-                    "title": { "type": "STRING" },
-                    "english_title": { "type": "STRING" },
-                    "summary": { "type": "STRING" },
-                    "tags": { "type": "ARRAY", "items": { "type": "STRING" } },
-                    "body": { "type": "STRING" }
-                },
+                properties: { "title": { "type": "STRING" }, "english_title": { "type": "STRING" }, "summary": { "type": "STRING" }, "tags": { "type": "ARRAY", "items": { "type": "STRING" } }, "body": { "type": "STRING" } },
                 required: ["title", "english_title", "summary", "tags", "body"]
             };
 
             if (isInitial) { 
                 systemPrompt = { parts: [{ text: systemPromptContent }] };
-                userQuery = `주제: "${topic}"`; 
-                if (internalLinksContext && internalLinksContext.length > 0) {
-                    userQuery += `\n\n다음은 함께 발행될 관련 글 목록입니다. 이 글들을 자연스럽게 본문에 2~3개 링크해주세요: ${JSON.stringify(internalLinksContext)}`;
-                }
-                responseSchema = baseSchema;
+                userQuery = `Topic: "${topic}"`;
+                payload = { 
+                    contents: [{ parts: [{ text: userQuery }] }], 
+                    systemInstruction: systemPrompt,
+                    tools: [{ "google_search": {} }], // Use Google Search for initial generation
+                    generationConfig: { responseMimeType: "application/json", responseSchema } 
+                };
             } else { 
                 systemPrompt = { parts: [{ text: editorSystemPrompt }] };
                 userQuery = `{"draft": ${JSON.stringify(draft)}, "instruction": "${instruction}"}`;
-                responseSchema = baseSchema; 
+                payload = { 
+                    contents: [{ parts: [{ text: userQuery }] }], 
+                    systemInstruction: systemPrompt, 
+                    generationConfig: { responseMimeType: "application/json", responseSchema } 
+                }; 
             } 
             
-            const payload = { 
-                contents: [{ parts: [{ text: userQuery }] }], 
-                systemInstruction: systemPrompt, 
-                generationConfig: { 
-                    responseMimeType: "application/json", 
-                    responseSchema: responseSchema
-                } 
-            }; 
             try {
                 const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'text', payload }) }); 
                 if (!response.ok) throw new Error(`Server responded with status: ${response.status}`); 
@@ -965,10 +943,9 @@
             let finalSlug = $('#slug-input').value.trim();
         
             if (state.quill.getText().trim() === '') refined_content = '';
-            if (!title || !summary) { showToast('제목과 요약은 필수 항목입니다.', true); return; }
-            if (!id && !finalSlug) { showToast('URL 주소는 필수 항목입니다.', true); return; }
+            if (!title || !summary || !finalSlug) { showToast('제목, 요약, URL 주소는 필수 항목입니다.', true); return; }
 
-            finalSlug = createBaseSlug(finalSlug); // Clean the user-provided slug
+            finalSlug = createBaseSlug(finalSlug);
             $('#slug-input').value = finalSlug;
 
             const button = $(status === 'published' ? '#publish-btn' : '#save-draft-btn');
@@ -976,7 +953,7 @@
             setButtonLoading(button, true, originalBtnText);
 
             try {
-                if (!id) { // Only check for uniqueness on new posts
+                if (!id) {
                     const { data, error } = await supabase.from('posts').select('slug').eq('slug', finalSlug).maybeSingle();
                     if (error) throw new Error('URL 중복 확인 중 오류 발생');
                     if (data) {
@@ -1117,21 +1094,15 @@
             const selectedTopics = Array.from(checkedBoxes).map(box => box.value);
             const shouldGenerateImages = document.querySelector('#bulk-image-toggle').checked;
 
-            if (selectedTopics.length === 0) {
-                showToast('먼저 발행할 주제를 하나 이상 선택해주세요.', true);
-                return;
-            }
+            if (selectedTopics.length === 0) { showToast('먼저 발행할 주제를 하나 이상 선택해주세요.', true); return; }
 
             renderProgressModal('일괄 발행 준비 중...');
-
             try {
-                const articlesToGenerate = selectedTopics.map(topic => ({ topic }));
-
                 const generatedArticles = [];
-                for (let i = 0; i < articlesToGenerate.length; i++) {
-                    renderProgressModal(`글 생성 중... (${i + 1}/${articlesToGenerate.length})`);
-                    const articleContent = await generateText(articlesToGenerate[i].topic, true, null, null, []);
-                    generatedArticles.push({ ...articlesToGenerate[i], ...articleContent });
+                for (let i = 0; i < selectedTopics.length; i++) {
+                    renderProgressModal(`글 생성 중... (${i + 1}/${selectedTopics.length})`);
+                    const articleContent = await generateText(selectedTopics[i]);
+                    generatedArticles.push({ ...articleContent });
                 }
 
                 for (let i = 0; i < generatedArticles.length; i++) {
@@ -1151,13 +1122,8 @@
                     const finalSlug = await generateUniqueSlug(baseSlug);
 
                     const postData = {
-                        title: article.title,
-                        summary: article.summary,
-                        refined_content: refined_content,
-                        author_id: state.user.id,
-                        slug: finalSlug,
-                        tags: article.tags,
-                        status: 'published'
+                        title: article.title, summary: article.summary, refined_content, author_id: state.user.id,
+                        slug: finalSlug, tags: article.tags, status: 'published'
                     };
                     
                     const { error } = await supabase.from('posts').insert(postData);
@@ -1174,7 +1140,6 @@
             }
         }
 
-
         async function handleDirectPublish() { 
             if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true);
             showToast("글 발행을 시작합니다...");
@@ -1184,7 +1149,7 @@
                 let refined_content = body;
                 if (imageBase64) { const imageUrl = await uploadBase64Image(imageBase64, title); refined_content = `<img src="${imageUrl}" alt="${title}" loading="lazy">${body}`; }
                 
-                if (!postId || !slug) {
+                if (!postId) {
                     const baseSlug = createBaseSlug(english_title || title);
                     slug = await generateUniqueSlug(baseSlug);
                 }
@@ -1278,36 +1243,30 @@
         }
         
         function createBaseSlug(text) {
-            return text.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+            return text.toLowerCase().trim()
+                .replace(/[^a-z0-9\s-]/g, '') // Allow only English letters, numbers, spaces, hyphens
+                .replace(/[\s_-]+/g, '-')      // Replace spaces/underscores with a single hyphen
+                .replace(/^-+|-+$/g, '');     // Remove leading/trailing hyphens
         }
 
         async function generateUniqueSlug(baseSlug) {
             let finalSlug = baseSlug;
-            if (!finalSlug) {
-                finalSlug = Math.random().toString(36).substring(2, 10);
-            }
-
+            if (!finalSlug) finalSlug = Math.random().toString(36).substring(2, 10);
             let isUnique = false;
             let attempt = 0;
             const maxAttempts = 10;
             
             while (!isUnique && attempt < maxAttempts) {
                 const { data, error } = await supabase.from('posts').select('slug').eq('slug', finalSlug).maybeSingle();
-                if (error) {
-                    console.error("Slug uniqueness check error:", error);
-                    throw new Error("Slug 중복 확인 중 오류가 발생했습니다.");
-                }
-                if (!data) {
-                    isUnique = true;
-                } else {
+                if (error) { console.error("Slug uniqueness check error:", error); throw new Error("Slug 중복 확인 중 오류가 발생했습니다."); }
+                if (!data) isUnique = true;
+                else {
                     const randomSuffix = Math.random().toString(36).substring(2, 8);
                     finalSlug = `${baseSlug}-${randomSuffix}`;
                     attempt++;
                 }
             }
-            if (!isUnique) {
-                 throw new Error("고유한 URL을 생성하지 못했습니다. 제목을 변경해 보세요.");
-            }
+            if (!isUnique) throw new Error("고유한 URL을 생성하지 못했습니다. 제목을 변경해 보세요.");
             return finalSlug;
         }
 
