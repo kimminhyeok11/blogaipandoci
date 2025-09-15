@@ -41,6 +41,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
+    <!-- Quill Editor Library -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
     <!-- Code Highlighting (Prettify) Styles -->
     <style>
         /* Prettify Tomorrow Theme */
@@ -129,29 +133,15 @@
 
         .pagination-controls a.disabled { pointer-events: none; opacity: 0.5; }
         
-        /* Tiptap Editor Styles */
-        #tiptap-toolbar button { padding: 0.25rem 0.5rem; border-radius: 4px; transition: background-color 0.2s ease; }
-        #tiptap-toolbar button:hover { background-color: #e5e7eb; }
-        #tiptap-toolbar button.is-active { background-color: var(--accent); color: white; }
-        .ProseMirror { min-height: 300px; padding: 0.5rem 0.75rem; outline: none; line-height: 1.7; font-size: 0.95rem; }
-        
-        .ProseMirror img {
-            display: block;
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 1em 0;
-        }
-        
-        .ProseMirror > *:first-child { margin-top: 0; }
-        .ProseMirror > *:last-child { margin-bottom: 0; }
-        .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: #adb5bd; pointer-events: none; height: 0; }
-        .ProseMirror pre { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; white-space: pre-wrap; }
-        .ProseMirror code { background: #e5e7eb; padding: 0.1em 0.3em; border-radius: 4px; font-size: 0.9em; }
-        .ProseMirror pre > code { background: none; padding: 0; }
-        .ProseMirror blockquote { border-left: 3px solid #d1d5db; margin-left: 1rem; padding-left: 1rem; font-style: italic; }
-        .ProseMirror a { text-decoration: underline; cursor: pointer; }
-        
+        /* Quill Editor Styles */
+        #editor-container { background-color: white; border: 1px solid #D1D5DB; border-radius: 8px; }
+        .ql-editor { min-height: 300px; font-size: 0.95rem; line-height: 1.7; }
+        .ql-toolbar { border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom: 1px solid #D1D5DB !important; }
+        .ql-container { border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+        .ql-editor.ql-blank::before { font-style: normal; color: #adb5bd; }
+        .ql-editor pre { background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; white-space: pre-wrap; }
+        .ql-editor img { max-width: 100%; border-radius: 8px; }
+
         .author-box { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem; }
         .author-box img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
         .author-box .name { font-family: var(--font-heading); font-weight: 600; color: var(--text-primary); }
@@ -241,7 +231,7 @@
 
         const state = { 
             user: null, 
-            tiptap: null,
+            quill: null,
             isAuthReady: false,
             draftArticle: null,
             tocObserver: null,
@@ -281,9 +271,11 @@
                 schema = { "@context": "https://schema.org", "@type": "WebSite", "url": SITE_URL, "name": "InsureLog", "description": "AI, 기술, 그리고 보험에 대한 깊이 있는 인사이트" };
             } else if (type === 'Article' && data && data.refined_content) {
                 const imageUrl = (data.refined_content.match(/<img[^>]+src="([^">]+)"/) || [])[1] || defaultMeta.image;
+                // [OPTIMIZATION] Fallback name consistency
+                const authorName = data.profiles?.full_name || '작성자';
                 schema = {
                     "@context": "https://schema.org", "@type": "Article", "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/post/${data.slug}` },
-                    "headline": data.title, "description": data.summary, "image": imageUrl, "author": { "@type": "Person", "name": data.profiles?.full_name || "InsureLog Admin" },
+                    "headline": data.title, "description": data.summary, "image": imageUrl, "author": { "@type": "Person", "name": authorName },
                     "publisher": { "@type": "Organization", "name": "InsureLog", "logo": { "@type": "ImageObject", "url": defaultMeta.image } },
                     "datePublished": new Date(data.created_at).toISOString(), "dateModified": new Date(data.updated_at || data.created_at).toISOString() 
                 };
@@ -368,13 +360,18 @@
         // --- ROUTING & VIEW MANAGEMENT ---
         // =================================================================================
         function navigateTo(path) {
-            history.pushState(null, null, path);
+            if (window.location.pathname !== path) {
+                history.pushState(null, null, path);
+            }
             handleRouting();
         }
 
         async function switchView(viewId, callback) {
-            if (state.tiptap) { state.tiptap.destroy(); state.tiptap = null; }
+            if (state.quill) {
+                state.quill = null;
+            }
             if (state.tocObserver) { state.tocObserver.disconnect(); state.tocObserver = null; }
+            
             const currentView = $('.app-view.active');
             if (currentView) {
                 await animations.pageExit(currentView);
@@ -386,7 +383,9 @@
                 if (callback) await callback(nextView);
                 nextView.classList.add('active');
                 animations.pageEnter(nextView);
-                setTimeout(() => PR.prettyPrint(), 50);
+                setTimeout(() => {
+                    try { PR.prettyPrint(); } catch (e) { console.warn("Prettify failed to run:", e); }
+                }, 50);
             }
         }
         
@@ -483,16 +482,12 @@
         
         async function renderPostView(container, slug) {
             if (!slug) { navigateTo('/'); return; }
-
-            // [FIX START] 글과 프로필 정보를 별도로 조회하여 RLS(Row-Level Security) 문제를 회피합니다.
-            // 1. 글 내용 먼저 가져오기 (프로필 조인 없이)
             const { data: post, error: postError } = await supabase
                 .from('posts')
                 .select('*')
                 .eq('slug', slug)
                 .single();
 
-            // 2. 글이 없는 경우 에러 처리
             if (postError || !post) {
                 console.error("Error fetching post:", postError);
                 showToast('글을 찾을 수 없습니다.', true);
@@ -500,7 +495,6 @@
                 return;
             }
 
-            // 3. 작성자 프로필 정보 별도 조회
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('*')
@@ -511,11 +505,8 @@
                 console.warn("Could not fetch author profile:", profileError.message);
             }
 
-            // 4. 조회한 프로필 정보를 post 객체에 수동으로 추가
             post.profiles = profile || null;
-            // [FIX END]
 
-            // 조회수 증가 로직은 글을 성공적으로 가져온 후에 실행
             (async () => {
                 try {
                     const viewedPostsKey = 'viewed_posts';
@@ -534,7 +525,6 @@
                 }
             })();
 
-            // 권한 확인 및 화면 렌더링
             if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) {
                 showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true);
                 navigateTo('/');
@@ -607,8 +597,8 @@
                 }
                 post = data;
             }
-            container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-4"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-600 mb-2">본문</label><div id="tiptap-container" class="border border-gray-300 rounded-lg bg-white"><div id="tiptap-toolbar" class="p-2 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-1"></div><div id="editor" class="prose-custom max-w-none"></div></div></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="writer-image-toggle" checked></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
-            initTiptapEditor(post.refined_content || '');
+            container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-4"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-600 mb-2">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="writer-image-toggle" checked></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
+            initQuillEditor(post.refined_content || '');
             $('#save-draft-btn').addEventListener('click', () => handlePostSave('draft'));
             $('#publish-btn').addEventListener('click', () => handlePostSave('published'));
             $('[data-action="get-seo-suggestions"]').addEventListener('click', handleSeoSuggestion);
@@ -667,75 +657,64 @@
             return `<div class="author-box"><img src="${avatarUrl}" alt="${authorName}" loading="lazy"><div><p class="name">${authorName}</p><p class="bio">${authorBio}</p></div></div>`;
         }
         
-        async function initTiptapEditor(initialContent) {
-            const { Editor } = await import('https://esm.sh/@tiptap/core');
-            const { StarterKit } = await import('https://esm.sh/@tiptap/starter-kit');
-            const { Link } = await import('https://esm.sh/@tiptap/extension-link');
-            const { Placeholder } = await import('https://esm.sh/@tiptap/extension-placeholder');
-
-            const editorElement = document.querySelector('#editor');
-            const toolbarElement = document.querySelector('#tiptap-toolbar');
-            if (!editorElement || !toolbarElement) return;
-
-            state.tiptap = new Editor({
-                element: editorElement,
-                extensions: [
-                    StarterKit,
-                    Link.configure({ openOnClick: false }),
-                    Placeholder.configure({ placeholder: '여기에 글을 작성하세요...' })
-                ],
-                content: initialContent,
-                onUpdate: ({ editor }) => { updateToolbarState(editor); },
-                onSelectionUpdate: ({ editor }) => { updateToolbarState(editor); }
-            });
-
-            const toolbarButtons = [
-                { icon: '<b>B</b>', action: () => state.tiptap.chain().focus().toggleBold().run(), name: 'bold' },
-                { icon: '<i>I</i>', action: () => state.tiptap.chain().focus().toggleItalic().run(), name: 'italic' },
-                { icon: 'H1', action: () => state.tiptap.chain().focus().toggleHeading({ level: 1 }).run(), name: 'heading', level: 1 },
-                { icon: 'H2', action: () => state.tiptap.chain().focus().toggleHeading({ level: 2 }).run(), name: 'heading', level: 2 },
-                { icon: 'H3', action: () => state.tiptap.chain().focus().toggleHeading({ level: 3 }).run(), name: 'heading', level: 3 },
-                { icon: '¶', action: () => state.tiptap.chain().focus().setParagraph().run(), name: 'paragraph' },
-                { icon: '목록', action: () => state.tiptap.chain().focus().toggleBulletList().run(), name: 'bulletList' },
-                { icon: '번호', action: () => state.tiptap.chain().focus().toggleOrderedList().run(), name: 'orderedList' },
-                { icon: '코드', action: () => state.tiptap.chain().focus().toggleCodeBlock().run(), name: 'codeBlock' },
-                { icon: '인용', action: () => state.tiptap.chain().focus().toggleBlockquote().run(), name: 'blockquote' },
-                { icon: '이미지', action: handleImageUpload, name: 'image' }
+        function initQuillEditor(initialContent) {
+            const toolbarOptions = [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link', 'image', 'blockquote', 'code-block'],
+                ['clean']
             ];
 
-            toolbarElement.innerHTML = '';
-            toolbarButtons.forEach(btn => {
-                const button = document.createElement('button');
-                button.type = 'button'; button.innerHTML = btn.icon; button.dataset.name = btn.name;
-                if(btn.level) button.dataset.level = btn.level;
-                button.addEventListener('click', btn.action);
-                toolbarElement.appendChild(button);
+            state.quill = new Quill('#editor', {
+                modules: {
+                    toolbar: {
+                        container: toolbarOptions,
+                        handlers: {
+                            'image': quillImageHandler
+                        }
+                    }
+                },
+                placeholder: '여기에 글을 작성하세요...',
+                theme: 'snow'
             });
-            updateToolbarState(state.tiptap);
+
+            if(initialContent) {
+                 state.quill.root.innerHTML = initialContent;
+            }
         }
         
-        function updateToolbarState(editor) {
-            const toolbar = $('#tiptap-toolbar'); if (!toolbar) return;
-            toolbar.querySelectorAll('button').forEach(btn => {
-                const name = btn.dataset.name; const level = btn.dataset.level ? { level: parseInt(btn.dataset.level) } : {};
-                btn.classList.toggle('is-active', editor.isActive(name, level));
-            });
-        }
-        
-        function handleImageUpload() {
-            if (!state.user) { showToast('이미지를 업로드하려면 로그인이 필요합니다.', true); return; }
-            const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+        function quillImageHandler() {
+            if (!state.user) {
+                showToast('이미지를 업로드하려면 로그인이 필요합니다.', true);
+                return;
+            }
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
+
             input.onchange = async () => {
-                const file = input.files[0]; if (!file) return;
+                const file = input.files[0];
+                if (!file) return;
+
                 showToast('이미지 업로드 중...');
+                const originalEditorContent = state.quill.getContents();
+
                 try {
                     const webpBlob = await convertToWebP(file);
                     const imageUrl = await uploadImageFile(webpBlob);
-                    state.tiptap.chain().focus().setImage({ src: imageUrl }).run();
+                    
+                    const range = state.quill.getSelection(true);
+                    state.quill.insertEmbed(range.index, 'image', imageUrl, 'user');
+                    state.quill.setSelection(range.index + 1, 'silent');
+                    
                     showToast('이미지 업로드 완료!');
-                } catch (error) { showToast(`이미지 업로드 실패: ${error.message}`, true); }
+                } catch (error) {
+                    showToast(`이미지 업로드 실패: ${error.message}`, true);
+                    state.quill.setContents(originalEditorContent); // Restore content on failure
+                }
             };
-            input.click();
         }
 
         function base64ToBlob(base64, contentType = 'image/webp') { const byteCharacters = atob(base64); const byteArrays = []; for (let offset = 0; offset < byteCharacters.length; offset += 512) { const slice = byteCharacters.slice(offset, offset + 512); const byteNumbers = new Array(slice.length); for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i); byteArrays.push(new Uint8Array(byteNumbers)); } return new Blob(byteArrays, { type: contentType }); }
@@ -774,6 +753,10 @@
 
         function lazyLoadImages() {
             const images = document.querySelectorAll('#post-content img');
+            if (!('IntersectionObserver' in window)) {
+                images.forEach(img => { if(img.dataset.src) img.src = img.dataset.src; });
+                return;
+            }
             const observer = new IntersectionObserver((entries, obs) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) { const img = entry.target; img.src = img.dataset.src; obs.unobserve(img); }
@@ -786,7 +769,6 @@
         // --- GEMINI API & IMAGE HANDLING ---
         // =================================================================================
         async function generateText(topic, isInitial = true, draft = null, instruction = null) { 
-            const proxyUrl = '/api/generate';
             const systemPromptContent = `## Persona (글쓴이 설정)
 당신은 특정 주제에 대해 깊이 있는 지식을 가진 전문 작가입니다. 당신의 목표는 사용자가 제공한 주제에 대해 명확하고, 유익하며, 매력적인 고품질 블로그 게시물을 작성하는 것입니다.
 ## Technical Output Rules (기술적 출력 규칙)
@@ -818,23 +800,32 @@
                     responseSchema: { type: "OBJECT", properties: { "title": { "type": "STRING" }, "summary": { "type": "STRING" }, "slug": { "type": "STRING" }, "tags": { "type": "ARRAY", "items": { "type": "STRING" } }, "body": { "type": "STRING" } }, required: ["title", "summary", "slug", "tags", "body"] } 
                 } 
             }; 
-
-            const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'text', payload }) }); 
-            if (!response.ok) throw new Error(`Gemini API 오류: ${response.statusText}`); 
-            const result = await response.json(); 
-            const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text; 
-            if (!textContent) throw new Error("Gemini API로부터 유효한 콘텐츠를 받지 못했습니다."); 
-            return JSON.parse(textContent); 
+            try {
+                const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'text', payload }) }); 
+                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`); 
+                const result = await response.json(); 
+                const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text; 
+                if (!textContent) throw new Error("AI로부터 유효한 콘텐츠를 받지 못했습니다."); 
+                return JSON.parse(textContent); 
+            } catch (error) {
+                console.error("generateText Error:", error);
+                throw new Error("AI 글 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+            }
         }
 
         async function generateImage(title) { 
             const payload = { instances: [{ prompt: `A minimalist, flat design, vector-style abstract illustration about "${title}". Featuring a simple faceless human character illustration relevant to the topic. Use a light background (#FFFFFF) with a simple grayscale palette. Clean, modern style. No text.` }], parameters: { "sampleCount": 1 } }; 
-            const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'image', payload }) }); 
-            if (!response.ok) throw new Error(`Imagen API 오류: ${response.statusText}`); 
-            const result = await response.json(); 
-            const base64Data = result.predictions?.[0]?.bytesBase64Encoded; 
-            if (!base64Data) throw new Error("Imagen API로부터 유효한 이미지 데이터를 받지 못했습니다."); 
-            return base64Data; 
+            try {
+                const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'image', payload }) }); 
+                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`); 
+                const result = await response.json(); 
+                const base64Data = result.predictions?.[0]?.bytesBase64Encoded; 
+                if (!base64Data) throw new Error("AI로부터 유효한 이미지 데이터를 받지 못했습니다."); 
+                return base64Data; 
+            } catch (error) {
+                console.error("generateImage Error:", error);
+                throw new Error("AI 이미지 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+            }
         }
 
         async function generateSeoSuggestions(title, content) {
@@ -848,27 +839,35 @@
                     responseSchema: { type: "OBJECT", properties: { "titles": { "type": "ARRAY", "items": { "type": "STRING" } }, "description": { "type": "STRING" } }, required: ["titles", "description"] }
                 }
             };
-            const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'text', payload }) });
-            if (!response.ok) throw new Error(`Gemini API 오류: ${response.statusText}`);
-            const result = await response.json();
-            const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!textContent) throw new Error("Gemini API로부터 유효한 SEO 제안을 받지 못했습니다.");
-            return JSON.parse(textContent);
+            try {
+                const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'text', payload }) });
+                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
+                const result = await response.json();
+                const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!textContent) throw new Error("AI로부터 유효한 SEO 제안을 받지 못했습니다.");
+                return JSON.parse(textContent);
+            } catch (error) {
+                console.error("generateSeoSuggestions Error:", error);
+                throw new Error("AI SEO 제안 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+            }
         }
 
         async function generateTopicSuggestions(keyword = '') {
             const systemPrompt = `You are a helpful AI assistant and trend analyst. Your task is to use Google Search to find the latest news and trends and then suggest 5 compelling blog post topics in Korean based on the user's request. CRITICAL: Your entire response must be ONLY a valid JSON array of strings.`;
             const userQuery = keyword ? `Find the latest news and trends about "${keyword}". Based on the search results, suggest 5 compelling blog post topics.` : `Find the latest general news and trending topics. Based on the search results, suggest 5 compelling blog post topics.`;
             const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, tools: [{ "google_search": {} }] };
-            const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'text', payload }) });
-            if (!response.ok) throw new Error(`Gemini API 오류 (Topic Suggestions): ${response.statusText}`);
-            const result = await response.json();
-            const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!textContent) throw new Error("Gemini API로부터 유효한 주제 제안을 받지 못했습니다.");
-             try {
+            try {
+                const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'text', payload }) });
+                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
+                const result = await response.json();
+                const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!textContent) throw new Error("AI로부터 유효한 주제 제안을 받지 못했습니다.");
                 const cleanedText = textContent.replace(/^```json\s*|```\s*$/g, '');
                 return JSON.parse(cleanedText);
-            } catch (e) { console.error("Failed to parse topic suggestions:", textContent); throw new Error("주제 제안의 형식이 잘못되었습니다."); }
+            } catch (error) {
+                 console.error("generateTopicSuggestions Error:", error);
+                 throw new Error("AI 주제 제안 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+            }
         }
 
         async function uploadBase64Image(base64Data, title) { if (!base64Data) throw new Error("이미지 데이터가 없습니다."); const imageBlob = base64ToBlob(base64Data); const fileName = `${state.user.id}/${Date.now()}.webp`; const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, imageBlob); if (error) throw new Error(`이미지 업로드 실패: ${error.message}`); const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName); return data.publicUrl; }
@@ -923,24 +922,74 @@
         }
 
         async function handlePostSave(status) {
-            const id = $('#post-id').value; const title = $('#title').value.trim(); const summary = $('#summary').value.trim();
+            const id = $('#post-id').value;
+            const title = $('#title').value.trim();
+            const summary = $('#summary').value.trim();
             const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
-            let refined_content = state.tiptap.getHTML();
-            if (!title || !summary) { showToast('제목과 요약은 필수 항목입니다.', true); return; }
+            let refined_content = state.quill.root.innerHTML;
+        
+            // Quill의 기본 빈 상태는 '<p><br></p>'이므로, 텍스트가 비었는지 확인
+            if (state.quill.getText().trim() === '') {
+                refined_content = '';
+            }
+            if (!title || !summary) {
+                showToast('제목과 요약은 필수 항목입니다.', true);
+                return;
+            }
 
-            const button = $(status === 'published' ? '#publish-btn' : '#save-draft-btn'); const originalBtnText = button.textContent;
-            button.disabled = true; button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
+            const button = $(status === 'published' ? '#publish-btn' : '#save-draft-btn');
+            const originalBtnText = button.textContent;
+            button.disabled = true;
+            button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
 
             try {
-                let finalSlug = $('#post-slug').value || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+                let finalSlug = $('#post-slug').value;
+                // 새 글일 경우에만 slug를 생성하고 중복을 확인
+                if (!id) {
+                    const baseSlug = title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+                    finalSlug = await generateUniqueSlug(baseSlug);
+                }
+
                 const postData = { title, summary, refined_content, author_id: state.user.id, slug: finalSlug, tags, status };
+                
                 const { error } = id ? await supabase.from('posts').update(postData).eq('id', id) : await supabase.from('posts').insert(postData);
                 if (error) throw error;
+
                 clearDraft();
                 showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
-                navigateTo('/dashboard');
-            } catch (error) { showToast(`저장 실패: ${error.message}`, true);
-            } finally { button.disabled = false; button.textContent = originalBtnText; }
+                navigateTo(status === 'published' ? `/post/${finalSlug}` : '/dashboard');
+            } catch (error) {
+                showToast(`저장 실패: ${error.message}`, true);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalBtnText;
+            }
+        }
+
+        // [CRITICAL FIX] Ensure slug is unique before saving
+        async function generateUniqueSlug(baseSlug) {
+            let finalSlug = baseSlug;
+            let isUnique = false;
+            let attempt = 0;
+            const maxAttempts = 10;
+
+            while (!isUnique && attempt < maxAttempts) {
+                const { data, error } = await supabase.from('posts').select('slug').eq('slug', finalSlug).maybeSingle();
+                if (error) {
+                    throw new Error("Slug 중복 확인 중 오류가 발생했습니다.");
+                }
+                if (!data) {
+                    isUnique = true;
+                } else {
+                    const randomSuffix = Math.random().toString(36).substring(2, 8);
+                    finalSlug = `${baseSlug}-${randomSuffix}`;
+                    attempt++;
+                }
+            }
+            if (!isUnique) {
+                 throw new Error("고유한 URL을 생성하지 못했습니다. 제목을 변경해 보세요.");
+            }
+            return finalSlug;
         }
         
         async function handleAiWriterSubmit() { 
@@ -958,7 +1007,7 @@
                 state.draftArticle = { ...article, imageBase64 }; 
                 saveDraft(state.draftArticle); 
                 navigateTo('/refiner'); 
-            } catch (error) { showToast(`오류 발생: ${error.message}`, true); 
+            } catch (error) { showToast(error.message, true); 
             } finally { loader.style.display = 'none'; button.disabled = false; } 
         }
 
@@ -976,7 +1025,7 @@
                 state.draftArticle = { ...state.draftArticle, ...updatedArticle };
                 saveDraft(state.draftArticle); 
                 renderRefinerPreview(); 
-            } catch(error) { showToast(`수정 중 오류 발생: ${error.message}`, true); 
+            } catch(error) { showToast(error.message, true); 
             } finally { input.disabled = false; $('#refiner-loader').style.display = 'none'; } 
         }
 
@@ -986,7 +1035,8 @@
             const button = $('[data-action="go-to-refiner"]'); button.disabled = true; button.innerHTML = '<div class="ai-loader" style="display: block; margin: 0 auto;"></div>';
             try {
                 const summary = $('#summary').value.trim(); const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
-                const postId = $('#post-id').value || null; const postSlug = $('#post-slug').value || ''; const body = state.tiptap.getHTML();
+                const postId = $('#post-id').value || null; const postSlug = $('#post-slug').value || ''; 
+                const body = state.quill.root.innerHTML;
                 
                 let imageBase64 = null;
                 if ($('#writer-image-toggle').checked) { imageBase64 = await generateImage(title); }
@@ -994,7 +1044,7 @@
                 state.draftArticle = { postId, title, summary, body, imageBase64, slug: postSlug, tags };
                 saveDraft(state.draftArticle);
                 navigateTo('/refiner');
-            } catch (error) { showToast(`AI 글 다듬기 준비 중 오류 발생: ${error.message}`, true);
+            } catch (error) { showToast(error.message, true);
             } finally { button.disabled = false; button.textContent = 'AI로 다듬기'; }
         }
 
@@ -1003,12 +1053,13 @@
             try { 
                 state.draftArticle.imageBase64 = await generateImage(state.draftArticle.title); 
                 saveDraft(state.draftArticle); renderRefinerPreview(); showToast('이미지가 교체되었습니다.'); 
-            } catch (error) { showToast(`이미지 재생성 실패: ${error.message}`, true); 
+            } catch (error) { showToast(error.message, true); 
             } finally { btn.disabled = false; btn.textContent = '이미지 재생성'; } 
         }
         
         async function handleSeoSuggestion() {
-            const title = $('#title').value.trim(); const content = state.tiptap.getText();
+            const title = $('#title').value.trim();
+            const content = state.quill.getText(); 
             if (!title || !content.trim()) { showToast('SEO 제안을 받으려면 제목과 본문 내용이 필요합니다.', true); return; }
             const btn = $('[data-action="get-seo-suggestions"]'); const originalBtnText = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
@@ -1023,7 +1074,7 @@
                         showToast(`${type === 'title' ? '제목' : '요약'}이 적용되었습니다.`); closeModal();
                     }
                 });
-            } catch (error) { showToast(`SEO 제안 생성 실패: ${error.message}`, true);
+            } catch (error) { showToast(error.message, true);
             } finally { btn.disabled = false; btn.innerHTML = originalBtnText; }
         }
 
@@ -1039,7 +1090,7 @@
                     const target = e.target.closest('button[data-topic]');
                     if (target) { $('#ai-topic').value = target.dataset.topic; $('#ai-topic').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
                 });
-            } catch (error) { showToast(`주제 제안 생성 실패: ${error.message}`, true); resultsContainer.innerHTML = `<p class="text-xs text-red-500 text-center">오류가 발생했습니다. 다시 시도해주세요.</p>`;
+            } catch (error) { showToast(error.message, true); resultsContainer.innerHTML = `<p class="text-xs text-red-500 text-center">오류가 발생했습니다. 다시 시도해주세요.</p>`;
             } finally { btn.disabled = false; btn.innerHTML = originalBtnHtml; }
         }
         
@@ -1047,15 +1098,23 @@
             if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true);
             showToast("글 발행을 시작합니다...");
             try {
-                const { postId, imageBase64, title, summary, slug, tags, body } = state.draftArticle;
+                const { postId, imageBase64, title, summary, tags, body } = state.draftArticle;
+                let { slug } = state.draftArticle;
                 let refined_content = body;
-                if (imageBase64) { const imageUrl = await uploadBase64Image(imageBase64, title); refined_content = `<img src="${imageUrl}" alt="${title}" loading="lazy">` + body; }
+                if (imageBase64) { const imageUrl = await uploadBase64Image(imageBase64, title); refined_content = `<img src="${imageUrl}" alt="${title}" loading="lazy">${body}`; }
+                
+                // If it's a new post from draft, ensure slug is unique
+                if (!postId) {
+                    const baseSlug = slug || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+                    slug = await generateUniqueSlug(baseSlug);
+                }
+
                 const postData = { title, summary, slug, tags, refined_content, author_id: state.user.id, status: 'published' };
                 const { error } = postId ? await supabase.from('posts').update(postData).eq('id', postId) : await supabase.from('posts').insert(postData);
                 if (error) throw error;
                 clearDraft();
                 showToast(postId ? "글이 수정되었습니다!" : "글이 발행되었습니다!");
-                navigateTo('/dashboard');
+                navigateTo(`/post/${slug}`);
             } catch (error) { showToast(`발행 실패: ${error.message}`, true); }
         }
 
@@ -1067,7 +1126,7 @@
         async function deletePostAndAssociatedImages(postId) { 
             const { data: post } = await supabase.from('posts').select('refined_content').eq('id', postId).single(); 
             const content = post?.refined_content || ''; 
-            const imageUrls = content.match(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g) || []; 
+            const imageUrls = Array.from(content.matchAll(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g), m => m[0]);
             const imagePaths = imageUrls.map(url => url.split('/thought-images/')[1] || '').filter(Boolean); 
             if (imagePaths.length > 0) { await supabase.storage.from(IMAGE_BUCKET_NAME).remove(imagePaths); } 
             await supabase.from('posts').delete().eq('id', postId); 
@@ -1130,7 +1189,7 @@
             document.addEventListener('click', (e) => { const target = e.target.closest('[data-action]'); if (target) handleGlobalClick(e, target); });
             
             const searchOverlay = $('#search-overlay'); const searchInput = $('#search-input'); let searchTimeout;
-            searchInput.addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => performSearch(searchInput.value), 200); });
+            searchInput.addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => performSearch(searchInput.value), 300); });
             searchOverlay.addEventListener('click', (e) => {
                 const item = e.target.closest('a[data-action="route"]');
                 if (item) { navigateTo(item.getAttribute('href')); toggleSearch(false); } 
@@ -1145,7 +1204,8 @@
             supabase.auth.onAuthStateChange(async (_event, session) => {
                 const userJustChanged = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
-                if (userJustChanged) { renderNav(); }
+
+                // [OPTIMIZATION] Streamlined auth state change logic
                 if (!state.isAuthReady) {
                     state.isAuthReady = true;
                     renderNav();
@@ -1154,6 +1214,7 @@
                     handleRouting();
                     if (state.user) checkForUnsavedDraft();
                 } else if (userJustChanged) {
+                    renderNav();
                     handleRouting();
                 }
             });
@@ -1163,4 +1224,5 @@
     </script>
 </body>
 </html>
+
 
