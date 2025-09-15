@@ -40,6 +40,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Quill Editor -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 
     <!-- Code Highlighting (Prettify) Styles -->
     <style>
@@ -129,29 +132,16 @@
 
         .pagination-controls a.disabled { pointer-events: none; opacity: 0.5; }
         
-        /* Tiptap Editor Styles */
-        #tiptap-toolbar button { padding: 0.25rem 0.5rem; border-radius: 4px; transition: background-color 0.2s ease; }
-        #tiptap-toolbar button:hover { background-color: #e5e7eb; }
-        #tiptap-toolbar button.is-active { background-color: var(--accent); color: white; }
-        .ProseMirror { min-height: 300px; padding: 0.5rem 0.75rem; outline: none; line-height: 1.7; font-size: 0.95rem; }
-        
-        .ProseMirror img {
-            display: block;
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 1em 0;
-        }
-        
-        .ProseMirror > *:first-child { margin-top: 0; }
-        .ProseMirror > *:last-child { margin-bottom: 0; }
-        .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: #adb5bd; pointer-events: none; height: 0; }
-        .ProseMirror pre { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; white-space: pre-wrap; }
-        .ProseMirror code { background: #e5e7eb; padding: 0.1em 0.3em; border-radius: 4px; font-size: 0.9em; }
-        .ProseMirror pre > code { background: none; padding: 0; }
-        .ProseMirror blockquote { border-left: 3px solid #d1d5db; margin-left: 1rem; padding-left: 1rem; font-style: italic; }
-        .ProseMirror a { text-decoration: underline; cursor: pointer; }
-        
+        /* Quill Editor Styles */
+        #editor-container { background-color: white; border: 1px solid #D1D5DB; border-radius: 6px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        #editor-container .ql-toolbar { border: none; border-bottom: 1px solid #D1D5DB; border-top-left-radius: 6px; border-top-right-radius: 6px; background-color: #F9FAFB; padding: 8px; }
+        #editor-container .ql-container { border: none; }
+        #editor-container .ql-editor { min-height: 300px; font-size: 0.95rem; line-height: 1.7; color: var(--text-primary); padding: 12px; }
+        #editor-container .ql-editor.ql-blank::before { color: #adb5bd; font-style: normal; left: 12px; }
+        #editor-container .ql-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 1em 0; }
+        #editor-container .ql-editor pre { background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; white-space: pre-wrap; color: #374151; }
+        #editor-container .ql-editor blockquote { border-left: 3px solid #d1d5db; margin-left: 0; padding-left: 1rem; color: #6b7280; }
+
         .author-box { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem; }
         .author-box img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
         .author-box .name { font-family: var(--font-heading); font-weight: 600; color: var(--text-primary); }
@@ -241,7 +231,7 @@
 
         const state = { 
             user: null, 
-            tiptap: null,
+            quill: null,
             isAuthReady: false,
             draftArticle: null,
             tocObserver: null,
@@ -373,7 +363,7 @@
         }
 
         async function switchView(viewId, callback) {
-            if (state.tiptap) { state.tiptap.destroy(); state.tiptap = null; }
+            if (state.quill) { state.quill = null; } // Quill instance doesn't have a destroy method, so we just nullify it.
             if (state.tocObserver) { state.tocObserver.disconnect(); state.tocObserver = null; }
             const currentView = $('.app-view.active');
             if (currentView) {
@@ -484,15 +474,12 @@
         async function renderPostView(container, slug) {
             if (!slug) { navigateTo('/'); return; }
 
-            // [FIX START] 글과 프로필 정보를 별도로 조회하여 RLS(Row-Level Security) 문제를 회피합니다.
-            // 1. 글 내용 먼저 가져오기 (프로필 조인 없이)
             const { data: post, error: postError } = await supabase
                 .from('posts')
                 .select('*')
                 .eq('slug', slug)
                 .single();
 
-            // 2. 글이 없는 경우 에러 처리
             if (postError || !post) {
                 console.error("Error fetching post:", postError);
                 showToast('글을 찾을 수 없습니다.', true);
@@ -500,7 +487,6 @@
                 return;
             }
 
-            // 3. 작성자 프로필 정보 별도 조회
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('*')
@@ -511,11 +497,8 @@
                 console.warn("Could not fetch author profile:", profileError.message);
             }
 
-            // 4. 조회한 프로필 정보를 post 객체에 수동으로 추가
             post.profiles = profile || null;
-            // [FIX END]
 
-            // 조회수 증가 로직은 글을 성공적으로 가져온 후에 실행
             (async () => {
                 try {
                     const viewedPostsKey = 'viewed_posts';
@@ -534,7 +517,6 @@
                 }
             })();
 
-            // 권한 확인 및 화면 렌더링
             if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) {
                 showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true);
                 navigateTo('/');
@@ -607,8 +589,8 @@
                 }
                 post = data;
             }
-            container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-4"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-600 mb-2">본문</label><div id="tiptap-container" class="border border-gray-300 rounded-lg bg-white"><div id="tiptap-toolbar" class="p-2 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-1"></div><div id="editor" class="prose-custom max-w-none"></div></div></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="writer-image-toggle" checked></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
-            initTiptapEditor(post.refined_content || '');
+            container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-4"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-600 mb-2">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="writer-image-toggle" checked></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
+            initQuillEditor(post.refined_content || '');
             $('#save-draft-btn').addEventListener('click', () => handlePostSave('draft'));
             $('#publish-btn').addEventListener('click', () => handlePostSave('published'));
             $('[data-action="get-seo-suggestions"]').addEventListener('click', handleSeoSuggestion);
@@ -667,78 +649,67 @@
             return `<div class="author-box"><img src="${avatarUrl}" alt="${authorName}" loading="lazy"><div><p class="name">${authorName}</p><p class="bio">${authorBio}</p></div></div>`;
         }
         
-        async function initTiptapEditor(initialContent) {
-            const { Editor } = await import('https://esm.sh/@tiptap/core');
-            const { StarterKit } = await import('https://esm.sh/@tiptap/starter-kit');
-            const { Link } = await import('https://esm.sh/@tiptap/extension-link');
-            const { Placeholder } = await import('https://esm.sh/@tiptap/extension-placeholder');
+        function quillImageHandler() {
+            if (!state.user) {
+                showToast('이미지를 업로드하려면 로그인이 필요합니다.', true);
+                return;
+            }
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
 
-            const editorElement = document.querySelector('#editor');
-            const toolbarElement = document.querySelector('#tiptap-toolbar');
-            if (!editorElement || !toolbarElement) return;
-
-            state.tiptap = new Editor({
-                element: editorElement,
-                extensions: [
-                    StarterKit,
-                    Link.configure({ openOnClick: false }),
-                    Placeholder.configure({ placeholder: '여기에 글을 작성하세요...' })
-                ],
-                content: initialContent,
-                onUpdate: ({ editor }) => { updateToolbarState(editor); },
-                onSelectionUpdate: ({ editor }) => { updateToolbarState(editor); }
-            });
-
-            const toolbarButtons = [
-                { icon: '<b>B</b>', action: () => state.tiptap.chain().focus().toggleBold().run(), name: 'bold' },
-                { icon: '<i>I</i>', action: () => state.tiptap.chain().focus().toggleItalic().run(), name: 'italic' },
-                { icon: 'H1', action: () => state.tiptap.chain().focus().toggleHeading({ level: 1 }).run(), name: 'heading', level: 1 },
-                { icon: 'H2', action: () => state.tiptap.chain().focus().toggleHeading({ level: 2 }).run(), name: 'heading', level: 2 },
-                { icon: 'H3', action: () => state.tiptap.chain().focus().toggleHeading({ level: 3 }).run(), name: 'heading', level: 3 },
-                { icon: '¶', action: () => state.tiptap.chain().focus().setParagraph().run(), name: 'paragraph' },
-                { icon: '목록', action: () => state.tiptap.chain().focus().toggleBulletList().run(), name: 'bulletList' },
-                { icon: '번호', action: () => state.tiptap.chain().focus().toggleOrderedList().run(), name: 'orderedList' },
-                { icon: '코드', action: () => state.tiptap.chain().focus().toggleCodeBlock().run(), name: 'codeBlock' },
-                { icon: '인용', action: () => state.tiptap.chain().focus().toggleBlockquote().run(), name: 'blockquote' },
-                { icon: '이미지', action: handleImageUpload, name: 'image' }
-            ];
-
-            toolbarElement.innerHTML = '';
-            toolbarButtons.forEach(btn => {
-                const button = document.createElement('button');
-                button.type = 'button'; button.innerHTML = btn.icon; button.dataset.name = btn.name;
-                if(btn.level) button.dataset.level = btn.level;
-                button.addEventListener('click', btn.action);
-                toolbarElement.appendChild(button);
-            });
-            updateToolbarState(state.tiptap);
-        }
-        
-        function updateToolbarState(editor) {
-            const toolbar = $('#tiptap-toolbar'); if (!toolbar) return;
-            toolbar.querySelectorAll('button').forEach(btn => {
-                const name = btn.dataset.name; const level = btn.dataset.level ? { level: parseInt(btn.dataset.level) } : {};
-                btn.classList.toggle('is-active', editor.isActive(name, level));
-            });
-        }
-        
-        function handleImageUpload() {
-            if (!state.user) { showToast('이미지를 업로드하려면 로그인이 필요합니다.', true); return; }
-            const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
             input.onchange = async () => {
-                const file = input.files[0]; if (!file) return;
+                const file = input.files[0];
+                if (!file) return;
+                
                 showToast('이미지 업로드 중...');
                 try {
                     const webpBlob = await convertToWebP(file);
                     const imageUrl = await uploadImageFile(webpBlob);
-                    state.tiptap.chain().focus().setImage({ src: imageUrl }).run();
+                    
+                    const range = state.quill.getSelection(true);
+                    state.quill.insertEmbed(range.index, 'image', imageUrl, Quill.sources.USER);
+                    state.quill.setSelection(range.index + 1, Quill.sources.SILENT);
                     showToast('이미지 업로드 완료!');
-                } catch (error) { showToast(`이미지 업로드 실패: ${error.message}`, true); }
+                } catch (error) {
+                    showToast(`이미지 업로드 실패: ${error.message}`, true);
+                }
             };
-            input.click();
         }
 
-        function base64ToBlob(base64, contentType = 'image/webp') { const byteCharacters = atob(base64); const byteArrays = []; for (let offset = 0; offset < byteCharacters.length; offset += 512) { const slice = byteCharacters.slice(offset, offset + 512); const byteNumbers = new Array(slice.length); for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i); byteArrays.push(new Uint8Array(byteNumbers)); } return new Blob(byteArrays, { type: contentType }); }
+        function initQuillEditor(initialContent) {
+            const editorElement = document.querySelector('#editor');
+            if (!editorElement) return;
+
+            const toolbarOptions = [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'script': 'sub'}, { 'script': 'super' }],
+                [{ 'indent': '-1'}, { 'indent': '+1' }],
+                ['link', 'image'],
+                ['clean']
+            ];
+
+            state.quill = new Quill('#editor', {
+                modules: {
+                    toolbar: {
+                        container: toolbarOptions,
+                        handlers: {
+                            'image': quillImageHandler
+                        }
+                    }
+                },
+                placeholder: '여기에 글을 작성하세요...',
+                theme: 'snow'
+            });
+
+            if (initialContent) {
+                state.quill.root.innerHTML = initialContent;
+            }
+        }
         
         async function uploadImageFile(imageFile) {
             if (!imageFile) throw new Error("이미지 파일이 없습니다.");
@@ -771,6 +742,8 @@
                 reader.onerror = error => reject(error);
             });
         }
+        
+        function base64ToBlob(base64, contentType = 'image/webp') { const byteCharacters = atob(base64); const byteArrays = []; for (let offset = 0; offset < byteCharacters.length; offset += 512) { const slice = byteCharacters.slice(offset, offset + 512); const byteNumbers = new Array(slice.length); for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i); byteArrays.push(new Uint8Array(byteNumbers)); } return new Blob(byteArrays, { type: contentType }); }
 
         function lazyLoadImages() {
             const images = document.querySelectorAll('#post-content img');
@@ -787,14 +760,16 @@
         // =================================================================================
         async function generateText(topic, isInitial = true, draft = null, instruction = null) { 
             const proxyUrl = '/api/generate';
-            const systemPromptContent = `## Persona (글쓴이 설정)
-당신은 특정 주제에 대해 깊이 있는 지식을 가진 전문 작가입니다. 당신의 목표는 사용자가 제공한 주제에 대해 명확하고, 유익하며, 매력적인 고품질 블로그 게시물을 작성하는 것입니다.
+            // [PROMPT UPDATE START]
+            const systemPromptContent = `이제부터 너에게 임무를 줄게. 너의 임무는 내가 주는 주제에 대해 도움이 되는 방법으로 글을 쓰는 것이야. 도움이 되는 방법이라고 하면 그 주제에 대한 노하우와 팁, 활용방법, 도움이 되는 관련 내용, 도움이 되는 레퍼런스 자료와 온라인 사이트 링크 페이지를 말하는 거야. 어떤식으로든 글을 읽는 독자에게 주제에 대한 행동할 수 있는 활용법을 찾아서 만들어 내는데 중점을 둬야해. 사람들은 행동할 수 있는 활용방법에 대한 내용들을 좋아하거든. 그리고 글내용은 내가 출처를 타고 자세히 보지 않아도 되게끔 출처에 있는 내용을 가져와서 바로 보여줘.
+
 ## Technical Output Rules (기술적 출력 규칙)
 - **응답 형식:** 생성물은 반드시 제목(title), 한두 문장의 요약(summary), SEO 친화적인 영어 URL 슬러그(slug), 글의 핵심 키워드를 담은 태그 배열(tags), 그리고 HTML 형식의 본문(body)을 포함한 단일 JSON 객체여야 합니다.
 - **슬러그:** 소문자, 숫자, 하이픈(-)만 사용해야 합니다.
 - **태그:** 한국어로 3~5개 생성합니다.
 - **본문 HTML 규칙:** 유효한 HTML이어야 하며, 제목(title)을 중복 포함하지 마세요. 소제목은 '<h2>' 또는 '<h3>'를 사용하고, 코드 블록은 <pre class="prettyprint linenums">로 감싸주세요.
 - **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`;
+            // [PROMPT UPDATE END]
             
             const editorSystemPrompt = `당신은 유능한 블로그 편집자입니다. 당신의 임무는 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글 전체를 수정하고 완성된 결과물을 JSON 형식으로 반환하는 것입니다.
 - **글쓰기 원칙:** 명확성, 정확성, 간결성을 최우선으로 합니다. 전문적이고 신뢰감 있는 톤을 유지해주세요.
@@ -925,7 +900,7 @@
         async function handlePostSave(status) {
             const id = $('#post-id').value; const title = $('#title').value.trim(); const summary = $('#summary').value.trim();
             const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
-            let refined_content = state.tiptap.getHTML();
+            let refined_content = state.quill.root.innerHTML;
             if (!title || !summary) { showToast('제목과 요약은 필수 항목입니다.', true); return; }
 
             const button = $(status === 'published' ? '#publish-btn' : '#save-draft-btn'); const originalBtnText = button.textContent;
@@ -986,7 +961,7 @@
             const button = $('[data-action="go-to-refiner"]'); button.disabled = true; button.innerHTML = '<div class="ai-loader" style="display: block; margin: 0 auto;"></div>';
             try {
                 const summary = $('#summary').value.trim(); const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
-                const postId = $('#post-id').value || null; const postSlug = $('#post-slug').value || ''; const body = state.tiptap.getHTML();
+                const postId = $('#post-id').value || null; const postSlug = $('#post-slug').value || ''; const body = state.quill.root.innerHTML;
                 
                 let imageBase64 = null;
                 if ($('#writer-image-toggle').checked) { imageBase64 = await generateImage(title); }
@@ -1008,7 +983,7 @@
         }
         
         async function handleSeoSuggestion() {
-            const title = $('#title').value.trim(); const content = state.tiptap.getText();
+            const title = $('#title').value.trim(); const content = state.quill.getText();
             if (!title || !content.trim()) { showToast('SEO 제안을 받으려면 제목과 본문 내용이 필요합니다.', true); return; }
             const btn = $('[data-action="get-seo-suggestions"]'); const originalBtnText = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
