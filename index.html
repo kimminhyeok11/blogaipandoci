@@ -271,7 +271,6 @@
                 schema = { "@context": "https://schema.org", "@type": "WebSite", "url": SITE_URL, "name": "InsureLog", "description": "AI, 기술, 그리고 보험에 대한 깊이 있는 인사이트" };
             } else if (type === 'Article' && data && data.refined_content) {
                 const imageUrl = (data.refined_content.match(/<img[^>]+src="([^">]+)"/) || [])[1] || defaultMeta.image;
-                // [OPTIMIZATION] Fallback name consistency
                 const authorName = data.profiles?.full_name || '작성자';
                 schema = {
                     "@context": "https://schema.org", "@type": "Article", "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/post/${data.slug}` },
@@ -328,6 +327,29 @@
                 anime({ targets: modal.querySelector('.modal-content'), translateY: 20, scale: 0.98, opacity: 0, duration: 300, easing: 'easeInCubic' }).finished
             ]);
             $('#modal-container').innerHTML = '';
+        }
+
+        function renderProgressModal(message) {
+            let modalEl = $('#progress-modal');
+            if (!modalEl) {
+                const modalHtml = `<div id="progress-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4"><div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div><div class="modal-content relative bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-sm p-8 flex flex-col items-center gap-4"><div class="loader-spinner"></div><p id="progress-message" class="text-gray-600 font-medium text-center">${message}</p></div></div>`;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                modalEl = $('#progress-modal');
+                anime({ targets: modalEl.querySelector('.modal-backdrop'), opacity: [0, 1], duration: 400 });
+                anime({ targets: modalEl.querySelector('.modal-content'), translateY: [20, 0], scale: [0.98, 1], opacity: [0, 1], duration: 400 });
+            } else {
+                $('#progress-message').textContent = message;
+            }
+        }
+
+        async function closeProgressModal() {
+            const modalEl = $('#progress-modal');
+            if (!modalEl) return;
+            await Promise.all([
+                anime({ targets: modalEl.querySelector('.modal-backdrop'), opacity: 0, duration: 300 }).finished,
+                anime({ targets: modalEl.querySelector('.modal-content'), translateY: 20, scale: 0.98, opacity: 0, duration: 300 }).finished
+            ]);
+            modalEl.remove();
         }
 
         // =================================================================================
@@ -567,14 +589,15 @@
                 const statusBadge = post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : '';
                 return `<li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg"><div><a href="/post/${post.slug}" data-action="route" class="font-semibold text-gray-800 hover:text-black">${post.title}</a>${statusBadge}<p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')} / 조회수 ${(post.view_count || 0).toLocaleString()}</p></div><div class="space-x-2"><a href="/writer/${post.slug}" class="btn text-xs" data-action="route">수정</a><button class="btn text-xs" data-action="delete-post" data-id="${post.id}">삭제</button></div></li>`;
             }).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
-
+            
             container.innerHTML = `<div class="py-12 space-y-12">
-                <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글감 제안</h1><p class="text-gray-500 mb-6">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="topic-suggestion-form" class="flex items-center gap-2 mb-4"><input type="text" id="topic-keyword" class="form-input" placeholder="키워드 입력 (선택 사항)"><button type="submit" id="get-topic-suggestions-btn" class="btn btn-primary whitespace-nowrap"><span>제안 받기</span></button></form><div id="topic-suggestions" class="mt-6 space-y-3"></div></div></div>
+                <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글감 제안</h1><p class="text-gray-500 mb-6">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="topic-suggestion-form" class="flex items-center gap-2 mb-4"><input type="text" id="topic-keyword" class="form-input" placeholder="키워드 입력 (선택 사항)"><button type="submit" id="get-topic-suggestions-btn" class="btn btn-primary whitespace-nowrap"><span>제안 받기</span></button></form><div id="topic-suggestions-wrapper" class="hidden"><div id="topic-suggestions" class="mt-6 space-y-3"></div><div class="mt-6 pt-4 border-t border-gray-200 flex justify-end"><button id="bulk-publish-btn" class="btn btn-primary">선택한 주제로 일괄 발행</button></div></div></div></div>
                 <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글 생성</h1><p class="text-gray-500 mb-6">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="ai-writer-form" class="space-y-4"><div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div><div class="flex justify-end items-center gap-4 pt-2"><div class="flex items-center gap-2"><label for="ai-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="ai-image-toggle" checked></div><div class="ai-loader"></div><button type="submit" id="ai-generate-btn" class="btn btn-primary">AI로 초안 생성하기</button></div></form></div></div>
                 <div><div class="flex justify-between items-center mb-6"><div class="flex-grow"><h1 class="text-xl sm:text-2xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a></div><div class="bg-white border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div>
             </div>`;
             $('#ai-writer-form').addEventListener('submit', (e) => { e.preventDefault(); handleAiWriterSubmit(); });
             $('#topic-suggestion-form').addEventListener('submit', (e) => { e.preventDefault(); handleTopicSuggestion(); });
+            $('#bulk-publish-btn').addEventListener('click', handleBulkPublish);
         }
 
         async function renderWriterView(container, slug, draft = null) {
@@ -712,7 +735,7 @@
                     showToast('이미지 업로드 완료!');
                 } catch (error) {
                     showToast(`이미지 업로드 실패: ${error.message}`, true);
-                    state.quill.setContents(originalEditorContent); // Restore content on failure
+                    state.quill.setContents(originalEditorContent);
                 }
             };
         }
@@ -768,28 +791,33 @@
         // =================================================================================
         // --- GEMINI API & IMAGE HANDLING ---
         // =================================================================================
-        async function generateText(topic, isInitial = true, draft = null, instruction = null) { 
+        async function generateText(topic, isInitial = true, draft = null, instruction = null, internalLinksContext = null) { 
             const systemPromptContent = `## Persona (글쓴이 설정)
 당신은 특정 주제에 대해 깊이 있는 지식을 가진 전문 작가입니다. 당신의 목표는 사용자가 제공한 주제에 대해 명확하고, 유익하며, 매력적인 고품질 블로그 게시물을 작성하는 것입니다.
 ## Technical Output Rules (기술적 출력 규칙)
-- **응답 형식:** 생성물은 반드시 제목(title), 한두 문장의 요약(summary), SEO 친화적인 영어 URL 슬러그(slug), 글의 핵심 키워드를 담은 태그 배열(tags), 그리고 HTML 형식의 본문(body)을 포함한 단일 JSON 객체여야 합니다.
-- **슬러그:** 소문자, 숫자, 하이픈(-)만 사용해야 합니다.
+- **응답 형식:** 생성물은 반드시 제목(title), 한두 문장의 요약(summary), 글의 핵심 키워드를 담은 태그 배열(tags), 그리고 HTML 형식의 본문(body)을 포함한 단일 JSON 객체여야 합니다.
 - **태그:** 한국어로 3~5개 생성합니다.
 - **본문 HTML 규칙:** 유효한 HTML이어야 하며, 제목(title)을 중복 포함하지 마세요. 소제목은 '<h2>' 또는 '<h3>'를 사용하고, 코드 블록은 <pre class="prettyprint linenums">로 감싸주세요.
+- **[중요] 내부 링크 규칙:** 만약 내부 링크 컨텍스트가 제공되면, 본문 내용과 가장 관련성이 높은 2~3개의 링크를 선택하여 자연스럽게 삽입해야 합니다. 링크 형식은 반드시 <a href="/post/SLUG_VALUE">TITLE_VALUE</a> 이어야 합니다.
 - **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`;
             
             const editorSystemPrompt = `당신은 유능한 블로그 편집자입니다. 당신의 임무는 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글 전체를 수정하고 완성된 결과물을 JSON 형식으로 반환하는 것입니다.
 - **글쓰기 원칙:** 명확성, 정확성, 간결성을 최우선으로 합니다. 전문적이고 신뢰감 있는 톤을 유지해주세요.
-- **응답 형식:** 응답은 반드시 제목(title), 요약(summary), SEO 친화적인 영어 슬러그(slug), 태그 배열(tags), 본문(body) 필드를 포함한 단일 JSON 객체여야 합니다.
+- **응답 형식:** 응답은 반드시 제목(title), 요약(summary), 태그 배열(tags), 본문(body) 필드를 포함한 단일 JSON 객체여야 합니다.
 - **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`; 
             
-            let systemPrompt, userQuery; 
+            let systemPrompt, userQuery, responseSchema; 
             if (isInitial) { 
                 systemPrompt = { parts: [{ text: systemPromptContent }] };
                 userQuery = `주제: "${topic}"`; 
+                if (internalLinksContext && internalLinksContext.length > 0) {
+                    userQuery += `\n\n다음은 함께 발행될 관련 글 목록입니다. 이 글들을 자연스럽게 본문에 2~3개 링크해주세요: ${JSON.stringify(internalLinksContext)}`;
+                }
+                responseSchema = { type: "OBJECT", properties: { "title": { "type": "STRING" }, "summary": { "type": "STRING" }, "tags": { "type": "ARRAY", "items": { "type": "STRING" } }, "body": { "type": "STRING" } }, required: ["title", "summary", "tags", "body"] };
             } else { 
                 systemPrompt = { parts: [{ text: editorSystemPrompt }] };
-                userQuery = `{"draft": ${JSON.stringify(draft)}, "instruction": "${instruction}"}`; 
+                userQuery = `{"draft": ${JSON.stringify(draft)}, "instruction": "${instruction}"}`;
+                responseSchema = { type: "OBJECT", properties: { "title": { "type": "STRING" }, "summary": { "type": "STRING" }, "tags": { "type": "ARRAY", "items": { "type": "STRING" } }, "body": { "type": "STRING" } }, required: ["title", "summary", "tags", "body"] }; 
             } 
             
             const payload = { 
@@ -797,7 +825,7 @@
                 systemInstruction: systemPrompt, 
                 generationConfig: { 
                     responseMimeType: "application/json", 
-                    responseSchema: { type: "OBJECT", properties: { "title": { "type": "STRING" }, "summary": { "type": "STRING" }, "slug": { "type": "STRING" }, "tags": { "type": "ARRAY", "items": { "type": "STRING" } }, "body": { "type": "STRING" } }, required: ["title", "summary", "slug", "tags", "body"] } 
+                    responseSchema: responseSchema
                 } 
             }; 
             try {
@@ -900,8 +928,9 @@
         }
 
         async function handleProfileUpdateSubmit() {
-            const saveBtn = $('#save-settings-btn'); const originalBtnText = saveBtn.innerHTML;
-            saveBtn.disabled = true; saveBtn.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
+            const saveBtn = $('#save-settings-btn');
+            const originalBtnText = '변경사항 저장';
+            setButtonLoading(saveBtn, true);
             try {
                 const fullName = $('#full_name').value; const bio = $('#bio').value; const avatarFile = $('#avatar-upload').files[0];
                 let avatarUrl = null;
@@ -918,7 +947,7 @@
                 if (error) throw error;
                 showToast('프로필이 업데이트되었습니다.');
             } catch (error) { showToast(`프로필 업데이트 실패: ${error.message}`, true);
-            } finally { saveBtn.disabled = false; saveBtn.innerHTML = originalBtnText; }
+            } finally { setButtonLoading(saveBtn, false, originalBtnText); }
         }
 
         async function handlePostSave(status) {
@@ -928,7 +957,6 @@
             const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
             let refined_content = state.quill.root.innerHTML;
         
-            // Quill의 기본 빈 상태는 '<p><br></p>'이므로, 텍스트가 비었는지 확인
             if (state.quill.getText().trim() === '') {
                 refined_content = '';
             }
@@ -939,15 +967,12 @@
 
             const button = $(status === 'published' ? '#publish-btn' : '#save-draft-btn');
             const originalBtnText = button.textContent;
-            button.disabled = true;
-            button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
+            setButtonLoading(button, true);
 
             try {
                 let finalSlug = $('#post-slug').value;
-                // 새 글일 경우에만 slug를 생성하고 중복을 확인
                 if (!id) {
-                    const baseSlug = title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
-                    finalSlug = await generateUniqueSlug(baseSlug);
+                    finalSlug = await generateUniqueSlug(createBaseSlug(title));
                 }
 
                 const postData = { title, summary, refined_content, author_id: state.user.id, slug: finalSlug, tags, status };
@@ -961,35 +986,8 @@
             } catch (error) {
                 showToast(`저장 실패: ${error.message}`, true);
             } finally {
-                button.disabled = false;
-                button.textContent = originalBtnText;
+                setButtonLoading(button, false, originalBtnText);
             }
-        }
-
-        // [CRITICAL FIX] Ensure slug is unique before saving
-        async function generateUniqueSlug(baseSlug) {
-            let finalSlug = baseSlug;
-            let isUnique = false;
-            let attempt = 0;
-            const maxAttempts = 10;
-
-            while (!isUnique && attempt < maxAttempts) {
-                const { data, error } = await supabase.from('posts').select('slug').eq('slug', finalSlug).maybeSingle();
-                if (error) {
-                    throw new Error("Slug 중복 확인 중 오류가 발생했습니다.");
-                }
-                if (!data) {
-                    isUnique = true;
-                } else {
-                    const randomSuffix = Math.random().toString(36).substring(2, 8);
-                    finalSlug = `${baseSlug}-${randomSuffix}`;
-                    attempt++;
-                }
-            }
-            if (!isUnique) {
-                 throw new Error("고유한 URL을 생성하지 못했습니다. 제목을 변경해 보세요.");
-            }
-            return finalSlug;
         }
         
         async function handleAiWriterSubmit() { 
@@ -1020,7 +1018,7 @@
             
             $('#refiner-loader').style.display = 'flex';
             try { 
-                const currentDraft = { title: state.draftArticle.title, summary: state.draftArticle.summary, body: state.draftArticle.body, slug: state.draftArticle.slug, tags: state.draftArticle.tags }; 
+                const currentDraft = { title: state.draftArticle.title, summary: state.draftArticle.summary, body: state.draftArticle.body }; 
                 const updatedArticle = await generateText(null, false, currentDraft, instruction); 
                 state.draftArticle = { ...state.draftArticle, ...updatedArticle };
                 saveDraft(state.draftArticle); 
@@ -1032,7 +1030,8 @@
         async function handleGoToRefiner() {
             const title = $('#title').value.trim();
             if (!title) { showToast('AI로 다듬기 위해서는 제목이 필요합니다.', true); return; }
-            const button = $('[data-action="go-to-refiner"]'); button.disabled = true; button.innerHTML = '<div class="ai-loader" style="display: block; margin: 0 auto;"></div>';
+            const button = $('[data-action="go-to-refiner"]');
+            setButtonLoading(button, true);
             try {
                 const summary = $('#summary').value.trim(); const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
                 const postId = $('#post-id').value || null; const postSlug = $('#post-slug').value || ''; 
@@ -1045,24 +1044,25 @@
                 saveDraft(state.draftArticle);
                 navigateTo('/refiner');
             } catch (error) { showToast(error.message, true);
-            } finally { button.disabled = false; button.textContent = 'AI로 다듬기'; }
+            } finally { setButtonLoading(button, false, 'AI로 다듬기'); }
         }
 
         async function handleRegenerateImage() { 
-            const btn = $('#regenerate-image-btn'); btn.disabled = true; btn.innerHTML = '<div class="image-loader" style="display: block;"></div>'; 
+            const btn = $('#regenerate-image-btn'); 
+            setButtonLoading(btn, true);
             try { 
                 state.draftArticle.imageBase64 = await generateImage(state.draftArticle.title); 
                 saveDraft(state.draftArticle); renderRefinerPreview(); showToast('이미지가 교체되었습니다.'); 
             } catch (error) { showToast(error.message, true); 
-            } finally { btn.disabled = false; btn.textContent = '이미지 재생성'; } 
+            } finally { setButtonLoading(btn, false, '이미지 재생성'); } 
         }
         
         async function handleSeoSuggestion() {
             const title = $('#title').value.trim();
             const content = state.quill.getText(); 
             if (!title || !content.trim()) { showToast('SEO 제안을 받으려면 제목과 본문 내용이 필요합니다.', true); return; }
-            const btn = $('[data-action="get-seo-suggestions"]'); const originalBtnText = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
+            const btn = $('[data-action="get-seo-suggestions"]'); 
+            setButtonLoading(btn, true);
             try {
                 const suggestions = await generateSeoSuggestions(title, content);
                 const modalContent = `<div class="space-y-4"><div><h4 class="font-semibold text-sm mb-2 text-gray-800">추천 제목 (클릭하여 적용)</h4><ul class="space-y-2 text-sm">${suggestions.titles.map(t => `<li><button type="button" class="text-left w-full p-2 bg-gray-50 hover:bg-gray-100 rounded-md" data-type="title" data-value="${t.replace(/"/g, '&quot;')}">${t}</button></li>`).join('')}</ul></div><div><h4 class="font-semibold text-sm mb-2 text-gray-800">추천 요약 (클릭하여 적용)</h4><p><button type="button" class="text-left w-full p-2 bg-gray-50 hover:bg-gray-100 rounded-md text-sm" data-type="summary" data-value="${suggestions.description.replace(/"/g, '&quot;')}">${suggestions.description}</button></p></div></div>`;
@@ -1075,26 +1075,104 @@
                     }
                 });
             } catch (error) { showToast(error.message, true);
-            } finally { btn.disabled = false; btn.innerHTML = originalBtnText; }
+            } finally { setButtonLoading(btn, false, 'AI SEO 제안'); }
         }
 
         async function handleTopicSuggestion() {
-            const btn = $('#get-topic-suggestions-btn'); const originalBtnHtml = btn.innerHTML;
+            const btn = $('#get-topic-suggestions-btn'); 
+            const originalBtnHtml = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div><span>분석 중...</span>`;
-            const resultsContainer = $('#topic-suggestions'); resultsContainer.innerHTML = '';
+            const resultsWrapper = $('#topic-suggestions-wrapper');
+            const resultsContainer = $('#topic-suggestions'); 
+            resultsWrapper.classList.add('hidden');
+            resultsContainer.innerHTML = '';
             try {
                 const keyword = $('#topic-keyword').value.trim();
                 const topics = await generateTopicSuggestions(keyword);
-                resultsContainer.innerHTML = topics.map(topic => `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"><span class="text-sm text-gray-700">${topic}</span><button class="btn text-xs py-1 px-2" data-topic="${topic.replace(/"/g, '&quot;')}">이 주제로 글쓰기</button></div>`).join('');
+                resultsContainer.innerHTML = topics.map((topic, index) => `<div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg gap-4"><label class="flex items-center gap-3 cursor-pointer flex-grow"><input type="checkbox" class="topic-checkbox" data-topic="${topic.replace(/"/g, '&quot;')}" value="${topic}"><span class="text-sm text-gray-700">${topic}</span></label><button class="btn text-xs py-1 px-2 whitespace-nowrap" data-topic="${topic.replace(/"/g, '&quot;')}">이 주제로 쓰기</button></div>`).join('');
                 resultsContainer.addEventListener('click', (e) => {
                     const target = e.target.closest('button[data-topic]');
                     if (target) { $('#ai-topic').value = target.dataset.topic; $('#ai-topic').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
                 });
+                resultsWrapper.classList.remove('hidden');
             } catch (error) { showToast(error.message, true); resultsContainer.innerHTML = `<p class="text-xs text-red-500 text-center">오류가 발생했습니다. 다시 시도해주세요.</p>`;
             } finally { btn.disabled = false; btn.innerHTML = originalBtnHtml; }
         }
         
-        async function handleDirectPublish() {
+        async function handleBulkPublish() {
+            const checkedBoxes = document.querySelectorAll('.topic-checkbox:checked');
+            const selectedTopics = Array.from(checkedBoxes).map(box => box.value);
+
+            if (selectedTopics.length === 0) {
+                showToast('먼저 발행할 주제를 하나 이상 선택해주세요.', true);
+                return;
+            }
+
+            renderProgressModal('일괄 발행 준비 중...');
+
+            try {
+                // 1. 선 슬러그 생성
+                renderProgressModal(`고유 URL 생성 중... (0/${selectedTopics.length})`);
+                const articlesToProcess = [];
+                for (let i = 0; i < selectedTopics.length; i++) {
+                    const topic = selectedTopics[i];
+                    const uniqueSlug = await generateUniqueSlug(createBaseSlug(topic));
+                    articlesToProcess.push({ topic, slug: uniqueSlug });
+                    renderProgressModal(`고유 URL 생성 중... (${i + 1}/${selectedTopics.length})`);
+                }
+                
+                const generatedArticles = [];
+
+                // 2. 순차적으로 글 생성 및 내부 링크 삽입
+                for (let i = 0; i < articlesToProcess.length; i++) {
+                    const currentArticle = articlesToProcess[i];
+                    renderProgressModal(`글 생성 중... (${i + 1}/${articlesToProcess.length})`);
+                    
+                    const otherArticlesContext = articlesToProcess
+                        .filter((_, index) => index !== i)
+                        .map(a => ({ title: a.topic, slug: a.slug }));
+
+                    const articleContent = await generateText(currentArticle.topic, true, null, null, otherArticlesContext);
+                    generatedArticles.push({ ...currentArticle, ...articleContent });
+                }
+
+                // 3. 이미지 생성 및 DB 발행
+                for (let i = 0; i < generatedArticles.length; i++) {
+                    const article = generatedArticles[i];
+                    renderProgressModal(`이미지 생성 및 발행 중... (${i + 1}/${generatedArticles.length})`);
+                    
+                    const imageBase64 = await generateImage(article.title);
+                    const imageUrl = await uploadBase64Image(imageBase64, article.title);
+                    const refined_content = `<img src="${imageUrl}" alt="${article.title}" loading="lazy">${article.body}`;
+
+                    const postData = {
+                        title: article.title,
+                        summary: article.summary,
+                        refined_content: refined_content,
+                        author_id: state.user.id,
+                        slug: article.slug,
+                        tags: article.tags,
+                        status: 'published'
+                    };
+                    
+                    const { error } = await supabase.from('posts').insert(postData);
+                    if (error) {
+                        throw new Error(`'${article.title}' 글 발행 중 오류 발생: ${error.message}`);
+                    }
+                }
+
+                await closeProgressModal();
+                showToast(`${selectedTopics.length}개의 글이 모두 성공적으로 발행되었습니다!`);
+                navigateTo('/dashboard');
+
+            } catch (error) {
+                await closeProgressModal();
+                showToast(`일괄 발행 중 오류가 발생했습니다: ${error.message}`, true);
+            }
+        }
+
+
+        async function handleDirectPublish() { 
             if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true);
             showToast("글 발행을 시작합니다...");
             try {
@@ -1103,9 +1181,8 @@
                 let refined_content = body;
                 if (imageBase64) { const imageUrl = await uploadBase64Image(imageBase64, title); refined_content = `<img src="${imageUrl}" alt="${title}" loading="lazy">${body}`; }
                 
-                // If it's a new post from draft, ensure slug is unique
                 if (!postId) {
-                    const baseSlug = slug || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+                    const baseSlug = slug || createBaseSlug(title);
                     slug = await generateUniqueSlug(baseSlug);
                 }
 
@@ -1181,6 +1258,47 @@
         function clearDraft() { localStorage.removeItem(DRAFT_STORAGE_KEY); state.draftArticle = null; }
         function checkForUnsavedDraft() { const savedDraft = loadDraft(); if (savedDraft) { renderModal({ title: '미완성 초안 발견', content: '작업을 중단했던 AI 글 초안이 있습니다. 이어서 작성하시겠습니까?', confirmText: '이어쓰기', onConfirm: () => { state.draftArticle = savedDraft; navigateTo('/refiner'); closeModal(); }, cancelText: '삭제', onCancel: () => { clearDraft(); closeModal(); } }); } }
 
+        // [REFACTOR] Helper function to manage button loading states
+        function setButtonLoading(button, isLoading, originalText = '') {
+            if (isLoading) {
+                button.disabled = true;
+                button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px; margin: auto;"></div>`;
+            } else {
+                button.disabled = false;
+                button.innerHTML = `<span>${originalText}</span>`;
+            }
+        }
+
+        // [REFACTOR] Helper function for creating a base slug from a title
+        function createBaseSlug(title) {
+            return title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+        }
+
+        async function generateUniqueSlug(baseSlug) {
+            let finalSlug = baseSlug;
+            let isUnique = false;
+            let attempt = 0;
+            const maxAttempts = 10;
+
+            while (!isUnique && attempt < maxAttempts) {
+                const { data, error } = await supabase.from('posts').select('slug').eq('slug', finalSlug).maybeSingle();
+                if (error) {
+                    throw new Error("Slug 중복 확인 중 오류가 발생했습니다.");
+                }
+                if (!data) {
+                    isUnique = true;
+                } else {
+                    const randomSuffix = Math.random().toString(36).substring(2, 8);
+                    finalSlug = `${baseSlug}-${randomSuffix}`;
+                    attempt++;
+                }
+            }
+            if (!isUnique) {
+                 throw new Error("고유한 URL을 생성하지 못했습니다. 제목을 변경해 보세요.");
+            }
+            return finalSlug;
+        }
+
         // =================================================================================
         // --- INITIALIZATION ---
         // =================================================================================
@@ -1205,7 +1323,6 @@
                 const userJustChanged = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
 
-                // [OPTIMIZATION] Streamlined auth state change logic
                 if (!state.isAuthReady) {
                     state.isAuthReady = true;
                     renderNav();
