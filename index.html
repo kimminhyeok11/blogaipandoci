@@ -503,28 +503,33 @@
         }
         
         async function renderPostView(container, slug) {
-            if (!slug) { navigateTo('/'); return; }
-            const { data: post, error: postError } = await supabase
-                .from('posts')
-                .select('*, profiles(*)') // Join with profiles table
-                .eq('slug', slug)
-                .single();
-
-            if (postError || !post) {
-                console.error("Error fetching post:", postError);
-                showToast('글을 찾을 수 없습니다.', true);
+            if (!slug) {
                 navigateTo('/');
                 return;
             }
 
-            // No need for a separate profile fetch now
+            // [FIX] Decode the slug from the URL before querying the database.
+            const decodedSlug = decodeURIComponent(slug);
+
+            const { data: post, error: postError } = await supabase
+                .from('posts')
+                .select('*, profiles(*)')
+                .eq('slug', decodedSlug) // Use the decoded slug for the query
+                .single();
+
+            if (postError || !post) {
+                console.error("Error fetching post:", postError, "Attempted slug:", decodedSlug);
+                showToast('글을 찾을 수 없습니다.', true);
+                navigateTo('/');
+                return;
+            }
             
             (async () => {
                 try {
                     const viewedPostsKey = 'viewed_posts';
                     const viewedPosts = JSON.parse(sessionStorage.getItem(viewedPostsKey)) || [];
                     if (!viewedPosts.includes(post.id)) {
-                        const { error: rpcError } = await supabase.rpc('increment_post_view', { post_slug: slug });
+                        const { error: rpcError } = await supabase.rpc('increment_post_view', { post_slug: decodedSlug });
                         if (rpcError) {
                             console.error('조회수 증가 실패:', rpcError.message);
                         } else {
@@ -961,7 +966,7 @@
 
             try {
                 let finalSlug = $('#post-slug').value;
-                if (!id || !finalSlug) { // Also regenerate slug if it's missing for some reason
+                if (!id || !finalSlug) {
                     finalSlug = await generateUniqueSlug(createBaseSlug(title));
                 }
 
@@ -1180,8 +1185,8 @@
                 let refined_content = body;
                 if (imageBase64) { const imageUrl = await uploadBase64Image(imageBase64, title); refined_content = `<img src="${imageUrl}" alt="${title}" loading="lazy">${body}`; }
                 
-                if (!postId) {
-                    const baseSlug = slug || createBaseSlug(title);
+                if (!postId || !slug) {
+                    const baseSlug = createBaseSlug(title);
                     slug = await generateUniqueSlug(baseSlug);
                 }
 
@@ -1269,25 +1274,23 @@
             }
         }
         
-        // [REFACTOR & FIX] Helper function for creating a base slug from a title
         function createBaseSlug(title) {
             return title.toLowerCase().trim()
-                .replace(/[^\w\s-가-힣]/g, '') // [FIX] Keep Korean characters (가-힣)
-                .replace(/[\s_-]+/g, '-')      // Replace spaces/underscores with a single hyphen
-                .replace(/^-+|-+$/g, '');     // Remove leading/trailing hyphens
+                .replace(/[^\w\s-가-힣]/g, '')
+                .replace(/[\s_-]+/g, '-')
+                .replace(/^-+|-+$/g, '');
         }
 
         async function generateUniqueSlug(baseSlug) {
             let finalSlug = baseSlug;
-            let isUnique = false;
-            let attempt = 0;
-            const maxAttempts = 10;
-            
-            // Handle empty base slug case
             if (!finalSlug) {
                 finalSlug = Math.random().toString(36).substring(2, 10);
             }
 
+            let isUnique = false;
+            let attempt = 0;
+            const maxAttempts = 10;
+            
             while (!isUnique && attempt < maxAttempts) {
                 const { data, error } = await supabase.from('posts').select('slug').eq('slug', finalSlug).maybeSingle();
                 if (error) {
