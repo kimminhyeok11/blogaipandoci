@@ -219,7 +219,7 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
         const IMAGE_BUCKET_NAME = 'thought-images';
         const POSTS_PER_PAGE = 5;
-        const DRAFT_STORAGE_KEY = 'insurelog_ai_draft'; // Updated key for consistency
+        const DRAFT_STORAGE_KEY = 'insurelog_ai_draft';
         const defaultMeta = {
             title: "InsureLog",
             description: "AI, 기술, 그리고 보험에 대한 깊이 있는 인사이트를 탐험하는 공간, InsureLog입니다.",
@@ -506,7 +506,7 @@
             if (!slug) { navigateTo('/'); return; }
             const { data: post, error: postError } = await supabase
                 .from('posts')
-                .select('*')
+                .select('*, profiles(*)') // Join with profiles table
                 .eq('slug', slug)
                 .single();
 
@@ -517,18 +517,8 @@
                 return;
             }
 
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', post.author_id)
-                .single();
+            // No need for a separate profile fetch now
             
-            if (profileError) {
-                console.warn("Could not fetch author profile:", profileError.message);
-            }
-
-            post.profiles = profile || null;
-
             (async () => {
                 try {
                     const viewedPostsKey = 'viewed_posts';
@@ -971,7 +961,7 @@
 
             try {
                 let finalSlug = $('#post-slug').value;
-                if (!id) {
+                if (!id || !finalSlug) { // Also regenerate slug if it's missing for some reason
                     finalSlug = await generateUniqueSlug(createBaseSlug(title));
                 }
 
@@ -1267,7 +1257,6 @@
         function clearDraft() { localStorage.removeItem(DRAFT_STORAGE_KEY); state.draftArticle = null; }
         function checkForUnsavedDraft() { const savedDraft = loadDraft(); if (savedDraft) { renderModal({ title: '미완성 초안 발견', content: '작업을 중단했던 AI 글 초안이 있습니다. 이어서 작성하시겠습니까?', confirmText: '이어쓰기', onConfirm: () => { state.draftArticle = savedDraft; navigateTo('/refiner'); closeModal(); }, cancelText: '삭제', onCancel: () => { clearDraft(); closeModal(); } }); } }
 
-        // [REFACTOR] Helper function to manage button loading states
         function setButtonLoading(button, isLoading, originalText = '') {
             if (!button) return;
             if (isLoading) {
@@ -1279,11 +1268,13 @@
                 button.innerHTML = originalText || button._originalContent || '';
             }
         }
-
-
-        // [REFACTOR] Helper function for creating a base slug from a title
+        
+        // [REFACTOR & FIX] Helper function for creating a base slug from a title
         function createBaseSlug(title) {
-            return title.toLowerCase().trim().replace(/[^\w\s-가-힣]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+            return title.toLowerCase().trim()
+                .replace(/[^\w\s-가-힣]/g, '') // [FIX] Keep Korean characters (가-힣)
+                .replace(/[\s_-]+/g, '-')      // Replace spaces/underscores with a single hyphen
+                .replace(/^-+|-+$/g, '');     // Remove leading/trailing hyphens
         }
 
         async function generateUniqueSlug(baseSlug) {
@@ -1291,10 +1282,16 @@
             let isUnique = false;
             let attempt = 0;
             const maxAttempts = 10;
+            
+            // Handle empty base slug case
+            if (!finalSlug) {
+                finalSlug = Math.random().toString(36).substring(2, 10);
+            }
 
             while (!isUnique && attempt < maxAttempts) {
                 const { data, error } = await supabase.from('posts').select('slug').eq('slug', finalSlug).maybeSingle();
                 if (error) {
+                    console.error("Slug uniqueness check error:", error);
                     throw new Error("Slug 중복 확인 중 오류가 발생했습니다.");
                 }
                 if (!data) {
@@ -1353,4 +1350,5 @@
     </script>
 </body>
 </html>
+
 
