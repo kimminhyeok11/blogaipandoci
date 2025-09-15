@@ -112,6 +112,7 @@
         
         .form-input, .form-textarea { font-size: 0.85rem; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px; width: 100%; background-color: var(--bg-content); color: var(--text-primary); transition: all 0.2s ease; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
         .form-input:focus, .form-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1); }
+        .form-input:disabled { background-color: #F9FAFB; cursor: not-allowed; }
         
         .prose-custom { color: #374151; line-height: 1.7; font-size: 0.9rem; }
         .prose-custom > *:not(:first-child) { margin-top: 1.25em; }
@@ -133,7 +134,6 @@
 
         .pagination-controls a.disabled { pointer-events: none; opacity: 0.5; }
         
-        /* Quill Editor Styles */
         #editor-container { background-color: white; border: 1px solid #D1D5DB; border-radius: 8px; }
         .ql-editor { min-height: 300px; font-size: 0.95rem; line-height: 1.7; }
         .ql-toolbar { border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom: 1px solid #D1D5DB !important; }
@@ -507,14 +507,12 @@
                 navigateTo('/');
                 return;
             }
-
-            // [FIX] Decode the slug from the URL before querying the database.
             const decodedSlug = decodeURIComponent(slug);
 
             const { data: post, error: postError } = await supabase
                 .from('posts')
                 .select('*, profiles(*)')
-                .eq('slug', decodedSlug) // Use the decoded slug for the query
+                .eq('slug', decodedSlug)
                 .single();
 
             if (postError || !post) {
@@ -586,8 +584,8 @@
             }).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
             
             container.innerHTML = `<div class="py-12 space-y-12">
-                <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글감 제안</h1><p class="text-gray-500 mb-6">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="topic-suggestion-form" class="flex items-center gap-2 mb-4"><input type="text" id="topic-keyword" class="form-input" placeholder="키워드 입력 (선택 사항)"><button type="submit" id="get-topic-suggestions-btn" class="btn btn-primary whitespace-nowrap"><span>제안 받기</span></button></form><div id="topic-suggestions-wrapper" class="hidden"><div id="topic-suggestions" class="mt-6 space-y-3"></div><div class="mt-6 pt-4 border-t border-gray-200 flex justify-end items-center gap-4"><div class="flex items-center gap-2"><label for="bulk-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 함께 생성</label><input type="checkbox" id="bulk-image-toggle" checked></div><button id="bulk-publish-btn" class="btn btn-primary">선택한 주제로 일괄 발행</button></div></div></div></div>
-                <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글 생성</h1><p class="text-gray-500 mb-6">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="ai-writer-form" class="space-y-4"><div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div><div class="flex justify-end items-center gap-4 pt-2"><div class="flex items-center gap-2"><label for="ai-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="ai-image-toggle" checked></div><div class="ai-loader"></div><button type="submit" id="ai-generate-btn" class="btn btn-primary">AI로 초안 생성하기</button></div></form></div></div>
+                <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글감 제안</h1><p class="text-gray-500 mb-6">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="topic-suggestion-form" class="flex items-center gap-2 mb-4"><input type="text" id="topic-keyword" class="form-input" placeholder="키워드 입력 (선택 사항)"><button type="submit" id="get-topic-suggestions-btn" class="btn btn-primary whitespace-nowrap"><span>제안 받기</span></button></form><div id="topic-suggestions-wrapper" class="hidden"><div id="topic-suggestions" class="mt-6 space-y-3"></div><div class="mt-6 pt-4 border-t border-gray-200 flex justify-end items-center gap-4"><div class="flex items-center gap-2"><label for="bulk-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 함께 생성</label><input type="checkbox" id="bulk-image-toggle"></div><button id="bulk-publish-btn" class="btn btn-primary">선택한 주제로 일괄 발행</button></div></div></div></div>
+                <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글 생성</h1><p class="text-gray-500 mb-6">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="ai-writer-form" class="space-y-4"><div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div><div class="flex justify-end items-center gap-4 pt-2"><div class="flex items-center gap-2"><label for="ai-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="ai-image-toggle"></div><div class="ai-loader"></div><button type="submit" id="ai-generate-btn" class="btn btn-primary">AI로 초안 생성하기</button></div></form></div></div>
                 <div><div class="flex justify-between items-center mb-6"><div class="flex-grow"><h1 class="text-xl sm:text-2xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a></div><div class="bg-white border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div>
             </div>`;
             $('#ai-writer-form').addEventListener('submit', (e) => { e.preventDefault(); handleAiWriterSubmit(); });
@@ -605,7 +603,7 @@
                 const { data, error } = await supabase
                     .from('posts')
                     .select('*')
-                    .eq('slug', slug)
+                    .eq('slug', decodeURIComponent(slug))
                     .single();
 
                 if (error || !data || data.author_id !== state.user.id) {
@@ -615,7 +613,7 @@
                 }
                 post = data;
             }
-            container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-4"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-600 mb-2">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="writer-image-toggle" checked></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
+            container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="go-back"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>대시보드로</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-4"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-status" value="${post.status || 'draft'}"><div><div class="flex justify-between items-center mb-2"><label for="title" class="block text-sm font-medium text-gray-600">제목</label><button type="button" class="btn text-xs" data-action="get-seo-suggestions">AI SEO 제안</button></div><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="slug-input" class="block text-sm font-medium text-gray-600">URL 주소 (영문, 숫자, 하이픈(-)만 가능)</label><input type="text" id="slug-input" class="form-input mt-2" required value="${post.slug}" ${post.id ? 'disabled' : ''}><p class="text-xs text-gray-500 mt-1">${post.id ? '발행된 글의 URL 주소는 변경할 수 없습니다.' : '새 글 작성 시 영문으로 자동 변환됩니다.'}</p></div><div><label for="summary" class="block text-sm font-medium text-gray-600 mb-2">요약</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-600 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-600 mb-2">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-between items-center pt-4"><div class="flex items-center gap-2"><label class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="writer-image-toggle"></div><div class="flex items-center space-x-3"><button type="button" id="save-draft-btn" class="btn">초안으로 저장</button><button type="button" id="publish-btn" class="btn btn-primary">발행하기</button><div class="border-l border-gray-300 h-6"></div><button type="button" class="btn" data-action="go-to-refiner">AI로 다듬기</button></div></div></form></div>`;
             initQuillEditor(post.refined_content || '');
             $('#save-draft-btn').addEventListener('click', () => handlePostSave('draft'));
             $('#publish-btn').addEventListener('click', () => handlePostSave('published'));
@@ -790,7 +788,8 @@
             const systemPromptContent = `## Persona (글쓴이 설정)
 당신은 특정 주제에 대해 깊이 있는 지식을 가진 전문 작가입니다. 당신의 목표는 사용자가 제공한 주제에 대해 명확하고, 유익하며, 매력적인 고품질 블로그 게시물을 작성하는 것입니다.
 ## Technical Output Rules (기술적 출력 규칙)
-- **응답 형식:** 생성물은 반드시 제목(title), 한두 문장의 요약(summary), 글의 핵심 키워드를 담은 태그 배열(tags), 그리고 HTML 형식의 본문(body)을 포함한 단일 JSON 객체여야 합니다.
+- **응답 형식:** 생성물은 반드시 제목(title), URL용 영문 제목(english_title), 요약(summary), 태그 배열(tags), 그리고 HTML 형식의 본문(body)을 포함한 단일 JSON 객체여야 합니다.
+- **URL용 영문 제목:** 한국어 제목을 기반으로, URL에 사용하기 좋은 짧고 모든 문자가 소문자인 영문 슬러그(english_title)를 생성합니다. (예: 'ai-insurance-trends-2025').
 - **태그:** 한국어로 3~5개 생성합니다.
 - **본문 HTML 규칙:** 유효한 HTML이어야 하며, 제목(title)을 중복 포함하지 마세요. 소제목은 '<h2>' 또는 '<h3>'를 사용하고, 코드 블록은 <pre class="prettyprint linenums">로 감싸주세요.
 - **[중요] 내부 링크 규칙:** 만약 내부 링크 컨텍스트가 제공되면, 본문 내용과 가장 관련성이 높은 2~3개의 링크를 선택하여 자연스럽게 삽입해야 합니다. 링크 형식은 반드시 <a href="/post/SLUG_VALUE">TITLE_VALUE</a> 이어야 합니다.
@@ -798,21 +797,33 @@
             
             const editorSystemPrompt = `당신은 유능한 블로그 편집자입니다. 당신의 임무는 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글 전체를 수정하고 완성된 결과물을 JSON 형식으로 반환하는 것입니다.
 - **글쓰기 원칙:** 명확성, 정확성, 간결성을 최우선으로 합니다. 전문적이고 신뢰감 있는 톤을 유지해주세요.
-- **응답 형식:** 응답은 반드시 제목(title), 요약(summary), 태그 배열(tags), 본문(body) 필드를 포함한 단일 JSON 객체여야 합니다.
+- **응답 형식:** 응답은 반드시 제목(title), URL용 영문 제목(english_title), 요약(summary), 태그 배열(tags), 본문(body) 필드를 포함한 단일 JSON 객체여야 합니다.
 - **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`; 
             
             let systemPrompt, userQuery, responseSchema; 
+            const baseSchema = {
+                type: "OBJECT",
+                properties: {
+                    "title": { "type": "STRING" },
+                    "english_title": { "type": "STRING" },
+                    "summary": { "type": "STRING" },
+                    "tags": { "type": "ARRAY", "items": { "type": "STRING" } },
+                    "body": { "type": "STRING" }
+                },
+                required: ["title", "english_title", "summary", "tags", "body"]
+            };
+
             if (isInitial) { 
                 systemPrompt = { parts: [{ text: systemPromptContent }] };
                 userQuery = `주제: "${topic}"`; 
                 if (internalLinksContext && internalLinksContext.length > 0) {
                     userQuery += `\n\n다음은 함께 발행될 관련 글 목록입니다. 이 글들을 자연스럽게 본문에 2~3개 링크해주세요: ${JSON.stringify(internalLinksContext)}`;
                 }
-                responseSchema = { type: "OBJECT", properties: { "title": { "type": "STRING" }, "summary": { "type": "STRING" }, "tags": { "type": "ARRAY", "items": { "type": "STRING" } }, "body": { "type": "STRING" } }, required: ["title", "summary", "tags", "body"] };
+                responseSchema = baseSchema;
             } else { 
                 systemPrompt = { parts: [{ text: editorSystemPrompt }] };
                 userQuery = `{"draft": ${JSON.stringify(draft)}, "instruction": "${instruction}"}`;
-                responseSchema = { type: "OBJECT", properties: { "title": { "type": "STRING" }, "summary": { "type": "STRING" }, "tags": { "type": "ARRAY", "items": { "type": "STRING" } }, "body": { "type": "STRING" } }, required: ["title", "summary", "tags", "body"] }; 
+                responseSchema = baseSchema; 
             } 
             
             const payload = { 
@@ -951,23 +962,28 @@
             const summary = $('#summary').value.trim();
             const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
             let refined_content = state.quill.root.innerHTML;
+            let finalSlug = $('#slug-input').value.trim();
         
-            if (state.quill.getText().trim() === '') {
-                refined_content = '';
-            }
-            if (!title || !summary) {
-                showToast('제목과 요약은 필수 항목입니다.', true);
-                return;
-            }
+            if (state.quill.getText().trim() === '') refined_content = '';
+            if (!title || !summary) { showToast('제목과 요약은 필수 항목입니다.', true); return; }
+            if (!id && !finalSlug) { showToast('URL 주소는 필수 항목입니다.', true); return; }
+
+            finalSlug = createBaseSlug(finalSlug); // Clean the user-provided slug
+            $('#slug-input').value = finalSlug;
 
             const button = $(status === 'published' ? '#publish-btn' : '#save-draft-btn');
             const originalBtnText = button.textContent;
             setButtonLoading(button, true, originalBtnText);
 
             try {
-                let finalSlug = $('#post-slug').value;
-                if (!id || !finalSlug) {
-                    finalSlug = await generateUniqueSlug(createBaseSlug(title));
+                if (!id) { // Only check for uniqueness on new posts
+                    const { data, error } = await supabase.from('posts').select('slug').eq('slug', finalSlug).maybeSingle();
+                    if (error) throw new Error('URL 중복 확인 중 오류 발생');
+                    if (data) {
+                        showToast('이미 사용 중인 URL 주소입니다. 다른 주소를 입력해주세요.', true);
+                        setButtonLoading(button, false, originalBtnText);
+                        return;
+                    }
                 }
 
                 const postData = { title, summary, refined_content, author_id: state.user.id, slug: finalSlug, tags, status };
@@ -980,7 +996,6 @@
                 navigateTo(status === 'published' ? `/post/${finalSlug}` : '/dashboard');
             } catch (error) {
                 showToast(`저장 실패: ${error.message}`, true);
-            } finally {
                 setButtonLoading(button, false, originalBtnText);
             }
         }
@@ -1013,7 +1028,7 @@
             
             $('#refiner-loader').style.display = 'flex';
             try { 
-                const currentDraft = { title: state.draftArticle.title, summary: state.draftArticle.summary, body: state.draftArticle.body }; 
+                const currentDraft = { title: state.draftArticle.title, summary: state.draftArticle.summary, body: state.draftArticle.body, english_title: state.draftArticle.english_title }; 
                 const updatedArticle = await generateText(null, false, currentDraft, instruction); 
                 state.draftArticle = { ...state.draftArticle, ...updatedArticle };
                 saveDraft(state.draftArticle); 
@@ -1030,13 +1045,13 @@
             setButtonLoading(button, true, originalText);
             try {
                 const summary = $('#summary').value.trim(); const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
-                const postId = $('#post-id').value || null; const postSlug = $('#post-slug').value || ''; 
+                const postId = $('#post-id').value || null; const postSlug = $('#slug-input').value || ''; 
                 const body = state.quill.root.innerHTML;
                 
                 let imageBase64 = null;
                 if ($('#writer-image-toggle').checked) { imageBase64 = await generateImage(title); }
                 
-                state.draftArticle = { postId, title, summary, body, imageBase64, slug: postSlug, tags };
+                state.draftArticle = { postId, title, summary, body, imageBase64, slug: postSlug, tags, english_title: postSlug };
                 saveDraft(state.draftArticle);
                 navigateTo('/refiner');
             } catch (error) { showToast(error.message, true);
@@ -1110,36 +1125,19 @@
             renderProgressModal('일괄 발행 준비 중...');
 
             try {
-                // 1. 선 슬러그 생성
-                renderProgressModal(`고유 URL 생성 중... (0/${selectedTopics.length})`);
-                const articlesToProcess = [];
-                for (let i = 0; i < selectedTopics.length; i++) {
-                    const topic = selectedTopics[i];
-                    const uniqueSlug = await generateUniqueSlug(createBaseSlug(topic));
-                    articlesToProcess.push({ topic, slug: uniqueSlug });
-                    renderProgressModal(`고유 URL 생성 중... (${i + 1}/${selectedTopics.length})`);
-                }
-                
+                const articlesToGenerate = selectedTopics.map(topic => ({ topic }));
+
                 const generatedArticles = [];
-
-                // 2. 순차적으로 글 생성 및 내부 링크 삽입
-                for (let i = 0; i < articlesToProcess.length; i++) {
-                    const currentArticle = articlesToProcess[i];
-                    renderProgressModal(`글 생성 중... (${i + 1}/${articlesToProcess.length})`);
-                    
-                    const otherArticlesContext = articlesToProcess
-                        .filter((_, index) => index !== i)
-                        .map(a => ({ title: a.topic, slug: a.slug }));
-
-                    const articleContent = await generateText(currentArticle.topic, true, null, null, otherArticlesContext);
-                    generatedArticles.push({ ...currentArticle, ...articleContent });
+                for (let i = 0; i < articlesToGenerate.length; i++) {
+                    renderProgressModal(`글 생성 중... (${i + 1}/${articlesToGenerate.length})`);
+                    const articleContent = await generateText(articlesToGenerate[i].topic, true, null, null, []);
+                    generatedArticles.push({ ...articlesToGenerate[i], ...articleContent });
                 }
 
-                // 3. 이미지 생성(선택적) 및 DB 발행
                 for (let i = 0; i < generatedArticles.length; i++) {
                     const article = generatedArticles[i];
                     let refined_content = article.body;
-
+                    
                     if (shouldGenerateImages) {
                         renderProgressModal(`이미지 생성 및 발행 중... (${i + 1}/${generatedArticles.length})`);
                         const imageBase64 = await generateImage(article.title);
@@ -1149,20 +1147,21 @@
                         renderProgressModal(`글 발행 중... (${i + 1}/${generatedArticles.length})`);
                     }
 
+                    const baseSlug = createBaseSlug(article.english_title);
+                    const finalSlug = await generateUniqueSlug(baseSlug);
+
                     const postData = {
                         title: article.title,
                         summary: article.summary,
                         refined_content: refined_content,
                         author_id: state.user.id,
-                        slug: article.slug,
+                        slug: finalSlug,
                         tags: article.tags,
                         status: 'published'
                     };
                     
                     const { error } = await supabase.from('posts').insert(postData);
-                    if (error) {
-                        throw new Error(`'${article.title}' 글 발행 중 오류 발생: ${error.message}`);
-                    }
+                    if (error) throw new Error(`'${article.title}' 글 발행 중 오류 발생: ${error.message}`);
                 }
 
                 await closeProgressModal();
@@ -1180,13 +1179,13 @@
             if (!state.draftArticle) return showToast("발행할 초안이 없습니다.", true);
             showToast("글 발행을 시작합니다...");
             try {
-                const { postId, imageBase64, title, summary, tags, body } = state.draftArticle;
+                const { postId, imageBase64, title, summary, tags, body, english_title } = state.draftArticle;
                 let { slug } = state.draftArticle;
                 let refined_content = body;
                 if (imageBase64) { const imageUrl = await uploadBase64Image(imageBase64, title); refined_content = `<img src="${imageUrl}" alt="${title}" loading="lazy">${body}`; }
                 
                 if (!postId || !slug) {
-                    const baseSlug = createBaseSlug(title);
+                    const baseSlug = createBaseSlug(english_title || title);
                     slug = await generateUniqueSlug(baseSlug);
                 }
 
@@ -1201,7 +1200,11 @@
 
         async function handleMoveToEditor() { 
             if (!state.draftArticle) return showToast("편집할 초안이 없습니다.", true); 
-            switchView('view-writer', (el) => renderWriterView(el, null, state.draftArticle)); 
+            const draftForEditor = {
+                ...state.draftArticle,
+                slug: createBaseSlug(state.draftArticle.english_title || state.draftArticle.title)
+            };
+            switchView('view-writer', (el) => renderWriterView(el, null, draftForEditor)); 
         }
 
         async function deletePostAndAssociatedImages(postId) { 
@@ -1274,11 +1277,8 @@
             }
         }
         
-        function createBaseSlug(title) {
-            return title.toLowerCase().trim()
-                .replace(/[^\w\s-가-힣]/g, '')
-                .replace(/[\s_-]+/g, '-')
-                .replace(/^-+|-+$/g, '');
+        function createBaseSlug(text) {
+            return text.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
         }
 
         async function generateUniqueSlug(baseSlug) {
