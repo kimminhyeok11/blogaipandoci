@@ -219,7 +219,7 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
         const IMAGE_BUCKET_NAME = 'thought-images';
         const POSTS_PER_PAGE = 5;
-        const DRAFT_STORAGE_KEY = 'cortexlog_ai_draft';
+        const DRAFT_STORAGE_KEY = 'insurelog_ai_draft'; // Updated key for consistency
         const defaultMeta = {
             title: "InsureLog",
             description: "AI, 기술, 그리고 보험에 대한 깊이 있는 인사이트를 탐험하는 공간, InsureLog입니다.",
@@ -591,7 +591,7 @@
             }).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
             
             container.innerHTML = `<div class="py-12 space-y-12">
-                <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글감 제안</h1><p class="text-gray-500 mb-6">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="topic-suggestion-form" class="flex items-center gap-2 mb-4"><input type="text" id="topic-keyword" class="form-input" placeholder="키워드 입력 (선택 사항)"><button type="submit" id="get-topic-suggestions-btn" class="btn btn-primary whitespace-nowrap"><span>제안 받기</span></button></form><div id="topic-suggestions-wrapper" class="hidden"><div id="topic-suggestions" class="mt-6 space-y-3"></div><div class="mt-6 pt-4 border-t border-gray-200 flex justify-end"><button id="bulk-publish-btn" class="btn btn-primary">선택한 주제로 일괄 발행</button></div></div></div></div>
+                <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글감 제안</h1><p class="text-gray-500 mb-6">최신 트렌드를 분석하여 새로운 글쓰기 아이디어를 얻어보세요.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="topic-suggestion-form" class="flex items-center gap-2 mb-4"><input type="text" id="topic-keyword" class="form-input" placeholder="키워드 입력 (선택 사항)"><button type="submit" id="get-topic-suggestions-btn" class="btn btn-primary whitespace-nowrap"><span>제안 받기</span></button></form><div id="topic-suggestions-wrapper" class="hidden"><div id="topic-suggestions" class="mt-6 space-y-3"></div><div class="mt-6 pt-4 border-t border-gray-200 flex justify-end items-center gap-4"><div class="flex items-center gap-2"><label for="bulk-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 함께 생성</label><input type="checkbox" id="bulk-image-toggle" checked></div><button id="bulk-publish-btn" class="btn btn-primary">선택한 주제로 일괄 발행</button></div></div></div></div>
                 <div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-2">AI 글 생성</h1><p class="text-gray-500 mb-6">아이디어나 주제만으로 AI가 고품질의 초안을 생성합니다.</p><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6"><form id="ai-writer-form" class="space-y-4"><div><label for="ai-topic" class="block text-sm font-medium text-gray-600 mb-2">글 주제</label><input type="text" id="ai-topic" class="form-input" required placeholder="예: '20대 사회초년생을 위한 실손보험 가이드'"></div><div class="flex justify-end items-center gap-4 pt-2"><div class="flex items-center gap-2"><label for="ai-image-toggle" class="text-sm font-medium text-gray-600 cursor-pointer">대표 이미지 생성</label><input type="checkbox" id="ai-image-toggle" checked></div><div class="ai-loader"></div><button type="submit" id="ai-generate-btn" class="btn btn-primary">AI로 초안 생성하기</button></div></form></div></div>
                 <div><div class="flex justify-between items-center mb-6"><div class="flex-grow"><h1 class="text-xl sm:text-2xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm" data-action="route"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>새 글 수동 작성</a></div><div class="bg-white border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div>
             </div>`;
@@ -930,7 +930,7 @@
         async function handleProfileUpdateSubmit() {
             const saveBtn = $('#save-settings-btn');
             const originalBtnText = '변경사항 저장';
-            setButtonLoading(saveBtn, true);
+            setButtonLoading(saveBtn, true, originalBtnText);
             try {
                 const fullName = $('#full_name').value; const bio = $('#bio').value; const avatarFile = $('#avatar-upload').files[0];
                 let avatarUrl = null;
@@ -967,7 +967,7 @@
 
             const button = $(status === 'published' ? '#publish-btn' : '#save-draft-btn');
             const originalBtnText = button.textContent;
-            setButtonLoading(button, true);
+            setButtonLoading(button, true, originalBtnText);
 
             try {
                 let finalSlug = $('#post-slug').value;
@@ -1031,7 +1031,8 @@
             const title = $('#title').value.trim();
             if (!title) { showToast('AI로 다듬기 위해서는 제목이 필요합니다.', true); return; }
             const button = $('[data-action="go-to-refiner"]');
-            setButtonLoading(button, true);
+            const originalText = 'AI로 다듬기';
+            setButtonLoading(button, true, originalText);
             try {
                 const summary = $('#summary').value.trim(); const tags = $('#tags').value.split(',').map(tag => tag.trim()).filter(Boolean);
                 const postId = $('#post-id').value || null; const postSlug = $('#post-slug').value || ''; 
@@ -1044,17 +1045,18 @@
                 saveDraft(state.draftArticle);
                 navigateTo('/refiner');
             } catch (error) { showToast(error.message, true);
-            } finally { setButtonLoading(button, false, 'AI로 다듬기'); }
+            } finally { setButtonLoading(button, false, originalText); }
         }
 
         async function handleRegenerateImage() { 
             const btn = $('#regenerate-image-btn'); 
-            setButtonLoading(btn, true);
+            const originalText = '이미지 재생성';
+            setButtonLoading(btn, true, originalText);
             try { 
                 state.draftArticle.imageBase64 = await generateImage(state.draftArticle.title); 
                 saveDraft(state.draftArticle); renderRefinerPreview(); showToast('이미지가 교체되었습니다.'); 
             } catch (error) { showToast(error.message, true); 
-            } finally { setButtonLoading(btn, false, '이미지 재생성'); } 
+            } finally { setButtonLoading(btn, false, originalText); } 
         }
         
         async function handleSeoSuggestion() {
@@ -1062,7 +1064,8 @@
             const content = state.quill.getText(); 
             if (!title || !content.trim()) { showToast('SEO 제안을 받으려면 제목과 본문 내용이 필요합니다.', true); return; }
             const btn = $('[data-action="get-seo-suggestions"]'); 
-            setButtonLoading(btn, true);
+            const originalText = 'AI SEO 제안';
+            setButtonLoading(btn, true, originalText);
             try {
                 const suggestions = await generateSeoSuggestions(title, content);
                 const modalContent = `<div class="space-y-4"><div><h4 class="font-semibold text-sm mb-2 text-gray-800">추천 제목 (클릭하여 적용)</h4><ul class="space-y-2 text-sm">${suggestions.titles.map(t => `<li><button type="button" class="text-left w-full p-2 bg-gray-50 hover:bg-gray-100 rounded-md" data-type="title" data-value="${t.replace(/"/g, '&quot;')}">${t}</button></li>`).join('')}</ul></div><div><h4 class="font-semibold text-sm mb-2 text-gray-800">추천 요약 (클릭하여 적용)</h4><p><button type="button" class="text-left w-full p-2 bg-gray-50 hover:bg-gray-100 rounded-md text-sm" data-type="summary" data-value="${suggestions.description.replace(/"/g, '&quot;')}">${suggestions.description}</button></p></div></div>`;
@@ -1075,7 +1078,7 @@
                     }
                 });
             } catch (error) { showToast(error.message, true);
-            } finally { setButtonLoading(btn, false, 'AI SEO 제안'); }
+            } finally { setButtonLoading(btn, false, originalText); }
         }
 
         async function handleTopicSuggestion() {
@@ -1102,6 +1105,7 @@
         async function handleBulkPublish() {
             const checkedBoxes = document.querySelectorAll('.topic-checkbox:checked');
             const selectedTopics = Array.from(checkedBoxes).map(box => box.value);
+            const shouldGenerateImages = document.querySelector('#bulk-image-toggle').checked;
 
             if (selectedTopics.length === 0) {
                 showToast('먼저 발행할 주제를 하나 이상 선택해주세요.', true);
@@ -1136,14 +1140,19 @@
                     generatedArticles.push({ ...currentArticle, ...articleContent });
                 }
 
-                // 3. 이미지 생성 및 DB 발행
+                // 3. 이미지 생성(선택적) 및 DB 발행
                 for (let i = 0; i < generatedArticles.length; i++) {
                     const article = generatedArticles[i];
-                    renderProgressModal(`이미지 생성 및 발행 중... (${i + 1}/${generatedArticles.length})`);
-                    
-                    const imageBase64 = await generateImage(article.title);
-                    const imageUrl = await uploadBase64Image(imageBase64, article.title);
-                    const refined_content = `<img src="${imageUrl}" alt="${article.title}" loading="lazy">${article.body}`;
+                    let refined_content = article.body;
+
+                    if (shouldGenerateImages) {
+                        renderProgressModal(`이미지 생성 및 발행 중... (${i + 1}/${generatedArticles.length})`);
+                        const imageBase64 = await generateImage(article.title);
+                        const imageUrl = await uploadBase64Image(imageBase64, article.title);
+                        refined_content = `<img src="${imageUrl}" alt="${article.title}" loading="lazy">${article.body}`;
+                    } else {
+                        renderProgressModal(`글 발행 중... (${i + 1}/${generatedArticles.length})`);
+                    }
 
                     const postData = {
                         title: article.title,
@@ -1260,18 +1269,21 @@
 
         // [REFACTOR] Helper function to manage button loading states
         function setButtonLoading(button, isLoading, originalText = '') {
+            if (!button) return;
             if (isLoading) {
+                button._originalContent = button.innerHTML;
                 button.disabled = true;
                 button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px; margin: auto;"></div>`;
             } else {
                 button.disabled = false;
-                button.innerHTML = `<span>${originalText}</span>`;
+                button.innerHTML = originalText || button._originalContent || '';
             }
         }
 
+
         // [REFACTOR] Helper function for creating a base slug from a title
         function createBaseSlug(title) {
-            return title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+            return title.toLowerCase().trim().replace(/[^\w\s-가-힣]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
         }
 
         async function generateUniqueSlug(baseSlug) {
@@ -1341,5 +1353,4 @@
     </script>
 </body>
 </html>
-
 
