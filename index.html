@@ -196,7 +196,7 @@
     
     <div id="search-overlay">
         <div id="search-container">
-            <input type="search" id="search-input" placeholder="검색어를 입력하세요..." autocomplete="off">
+            <input type="text" id="search-input" placeholder="검색어를 입력하세요..." autocomplete="off">
             <div id="search-results"></div>
         </div>
         <button id="close-search-btn" class="absolute top-6 right-6 text-gray-500 hover:text-black">
@@ -747,12 +747,36 @@
 
         function lazyLoadImages() {
             const images = document.querySelectorAll('#post-content img');
+            const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; // 1x1 transparent GIF
+
             const observer = new IntersectionObserver((entries, obs) => {
                 entries.forEach(entry => {
-                    if (entry.isIntersecting) { const img = entry.target; img.src = img.dataset.src; obs.unobserve(img); }
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        // data-src에서 실제 이미지 URL을 가져와 src에 설정
+                        img.src = img.dataset.src;
+                        // 로드가 완료되면 'loaded' 클래스를 추가하여 투명 효과 제거 가능
+                        img.onload = () => {
+                            img.style.opacity = '1';
+                        };
+                        obs.unobserve(img);
+                    }
                 });
             }, { rootMargin: '0px 0px 200px 0px' });
-            images.forEach(image => observer.observe(image));
+
+            images.forEach(image => {
+                // 이미지가 아직 lazy load 처리가 되지 않았다면 처리
+                if (image.src && !image.dataset.src) {
+                    // 실제 이미지 URL을 data-src 속성으로 이동
+                    image.dataset.src = image.src;
+                    // src 속성에는 플레이스홀더를 설정
+                    image.src = placeholderSrc;
+                    // 이미지가 처음에는 약간 투명하게 보이도록 설정
+                    image.style.transition = 'opacity 0.3s';
+                    image.style.opacity = '0';
+                }
+                observer.observe(image);
+            });
         }
 
         // =================================================================================
@@ -761,20 +785,27 @@
         async function generateText(topic, isInitial = true, draft = null, instruction = null) { 
             const proxyUrl = '/api/generate';
             // [PROMPT UPDATE START]
-            const systemPromptContent = `이제부터 너에게 임무를 줄게. 너의 임무는 내가 주는 주제에 대해 도움이 되는 방법으로 글을 쓰는 것이야. 도움이 되는 방법이라고 하면 그 주제에 대한 노하우와 팁, 활용방법, 도움이 되는 관련 내용, 도움이 되는 레퍼런스 자료와 온라인 사이트 링크 페이지를 말하는 거야. 어떤식으로든 글을 읽는 독자에게 주제에 대한 행동할 수 있는 활용법을 찾아서 만들어 내는데 중점을 둬야해. 사람들은 행동할 수 있는 활용방법에 대한 내용들을 좋아하거든. 그리고 글내용은 내가 출처를 타고 자세히 보지 않아도 되게끔 출처에 있는 내용을 가져와서 바로 보여줘.
+            const systemPromptContent = `당신은 특정 주제에 대해 깊이 있는 인사이트를 공유하는 전문 블로거입니다. 당신의 글은 딱딱한 설명서가 아니라, 마치 경험 많은 친구나 선배가 자신의 경험과 지식을 바탕으로 흥미로운 이야기를 들려주는 것과 같아야 합니다.
+
+## 글쓰기 스타일 및 구조
+- **스토리텔링:** 흥미로운 사실, 개인적인 경험담, 또는 공감할 만한 질문으로 글을 시작하여 독자의 호기심을 자극하세요.
+- **자연스러운 흐름:** '서론, 본론, 결론' 같은 정형화된 구조를 버리세요. 대신, 하나의 주제가 자연스럽게 다음 주제로 이어지도록 물 흐르듯 글을 구성해야 합니다. 독자가 글을 읽는 동안 생각의 흐름이 끊기지 않도록 하는 것이 중요합니다.
+- **실용적인 조언:** 단순히 정보를 나열하는 것을 넘어, 독자가 실제로 행동으로 옮길 수 있는 구체적인 팁, 노하우, 활용 방법을 제시해주세요.
+- **깊이 있는 설명:** 핵심 개념에 대해서는 독자들이 쉽게 이해할 수 있도록 비유나 예시를 들어 친절하게 설명해주세요.
+- **자연스러운 레퍼런스:** 참고 자료나 유용한 링크는 글의 마지막에 몰아서 나열하지 말고, 본문 내용과 관련된 부분에 자연스럽게 녹여내어 '더 알아보기' 형태로 제시하세요.
 
 ## Technical Output Rules (기술적 출력 규칙)
 - **응답 형식:** 생성물은 반드시 제목(title), 한두 문장의 요약(summary), SEO 친화적인 영어 URL 슬러그(slug), 글의 핵심 키워드를 담은 태그 배열(tags), 그리고 HTML 형식의 본문(body)을 포함한 단일 JSON 객체여야 합니다.
 - **슬러그:** 소문자, 숫자, 하이픈(-)만 사용해야 합니다.
 - **태그:** 한국어로 3~5개 생성합니다.
 - **본문 HTML 규칙:** 유효한 HTML이어야 하며, 제목(title)을 중복 포함하지 마세요. 소제목은 '<h2>' 또는 '<h3>'를 사용하고, 코드 블록은 <pre class="prettyprint linenums">로 감싸주세요.
-- **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`;
-            // [PROMPT UPDATE END]
-            
-            const editorSystemPrompt = `당신은 유능한 블로그 편집자입니다. 당신의 임무는 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글 전체를 수정하고 완성된 결과물을 JSON 형식으로 반환하는 것입니다.
-- **글쓰기 원칙:** 명확성, 정확성, 간결성을 최우선으로 합니다. 전문적이고 신뢰감 있는 톤을 유지해주세요.
+- **CRITICAL:** 당신의 전체 응답은 반드시 단일하고, 유효하며, 완전한 JSON 객체여야 합니다. JSON을 절대 중간에 자르거나 미완성 상태로 두지 마세요.`;
+
+            const editorSystemPrompt = `당신은 뛰어난 블로그 편집자입니다. 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글을 개선하는 것이 당신의 임무입니다.
+- **편집 원칙:** 기존 글의 핵심 메시지를 유지하면서, 더 자연스럽고 흥미로운 이야기 방식으로 다듬어주세요. '경험 많은 친구가 들려주는 이야기' 같은 톤앤매너를 유지하는 것이 중요합니다.
 - **응답 형식:** 응답은 반드시 제목(title), 요약(summary), SEO 친화적인 영어 슬러그(slug), 태그 배열(tags), 본문(body) 필드를 포함한 단일 JSON 객체여야 합니다.
-- **CRITICAL:** Your entire response MUST be a single, valid, and complete JSON object. Never truncate or leave the JSON unfinished.`; 
+- **CRITICAL:** 당신의 전체 응답은 반드시 단일하고, 유효하며, 완전한 JSON 객체여야 합니다. JSON을 절대 중간에 자르거나 미완성 상태로 두지 마세요.`; 
+            // [PROMPT UPDATE END]
             
             let systemPrompt, userQuery; 
             if (isInitial) { 
