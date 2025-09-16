@@ -127,9 +127,8 @@
         .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
         .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         
-        /* [FIX] Editor Line Break Fix: This CSS rule gives empty paragraphs a minimum height,
-           making line breaks (created by pressing Enter) visible in the editor. */
-        .prose-custom p:empty, .ql-editor p:empty {
+        /* [FIX] Editor Line Break Fix */
+        .prose-custom p:empty {
             min-height: 1rem;
         }
 
@@ -382,7 +381,6 @@
                 if (callback) await callback(nextView);
                 nextView.classList.add('active');
                 animations.pageEnter(nextView);
-                // [OPTIMIZATION] Delay prettify to ensure content is fully rendered.
                 setTimeout(() => PR.prettyPrint(), 50);
             }
         }
@@ -390,7 +388,6 @@
         function handleRouting() {
             if (!state.isAuthReady) return;
             const path = window.location.pathname;
-            // GTM page view event
             window.dataLayer.push({ event: 'page_view', page_path: path, page_title: document.title });
 
             const parts = path.substring(1).split('/');
@@ -427,7 +424,7 @@
                 <nav class="w-full max-w-7xl flex items-center justify-between py-2 px-4 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl shadow-sm">
                     <a href="/" class="brand-logo" data-action="route">InsureLog</a>
                     <div class="flex items-center space-x-2">
-                        <button data-action="show-search" class="btn !p-1.5 !text-xs" aria-label="Search">
+                        <button data-action="show-search" class="btn !p-1.5 !text-xs">
                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
                         ${state.user 
@@ -442,8 +439,7 @@
         
         async function renderLibraryView(container, page = 1) {
             updateMetaTags();
-            // [FIX] Visitor Count Fix: This logic uses sessionStorage to ensure
-            // the visitor count is incremented only once per browser session, not on every refresh.
+            // [FIX] Visitor Count Fix: Only count visit once per session.
             if (!sessionStorage.getItem('site_visited')) {
                 supabase.from('site_visits').insert({}).then();
                 sessionStorage.setItem('site_visited', 'true');
@@ -490,7 +486,7 @@
 
             const { data: post, error: postError } = await supabase
                 .from('posts')
-                .select('*, profiles(*)') // [OPTIMIZATION] Join profiles in one query
+                .select('*')
                 .eq('slug', slug)
                 .single();
 
@@ -501,7 +497,18 @@
                 return;
             }
 
-            // Increment view count using session storage to prevent multiple counts per session
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', post.author_id)
+                .single();
+            
+            if (profileError) {
+                console.warn("Could not fetch author profile:", profileError.message);
+            }
+
+            post.profiles = profile || null;
+
             (async () => {
                 try {
                     const viewedPostsKey = 'viewed_posts';
@@ -509,14 +516,14 @@
                     if (!viewedPosts.includes(post.id)) {
                         const { error: rpcError } = await supabase.rpc('increment_post_view', { post_slug: slug });
                         if (rpcError) {
-                            console.error('View count increment failed:', rpcError.message);
+                            console.error('조회수 증가 실패:', rpcError.message);
                         } else {
                             viewedPosts.push(post.id);
                             sessionStorage.setItem(viewedPostsKey, JSON.stringify(viewedPosts));
                         }
                     }
                 } catch (e) {
-                    console.error("Error processing session storage for view count:", e);
+                    console.error("세션 스토리지 처리 중 오류:", e);
                 }
             })();
 
@@ -550,14 +557,13 @@
             </div>`;
             
             lazyLoadImages();
-            // [OPTIMIZATION] Safely push to AdSense array
-            setTimeout(() => { try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("AdSense push failed:", e.message); } }, 100);
+            setTimeout(() => { try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("AdSense push warning:", e.message); } }, 100);
         }
 
         async function renderDashboardView(container, page = 1) {
             updateMetaTags();
             const { from, to } = getPaginationRange(page);
-            const { data, error, count } = await supabase.from('posts').select('id, title, slug, created_at, status, view_count', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to);
+            const { data, error, count } = await supabase.from('posts').select('*, view_count', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to);
             if (error) { showToast('내 글 목록 로딩 실패: ' + error.message, true); container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; }
             const listHtml = data.length > 0 ? data.map(post => {
                 const statusBadge = post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : '';
@@ -708,10 +714,10 @@
                 theme: 'snow'
             });
 
-            // [FIX] Content Omission Fix: Use Quill's 'dangerouslyPasteHTML' API to safely load
-            // existing content. This method correctly parses the HTML and converts it to Quill's
-            // internal Delta format, preventing content loss that can occur with direct innerHTML manipulation.
+            // [FIX] Content Omission Fix: Use Quill's API to safely load existing content.
             if (initialContent) {
+                // This method correctly parses the HTML and converts it to Quill's internal format (Delta),
+                // preventing content loss or corruption that can happen with direct innerHTML manipulation.
                 state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
             }
         }
@@ -820,8 +826,7 @@
                     responseSchema: { type: "OBJECT", properties: { "title": { "type": "STRING" }, "summary": { "type": "STRING" }, "slug": { "type": "STRING" }, "tags": { "type": "ARRAY", "items": { "type": "STRING" } }, "body": { "type": "STRING" } }, required: ["title", "summary", "slug", "tags", "body"] } 
                 } 
             }; 
-            
-            // This assumes a backend proxy endpoint '/api/generate' to handle the actual API call securely.
+
             const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'text', payload }) }); 
             if (!response.ok) throw new Error(`Gemini API 오류: ${response.statusText}`); 
             const result = await response.json(); 
@@ -894,7 +899,7 @@
                     navigator.clipboard.writeText(target.dataset.url).then(() => showToast('링크가 복사되었습니다!'), () => showToast('링크 복사에 실패했습니다.', true));
                     break; 
                 case 'delete-post': 
-                    renderModal({ title: '정말 삭제하시겠습니까?', content: '이 작업은 되돌릴 수 없습니다. 글에 포함된 이미지도 함께 삭제됩니다.', confirmText: '삭제', onConfirm: async () => { 
+                    renderModal({ title: '정말 삭제하시겠습니까?', content: '이 작업은 되돌릴 수 없습니다.', confirmText: '삭제', onConfirm: async () => { 
                         try { showToast('글 삭제를 시작합니다...'); await deletePostAndAssociatedImages(target.dataset.id); showToast('글이 삭제되었습니다.'); handleRouting(); } 
                         catch (error) { showToast(`삭제 중 오류 발생: ${error.message}`, true); } 
                         finally { closeModal(); } 
@@ -914,7 +919,7 @@
                     const filePath = `${state.user.id}/avatar.webp`;
                     await supabase.storage.from('thought-images').upload(filePath, webpBlob, { upsert: true });
                     const { data } = supabase.storage.from('thought-images').getPublicUrl(filePath);
-                    avatarUrl = `${data.publicUrl}?t=${new Date().getTime()}`; // Add timestamp to break cache
+                    avatarUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
                 }
                 const updates = { id: state.user.id, full_name: fullName, bio: bio, updated_at: new Date() };
                 if (avatarUrl) updates.avatar_url = avatarUrl;
@@ -1068,8 +1073,6 @@
         }
 
         async function deletePostAndAssociatedImages(postId) { 
-            // This function deletes a post and any associated images from Supabase storage
-            // to prevent orphaned files.
             const { data: post } = await supabase.from('posts').select('refined_content').eq('id', postId).single(); 
             const content = post?.refined_content || ''; 
             const imageUrls = content.match(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g) || []; 
@@ -1097,7 +1100,6 @@
             if (!query) { resultsContainer.innerHTML = ''; return; }
             resultsContainer.innerHTML = '<div class="p-8 flex justify-center"><div class="loader-spinner"></div></div>';
             try {
-                // Using Supabase RPC for efficient text search
                 const { data, error } = await supabase.rpc('search_posts', { search_term: query });
                 if (error) throw error;
                 if (data.length === 0) { resultsContainer.innerHTML = `<p class="p-8 text-center text-gray-500">검색 결과가 없습니다.</p>`; } 
@@ -1139,7 +1141,7 @@
             searchInput.addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => performSearch(searchInput.value), 200); });
             searchOverlay.addEventListener('click', (e) => {
                 const item = e.target.closest('a[data-action="route"]');
-                if (item) { toggleSearch(false); /* Navigation is handled by global click handler */ } 
+                if (item) { navigateTo(item.getAttribute('href')); toggleSearch(false); } 
                 else if (e.target === searchOverlay) { toggleSearch(false); }
             });
             $('#close-search-btn').addEventListener('click', () => toggleSearch(false));
@@ -1169,4 +1171,5 @@
     </script>
 </body>
 </html>
+
 
