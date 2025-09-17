@@ -67,13 +67,13 @@
     <!-- Main Styles -->
     <style>
         :root {
-            --bg-main: #FFFFFF;
+            --bg-main: #F9FAFB; /* Changed from #FFFFFF */
             --bg-content: #FFFFFF;
             --border-color: #F0F0F0;
             --text-primary: #111827;
             --text-secondary: #6B7280;
-            --accent: #111827;
-            --accent-hover: #374151;
+            --accent: #3B82F6; /* Changed from #111827 */
+            --accent-hover: #2563EB; /* Changed from #374151 */
             --font-heading: 'Open Sans', sans-serif;
             --font-body: 'Open Sans', sans-serif;
         }
@@ -111,7 +111,7 @@
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background-color: var(--bg-content) !important; color: var(--text-secondary) !important; }
         
         .form-input, .form-textarea { font-size: 0.85rem; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px; width: 100%; background-color: var(--bg-content); color: var(--text-primary); transition: all 0.2s ease; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-        .form-input:focus, .form-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1); }
+        .form-input:focus, .form-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
         
         .prose-custom { color: #374151; line-height: 1.7; font-size: 0.9rem; }
         .prose-custom > *:not(:first-child) { margin-top: 1.25em; }
@@ -120,7 +120,7 @@
         .prose-custom h1 { font-size: 1.5rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.3em; }
         .prose-custom h2 { font-size: 1.1rem; background-color: var(--accent); color: white; padding: 0.3rem 0.8rem; border-radius: 9999px; display: inline-block; }
         .prose-custom h3 { font-size: 1.05rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.3em; }
-        .prose-custom a { color: var(--text-primary); text-decoration: none; font-weight: 500; border-bottom: 1px solid #D1D5DB; transition: all 0.2s ease; }
+        .prose-custom a { color: var(--accent); text-decoration: none; font-weight: 500; border-bottom: 1px solid #93c5fd; transition: all 0.2s ease; }
         .prose-custom a:hover { border-bottom-color: var(--accent); }
         .prose-custom pre, .prose-custom blockquote { margin-top: 2em; margin-bottom: 2em; }
         .prose-custom code { background-color: #E5E7EB; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.85em; color: #4B5563; }
@@ -128,6 +128,41 @@
         .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
         .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         
+        /* New AI Card Summary Style */
+        .ai-card-summary {
+            background-color: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2em;
+            margin-bottom: 2em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .ai-card-summary h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+        .ai-card-summary ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .ai-card-summary li {
+            padding-left: 1.5em;
+            position: relative;
+            margin-bottom: 0.75em;
+        }
+        .ai-card-summary li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
         /* Table Styles */
         .prose-custom table { width: 100%; margin-top: 2em; margin-bottom: 2em; border-collapse: collapse; font-size: 0.875rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05); border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
         .prose-custom th, .prose-custom td { border-bottom: 1px solid #e5e7eb; padding: 0.75rem 1rem; text-align: left; }
@@ -543,18 +578,20 @@
             const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" class="btn" data-action="route"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="m13.83 2.17 3 3L6.83 15.17H3.83V12.17l10-10ZM15.24 0 .92 14.31A.996.996 0 0 0 0 15v4a.996.996 0 0 0 1 1h4c.27 0 .52-.11.71-.29L19.03 4.4a2.5 2.5 0 0 0 0-3.53l-3-3a2.5 2.5 0 0 0-3.54-.29Z"/></svg><span>수정하기</span></a>` : '';
             
             container.innerHTML = `<div class="py-12">
-                <article class="prose-custom max-w-none">
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="text-sm text-gray-500">
-                            ${new Date(post.created_at).toLocaleDateString('ko-KR')} · 조회수 ${(post.view_count || 0).toLocaleString()}
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-8 md:p-10">
+                    <article class="prose-custom max-w-none">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="text-sm text-gray-500">
+                                ${new Date(post.created_at).toLocaleDateString('ko-KR')} · 조회수 ${(post.view_count || 0).toLocaleString()}
+                            </div>
+                            ${editButtonHtml}
                         </div>
-                        ${editButtonHtml}
-                    </div>
-                    <h1 class="!mt-0">${post.title}</h1>
-                    <div id="post-content">${post.refined_content || ''}</div>
-                    <div class="border-t border-gray-200 mt-12 pt-4">${renderTags(post.tags)}</div>
-                </article>
-                ${renderAuthorProfile(post.profiles)}
+                        <h1 class="!mt-0">${post.title}</h1>
+                        <div id="post-content">${post.refined_content || ''}</div>
+                        <div class="border-t border-gray-200 mt-12 pt-4">${renderTags(post.tags)}</div>
+                    </article>
+                    ${renderAuthorProfile(post.profiles)}
+                </div>
                 <div class="my-12"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
                 ${createRelatedPostsHtml(findRelatedPosts(post, allOtherPosts || []))}
                 ${createShareButtonsHtml(`${SITE_URL}/post/${post.slug}`, post.title)}
@@ -646,7 +683,16 @@
         }
 
         function findRelatedPosts(currentPost, otherPosts, count = 2) { const currentTitleWords = currentPost.title.toLowerCase().split(/\s+/); const scoredPosts = otherPosts.map(post => { let score = 0; const targetTitle = post.title.toLowerCase(); currentTitleWords.forEach(word => { if (word.length > 1 && targetTitle.includes(word)) score++; }); return { ...post, score }; }); return scoredPosts.filter(post => post.score > 0).sort((a, b) => b.score - a.score).slice(0, count); }
-        function createShareButtonsHtml(url, title) { return `<div class="mt-12 py-8 mb-12 border-t border-gray-200"><h3 class="text-center text-sm font-bold text-gray-500 mb-4 tracking-wider">공유하기</h3><div class="flex justify-center items-center gap-4"><a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg><span>X</span></a><a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4z"></path></svg><span>Facebook</span></a><button class="btn" data-action="copy-link" data-url="${url}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>링크 복사</span></button></div></div>`; }
+        
+        function createShareButtonsHtml(url, title) {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const facebookShareUrl = isMobile 
+                ? `https://m.facebook.com/sharer.php?u=${encodeURIComponent(url)}`
+                : `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            
+            return `<div class="mt-12 py-8 mb-12 border-t border-gray-200"><h3 class="text-center text-sm font-bold text-gray-500 mb-4 tracking-wider">공유하기</h3><div class="flex justify-center items-center gap-4"><a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg><span>X</span></a><a href="${facebookShareUrl}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4z"></path></svg><span>Facebook</span></a><button class="btn" data-action="copy-link" data-url="${url}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>링크 복사</span></button></div></div>`; 
+        }
+
         function createRelatedPostsHtml(relatedPosts) { if (relatedPosts.length === 0) return ''; return `<div class="mt-8 pt-8 border-t border-gray-200"><h3 class="text-xl font-bold font-heading mb-6">관련 글</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6">${relatedPosts.map(p => `<a href="/post/${p.slug}" data-action="route" class="block p-5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl transition-all duration-300 group"><h4 class="font-semibold text-gray-800 group-hover:text-black transition-colors">${p.title}</h4><p class="text-gray-500 text-sm mt-1">${p.summary}</p></a>`).join('')}</div></div>`; }
         
         function renderTags(tags, withWrapper = true) {
@@ -802,7 +848,7 @@
 - **응답 형식:** 생성물은 반드시 제목(title), 한두 문장의 요약(summary), SEO 친화적인 영어 URL 슬러그(slug), 글의 핵심 키워드를 담은 태그 배열(tags), 그리고 HTML 형식의 본문(body)을 포함한 단일 JSON 객체여야 합니다.
 - **슬러그:** 소문자, 숫자, 하이픈(-)만 사용해야 합니다.
 - **태그:** 한국어로 3~5개 생성합니다.
-- **본문 HTML 규칙:** 유효한 HTML이어야 하며, 제목(title)을 중복 포함하지 마세요. 소제목은 '<h2>' 또는 '<h3>'를 사용하고, 코드 블록은 <pre class="prettyprint linenums">로 감싸주세요.
+- **본문 HTML 규칙:** 유효한 HTML이어야 하며, 제목(title)을 중복 포함하지 마세요. 소제목은 '<h2>' 또는 '<h3>'를 사용하고, 코드 블록은 <pre class="prettyprint linenums">로 감싸주세요. 핵심 요약, 팁, 정리 등 목록 형식의 내용을 작성할 때는, 선택적인 <h3> 제목을 포함한 전체 목록 섹션을 <div class="ai-card-summary">로 감싸서 특별한 서식을 적용해주세요.
 - **CRITICAL:** 당신의 전체 응답은 반드시 단일하고, 유효하며, 완전한 JSON 객체여야 합니다. JSON을 절대 중간에 자르거나 미완성 상태로 두지 마세요.`;
 
             const editorSystemPrompt = `당신은 뛰어난 블로그 편집자입니다. 사용자가 제공한 초안(draft)과 수정 요청(instruction)을 바탕으로 글을 개선하는 것이 당신의 임무입니다.
