@@ -128,6 +128,14 @@
         .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
         .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         
+        /* Table Styles */
+        .prose-custom table { width: 100%; margin-top: 2em; margin-bottom: 2em; border-collapse: collapse; font-size: 0.875rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05); border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+        .prose-custom th, .prose-custom td { border-bottom: 1px solid #e5e7eb; padding: 0.75rem 1rem; text-align: left; }
+        .prose-custom thead { background-color: #F9FAFB; }
+        .prose-custom th { font-weight: 600; color: var(--text-primary); }
+        .prose-custom tbody tr:nth-child(even) { background-color: #F9FAFB; }
+        .prose-custom td { color: var(--text-secondary); }
+
         .youtube-embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; margin: 2em 0; border-radius: 8px; }
         .youtube-embed-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
 
@@ -435,7 +443,7 @@
         
         async function renderLibraryView(container, page = 1) {
             updateMetaTags();
-            // [FIX] Visitor Count Fix: Only count visit once per session.
+            // Visitor Count Fix: Only count visit once per session.
             if (!sessionStorage.getItem('site_visited')) {
                 supabase.from('site_visits').insert({}).then();
                 sessionStorage.setItem('site_visited', 'true');
@@ -710,9 +718,6 @@
                 theme: 'snow'
             });
 
-            // [FIX] Content Omission Fix: Use Quill's API to safely load existing content.
-            // Directly setting innerHTML can cause data loss and formatting issues.
-            // dangerouslyPasteHTML correctly parses the HTML and converts it to Quill's internal format (Delta).
             if (initialContent) {
                 state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
             }
