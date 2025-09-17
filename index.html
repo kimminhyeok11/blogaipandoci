@@ -67,13 +67,13 @@
     <!-- Main Styles -->
     <style>
         :root {
-            --bg-main: #F9FAFB; /* Changed from #FFFFFF */
+            --bg-main: #F9FAFB;
             --bg-content: #FFFFFF;
             --border-color: #F0F0F0;
             --text-primary: #111827;
             --text-secondary: #6B7280;
-            --accent: #3B82F6; /* Changed from #111827 */
-            --accent-hover: #2563EB; /* Changed from #374151 */
+            --accent: #3B82F6;
+            --accent-hover: #2563EB;
             --font-heading: 'Open Sans', sans-serif;
             --font-body: 'Open Sans', sans-serif;
         }
@@ -128,42 +128,12 @@
         .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
         .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         
-        /* New AI Card Summary Style */
-        .ai-card-summary {
-            background-color: #F9FAFB;
-            border: 1px solid #E5E7EB;
-            border-left: 4px solid var(--accent);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-top: 2em;
-            margin-bottom: 2em;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .ai-card-summary h3 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-top: 0;
-            margin-bottom: 1rem;
-            color: var(--accent);
-        }
-        .ai-card-summary ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        .ai-card-summary li {
-            padding-left: 1.5em;
-            position: relative;
-            margin-bottom: 0.75em;
-        }
-        .ai-card-summary li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: var(--accent);
-            font-weight: bold;
-        }
+        .ai-card-summary { background-color: #F9FAFB; border: 1px solid #E5E7EB; border-left: 4px solid var(--accent); border-radius: 8px; padding: 1.5rem; margin-top: 2em; margin-bottom: 2em; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .ai-card-summary h3 { font-size: 1.1rem; font-weight: 700; margin-top: 0; margin-bottom: 1rem; color: var(--accent); }
+        .ai-card-summary ul { list-style-type: none; padding-left: 0; }
+        .ai-card-summary li { padding-left: 1.5em; position: relative; margin-bottom: 0.75em; }
+        .ai-card-summary li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: bold; }
 
-        /* Table Styles */
         .prose-custom table { width: 100%; margin-top: 2em; margin-bottom: 2em; border-collapse: collapse; font-size: 0.875rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05); border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
         .prose-custom th, .prose-custom td { border-bottom: 1px solid #e5e7eb; padding: 0.75rem 1rem; text-align: left; }
         .prose-custom thead { background-color: #F9FAFB; }
@@ -176,7 +146,6 @@
 
         .pagination-controls a.disabled { pointer-events: none; opacity: 0.5; }
         
-        /* Quill Editor Styles */
         #editor-container { background-color: white; border: 1px solid #D1D5DB; border-radius: 6px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
         #editor-container .ql-toolbar { border: none; border-bottom: 1px solid #D1D5DB; border-top-left-radius: 6px; border-top-right-radius: 6px; background-color: #F9FAFB; padding: 8px; }
         #editor-container .ql-container { border: none; }
@@ -352,7 +321,7 @@
 
         function renderModal({ title, content, confirmText, onConfirm, cancelText = '취소', onCancel = closeModal }) {
             const modalId = `modal-${Date.now()}`;
-            const modalHtml = `<div id="${modalId}" class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div><div class="modal-content relative bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-sm p-6"><h3 class="text-lg font-bold font-heading mb-4">${title}</h3><div class="text-gray-500 mb-6 text-sm">${content}</div><div class="flex justify-end space-x-3"><button type="button" class="btn" id="modal-cancel-btn">${cancelText}</button>${confirmText ? `<button type="button" class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>` : ''}</div></div></div>`;
+            const modalHtml = `<div id="${modalId}" class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div><div class="modal-content relative bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-lg p-6"><h3 class="text-lg font-bold font-heading mb-4">${title}</h3><div class="text-gray-500 mb-6 text-sm">${content}</div><div class="flex justify-end space-x-3"><button type="button" class="btn" id="modal-cancel-btn">${cancelText}</button>${confirmText ? `<button type="button" class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>` : ''}</div></div></div>`;
             $('#modal-container').innerHTML = modalHtml;
             const modalEl = $(`#${modalId}`);
             if (onConfirm) $('#modal-confirm-btn').addEventListener('click', onConfirm);
@@ -478,7 +447,6 @@
         
         async function renderLibraryView(container, page = 1) {
             updateMetaTags();
-            // Visitor Count Fix: Only count visit once per session.
             if (!sessionStorage.getItem('site_visited')) {
                 supabase.from('site_visits').insert({}).then();
                 sessionStorage.setItem('site_visited', 'true');
@@ -554,16 +522,13 @@
                     const viewedPosts = JSON.parse(sessionStorage.getItem(viewedPostsKey)) || [];
                     if (!viewedPosts.includes(post.id)) {
                         const { error: rpcError } = await supabase.rpc('increment_post_view', { post_slug: slug });
-                        if (rpcError) {
-                            console.error('조회수 증가 실패:', rpcError.message);
-                        } else {
+                        if (rpcError) console.error('조회수 증가 실패:', rpcError.message);
+                        else {
                             viewedPosts.push(post.id);
                             sessionStorage.setItem(viewedPostsKey, JSON.stringify(viewedPosts));
                         }
                     }
-                } catch (e) {
-                    console.error("세션 스토리지 처리 중 오류:", e);
-                }
+                } catch (e) { console.error("세션 스토리지 처리 중 오류:", e); }
             })();
 
             if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) {
@@ -625,7 +590,8 @@
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [] };
             
             if (draft) {
-                post = { ...post, ...draft, refined_content: `${draft.imageHtml || ''}${draft.body}` };
+                const imageHtml = draft.imageBase64 ? `<img src="data:image/webp;base64,${draft.imageBase64}" alt="${draft.title || 'draft image'}">` : '';
+                post = { ...post, ...draft, refined_content: `${imageHtml}${draft.body}` };
             } else if (slug) {
                 const { data, error } = await supabase
                     .from('posts')
@@ -686,11 +652,14 @@
         
         function createShareButtonsHtml(url, title) {
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const facebookShareUrl = isMobile 
-                ? `https://m.facebook.com/sharer.php?u=${encodeURIComponent(url)}`
-                : `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-            
-            return `<div class="mt-12 py-8 mb-12 border-t border-gray-200"><h3 class="text-center text-sm font-bold text-gray-500 mb-4 tracking-wider">공유하기</h3><div class="flex justify-center items-center gap-4"><a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg><span>X</span></a><a href="${facebookShareUrl}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4z"></path></svg><span>Facebook</span></a><button class="btn" data-action="copy-link" data-url="${url}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>링크 복사</span></button></div></div>`; 
+            const facebookShareUrl = `fb://sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            const facebookFallbackUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+
+            return `<div class="mt-12 py-8 mb-12 border-t border-gray-200"><h3 class="text-center text-sm font-bold text-gray-500 mb-4 tracking-wider">공유하기</h3><div class="flex justify-center items-center gap-4">
+                <a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}" target="_blank" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg><span>X</span></a>
+                <a href="${isMobile ? facebookShareUrl : facebookFallbackUrl}" ${isMobile ? '' : `target="_blank"`} onclick="if(${isMobile}) { event.preventDefault(); window.location.href = '${facebookShareUrl}'; setTimeout(() => { window.location.href = '${facebookFallbackUrl}'; }, 500); }" class="btn"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4z"></path></svg><span>Facebook</span></a>
+                <button class="btn" data-action="copy-link" data-url="${url}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>링크 복사</span></button>
+            </div></div>`; 
         }
 
         function createRelatedPostsHtml(relatedPosts) { if (relatedPosts.length === 0) return ''; return `<div class="mt-8 pt-8 border-t border-gray-200"><h3 class="text-xl font-bold font-heading mb-6">관련 글</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6">${relatedPosts.map(p => `<a href="/post/${p.slug}" data-action="route" class="block p-5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl transition-all duration-300 group"><h4 class="font-semibold text-gray-800 group-hover:text-black transition-colors">${p.title}</h4><p class="text-gray-500 text-sm mt-1">${p.summary}</p></a>`).join('')}</div></div>`; }
@@ -737,10 +706,66 @@
                 }
             };
         }
+        
+        async function imageLibraryHandler() {
+            if (!state.user) {
+                showToast('이미지 보관함을 사용하려면 로그인이 필요합니다.', true);
+                return;
+            }
+
+            renderModal({ title: '이미지 보관함', content: '<div class="flex justify-center p-8"><div class="loader-spinner"></div></div>', confirmText: null });
+
+            try {
+                const { data: files, error } = await supabase.storage
+                    .from(IMAGE_BUCKET_NAME)
+                    .list(state.user.id, {
+                        limit: 100,
+                        offset: 0,
+                        sortBy: { column: 'created_at', order: 'desc' },
+                    });
+
+                if (error) throw error;
+                
+                if (files.length === 0 || files.every(f => !['.webp', '.jpg', '.png', '.gif'].some(ext => f.name.endsWith(ext)))) {
+                     renderModal({ title: '이미지 보관함', content: '<p class="text-center text-gray-500">업로드된 이미지가 없습니다.</p>', confirmText: '닫기', onConfirm: closeModal });
+                     return;
+                }
+
+                let imageGridHtml = '<div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-96 overflow-y-auto">';
+                for (const file of files) {
+                    if (['.webp', '.jpg', '.png', '.gif'].some(ext => file.name.endsWith(ext))) {
+                        const { data: { publicUrl } } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(`${state.user.id}/${file.name}`);
+                        imageGridHtml += `<img src="${publicUrl}" alt="${file.name}" class="w-full h-24 object-cover rounded-md cursor-pointer hover:opacity-75 transition-opacity" data-url="${publicUrl}">`;
+                    }
+                }
+                imageGridHtml += '</div>';
+
+                renderModal({ title: '이미지 보관함 (클릭하여 삽입)', content: imageGridHtml, confirmText: '닫기', onConfirm: closeModal });
+
+                $('#modal-container').addEventListener('click', (e) => {
+                    const target = e.target.closest('img[data-url]');
+                    if (target) {
+                        const imageUrl = target.dataset.url;
+                        const range = state.quill.getSelection(true);
+                        state.quill.insertEmbed(range.index, 'image', imageUrl, Quill.sources.USER);
+                        state.quill.setSelection(range.index + 1, Quill.sources.SILENT);
+                        closeModal();
+                    }
+                });
+
+            } catch (error) {
+                showToast('이미지를 불러오는 데 실패했습니다: ' + error.message, true);
+                console.error('Error fetching image library:', error);
+                closeModal();
+            }
+        }
 
         function initQuillEditor(initialContent) {
             const editorElement = document.querySelector('#editor');
             if (!editorElement) return;
+
+            const icons = Quill.import('ui/icons');
+            icons['imageLibrary'] = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/><path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2zM14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1zM2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1h-10z"/></svg>`;
 
             const toolbarOptions = [
                 [{ 'header': [1, 2, 3, false] }],
@@ -749,7 +774,7 @@
                 [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                 [{ 'script': 'sub'}, { 'script': 'super' }],
                 [{ 'indent': '-1'}, { 'indent': '+1' }],
-                ['link', 'image'],
+                ['link', 'image', 'imageLibrary'],
                 ['clean']
             ];
 
@@ -757,7 +782,10 @@
                 modules: {
                     toolbar: {
                         container: toolbarOptions,
-                        handlers: { 'image': quillImageHandler }
+                        handlers: { 
+                            'image': quillImageHandler,
+                            'imageLibrary': imageLibraryHandler
+                        }
                     }
                 },
                 placeholder: '여기에 글을 작성하세요...',
@@ -812,9 +840,7 @@
                     if (entry.isIntersecting) {
                         const img = entry.target;
                         img.src = img.dataset.src;
-                        img.onload = () => {
-                            img.style.opacity = '1';
-                        };
+                        img.onload = () => { img.style.opacity = '1'; };
                         obs.unobserve(img);
                     }
                 });
@@ -987,6 +1013,14 @@
             button.disabled = true; button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
 
             try {
+                const base64ImageRegex = /<img src="data:image\/webp;base64,([^"]+)"[^>]*>/;
+                const match = refined_content.match(base64ImageRegex);
+                if (match && match[1]) {
+                    showToast('대표 이미지를 업로드하고 있습니다...');
+                    const imageUrl = await uploadBase64Image(match[1], title);
+                    refined_content = refined_content.replace(base64ImageRegex, `<img src="${imageUrl}" alt="${title}">`);
+                }
+
                 let finalSlug = $('#post-slug').value || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
                 const postData = { title, summary, refined_content, author_id: state.user.id, slug: finalSlug, tags, status };
                 const { error } = id ? await supabase.from('posts').update(postData).eq('id', id) : await supabase.from('posts').insert(postData);
@@ -1218,4 +1252,5 @@
     </script>
 </body>
 </html>
+
 
