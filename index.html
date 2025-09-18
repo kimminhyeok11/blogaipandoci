@@ -128,11 +128,43 @@
         .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
         .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         
-        .ai-card-summary { background-color: #F9FAFB; border: 1px solid #E5E7EB; border-left: 4px solid var(--accent); border-radius: 8px; padding: 1.5rem; margin-top: 2em; margin-bottom: 2em; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .ai-card-summary h3 { font-size: 1.1rem; font-weight: 700; margin-top: 0; margin-bottom: 1rem; color: var(--accent); }
-        .ai-card-summary ul { list-style-type: none; padding-left: 0; }
-        .ai-card-summary li { padding-left: 1.5em; position: relative; margin-bottom: 0.75em; }
-        .ai-card-summary li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: bold; }
+        .ai-card-summary {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2em;
+            margin-bottom: 2em;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .ai-card-summary h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        .ai-card-summary ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 1rem;
+        }
+        .ai-card-summary li {
+            padding-left: 1.5em;
+            position: relative;
+            margin-bottom: 0.75em;
+            color: var(--text-secondary);
+        }
+        .ai-card-summary li::before {
+            content: '●';
+            position: absolute;
+            left: 0;
+            color: var(--text-primary);
+            font-size: 0.7em;
+            top: 0.4em;
+        }
 
         .prose-custom table { width: 100%; margin-top: 2em; margin-bottom: 2em; border-collapse: collapse; font-size: 0.875rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05); border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
         .prose-custom th, .prose-custom td { border-bottom: 1px solid #e5e7eb; padding: 0.75rem 1rem; text-align: left; }
@@ -764,6 +796,14 @@
             const editorElement = document.querySelector('#editor');
             if (!editorElement) return;
 
+            // Register the custom format so Quill doesn't strip it out during edits.
+            const Block = Quill.import('blots/block');
+            class AiCardSummary extends Block {}
+            AiCardSummary.blotName = 'aicard';
+            AiCardSummary.tagName = 'div';
+            AiCardSummary.className = 'ai-card-summary';
+            Quill.register(AiCardSummary, true); // Use true to overwrite existing format
+
             const icons = Quill.import('ui/icons');
             icons['imageLibrary'] = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/><path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-1.998 2zM14 2H4a1 1 0 0 0-1 1h9.002a2 2 0 0 1 2 2v7A1 1 0 0 0 15 11V3a1 1 0 0 0-1-1zM2.002 4a1 1 0 0 0-1 1v8l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V5a1 1 0 0 0-1-1h-10z"/></svg>`;
 
@@ -1252,5 +1292,4 @@
     </script>
 </body>
 </html>
-
 
