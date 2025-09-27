@@ -128,43 +128,11 @@
         .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
         .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         
-        .ai-card-summary {
-            background-color: #FFFFFF;
-            border: 1px solid #E5E7EB;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-top: 2em;
-            margin-bottom: 2em;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-        .ai-card-summary h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid #E5E7EB;
-        }
-        .ai-card-summary ul {
-            list-style-type: none;
-            padding-left: 0;
-            margin-top: 1rem;
-        }
-        .ai-card-summary li {
-            padding-left: 1.5em;
-            position: relative;
-            margin-bottom: 0.75em;
-            color: var(--text-secondary);
-        }
-        .ai-card-summary li::before {
-            content: '●';
-            position: absolute;
-            left: 0;
-            color: var(--text-primary);
-            font-size: 0.7em;
-            top: 0.4em;
-        }
+        .ai-card-summary { background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 1.5rem; margin-top: 2em; margin-bottom: 2em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .ai-card-summary h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 1rem; color: var(--text-primary); padding-bottom: 0.75rem; border-bottom: 1px solid #E5E7EB; }
+        .ai-card-summary ul { list-style-type: none; padding-left: 0; margin-top: 1rem; }
+        .ai-card-summary li { padding-left: 1.5em; position: relative; margin-bottom: 0.75em; color: var(--text-secondary); }
+        .ai-card-summary li::before { content: '●'; position: absolute; left: 0; color: var(--text-primary); font-size: 0.7em; top: 0.4em; }
 
         .prose-custom table { width: 100%; margin-top: 2em; margin-bottom: 2em; border-collapse: collapse; font-size: 0.875rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05); border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
         .prose-custom th, .prose-custom td { border-bottom: 1px solid #e5e7eb; padding: 0.75rem 1rem; text-align: left; }
@@ -589,13 +557,32 @@
                     </article>
                     ${renderAuthorProfile(post.profiles)}
                 </div>
-                <div class="my-12"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
+                
+                <!-- AdSense Ad Unit -->
+                <div class="my-12 text-center">
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="ca-pub-5239497835591112"
+                         data-ad-slot="2069100221"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"></ins>
+                </div>
+
                 ${createRelatedPostsHtml(findRelatedPosts(post, allOtherPosts || []))}
                 ${createShareButtonsHtml(`${SITE_URL}/post/${post.slug}`, post.title)}
             </div>`;
             
             lazyLoadImages();
-            setTimeout(() => { try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("AdSense push warning:", e.message); } }, 100);
+
+            // IMPORTANT: This tells the AdSense script to find and fill the new ad unit
+            // that was just added to the page. A small delay ensures the DOM is ready.
+            setTimeout(() => {
+                try {
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                } catch (e) {
+                    console.error("AdSense push error:", e);
+                }
+            }, 100);
         }
 
         async function renderDashboardView(container, page = 1) {
