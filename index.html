@@ -124,6 +124,17 @@
         .prose-custom pre code { background-color: transparent; padding: 0; }
         .prose-custom blockquote { border-left: 2px solid #9CA3AF; padding-left: 1rem; color: var(--text-secondary); font-style: normal; }
         .prose-custom img { border-radius: 8px; max-width: 100%; height: auto; margin-top: 2.5em; margin-bottom: 2.5em; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        
+        /* [FIX] Added styles for tables and lists */
+        .prose-custom ul, .prose-custom ol { padding-left: 1.5em; }
+        .prose-custom li { margin-bottom: 0.5em; }
+        .prose-custom ul { list-style-type: disc; }
+        .prose-custom ol { list-style-type: decimal; }
+        .prose-custom table { width: 100%; border-collapse: collapse; margin-top: 2em; margin-bottom: 2em; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); border-radius: 8px; overflow: hidden; }
+        .prose-custom th, .prose-custom td { border: 1px solid #e5e7eb; padding: 0.75rem 1rem; text-align: left; }
+        .prose-custom th { background-color: #f9fafb; font-weight: 600; color: var(--text-primary); }
+        .prose-custom tr:nth-child(even) { background-color: #f9fafb; }
+        .prose-custom td { color: var(--text-secondary); }
                 
         .pagination-controls a.disabled { pointer-events: none; opacity: 0.5; }
         
@@ -856,5 +867,4 @@
     </script>
 </body>
 </html>
-
 
