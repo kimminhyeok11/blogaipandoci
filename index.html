@@ -393,12 +393,24 @@
         
         async function renderLibraryView(container, page = 1) {
             updateMetaTags();
-            
+            // Count unique visitor per session
+            if (!sessionStorage.getItem('site_visited')) {
+                supabase.from('site_visits').insert({}).then();
+                sessionStorage.setItem('site_visited', 'true');
+            }
+
             const { from, to } = getPaginationRange(page);
-            const { data: posts, error, count: totalPosts } = await supabase.from('posts').select('*', { count: 'exact' })
-                .eq('status', 'published')
-                .order('created_at', { ascending: false })
-                .range(from, to);
+            // Fetch posts and total visitor count concurrently
+            const [
+                { count: totalVisits }, 
+                { data: posts, error, count: totalPosts }
+            ] = await Promise.all([
+                supabase.from('site_visits').select('*', { count: 'exact', head: true }),
+                supabase.from('posts').select('*', { count: 'exact' })
+                    .eq('status', 'published')
+                    .order('created_at', { ascending: false })
+                    .range(from, to)
+            ]);
             
             if (error) { 
                 showToast('데이터를 불러오는 데 실패했습니다.', true); 
@@ -417,7 +429,8 @@
 
             container.innerHTML = `<div class="py-12">
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-center font-heading mb-2">Insurance Insights</h1>
-                <p class="text-center text-gray-500 text-sm mb-12">AI, 기술, 그리고 보험에 대한 기록들</p>
+                <p class="text-center text-gray-500 text-sm mb-4">AI, 기술, 그리고 보험에 대한 기록들</p>
+                <div class="text-center text-xs text-gray-400 mb-12">총 방문자: ${(totalVisits || 0).toLocaleString()}</div>
                 <div class="space-y-4">${postsHtml}</div>
                 ${renderPaginationControls(page, totalPosts, '/page/')}
             </div>`;
@@ -843,4 +856,5 @@
     </script>
 </body>
 </html>
+
 
