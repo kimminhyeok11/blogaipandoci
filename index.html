@@ -37,7 +37,7 @@
             --text-tertiary: #9CA3AF; --accent: #3B82F6; --accent-hover: #2563EB;
             --warning: #FBBF24; --warning-hover: #F59E0B;
             --font-body: 'Noto Sans KR', sans-serif;
-            --code-bg: #282c34; /* 코드 에디터 배경색 추가 */
+            --code-bg: #282c34;
         }
         html, body { height: 100%; }
         body {
@@ -77,12 +77,8 @@
         
         /* --- Component Styles --- */
         #editor-container .ql-editor { color: var(--text-primary); min-height: 400px; background-color: #262c3a; }
-        #raw-editor { background-color: var(--code-bg) !important; color: #abb2bf; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; }
         .category-btn { transition: all 0.2s ease-in-out; }
         .category-btn.active { background-color: var(--accent); color: white; }
-        .editor-mode-btn { background-color: var(--bg-content-secondary); transition: background-color 0.2s ease-in-out; }
-        .editor-mode-btn.active { background-color: var(--accent); color: white; }
-        .editor-mode-btn:hover:not(.active) { background-color: #4a5568; }
         .loader-spinner {
             width: 2rem; height: 2rem; border: 3px solid var(--border-color);
             border-top-color: var(--accent); border-radius: 50%;
@@ -116,7 +112,7 @@
         const SITE_URL = 'https://blogaipandoci.vercel.app';
         const SUPABASE_URL = 'https://ddehwkwzmmvcxltlplua.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
-        const IMAGE_BUCKET_NAME = 'thought-images';
+        const IMAGE_BUCKET_NAME = 'thought-images'; // Bucket name confirmed
         const POSTS_PER_PAGE = 10;
         const CATEGORIES = ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"];
         
@@ -126,18 +122,16 @@
             quill: null, 
             isAuthReady: false, 
             currentCategory: '전체',
-            editorMode: 'quill',
-            turndownService: null,
-            showdownConverter: null,
             autoSaveTimer: null,
         };
         const $ = (selector) => document.querySelector(selector);
         
         // --- Debounce Helper ---
         function debounce(func, delay) {
+            let timeout;
             return function(...args) {
-                clearTimeout(state.autoSaveTimer);
-                state.autoSaveTimer = setTimeout(() => func.apply(this, args), delay);
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
             };
         }
 
@@ -153,7 +147,7 @@
 
         async function switchView(viewId, callback) {
             if (state.quill) { state.quill = null; }
-            if (state.autoSaveTimer) { clearTimeout(state.autoSaveTimer); }
+            if (state.autoSaveTimer) { clearTimeout(state.autoSaveTimer); state.autoSaveTimer = null; }
 
             const currentView = $('.app-view.active');
             if (currentView) {
@@ -252,15 +246,6 @@
                 : `<div class="text-center py-20 text-gray-400"><p class="mb-5">아직 작성된 글이 없습니다.</p>${state.user ? `<a href="/writer" data-route class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-500 text-black border-2 border-yellow-600 hover:bg-yellow-600">첫 글 작성하기</a>` : ''}</div>`;
             
             listContainer.innerHTML = `${postsHtml}${renderPaginationControls(page, totalPosts, '/', { category })}`;
-
-            const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
-            if (totalPages > 1) {
-                makeSwipable(listContainer,
-                    () => { if (page > 1) navigateTo(buildUrl('/', { page: page - 1, category })); },
-                    () => { if (page < totalPages) navigateTo(buildUrl('/', { page: page + 1, category })); }
-                );
-                listContainer.style.cursor = 'grab';
-            }
         }
         
         async function renderPostView(container, slug) { 
@@ -290,21 +275,20 @@
             updateMetaTags(post); 
             const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-1.5 text-sm font-bold rounded-md transition bg-yellow-400 text-black border-2 border-yellow-500 hover:bg-yellow-500">수정하기</a>` : ''; 
             
+            // --- UI FIX: Removed the wrapping card for the article ---
             container.innerHTML = `
                 <div class="py-8 max-w-4xl mx-auto">
-                    <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5 sm:p-8">
-                        <article class="prose-custom">
-                            <div class="flex justify-between items-center mb-6"><div class="text-sm text-gray-400"><span class="font-semibold bg-gray-700 px-2 py-1 rounded-md text-xs">${post.category || '미분류'}</span> · ${new Date(post.created_at).toLocaleDateString('ko-KR')}</div>${editButtonHtml}</div>
-                            <h1>${post.title}</h1>
-                            <div id="post-content">${post.refined_content || ''}</div>
-                        </article>
-                    </div>
+                    <article class="prose-custom">
+                        <div class="flex justify-between items-center mb-6"><div class="text-sm text-gray-400"><span class="font-semibold bg-gray-700 px-2 py-1 rounded-md text-xs">${post.category || '미분류'}</span> · ${new Date(post.created_at).toLocaleDateString('ko-KR')}</div>${editButtonHtml}</div>
+                        <h1>${post.title}</h1>
+                        <div id="post-content">${post.refined_content || ''}</div>
+                    </article>
                     <div class="my-8"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
                     ${nextPrevLinksHtml}
                 </div>`; 
 
             try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error("Adsense push error:", e); }
-            $('#post-content')?.querySelectorAll('pre code')?.forEach(el => hljs.highlightElement(el));
+            document.querySelectorAll('#post-content pre code').forEach(el => hljs.highlightElement(el));
         }
         
         async function renderDashboardView(container) {
@@ -324,7 +308,6 @@
 
         async function renderWriterView(container, slug) {
             if (!state.user) { navigateTo('/'); return; }
-
             updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
 
             const savedDraft = JSON.parse(localStorage.getItem('unsaved_post_content'));
@@ -344,14 +327,14 @@
             if (slug && !hasRestored) {
                 const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
                 if (error || !data || data.author_id !== state.user.id) {
-                    showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true);
-                    navigateTo('/dashboard'); return;
+                    showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true); navigateTo('/dashboard'); return;
                 }
                 post = data;
             }
 
             const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
             
+            // --- UI FIX: Simplified editor layout ---
             container.innerHTML = `<div class="py-6">
                 <h1 class="text-2xl font-bold mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1>
                 <form id="writer-form" class="space-y-5">
@@ -360,16 +343,8 @@
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">제목</label><input type="text" id="title" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white" required value="${post.title || ''}"></div>
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">요약</label><textarea id="summary" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea></div>
                     <div>
-                        <div class="flex justify-between items-center mb-2">
-                           <label class="block text-sm font-medium text-gray-300">본문</label>
-                           <div id="editor-mode-switcher" class="flex items-center border border-gray-600 rounded-md text-xs font-medium">
-                               <button type="button" data-mode="quill" class="editor-mode-btn px-2.5 py-1 rounded-l-md border-r border-gray-600">Rich Text</button>
-                               <button type="button" data-mode="markdown" class="editor-mode-btn px-2.5 py-1 border-r border-gray-600">Markdown</button>
-                               <button type="button" data-mode="html" class="editor-mode-btn px-2.5 py-1 rounded-r-md">HTML</button>
-                           </div>
-                        </div>
-                        <div id="editor-container" class="border border-gray-600 rounded-md"><div id="editor"></div></div>
-                        <textarea id="raw-editor" class="w-full text-gray-200 font-mono p-3 border border-gray-600 rounded-md" style="display: none; min-height: 400px; resize: vertical;"></textarea>
+                       <label class="block text-sm font-medium text-gray-300 mb-2">본문</label>
+                       <div id="editor-container" class="border border-gray-600 rounded-md"><div id="editor"></div></div>
                     </div>
                     <div class="flex justify-end items-center space-x-2 pt-3">
                         <button type="submit" data-action="save-draft" class="px-4 py-2 text-sm font-medium rounded-md bg-gray-600 text-white hover:bg-gray-700">초안 저장</button>
@@ -378,12 +353,10 @@
                 </form>
             </div>`;
             
-            // --- FIX: Use setTimeout with 0 delay to ensure DOM is ready before initialization ---
             setTimeout(() => {
                 const writerForm = $('#writer-form');
                 if (writerForm) {
                     initQuillEditor(post.refined_content || '');
-                    setupEditorModeSwitcher();
                     setupAutoSave();
                     writerForm.addEventListener('submit', (e) => { 
                         e.preventDefault(); 
@@ -402,120 +375,96 @@
             state.quill = new Quill('#editor', {
                 modules: {
                     syntax: { highlight: text => hljs.highlightAuto(text).value },
-                    toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler } },
+                    toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler } }, // Image handler linked
                     clipboard: { matchVisual: false }
                 },
                 theme: 'snow'
             });
             if (initialContent) {
-                state.quill.setContents([]); // Clear previous content before pasting
                 state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
             }
         }
 
-        function setupEditorModeSwitcher() {
-            const switcher = $('#editor-mode-switcher');
-            const quillContainer = $('#editor-container');
-            const rawEditor = $('#raw-editor');
-            if (!switcher || !quillContainer || !rawEditor) return;
-            
-            const syncEditorViews = (newMode) => {
-                const oldMode = state.editorMode;
-                if (newMode === oldMode) return;
-                
-                try {
-                    if (oldMode === 'quill' && state.quill) {
-                        const htmlContent = state.quill.root.innerHTML;
-                        if (newMode === 'markdown') rawEditor.value = state.turndownService.turndown(htmlContent);
-                        else if (newMode === 'html') rawEditor.value = htmlContent;
-                    } else if (newMode === 'quill' && state.quill) {
-                        const rawContent = rawEditor.value;
-                        const htmlContent = (oldMode === 'markdown') ? state.showdownConverter.makeHtml(rawContent) : rawContent;
-                        state.quill.root.innerHTML = htmlContent;
-                    }
-                } catch (e) {
-                    console.error("Editor content conversion error:", e);
-                    showToast("모드 전환 중 오류가 발생했습니다.", true);
-                }
-
-                quillContainer.style.display = newMode === 'quill' ? 'block' : 'none';
-                rawEditor.style.display = newMode !== 'quill' ? 'block' : 'none';
-                
-                switcher.querySelector('.active')?.classList.remove('active');
-                switcher.querySelector(`[data-mode="${newMode}"]`).classList.add('active');
-                state.editorMode = newMode;
-            };
-
-            switcher.querySelector(`[data-mode="${state.editorMode}"]`).classList.add('active');
-            rawEditor.style.display = state.editorMode !== 'quill' ? 'block' : 'none';
-            quillContainer.style.display = state.editorMode === 'quill' ? 'block' : 'none';
-
-            switcher.addEventListener('click', e => {
-                const button = e.target.closest('[data-mode]');
-                if (button) syncEditorViews(button.dataset.mode);
-            });
-        }
-        
+        // --- FIX: Simplified auto-save logic ---
         function setupAutoSave() {
             const form = $('#writer-form');
-            if (!form) return;
+            if (!form || !state.quill) return;
             
-            const saveContent = debounce(() => {
-                try {
-                    let contentHTML = '';
-                    if (state.editorMode === 'quill' && state.quill) {
-                        contentHTML = state.quill.root.innerHTML;
-                    } else {
-                        const rawEditor = $('#raw-editor');
-                        if (rawEditor) {
-                           const rawContent = rawEditor.value;
-                           contentHTML = state.editorMode === 'markdown' ? state.showdownConverter.makeHtml(rawContent) : rawContent;
-                        }
-                    }
+            const performAutoSave = () => {
+                if (!state.quill) return;
+                const draft = {
+                    title: $('#title').value,
+                    summary: $('#summary').value,
+                    category: $('#category').value,
+                    refined_content: state.quill.root.innerHTML
+                };
+                localStorage.setItem('unsaved_post_content', JSON.stringify(draft));
+                showToast('자동 저장됨', false);
+            };
 
-                    const draft = {
-                        title: $('#title').value,
-                        summary: $('#summary').value,
-                        category: $('#category').value,
-                        refined_content: contentHTML
-                    };
-                    localStorage.setItem('unsaved_post_content', JSON.stringify(draft));
-                    showToast('자동 저장되었습니다.', false);
-                } catch(e) {
-                    console.error("Auto-save failed:", e);
-                }
-            }, 2000); // 2초마다 자동 저장
+            state.autoSaveTimer = debounce(performAutoSave, 2000);
 
-            if (state.quill) {
-                state.quill.on('text-change', saveContent);
-            }
-            form.addEventListener('input', saveContent);
-            form.addEventListener('change', saveContent);
+            state.quill.on('text-change', state.autoSaveTimer);
+            form.addEventListener('input', state.autoSaveTimer);
+            form.addEventListener('change', state.autoSaveTimer);
         }
 
+        // --- FIX: Overhauled image handler ---
         function quillImageHandler() {
+            if (!state.user) {
+                showToast('이미지를 업로드하려면 로그인이 필요합니다.', true);
+                return;
+            }
+
             const input = document.createElement('input');
-            input.setAttribute('type', 'file'); input.setAttribute('accept', 'image/*');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
             input.click();
+
             input.onchange = async () => {
                 const file = input.files[0];
-                if (!file || !state.user) return;
+                if (!file) return;
+
+                const originalButton = state.quill.getModule('toolbar').container.querySelector('.ql-image');
+                originalButton.disabled = true;
                 showToast('이미지 업로드 중...');
+
                 try {
                     const webpBlob = await convertToWebP(file);
                     const fileName = `${state.user.id}/${Date.now()}.webp`;
-                    const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, webpBlob);
-                    if (error) throw error;
-                    const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName);
+                    
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from(IMAGE_BUCKET_NAME)
+                        .upload(fileName, webpBlob, {
+                            cacheControl: '3600',
+                            upsert: false
+                        });
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: urlData } = supabase.storage
+                        .from(IMAGE_BUCKET_NAME)
+                        .getPublicUrl(fileName);
+                    
                     const range = state.quill.getSelection(true);
-                    state.quill.insertEmbed(range.index, 'image', data.publicUrl);
+                    state.quill.insertEmbed(range.index, 'image', urlData.publicUrl);
                     state.quill.setSelection(range.index + 1);
                     showToast('업로드 완료!');
-                } catch (error) { showToast(`업로드 실패: ${error.message}`, true); }
+                } catch (error) {
+                    console.error('Image Upload Error:', error);
+                    showToast(`업로드 실패: ${error.message}`, true);
+                } finally {
+                    originalButton.disabled = false;
+                }
             };
         }
 
+        // --- FIX: Simplified post save logic ---
         async function handlePostSave(status, button) {
+            if (!state.quill) {
+                showToast('에디터가 초기화되지 않았습니다.', true);
+                return;
+            }
             const originalBtnText = button.textContent;
             button.disabled = true;
             button.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
@@ -524,14 +473,7 @@
                 const title = $('#title').value.trim();
                 if (!title) throw new Error('제목은 필수 항목입니다.');
 
-                let contentHTML = '';
-                if (state.editorMode === 'quill') {
-                    if (!state.quill) throw new Error('에디터가 초기화되지 않았습니다.');
-                    contentHTML = state.quill.root.innerHTML;
-                } else {
-                    const rawContent = $('#raw-editor').value;
-                    contentHTML = state.editorMode === 'markdown' ? state.showdownConverter.makeHtml(rawContent) : rawContent;
-                }
+                const contentHTML = state.quill.root.innerHTML;
                 
                 let summary = $('#summary').value.trim();
                 if (!summary) {
@@ -553,16 +495,16 @@
                 const query = id ? supabase.from('posts').update(postData).eq('id', id) : supabase.from('posts').insert(postData);
                 const { data, error } = await query.select().single();
 
-                if (error) {
-                    console.error('Supabase save error:', error);
-                    throw new Error(`Supabase 오류: ${error.message}`);
-                }
+                if (error) throw error;
 
                 localStorage.removeItem('unsaved_post_content');
+                if (state.autoSaveTimer) clearTimeout(state.autoSaveTimer);
+
                 showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
                 navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard');
 
             } catch (error) {
+                console.error('Save Post Error:', error);
                 showToast(`저장 실패: ${error.message}`, true);
             } finally {
                 button.disabled = false;
@@ -602,7 +544,7 @@
                         const canvas = document.createElement('canvas'); let { width, height } = img;
                         if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
                         canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas to Blob 실패')), 'image/webp', quality);
+                        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas to Blob failed')), 'image/webp', quality);
                     }; img.onerror = reject;
                 }; reader.onerror = reject;
             });
@@ -666,25 +608,8 @@
             $('meta[property="og:description"]')?.setAttribute('content', description); $('meta[property="og:url"]')?.setAttribute('content', url);
         }
 
-        function makeSwipable(element, onSwipeRight, onSwipeLeft) {
-            if (!element) return;
-            let startX = 0, isSwiping = false; const threshold = 50;
-            const onStart = (e) => { startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; isSwiping = true; };
-            const onEnd = (e) => {
-                if (!isSwiping) return; isSwiping = false;
-                const endX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
-                const diff = endX - startX;
-                if (Math.abs(diff) > threshold) { if (diff > 0) onSwipeRight(); else onSwipeLeft(); }
-            };
-            element.addEventListener('mousedown', onStart); element.addEventListener('mouseup', onEnd); element.addEventListener('mouseleave', onEnd);
-            element.addEventListener('touchstart', onStart, { passive: true }); element.addEventListener('touchend', onEnd);
-        }
-
         // --- App Initialization ---
         function initializeApp() {
-            state.turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
-            state.showdownConverter = new showdown.Converter({ tables: true, strikethrough: true, tasklists: true });
-            
             supabase.auth.onAuthStateChange((event, session) => {
                 const userJustChanged = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
