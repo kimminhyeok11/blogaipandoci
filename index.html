@@ -20,6 +20,8 @@
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -68,10 +70,13 @@
         .prose-custom code { font-family: monospace; background-color: var(--bg-content-secondary); padding: 0.2em 0.4em; border-radius: 0.25rem; font-size: 0.9em; }
         .prose-custom pre code { background-color: transparent; padding: 0; }
         .prose-custom img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 2em 0; }
+        .prose-custom table { width: 100%; border-collapse: collapse; margin: 2em 0; }
+        .prose-custom th, .prose-custom td { border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; }
+        .prose-custom th { background-color: var(--bg-content-secondary); color: var(--text-primary); font-weight: bold; }
         
         #editor-container .ql-editor { color: var(--text-primary); min-height: 300px; }
-        .category-btn { transition: all 0.2s ease-in-out; }
-        .category-btn.active { background-color: var(--accent); color: white; }
+        .category-btn, .editor-mode-btn { transition: all 0.2s ease-in-out; }
+        .category-btn.active, .editor-mode-btn.active { background-color: var(--accent); color: white; }
         .loader-spinner {
             width: 2rem; height: 2rem; border: 3px solid var(--border-color);
             border-top-color: var(--accent); border-radius: 50%;
@@ -110,7 +115,15 @@
         const CATEGORIES = ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"];
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const state = { user: null, quill: null, isAuthReady: false, currentCategory: '전체' };
+        const state = { 
+            user: null, 
+            quill: null, 
+            isAuthReady: false, 
+            currentCategory: '전체',
+            editorMode: 'quill', // 'quill', 'markdown', 'html'
+            turndownService: null,
+            showdownConverter: null,
+        };
         const $ = (selector) => document.querySelector(selector);
 
         // --- 핵심 앱 로직 ---
@@ -124,7 +137,9 @@
         }
 
         async function switchView(viewId, callback) {
-            if (state.quill) state.quill = null;
+            if (state.quill) {
+                state.quill = null;
+            }
             const currentView = $('.app-view.active');
             if (currentView) {
                 await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
@@ -133,11 +148,12 @@
             }
             const nextView = $(`#${viewId}`);
             if (nextView) {
-                nextView.innerHTML = '';
+                nextView.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
+                nextView.classList.add('active');
+                anime({ targets: nextView, opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' });
+
                 try {
                     if (callback) await callback(nextView);
-                    nextView.classList.add('active');
-                    anime({ targets: nextView, opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' });
                 } catch (error) {
                     console.error(`Error rendering view ${viewId}:`, error);
                     nextView.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.</p>`;
@@ -228,8 +244,8 @@
             const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
             if (totalPages > 1) {
                 makeSwipable(listContainer,
-                    () => { if (page > 1) navigateTo(buildUrl('/', { page: page - 1, category })); },
-                    () => { if (page < totalPages) navigateTo(buildUrl('/', { page: page + 1, category })); }
+                    () => { if (page > 1) navigateTo(buildUrl('/', { page: page - 1, category })); }, // Swipe Right -> Prev
+                    () => { if (page < totalPages) navigateTo(buildUrl('/', { page: page + 1, category })); }  // Swipe Left -> Next
                 );
                 listContainer.style.cursor = 'grab';
             }
@@ -238,8 +254,7 @@
         async function renderPostView(container, slug) { 
             if (!slug) { navigateTo('/'); return; } 
             
-            container.innerHTML = `<div class="py-8 max-w-4xl mx-auto"><div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div></div>`;
-
+            // container already has a loader from switchView
             const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); 
             if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } 
 
@@ -277,32 +292,74 @@
                     ${nextPrevLinksHtml}
                 </div>`; 
             
+            // Apply swipe gesture for post navigation
+            makeSwipable(container,
+                () => { if (prevPost) navigateTo(`/post/${prevPost.slug}`); }, // Swipe Right -> Prev
+                () => { if (nextPost) navigateTo(`/post/${nextPost.slug}`); }  // Swipe Left -> Next
+            );
+
             try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error("Adsense push error:", e); }
         }
         
         async function renderDashboardView(container) {
             updateMetaTags({ title: '대시보드' });
-            container.innerHTML = `<div class="py-8"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-white">대시보드</h1><a href="/writer" data-route class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-400 text-black border-2 border-yellow-500 hover:bg-yellow-500">새 글 작성</a></div><div id="dashboard-post-list" class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-4"><div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
+            container.innerHTML = `<div class="py-8"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-white">대시보드</h1><a href="/writer" data-route class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-400 text-black border-2 border-yellow-500 hover:bg-yellow-500">새 글 작성</a></div><div id="dashboard-post-list" class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-4 min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div>`;
             const listContainer = $('#dashboard-post-list');
             if (!state.user) return;
-            const { data: posts, error } = await supabase.from('posts').select('*').eq('author_id', state.user.id).order('created_at', { ascending: false });
+
+            // --- [FIX] Optimized query to fetch only necessary columns ---
+            const { data: posts, error } = await supabase.from('posts').select('id, title, slug, status, created_at').eq('author_id', state.user.id).order('created_at', { ascending: false });
+            
             if (error) { listContainer.innerHTML = '<p class="text-center text-gray-400">글 목록을 불러오는 데 실패했습니다.</p>'; return; }
             if (posts.length === 0) { listContainer.innerHTML = '<p class="text-center text-gray-400 py-10">작성한 글이 없습니다.</p>'; return; }
-            const postsHtml = `<ul class="divide-y divide-gray-700">${posts.map(post => `<li class="py-3 flex justify-between items-center"><div><a href="/post/${post.slug}" data-route class="font-semibold text-white hover:text-blue-400">${post.title}</a><div class="text-xs text-gray-400 mt-1"><span class="px-2 py-0.5 rounded-full text-white ${post.status === 'published' ? 'bg-blue-600' : 'bg-gray-600'}">${post.status === 'published' ? '발행됨' : '초안'}</span><span class="ml-2">${new Date(post.created_at).toLocaleDateString('ko-KR')}</span></div></div><a href="/writer/${post.slug}" data-route class="px-3 py-1 text-sm rounded-md bg-gray-600 hover:bg-gray-500">수정</a></li>`).join('')}</ul>`;
+            
+            const postsHtml = `<ul class="w-full divide-y divide-gray-700">${posts.map(post => `<li class="py-3 flex justify-between items-center"><div><a href="/post/${post.slug}" data-route class="font-semibold text-white hover:text-blue-400">${post.title}</a><div class="text-xs text-gray-400 mt-1"><span class="px-2 py-0.5 rounded-full text-white ${post.status === 'published' ? 'bg-blue-600' : 'bg-gray-600'}">${post.status === 'published' ? '발행됨' : '초안'}</span><span class="ml-2">${new Date(post.created_at).toLocaleDateString('ko-KR')}</span></div></div><a href="/writer/${post.slug}" data-route class="px-3 py-1 text-sm rounded-md bg-gray-600 hover:bg-gray-500">수정</a></li>`).join('')}</ul>`;
             listContainer.innerHTML = postsHtml;
         }
 
         async function renderWriterView(container, slug) {
+            if (!state.user) { showToast('로그인이 필요합니다.', true); navigateTo('/'); return; }
+
             updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: CATEGORIES[0] };
+            
             if (slug) {
                 const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
                 if (error || !data || data.author_id !== state.user.id) { showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true); navigateTo('/dashboard'); return; }
                 post = data;
             }
+
             const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
-            container.innerHTML = `<div class="py-6"><h1 class="text-2xl font-bold mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-5"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><div><label class="block text-sm font-medium text-gray-300 mb-1">카테고리</label><select id="category" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">${categoryOptions}</select></div><div><label class="block text-sm font-medium text-gray-300 mb-1">제목</label><input type="text" id="title" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required value="${post.title || ''}"></div><div><label class="block text-sm font-medium text-gray-300 mb-1">요약</label><textarea id="summary" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea></div><div><label class="block text-sm font-medium text-gray-300 mb-1">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-end items-center space-x-2 pt-3"><button type="submit" data-action="save-draft" class="px-4 py-2 text-sm font-medium rounded-md bg-gray-600 text-white hover:bg-gray-700">초안 저장</button><button type="submit" data-action="publish" class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-400 text-black border-2 border-yellow-500 hover:bg-yellow-500">발행하기</button></div></form></div>`;
+            
+            container.innerHTML = `<div class="py-6">
+                <h1 class="text-2xl font-bold mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1>
+                <form id="writer-form" class="space-y-5">
+                    <input type="hidden" id="post-id" value="${post.id || ''}">
+                    <input type="hidden" id="post-slug" value="${post.slug || ''}">
+                    <div><label class="block text-sm font-medium text-gray-300 mb-1">카테고리</label><select id="category" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white">${categoryOptions}</select></div>
+                    <div><label class="block text-sm font-medium text-gray-300 mb-1">제목</label><input type="text" id="title" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white" required value="${post.title || ''}"></div>
+                    <div><label class="block text-sm font-medium text-gray-300 mb-1">요약</label><textarea id="summary" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea></div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">본문</label>
+                        <div id="editor-mode-switcher" class="flex items-center space-x-1 mb-2 bg-gray-700 p-1 rounded-lg w-min">
+                            <button type="button" data-mode="quill" class="editor-mode-btn px-3 py-1 text-sm rounded-md bg-gray-600 hover:bg-gray-500">리치 텍스트</button>
+                            <button type="button" data-mode="markdown" class="editor-mode-btn px-3 py-1 text-sm rounded-md bg-gray-600 hover:bg-gray-500">마크다운</button>
+                            <button type="button" data-mode="html" class="editor-mode-btn px-3 py-1 text-sm rounded-md bg-gray-600 hover:bg-gray-500">HTML</button>
+                        </div>
+                        <div id="editor-container" class="border border-gray-600 rounded-b-md rounded-tr-md"><div id="editor"></div></div>
+                        <textarea id="raw-editor" class="w-full bg-gray-800 text-gray-200 font-mono p-3 border border-gray-600 rounded-md" style="display: none; min-height: 300px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div class="flex justify-end items-center space-x-2 pt-3">
+                        <button type="submit" data-action="save-draft" class="px-4 py-2 text-sm font-medium rounded-md bg-gray-600 text-white hover:bg-gray-700">초안 저장</button>
+                        <button type="submit" data-action="publish" class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-400 text-black border-2 border-yellow-500 hover:bg-yellow-500">발행하기</button>
+                    </div>
+                </form>
+            </div>`;
+            
             initQuillEditor(post.refined_content || '');
+            setupEditorModeSwitcher();
             $('#writer-form').addEventListener('submit', (e) => { e.preventDefault(); if (e.submitter?.dataset.action) handlePostSave(e.submitter.dataset.action, e.submitter); });
         }
         
@@ -311,8 +368,69 @@
             const editorElement = $('#editor');
             if (!editorElement) return;
             const toolbarOptions = [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], ['blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link', 'image'], ['clean']];
-            state.quill = new Quill('#editor', { modules: { syntax: { highlight: text => hljs.highlightAuto(text).value }, toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler } } }, theme: 'snow' });
+            
+            // --- [FIX] Added clipboard.matchVisual = false to improve paste fidelity ---
+            const options = {
+                modules: {
+                    syntax: { highlight: text => hljs.highlightAuto(text).value },
+                    toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler } },
+                    clipboard: { matchVisual: false }
+                },
+                theme: 'snow'
+            };
+            state.quill = new Quill('#editor', options);
             if (initialContent) state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
+        }
+
+        function setupEditorModeSwitcher() {
+            const switcher = $('#editor-mode-switcher');
+            if (!switcher) return;
+            
+            const syncEditorViews = (newMode) => {
+                const oldMode = state.editorMode;
+                if (newMode === oldMode) return;
+
+                const quillEditor = $('#editor-container');
+                const rawEditor = $('#raw-editor');
+
+                // Convert content before switching views
+                if (oldMode === 'quill') {
+                    const htmlContent = state.quill.root.innerHTML;
+                    if (newMode === 'markdown') {
+                        rawEditor.value = state.turndownService.turndown(htmlContent);
+                    } else if (newMode === 'html') {
+                        rawEditor.value = htmlContent;
+                    }
+                } else { // 'markdown' or 'html'
+                    if (newMode === 'quill') {
+                        const rawContent = rawEditor.value;
+                        const htmlContent = (oldMode === 'markdown') 
+                            ? state.showdownConverter.makeHtml(rawContent)
+                            : rawContent;
+                        state.quill.root.innerHTML = htmlContent;
+                    }
+                }
+
+                // Toggle visibility
+                quillEditor.style.display = newMode === 'quill' ? 'block' : 'none';
+                rawEditor.style.display = newMode !== 'quill' ? 'block' : 'none';
+
+                // Update active button
+                switcher.querySelector('.active')?.classList.remove('active', 'bg-accent');
+                switcher.querySelector(`[data-mode="${newMode}"]`).classList.add('active', 'bg-accent');
+                
+                state.editorMode = newMode;
+            };
+
+            // Initial state
+            switcher.querySelector(`[data-mode="quill"]`).classList.add('active', 'bg-accent');
+
+            switcher.addEventListener('click', e => {
+                const button = e.target.closest('[data-mode]');
+                if (button) {
+                    syncEditorViews(button.dataset.mode);
+                }
+            });
         }
 
         function quillImageHandler() {
@@ -343,12 +461,25 @@
             if (!title) { showToast('제목은 필수 항목입니다.', true); return; }
             const originalBtnText = button.textContent;
             button.disabled = true; button.innerHTML = `<div class="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin mx-auto"></div>`;
+            
             try {
                 const id = $('#post-id').value;
                 let slug = $('#post-slug').value || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
                 if (!id) { const { data } = await supabase.from('posts').select('id').eq('slug', slug).maybeSingle(); if (data) slug = `${slug}-${Date.now().toString().slice(-4)}`; }
-                const summary = $('#summary').value.trim() || state.quill.getText(0, 150).trim().replace(/\n/g, ' ') + '...';
-                const postData = { title, slug, status, author_id: state.user.id, refined_content: state.quill.root.innerHTML, category: $('#category').value, summary };
+                
+                let contentHTML;
+                if (state.editorMode === 'quill') {
+                    contentHTML = state.quill.root.innerHTML;
+                } else {
+                    const rawContent = $('#raw-editor').value;
+                    contentHTML = state.editorMode === 'markdown' ? state.showdownConverter.makeHtml(rawContent) : rawContent;
+                }
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = contentHTML;
+                const summary = $('#summary').value.trim() || tempDiv.textContent.slice(0,150).trim().replace(/\n/g, ' ') + '...';
+
+                const postData = { title, slug, status, author_id: state.user.id, refined_content: contentHTML, category: $('#category').value, summary };
+                
                 const { data, error } = id ? await supabase.from('posts').update(postData).eq('id', id).select().single() : await supabase.from('posts').insert(postData).select().single();
                 if (error) throw error;
                 showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
@@ -394,7 +525,7 @@
             });
         }
         
-        async function handleLogout() { await supabase.auth.signOut(); showToast('로그아웃되었습니다.'); navigateTo('/'); }
+        async function handleLogout() { await supabase.auth.signOut(); showToast('로그아웃되었습니다.'); navigateTo('/', true); }
         function showAuthModal() {
             if ($('#auth-modal')) return;
             const modalHtml = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"><div id="auth-modal-content" class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg w-full max-w-sm p-6 relative"><button id="close-modal-btn" class="absolute top-3 right-3 text-gray-400 hover:text-white text-2xl leading-none">&times;</button><h2 class="text-xl font-bold text-center mb-4 text-white">로그인 또는 가입</h2><p class="text-center text-sm text-gray-400 mb-6">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500"><button type="submit" class="w-full px-4 py-2 font-bold rounded-md transition bg-blue-600 text-white hover:bg-blue-700">매직 링크 받기</button></form></div></div>`;
@@ -421,14 +552,14 @@
             $('meta[property="og:description"]')?.setAttribute('content', description); $('meta[property="og:url"]')?.setAttribute('content', url);
         }
 
-        function makeSwipable(element, onSwipeLeft, onSwipeRight) {
+        function makeSwipable(element, onSwipeRight, onSwipeLeft) {
             if (!element) return;
             let startX = 0, isSwiping = false; const threshold = 50;
             const onStart = (e) => { startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; isSwiping = true; };
             const onEnd = (e) => {
                 if (!isSwiping) return; isSwiping = false;
                 const endX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
-                const diff = startX - endX;
+                const diff = endX - startX;
                 if (Math.abs(diff) > threshold) { if (diff > 0) onSwipeRight(); else onSwipeLeft(); }
             };
             element.addEventListener('mousedown', onStart); element.addEventListener('mouseup', onEnd); element.addEventListener('mouseleave', onEnd);
@@ -437,11 +568,12 @@
 
         // --- 앱 초기화 ---
         function initializeApp() {
+            state.turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+            state.showdownConverter = new showdown.Converter({ tables: true, strikethrough: true, tasklists: true });
+            
             supabase.auth.onAuthStateChange((event, session) => {
-                // [수정된 부분] 로그인 상태 변경 시 콘솔에 로그를 출력하여 디버깅을 돕습니다.
-                console.log('Auth event:', event, 'Session:', session);
-                
-                const userChanged = state.user?.id !== session?.user?.id;
+                console.log('Auth event:', event, 'Session available:', !!session);
+                const userJustChanged = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
                 
                 if (!state.isAuthReady) {
@@ -449,9 +581,14 @@
                     renderNav(); 
                     handleRouting();
                     anime({ targets: '#app-loader', opacity: 0, duration: 400, complete: (anim) => anim.animatables[0].target.remove() });
-                } else if (userChanged) {
+                } else if (userJustChanged) {
                     renderNav();
-                    handleRouting();
+                    const currentPath = window.location.pathname;
+                    if (currentPath === '/' || currentPath === '') {
+                        handleRouting(); 
+                    } else {
+                        navigateTo('/', true);
+                    }
                 }
             });
 
