@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" class="dark">
+<html lang="ko">
 <head>
     <!-- Meta tags -->
     <meta charset="UTF-8">
@@ -29,20 +29,20 @@
      crossorigin="anonymous"></script>
 
     <style>
-        /* --- Design System Update --- */
+        /* --- Design System Update (Light Theme) --- */
         :root {
-            --bg-main: #121212;
-            --bg-content: #1E1E1E;
-            --bg-content-secondary: #2A2A2A;
-            --border-color: #2D2D2D;
-            --text-primary: #FFFFFF;
-            --text-secondary: #A0A0A0;
-            --text-tertiary: #6B6B6B;
-            --accent: #D946EF; /* New Point Color: Fuchsia 500 */
+            --bg-main: #FFFFFF; /* White */
+            --bg-content: #FFFFFF;
+            --bg-content-secondary: #F3F4F6; /* Light Gray */
+            --border-color: #D1D5DB; /* Gray 300 */
+            --text-primary: #111827; /* Gray 900 */
+            --text-secondary: #374151; /* Gray 700 */
+            --text-tertiary: #6B7280; /* Gray 500 */
+            --accent: #D946EF; /* Fuchsia 500 */
             --accent-hover: #C026D3; /* Darker Fuchsia for hover */
-            --accent-tag-bg: #374151;
+            --accent-tag-bg: #F3F4F6; /* Light Gray */
             --font-body: 'Noto Sans KR', sans-serif;
-            --code-bg: #282c34;
+            --code-bg: #F3F4F6;
         }
         html, body { height: 100%; }
         body {
@@ -64,22 +64,23 @@
 
         /* --- Typography Enhancement --- */
         .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
-        .prose-custom h1 { font-size: 2.5rem !important; line-height: 1.4; } /* Increased line-height for wrapped titles */
+        .prose-custom h1 { font-size: 1.875rem !important; line-height: 1.4; } /* Reduced post title size */
+        #post-content h1 { font-size: 1.3rem !important; }
         .prose-custom h2 { font-size: 1.75rem; line-height: 1.3; }
         .prose-custom h3 { font-size: 1.3rem; line-height: 1.4; }
         .prose-custom p { margin-bottom: 1.5em; color: var(--text-secondary); }
         .prose-custom a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); transition: all 0.2s ease; }
         .prose-custom a:hover { background-color: var(--accent); color: white; border-bottom-color: transparent; }
-        .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-size: 1.1em; color: var(--text-primary); background-color: var(--bg-content); border-radius: 0 8px 8px 0; }
+        .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-size: 1.1em; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; }
 
         /* --- New Post Title Style --- */
         .post-title-highlight {
             display: inline;
-            background-color: rgba(217, 70, 239, 0.15); /* Accent color with 15% opacity */
+            background-color: rgba(217, 70, 239, 0.15);
             padding: 0.2em 0.6em;
             border-radius: 0.5rem;
             -webkit-box-decoration-break: clone;
-            box-decoration-break: clone; /* Ensures style applies to each line correctly */
+            box-decoration-break: clone;
         }
 
         /* --- Component Redesign --- */
@@ -87,18 +88,18 @@
         .category-btn { 
             transition: all 0.2s ease-in-out;
             border-radius: 9999px;
-            padding: 0.5rem 1.25rem;
+            padding: 0.25rem 0.875rem; /* Reduced padding */
             font-weight: 500;
             background-color: var(--accent-tag-bg);
             color: var(--text-primary);
             border: 1px solid transparent;
         }
         .category-btn:hover {
-            background-color: #4b5563;
+            background-color: #E5E7EB; /* Hover color for light theme */
         }
         .category-btn.active { 
             background-color: var(--accent); 
-            color: var(--text-primary); 
+            color: #FFFFFF; /* White text on accent background */
             font-weight: 700;
         }
         .loader-spinner {
@@ -110,27 +111,18 @@
     </style>
 </head>
 <body>
-    <div id="app-loader" class="fixed inset-0 z-50 bg-bg-main flex items-center justify-center"><div class="loader-spinner"></div></div>
+    <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center"><div class="loader-spinner"></div></div>
     <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-4"></header>
-    <main id="app-container" class="w-full max-w-7xl mx-auto px-4">
+    <main id="app-container" class="w-full px-4">
         <div id="view-library" class="app-view"></div>
         <div id="view-post" class="app-view"></div>
-        <div id="view-dashboard" class="app-view max-w-5xl mx-auto"></div>
-        <div id="view-writer" class="app-view max-w-4xl mx-auto"></div>
-    </main><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112"
-     crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-format="autorelaxed"
-     data-ad-client="ca-pub-5239497835591112"
-     data-ad-slot="7106336036"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
-    <footer class="text-center py-8 px-4 border-t border-gray-800/50 mt-24">
+        <div id="view-dashboard" class="app-view"></div>
+        <div id="view-writer" class="app-view"></div>
+    </main>
+    <footer class="text-center py-8 px-4 border-t border-gray-200 mt-24">
         <p class="text-sm text-gray-600">
             © 2024 InsureLog. 
-            개발 및 문의사항은 <a href="https://www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-500 hover:text-white transition-colors underline">Threads</a>로 연락 주세요.
+            개발 및 문의사항은 <a href="https://www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-500 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
         </p>
     </footer>
     <div id="modal-container"></div>
@@ -227,11 +219,11 @@
         // --- View Rendering ---
         function renderNav() {
             $('#main-nav-container').innerHTML = `
-                <nav class="w-full max-w-7xl flex items-center justify-between py-3 px-5 bg-black/30 backdrop-blur-xl border border-white/10 rounded-3xl shadow-lg">
-                    <a href="/" data-route class="font-black text-xl text-white tracking-tighter">InsureLog</a>
+                <nav class="w-full flex items-center justify-between py-3 px-5 bg-white/50 backdrop-blur-xl border border-black/10 rounded-3xl shadow-lg">
+                    <a href="/" data-route class="font-black text-xl text-gray-900 tracking-tighter">InsureLog</a>
                     <div class="flex items-center space-x-3">
                         ${state.user 
-                            ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-bold rounded-full bg-white/10 text-white hover:bg-white/20 transition">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-bold rounded-full bg-white/10 text-white hover:bg-white/20 transition">로그아웃</button>` 
+                            ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition">로그아웃</button>` 
                             : `<button data-action="auth" class="px-4 py-2 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">로그인 / 가입</button>`
                         }
                     </div>
@@ -246,9 +238,9 @@
             
             container.innerHTML = `
                 <div class="py-12 sm:py-16">
-                    <div class="text-center mb-12"><h1 class="text-5xl sm:text-7xl font-black mb-4 text-white tracking-tighter">InsureLog</h1><p class="text-lg text-gray-400">AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.</p></div>
-                    <div class="flex items-center justify-center gap-3 mb-12 flex-wrap">${categoryButtons}</div>
-                    <div id="post-list-container" class="space-y-2"></div>
+                    <div class="text-center mb-12"><h1 class="text-5xl sm:text-7xl font-black mb-4 text-black tracking-tighter">InsureLog</h1><p class="text-lg text-gray-500">AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.</p></div>
+                    <div class="flex items-center justify-center gap-2 mb-8 flex-wrap">${categoryButtons}</div>
+                    <div id="post-list-container" class="space-y-1"></div>
                 </div>`;
             
             await renderPostList(page, category);
@@ -272,8 +264,8 @@
             }
 
             const postsHtml = posts.length > 0
-                ? `<div class="space-y-2">${posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-6 transition-all duration-300 rounded-2xl bg-transparent hover:bg-white/5"><h3 class="text-white text-lg font-bold">${post.title}</h3><p class="text-base text-gray-500 mt-2">${post.summary || ''}</p></a>`).join('')}</div>`
-                : `<div class="text-center py-20 text-gray-400"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${state.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
+                ? `<div class="space-y-1">${posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-4 transition-all duration-300 rounded-2xl bg-transparent hover:bg-gray-50"><h3 class="text-gray-800 text-sm font-bold">${post.title}</h3><p class="text-xs text-gray-500 mt-1">${post.summary || ''}</p></a>`).join('')}</div>`
+                : `<div class="text-center py-20 text-gray-500"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${state.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
             
             listContainer.innerHTML = `${postsHtml}${renderPaginationControls(page, totalPosts, '/', { category })}`;
         }
@@ -284,6 +276,7 @@
             const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); 
             if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } 
 
+            // Increment view count
             (async () => { 
                 const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; 
                 if (!viewedPosts.includes(post.id)) { 
@@ -293,36 +286,83 @@
                 } 
             })();
 
+            // Fetch popular posts
+            const { data: popularPosts } = await supabase
+                .from('posts')
+                .select('title, slug')
+                .eq('status', 'published')
+                .neq('slug', slug)
+                .order('view_count', { ascending: false, nullsFirst: false })
+                .limit(5);
+
+            let popularPostsHtml = '';
+            if (popularPosts && popularPosts.length > 0) {
+                popularPostsHtml = `
+                    <div class="mt-20">
+                        <h2 class="text-2xl font-bold text-black mb-4">많이 본 뉴스</h2>
+                        <div class="border-t border-gray-200">
+                            ${popularPosts.map(p => `
+                                <a href="/post/${p.slug}" data-route class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50">
+                                    <h4 class="font-semibold text-gray-800">${p.title}</h4>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // AdSense Matched Content Ad
+            const adsenseMatchedContentHtml = `
+                <div class="mt-16">
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-format="autorelaxed"
+                         data-ad-client="ca-pub-5239497835591112"
+                         data-ad-slot="7106336036"></ins>
+                </div>
+            `;
+
+            // Fetch next/previous posts
             const { data: prevPost } = await supabase.from('posts').select('title, slug').lt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: false }).limit(1).single();
             const { data: nextPost } = await supabase.from('posts').select('title, slug').gt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: true }).limit(1).single();
 
             const nextPrevLinksHtml = `
-                <nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-white/10">
-                    <div>${prevPost ? `<a href="/post/${prevPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-white/5 transition h-full"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-white font-bold mt-2 text-lg">${prevPost.title}</h4></a>` : ''}</div>
-                    <div class="text-left md:text-right">${nextPost ? `<a href="/post/${nextPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-white/5 transition h-full"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-white font-bold mt-2 text-lg">${nextPost.title}</h4></a>` : ''}</div>
+                <nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10">
+                    <div>${prevPost ? `<a href="/post/${prevPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-lg">${prevPost.title}</h4></a>` : ''}</div>
+                    <div class="text-left md:text-right">${nextPost ? `<a href="/post/${nextPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-lg">${nextPost.title}</h4></a>` : ''}</div>
                 </nav>`;
             
             updateMetaTags(post); 
-            const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-sm font-bold rounded-full transition bg-white/10 text-white hover:bg-white/20">수정하기</a>` : ''; 
+            const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-sm font-bold rounded-full transition bg-black/5 text-gray-900 hover:bg-black/10">수정하기</a>` : ''; 
             
             container.innerHTML = `
-                <div class="py-12 sm:py-16 max-w-4xl mx-auto">
+                <div class="py-12 sm:py-16">
                     <article class="prose-custom">
-                        <div class="flex justify-between items-center mb-8"><div class="text-base text-gray-400"><span class="font-bold text-white">${post.category || '미분류'}</span> &nbsp;&nbsp;·&nbsp;&nbsp; ${new Date(post.created_at).toLocaleDateString('ko-KR')}</div>${editButtonHtml}</div>
+                        <div class="flex justify-between items-center mb-8"><div class="text-base text-gray-500"><span class="font-bold text-black">${post.category || '미분류'}</span> &nbsp;&nbsp;·&nbsp;&nbsp; ${new Date(post.created_at).toLocaleDateString('ko-KR')}</div>${editButtonHtml}</div>
                         <h1><span class="post-title-highlight">${post.title}</span></h1>
                         <div id="post-content" class="mt-12">${post.refined_content || ''}</div>
                     </article>
+                    
                     <div class="my-16"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
+                    
+                    ${popularPostsHtml}
+
+                    ${adsenseMatchedContentHtml}
+                    
                     ${nextPrevLinksHtml}
                 </div>`; 
 
-            try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error("Adsense push error:", e); }
+            try {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            } catch (e) {
+                console.error("Adsense push error:", e);
+            }
             document.querySelectorAll('#post-content pre code').forEach(el => hljs.highlightElement(el));
         }
         
         async function renderDashboardView(container) {
             updateMetaTags({ title: '대시보드' });
-            container.innerHTML = `<div class="py-12"><div class="flex justify-between items-center mb-10"><h1 class="text-4xl font-black text-white tracking-tighter">대시보드</h1><a href="/writer" data-route class="px-5 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">새 글 작성</a></div><div id="dashboard-post-list" class="bg-transparent space-y-2"><div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
+            container.innerHTML = `<div class="py-12"><div class="flex justify-between items-center mb-10"><h1 class="text-4xl font-black text-black tracking-tighter">대시보드</h1><a href="/writer" data-route class="px-5 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">새 글 작성</a></div><div id="dashboard-post-list" class="bg-transparent space-y-2"><div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
             const listContainer = $('#dashboard-post-list');
             if (!state.user) return;
 
@@ -331,7 +371,7 @@
             if (error) { listContainer.innerHTML = '<p class="text-center text-gray-400">글 목록을 불러오는 데 실패했습니다.</p>'; return; }
             if (posts.length === 0) { listContainer.innerHTML = '<p class="text-center text-gray-400 py-10">작성한 글이 없습니다.</p>'; return; }
             
-            const postsHtml = `<ul class="w-full">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-white/5 transition-colors"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-white hover:text-[#D946EF]">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-white/10 hover:bg-white/20">수정</a></li>`).join('')}</ul>`;
+            const postsHtml = `<ul class="w-full">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-black hover:text-[#D946EF]">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black">수정</a></li>`).join('')}</ul>`;
             listContainer.innerHTML = postsHtml;
         }
 
@@ -367,19 +407,19 @@
                 <form id="writer-form" class="space-y-8">
                     <input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}">
                     <div>
-                        <select id="category" class="w-auto bg-transparent border border-gray-600 rounded-full p-2 pl-4 pr-3 text-white text-sm font-bold mb-4">${categoryOptions}</select>
-                        <textarea id="title" class="w-full bg-transparent text-4xl font-black text-white placeholder-gray-600 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required>${post.title || ''}</textarea>
+                        <select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4">${categoryOptions}</select>
+                        <textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required>${post.title || ''}</textarea>
                     </div>
                     <div>
-                       <label class="block text-lg font-bold text-white mb-3">요약</label>
-                       <textarea id="summary" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea>
+                       <label class="block text-lg font-bold text-black mb-3">요약</label>
+                       <textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea>
                     </div>
                     <div>
-                       <label class="block text-lg font-bold text-white mb-3">본문</label>
-                       <div id="editor-container" class="bg-gray-900/50 border border-gray-700 rounded-xl overflow-hidden"><div id="editor"></div></div>
+                       <label class="block text-lg font-bold text-black mb-3">본문</label>
+                       <div id="editor-container" class="bg-gray-50 border border-gray-300 rounded-xl overflow-hidden"><div id="editor"></div></div>
                     </div>
                     <div class="flex justify-end items-center space-x-3 pt-5">
-                        <button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-white/10 text-white hover:bg-white/20 transition">초안 저장</button>
+                        <button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button>
                         <button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>
                     </div>
                 </form>
@@ -416,7 +456,6 @@
             if (initialContent) {
                 state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
             }
-            // Custom styles for Quill to match the new design
             $('.ql-toolbar').style.cssText = 'border: none; border-bottom: 1px solid var(--border-color); padding: 12px;';
             $('.ql-container').style.cssText = 'border: none; font-size: 18px;';
             $('.ql-editor').style.cssText = 'min-height: 450px; padding: 2rem;';
@@ -513,7 +552,7 @@
 
         function showToast(message, isError = false) {
             const toast = document.createElement('div');
-            toast.className = `py-2.5 px-5 rounded-full shadow-lg text-sm font-medium text-white ${isError ? 'bg-red-600' : 'bg-gray-800 border border-gray-700'}`;
+            toast.className = `py-2.5 px-5 rounded-full shadow-lg text-sm font-medium ${isError ? 'bg-red-600 text-white' : 'bg-gray-800 text-white'}`;
             toast.textContent = message; $('#toast-container').appendChild(toast);
             anime({ targets: toast, opacity: [0, 1], translateY: [10, 0], duration: 300 });
             setTimeout(() => anime({ targets: toast, opacity: 0, duration: 300, complete: () => toast.remove() }), 3000);
@@ -530,7 +569,7 @@
             if (totalPages <= 1) return '';
             const prevUrl = currentPage > 1 ? buildUrl(basePath, { ...params, page: currentPage - 1 }) : '#';
             const nextUrl = currentPage < totalPages ? buildUrl(basePath, { ...params, page: currentPage + 1 }) : '#';
-            return `<div class="flex justify-center items-center gap-4 mt-12"><a href="${prevUrl}" data-route class="px-4 py-2 text-sm rounded-full bg-white/10 ${currentPage === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-white/20'}">이전</a><span class="text-sm font-medium text-gray-500">${currentPage} / ${totalPages}</span><a href="${nextUrl}" data-route class="px-4 py-2 text-sm rounded-full bg-white/10 ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-white/20'}">다음</a></div>`;
+            return `<div class="flex justify-center items-center gap-4 mt-12"><a href="${prevUrl}" data-route class="px-4 py-2 text-sm rounded-full bg-gray-100 ${currentPage === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">이전</a><span class="text-sm font-medium text-gray-500">${currentPage} / ${totalPages}</span><a href="${nextUrl}" data-route class="px-4 py-2 text-sm rounded-full bg-gray-100 ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">다음</a></div>`;
         }
 
         async function convertToWebP(file, maxWidth = 1200, quality = 0.8) {
@@ -553,7 +592,7 @@
         
         function showAuthModal() {
             if ($('#auth-modal')) return;
-            const modalHtml = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"><div id="auth-modal-content" class="bg-bg-content border border-border-color rounded-2xl shadow-lg w-full max-w-sm p-8 relative"><button id="close-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold text-center mb-4 text-white">로그인 또는 가입</h2><p class="text-center text-gray-400 mb-8">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-900/50 border border-gray-600 rounded-lg p-3 text-white focus:ring-blue-500 focus:border-blue-500"><button type="submit" class="w-full px-4 py-3 font-bold rounded-lg transition bg-[#D946EF] text-white hover:bg-[#C026D3]">매직 링크 받기</button></form></div></div>`;
+            const modalHtml = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"><div id="auth-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8 relative"><button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold text-center mb-4 text-black">로그인 또는 가입</h2><p class="text-center text-gray-500 mb-8">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-blue-500 focus:border-blue-500"><button type="submit" class="w-full px-4 py-3 font-bold rounded-lg transition bg-[#D946EF] text-white hover:bg-[#C026D3]">매직 링크 받기</button></form></div></div>`;
             $('#modal-container').innerHTML = modalHtml;
             const closeModal = () => anime({ targets: '#auth-modal', opacity: 0, duration: 200, easing: 'easeInQuad', complete: () => $('#modal-container').innerHTML = '' });
             anime({ targets: '#auth-modal', opacity: [0, 1], duration: 200 });
@@ -574,10 +613,10 @@
                 if ($('#confirm-modal')) return;
                 const modalHtml = `
                     <div id="confirm-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-                        <div id="confirm-modal-content" class="bg-bg-content border border-border-color rounded-2xl shadow-lg w-full max-w-sm p-8">
-                            <p class="text-center text-white text-lg mb-8">${message}</p>
+                        <div id="confirm-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8">
+                            <p class="text-center text-black text-lg mb-8">${message}</p>
                             <div class="flex justify-center gap-4">
-                                <button id="confirm-btn-no" class="px-6 py-2.5 text-sm font-bold rounded-full bg-white/10 text-white hover:bg-white/20 transition">새로 작성</button>
+                                <button id="confirm-btn-no" class="px-6 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">새로 작성</button>
                                 <button id="confirm-btn-yes" class="px-6 py-2.5 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">불러오기</button>
                             </div>
                         </div>
