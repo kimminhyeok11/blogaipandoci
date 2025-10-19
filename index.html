@@ -88,7 +88,7 @@
         #editor-container .ql-editor img{max-width:100%;height:auto;border-radius:8px;margin:1em 0}
         #editor-container .ql-editor pre{background-color:#f3f4f6;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;white-space:pre-wrap;color:#374151}
         #editor-container .ql-editor blockquote{border-left:3px solid #d1d5db;margin:1rem 0;padding-left:1rem;color:#6b7280;background-color:#f9fafb}
-        .ql-toolbar .ql-ad::after { content: "광고 삽입"; font-size: 12px; font-weight: 500; padding: 0 4px; }
+        /* .ql-toolbar .ql-ad::after style removed as requested by user */
         img.lazy{background-color:#f0f0f0;aspect-ratio:16 / 9}
         .pln{color:#4d4d4c}.str{color:#718c00}.kwd{color:#8959a8}.com{color:#8e908c}.typ{color:#4271ae}.lit{color:#f5871f}.pun,.opn,.clo{color:#4d4d4c}.tag{color:#c82829}.atn{color:#f5871f}.atv{color:#3e999f}.dec,.var{color:#c82829}.fun{color:#4271ae}
         pre.prettyprint{font-family:Consolas,Monaco,'Andale Mono',monospace;border:1px solid #EAEAEA;border-radius:8px;padding:1.2rem;background:#F9FAFB;font-size:.875rem;white-space:pre-wrap;word-wrap:break-word;overflow-x:auto}
@@ -412,45 +412,35 @@
             </div>`;
         }
 
-        function quillAdHandler() {
-            if (!state.quill) return;
-            const adHtml = `
-                <p><br></p>
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-5239497835591112"
-                     data-ad-slot="2069100221"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <p><br></p>
-            `;
-            const range = state.quill.getSelection(true);
-            state.quill.clipboard.dangerouslyPasteHTML(range.index, adHtml);
-            showToast('광고 코드가 본문에 삽입되었습니다.');
-        }
+        /* * quillAdHandler function removed as requested by the user 
+         * to delete automatic/AI-related features and focus on manual writing. 
+         */
         
         function initQuillEditor(initialContent) {
             const editorElement = document.querySelector('#editor'); if (!editorElement) return;
+            
+            // Cleaned-up toolbar options focused on manual structure and formatting
             const toolbarOptions = [
                 [{ 'header': [1, 2, 3, false] }],
                 ['bold', 'italic', 'underline', 'strike'],
                 ['blockquote', 'code-block'],
                 [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                 [{ 'indent': '-1'}, { 'indent': '+1' }],
-                ['link', 'image', 'ad'], // Ad button
+                ['link', 'image'], // 'ad' button removed
                 ['clean']
             ];
+            
             state.quill = new Quill('#editor', { 
                 modules: { 
                     toolbar: { 
                         container: toolbarOptions, 
                         handlers: { 
                             'image': quillImageHandler,
-                            'ad': quillAdHandler
+                            // 'ad': quillAdHandler handler removed
                         }
                     }
                 }, 
-                placeholder: '여기에 글을 작성하세요...', 
+                placeholder: '여기에 글을 작성하세요... (팁: 목록이나 표를 사용할 때는 붙여넣기 대신 에디터의 버튼을 사용하면 포맷이 유지됩니다.)', 
                 theme: 'snow' 
             });
             if (initialContent) { state.quill.clipboard.dangerouslyPasteHTML(0, initialContent); }
