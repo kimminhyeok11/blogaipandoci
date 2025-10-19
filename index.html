@@ -54,7 +54,7 @@
         .app-view { display: none; opacity: 0; }
         .app-view.active { display: block; }
 
-        /* --- 본문 가독성 및 SEO 개선 스타일 --- */
+        /* --- Prose Styles --- */
         .prose-custom { line-height: 1.7; }
         .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 700; margin-top: 1.5em; margin-bottom: 0.8em; }
         .prose-custom h1 { font-size: 2rem !important; line-height: 1.2; }
@@ -74,6 +74,7 @@
         .prose-custom th, .prose-custom td { border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; }
         .prose-custom th { background-color: var(--bg-content-secondary); color: var(--text-primary); font-weight: bold; }
         
+        /* --- Component Styles --- */
         #editor-container .ql-editor { color: var(--text-primary); min-height: 300px; }
         .category-btn, .editor-mode-btn { transition: all 0.2s ease-in-out; }
         .category-btn.active, .editor-mode-btn.active { background-color: var(--accent); color: white; }
@@ -106,7 +107,7 @@
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-        // --- 설정 및 상태 관리 ---
+        // --- App State and Config ---
         const SITE_URL = 'https://blogaipandoci.vercel.app';
         const SUPABASE_URL = 'https://ddehwkwzmmvcxltlplua.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
@@ -126,7 +127,7 @@
         };
         const $ = (selector) => document.querySelector(selector);
 
-        // --- 핵심 앱 로직 ---
+        // --- Core App Logic ---
         function navigateTo(path, replace = false) {
             const newPath = path || '/';
             const historyAction = replace ? 'replaceState' : 'pushState';
@@ -137,15 +138,15 @@
         }
 
         async function switchView(viewId, callback) {
-            if (state.quill) {
-                state.quill = null;
-            }
+            if (state.quill) { state.quill = null; }
+
             const currentView = $('.app-view.active');
             if (currentView) {
                 await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
                 currentView.classList.remove('active');
                 currentView.innerHTML = '';
             }
+
             const nextView = $(`#${viewId}`);
             if (nextView) {
                 nextView.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
@@ -185,7 +186,7 @@
             }
         }
         
-        // --- 화면 렌더링 ---
+        // --- View Rendering ---
         function renderNav() {
             $('#main-nav-container').innerHTML = `
                 <nav class="w-full max-w-7xl flex items-center justify-between py-2 px-3 bg-gray-900/60 backdrop-blur-lg border border-gray-700 rounded-xl shadow-sm">
@@ -219,7 +220,6 @@
         async function renderPostList(page, category) {
             const listContainer = $('#post-list-container');
             if (!listContainer) return;
-            
             listContainer.innerHTML = `<div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
 
             const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 };
@@ -244,8 +244,8 @@
             const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
             if (totalPages > 1) {
                 makeSwipable(listContainer,
-                    () => { if (page > 1) navigateTo(buildUrl('/', { page: page - 1, category })); }, // Swipe Right -> Prev
-                    () => { if (page < totalPages) navigateTo(buildUrl('/', { page: page + 1, category })); }  // Swipe Left -> Next
+                    () => { if (page > 1) navigateTo(buildUrl('/', { page: page - 1, category })); },
+                    () => { if (page < totalPages) navigateTo(buildUrl('/', { page: page + 1, category })); }
                 );
                 listContainer.style.cursor = 'grab';
             }
@@ -254,7 +254,6 @@
         async function renderPostView(container, slug) { 
             if (!slug) { navigateTo('/'); return; } 
             
-            // container already has a loader from switchView
             const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); 
             if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } 
 
@@ -292,10 +291,9 @@
                     ${nextPrevLinksHtml}
                 </div>`; 
             
-            // Apply swipe gesture for post navigation
             makeSwipable(container,
-                () => { if (prevPost) navigateTo(`/post/${prevPost.slug}`); }, // Swipe Right -> Prev
-                () => { if (nextPost) navigateTo(`/post/${nextPost.slug}`); }  // Swipe Left -> Next
+                () => { if (prevPost) navigateTo(`/post/${prevPost.slug}`); },
+                () => { if (nextPost) navigateTo(`/post/${nextPost.slug}`); }
             );
 
             try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error("Adsense push error:", e); }
@@ -307,7 +305,6 @@
             const listContainer = $('#dashboard-post-list');
             if (!state.user) return;
 
-            // --- [FIX] Optimized query to fetch only necessary columns ---
             const { data: posts, error } = await supabase.from('posts').select('id, title, slug, status, created_at').eq('author_id', state.user.id).order('created_at', { ascending: false });
             
             if (error) { listContainer.innerHTML = '<p class="text-center text-gray-400">글 목록을 불러오는 데 실패했습니다.</p>'; return; }
@@ -318,14 +315,18 @@
         }
 
         async function renderWriterView(container, slug) {
-            if (!state.user) { showToast('로그인이 필요합니다.', true); navigateTo('/'); return; }
+            if (!state.user) { navigateTo('/'); return; }
 
             updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: CATEGORIES[0] };
             
             if (slug) {
                 const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
-                if (error || !data || data.author_id !== state.user.id) { showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true); navigateTo('/dashboard'); return; }
+                if (error || !data || data.author_id !== state.user.id) {
+                    showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true);
+                    navigateTo('/dashboard');
+                    return;
+                }
                 post = data;
             }
 
@@ -334,23 +335,20 @@
             container.innerHTML = `<div class="py-6">
                 <h1 class="text-2xl font-bold mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1>
                 <form id="writer-form" class="space-y-5">
-                    <input type="hidden" id="post-id" value="${post.id || ''}">
-                    <input type="hidden" id="post-slug" value="${post.slug || ''}">
+                    <input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}">
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">카테고리</label><select id="category" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white">${categoryOptions}</select></div>
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">제목</label><input type="text" id="title" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white" required value="${post.title || ''}"></div>
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">요약</label><textarea id="summary" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea></div>
-                    
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">본문</label>
                         <div id="editor-mode-switcher" class="flex items-center space-x-1 mb-2 bg-gray-700 p-1 rounded-lg w-min">
-                            <button type="button" data-mode="quill" class="editor-mode-btn px-3 py-1 text-sm rounded-md bg-gray-600 hover:bg-gray-500">리치 텍스트</button>
-                            <button type="button" data-mode="markdown" class="editor-mode-btn px-3 py-1 text-sm rounded-md bg-gray-600 hover:bg-gray-500">마크다운</button>
-                            <button type="button" data-mode="html" class="editor-mode-btn px-3 py-1 text-sm rounded-md bg-gray-600 hover:bg-gray-500">HTML</button>
+                            <button type="button" data-mode="quill" class="editor-mode-btn px-3 py-1 text-sm rounded-md">리치 텍스트</button>
+                            <button type="button" data-mode="markdown" class="editor-mode-btn px-3 py-1 text-sm rounded-md">마크다운</button>
+                            <button type="button" data-mode="html" class="editor-mode-btn px-3 py-1 text-sm rounded-md">HTML</button>
                         </div>
                         <div id="editor-container" class="border border-gray-600 rounded-b-md rounded-tr-md"><div id="editor"></div></div>
                         <textarea id="raw-editor" class="w-full bg-gray-800 text-gray-200 font-mono p-3 border border-gray-600 rounded-md" style="display: none; min-height: 300px; resize: vertical;"></textarea>
                     </div>
-
                     <div class="flex justify-end items-center space-x-2 pt-3">
                         <button type="submit" data-action="save-draft" class="px-4 py-2 text-sm font-medium rounded-md bg-gray-600 text-white hover:bg-gray-700">초안 저장</button>
                         <button type="submit" data-action="publish" class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-400 text-black border-2 border-yellow-500 hover:bg-yellow-500">발행하기</button>
@@ -358,27 +356,31 @@
                 </form>
             </div>`;
             
-            initQuillEditor(post.refined_content || '');
-            setupEditorModeSwitcher();
-            $('#writer-form').addEventListener('submit', (e) => { e.preventDefault(); if (e.submitter?.dataset.action) handlePostSave(e.submitter.dataset.action, e.submitter); });
+            // --- [FIX] Defer script initialization until after the next browser paint ---
+            setTimeout(() => {
+                if ($('#editor')) { // Check if view is still active
+                    initQuillEditor(post.refined_content || '');
+                    setupEditorModeSwitcher();
+                    $('#writer-form').addEventListener('submit', (e) => { 
+                        e.preventDefault(); 
+                        if (e.submitter?.dataset.action) handlePostSave(e.submitter.dataset.action, e.submitter); 
+                    });
+                }
+            }, 0);
         }
         
-        // --- 유틸리티 및 헬퍼 함수 ---
+        // --- Utilities & Helpers ---
         function initQuillEditor(initialContent) {
-            const editorElement = $('#editor');
-            if (!editorElement) return;
+            if (!$('#editor')) return;
             const toolbarOptions = [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], ['blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link', 'image'], ['clean']];
-            
-            // --- [FIX] Added clipboard.matchVisual = false to improve paste fidelity ---
-            const options = {
+            state.quill = new Quill('#editor', {
                 modules: {
                     syntax: { highlight: text => hljs.highlightAuto(text).value },
                     toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler } },
                     clipboard: { matchVisual: false }
                 },
                 theme: 'snow'
-            };
-            state.quill = new Quill('#editor', options);
+            });
             if (initialContent) state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
         }
 
@@ -390,53 +392,39 @@
                 const oldMode = state.editorMode;
                 if (newMode === oldMode) return;
 
-                const quillEditor = $('#editor-container');
+                const quillContainer = $('#editor-container');
                 const rawEditor = $('#raw-editor');
 
-                // Convert content before switching views
                 if (oldMode === 'quill') {
                     const htmlContent = state.quill.root.innerHTML;
-                    if (newMode === 'markdown') {
-                        rawEditor.value = state.turndownService.turndown(htmlContent);
-                    } else if (newMode === 'html') {
-                        rawEditor.value = htmlContent;
-                    }
-                } else { // 'markdown' or 'html'
+                    if (newMode === 'markdown') rawEditor.value = state.turndownService.turndown(htmlContent);
+                    else if (newMode === 'html') rawEditor.value = htmlContent;
+                } else {
                     if (newMode === 'quill') {
                         const rawContent = rawEditor.value;
-                        const htmlContent = (oldMode === 'markdown') 
-                            ? state.showdownConverter.makeHtml(rawContent)
-                            : rawContent;
+                        const htmlContent = (oldMode === 'markdown') ? state.showdownConverter.makeHtml(rawContent) : rawContent;
                         state.quill.root.innerHTML = htmlContent;
                     }
                 }
 
-                // Toggle visibility
-                quillEditor.style.display = newMode === 'quill' ? 'block' : 'none';
+                quillContainer.style.display = newMode === 'quill' ? 'block' : 'none';
                 rawEditor.style.display = newMode !== 'quill' ? 'block' : 'none';
-
-                // Update active button
+                
                 switcher.querySelector('.active')?.classList.remove('active', 'bg-accent');
                 switcher.querySelector(`[data-mode="${newMode}"]`).classList.add('active', 'bg-accent');
-                
                 state.editorMode = newMode;
             };
 
-            // Initial state
-            switcher.querySelector(`[data-mode="quill"]`).classList.add('active', 'bg-accent');
-
+            switcher.querySelector(`[data-mode="${state.editorMode}"]`).classList.add('active', 'bg-accent');
             switcher.addEventListener('click', e => {
                 const button = e.target.closest('[data-mode]');
-                if (button) {
-                    syncEditorViews(button.dataset.mode);
-                }
+                if (button) syncEditorViews(button.dataset.mode);
             });
         }
 
         function quillImageHandler() {
             const input = document.createElement('input');
-            input.setAttribute('type', 'file');
-            input.setAttribute('accept', 'image/*');
+            input.setAttribute('type', 'file'); input.setAttribute('accept', 'image/*');
             input.click();
             input.onchange = async () => {
                 const file = input.files[0];
@@ -526,6 +514,7 @@
         }
         
         async function handleLogout() { await supabase.auth.signOut(); showToast('로그아웃되었습니다.'); navigateTo('/', true); }
+        
         function showAuthModal() {
             if ($('#auth-modal')) return;
             const modalHtml = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"><div id="auth-modal-content" class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg w-full max-w-sm p-6 relative"><button id="close-modal-btn" class="absolute top-3 right-3 text-gray-400 hover:text-white text-2xl leading-none">&times;</button><h2 class="text-xl font-bold text-center mb-4 text-white">로그인 또는 가입</h2><p class="text-center text-sm text-gray-400 mb-6">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500"><button type="submit" class="w-full px-4 py-2 font-bold rounded-md transition bg-blue-600 text-white hover:bg-blue-700">매직 링크 받기</button></form></div></div>`;
@@ -566,13 +555,12 @@
             element.addEventListener('touchstart', onStart, { passive: true }); element.addEventListener('touchend', onEnd);
         }
 
-        // --- 앱 초기화 ---
+        // --- App Initialization ---
         function initializeApp() {
             state.turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
             state.showdownConverter = new showdown.Converter({ tables: true, strikethrough: true, tasklists: true });
             
             supabase.auth.onAuthStateChange((event, session) => {
-                console.log('Auth event:', event, 'Session available:', !!session);
                 const userJustChanged = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
                 
@@ -582,13 +570,9 @@
                     handleRouting();
                     anime({ targets: '#app-loader', opacity: 0, duration: 400, complete: (anim) => anim.animatables[0].target.remove() });
                 } else if (userJustChanged) {
+                    // --- [FIX] Re-render current page with new auth state instead of redirecting ---
                     renderNav();
-                    const currentPath = window.location.pathname;
-                    if (currentPath === '/' || currentPath === '') {
-                        handleRouting(); 
-                    } else {
-                        navigateTo('/', true);
-                    }
+                    handleRouting();
                 }
             });
 
@@ -613,4 +597,5 @@
     </script>
 </body>
 </html>
+
 
