@@ -75,9 +75,12 @@
         .prose-custom th { background-color: var(--bg-content-secondary); color: var(--text-primary); font-weight: bold; }
         
         /* --- Component Styles --- */
-        #editor-container .ql-editor { color: var(--text-primary); min-height: 300px; }
-        .category-btn, .editor-mode-btn { transition: all 0.2s ease-in-out; }
-        .category-btn.active, .editor-mode-btn.active { background-color: var(--accent); color: white; }
+        #editor-container .ql-editor { color: var(--text-primary); min-height: 300px; background-color: #262c3a; }
+        .category-btn { transition: all 0.2s ease-in-out; }
+        .category-btn.active { background-color: var(--accent); color: white; }
+        .editor-mode-btn { background-color: var(--bg-content-secondary); transition: background-color 0.2s ease-in-out; }
+        .editor-mode-btn.active { background-color: var(--accent); color: white; }
+        .editor-mode-btn:hover:not(.active) { background-color: #4a5568; }
         .loader-spinner {
             width: 2rem; height: 2rem; border: 3px solid var(--border-color);
             border-top-color: var(--accent); border-radius: 50%;
@@ -121,7 +124,7 @@
             quill: null, 
             isAuthReady: false, 
             currentCategory: '전체',
-            editorMode: 'quill', // 'quill', 'markdown', 'html'
+            editorMode: 'quill',
             turndownService: null,
             showdownConverter: null,
         };
@@ -139,22 +142,19 @@
 
         async function switchView(viewId, callback) {
             if (state.quill) { state.quill = null; }
-
             const currentView = $('.app-view.active');
             if (currentView) {
                 await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
                 currentView.classList.remove('active');
                 currentView.innerHTML = '';
             }
-
             const nextView = $(`#${viewId}`);
             if (nextView) {
                 nextView.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
                 nextView.classList.add('active');
                 anime({ targets: nextView, opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' });
-
                 try {
-                    if (callback) await callback(nextView);
+                    await callback(nextView);
                 } catch (error) {
                     console.error(`Error rendering view ${viewId}:`, error);
                     nextView.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.</p>`;
@@ -169,9 +169,6 @@
             const params = new URLSearchParams(window.location.search);
             const [_, route = 'library', param = null] = path.split('/');
             
-            const page = parseInt(params.get('page'), 10) || 1;
-            state.currentCategory = params.get('category') || '전체';
-
             if (!state.user && ['dashboard', 'writer'].includes(route)) {
                 showToast('이 기능을 사용하려면 로그인이 필요합니다.', true);
                 navigateTo('/');
@@ -182,7 +179,10 @@
                 case 'post': switchView('view-post', el => renderPostView(el, param)); break;
                 case 'dashboard': switchView('view-dashboard', el => renderDashboardView(el)); break;
                 case 'writer': switchView('view-writer', el => renderWriterView(el, param)); break;
-                default: switchView('view-library', el => renderLibraryView(el, page, state.currentCategory));
+                default: 
+                    const page = parseInt(params.get('page'), 10) || 1;
+                    state.currentCategory = params.get('category') || '전체';
+                    switchView('view-library', el => renderLibraryView(el, page, state.currentCategory));
             }
         }
         
@@ -211,7 +211,7 @@
                     <div class="text-center mb-10"><h1 class="text-3xl sm:text-4xl font-extrabold mb-2 text-yellow-400">InsureLog</h1><p class="text-gray-400">AI, 기술, 그리고 보험에 대한 기록들</p></div>
                     <div class="flex flex-wrap justify-center gap-2 mb-8">${categoryButtons}</div>
                     <h2 class="text-lg font-bold text-white mb-4">최신 글</h2>
-                    <div id="post-list-container" class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm"><div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div></div>
+                    <div id="post-list-container" class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm"></div>
                 </div>`;
             
             await renderPostList(page, category);
@@ -230,7 +230,6 @@
             const { data: posts, error, count: totalPosts } = await query;
 
             if (error) {
-                console.error('Error fetching posts:', error);
                 listContainer.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러오는 중 오류가 발생했습니다.</p>`;
                 return;
             }
@@ -290,11 +289,6 @@
                     <div class="my-8"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
                     ${nextPrevLinksHtml}
                 </div>`; 
-            
-            makeSwipable(container,
-                () => { if (prevPost) navigateTo(`/post/${prevPost.slug}`); },
-                () => { if (nextPost) navigateTo(`/post/${nextPost.slug}`); }
-            );
 
             try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error("Adsense push error:", e); }
         }
@@ -324,8 +318,7 @@
                 const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
                 if (error || !data || data.author_id !== state.user.id) {
                     showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true);
-                    navigateTo('/dashboard');
-                    return;
+                    navigateTo('/dashboard'); return;
                 }
                 post = data;
             }
@@ -340,14 +333,16 @@
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">제목</label><input type="text" id="title" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white" required value="${post.title || ''}"></div>
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">요약</label><textarea id="summary" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea></div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">본문</label>
-                        <div id="editor-mode-switcher" class="flex items-center space-x-1 mb-2 bg-gray-700 p-1 rounded-lg w-min">
-                            <button type="button" data-mode="quill" class="editor-mode-btn px-3 py-1 text-sm rounded-md">리치 텍스트</button>
-                            <button type="button" data-mode="markdown" class="editor-mode-btn px-3 py-1 text-sm rounded-md">마크다운</button>
-                            <button type="button" data-mode="html" class="editor-mode-btn px-3 py-1 text-sm rounded-md">HTML</button>
+                        <div class="flex justify-between items-center mb-2">
+                           <label class="block text-sm font-medium text-gray-300">본문</label>
+                           <div id="editor-mode-switcher" class="flex items-center border border-gray-600 rounded-md text-xs font-medium">
+                               <button type="button" data-mode="quill" class="editor-mode-btn px-2.5 py-1 rounded-l-md border-r border-gray-600">Rich Text</button>
+                               <button type="button" data-mode="markdown" class="editor-mode-btn px-2.5 py-1 border-r border-gray-600">Markdown</button>
+                               <button type="button" data-mode="html" class="editor-mode-btn px-2.5 py-1 rounded-r-md">HTML</button>
+                           </div>
                         </div>
-                        <div id="editor-container" class="border border-gray-600 rounded-b-md rounded-tr-md"><div id="editor"></div></div>
-                        <textarea id="raw-editor" class="w-full bg-gray-800 text-gray-200 font-mono p-3 border border-gray-600 rounded-md" style="display: none; min-height: 300px; resize: vertical;"></textarea>
+                        <div id="editor-container" class="border border-gray-600 rounded-md"><div id="editor"></div></div>
+                        <textarea id="raw-editor" class="w-full bg-gray-800 text-gray-200 font-mono p-3 border border-gray-600 rounded-md" style="display: none; min-height: 400px; resize: vertical;"></textarea>
                     </div>
                     <div class="flex justify-end items-center space-x-2 pt-3">
                         <button type="submit" data-action="save-draft" class="px-4 py-2 text-sm font-medium rounded-md bg-gray-600 text-white hover:bg-gray-700">초안 저장</button>
@@ -356,9 +351,8 @@
                 </form>
             </div>`;
             
-            // --- [FIX] Defer script initialization until after the next browser paint ---
             setTimeout(() => {
-                if ($('#editor')) { // Check if view is still active
+                if ($('#editor')) {
                     initQuillEditor(post.refined_content || '');
                     setupEditorModeSwitcher();
                     $('#writer-form').addEventListener('submit', (e) => { 
@@ -396,11 +390,13 @@
                 const rawEditor = $('#raw-editor');
 
                 if (oldMode === 'quill') {
+                    if(!state.quill) return;
                     const htmlContent = state.quill.root.innerHTML;
                     if (newMode === 'markdown') rawEditor.value = state.turndownService.turndown(htmlContent);
                     else if (newMode === 'html') rawEditor.value = htmlContent;
                 } else {
                     if (newMode === 'quill') {
+                        if(!state.quill) return;
                         const rawContent = rawEditor.value;
                         const htmlContent = (oldMode === 'markdown') ? state.showdownConverter.makeHtml(rawContent) : rawContent;
                         state.quill.root.innerHTML = htmlContent;
@@ -410,12 +406,15 @@
                 quillContainer.style.display = newMode === 'quill' ? 'block' : 'none';
                 rawEditor.style.display = newMode !== 'quill' ? 'block' : 'none';
                 
-                switcher.querySelector('.active')?.classList.remove('active', 'bg-accent');
-                switcher.querySelector(`[data-mode="${newMode}"]`).classList.add('active', 'bg-accent');
+                switcher.querySelector('.active')?.classList.remove('active');
+                switcher.querySelector(`[data-mode="${newMode}"]`).classList.add('active');
                 state.editorMode = newMode;
             };
 
-            switcher.querySelector(`[data-mode="${state.editorMode}"]`).classList.add('active', 'bg-accent');
+            switcher.querySelector(`[data-mode="${state.editorMode}"]`).classList.add('active');
+            rawEditor.style.display = state.editorMode !== 'quill' ? 'block' : 'none';
+            $('#editor-container').style.display = state.editorMode === 'quill' ? 'block' : 'none';
+
             switcher.addEventListener('click', e => {
                 const button = e.target.closest('[data-mode]');
                 if (button) syncEditorViews(button.dataset.mode);
@@ -445,34 +444,57 @@
         }
 
         async function handlePostSave(status, button) {
-            let title = $('#title').value.trim();
-            if (!title) { showToast('제목은 필수 항목입니다.', true); return; }
             const originalBtnText = button.textContent;
-            button.disabled = true; button.innerHTML = `<div class="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin mx-auto"></div>`;
-            
+            button.disabled = true;
+            button.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
+
             try {
-                const id = $('#post-id').value;
-                let slug = $('#post-slug').value || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
-                if (!id) { const { data } = await supabase.from('posts').select('id').eq('slug', slug).maybeSingle(); if (data) slug = `${slug}-${Date.now().toString().slice(-4)}`; }
-                
-                let contentHTML;
+                const title = $('#title').value.trim();
+                if (!title) throw new Error('제목은 필수 항목입니다.');
+
+                let contentHTML = '';
                 if (state.editorMode === 'quill') {
+                    if (!state.quill) throw new Error('에디터가 초기화되지 않았습니다.');
                     contentHTML = state.quill.root.innerHTML;
                 } else {
                     const rawContent = $('#raw-editor').value;
                     contentHTML = state.editorMode === 'markdown' ? state.showdownConverter.makeHtml(rawContent) : rawContent;
                 }
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = contentHTML;
-                const summary = $('#summary').value.trim() || tempDiv.textContent.slice(0,150).trim().replace(/\n/g, ' ') + '...';
+                
+                let summary = $('#summary').value.trim();
+                if (!summary) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = contentHTML;
+                    const textContent = tempDiv.textContent.trim().replace(/\s+/g, ' ');
+                    summary = textContent.slice(0, 150) + (textContent.length > 150 ? '...' : '');
+                }
+
+                const id = $('#post-id').value;
+                let slug = $('#post-slug').value.trim() || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+                if (!id) {
+                    const { data: existingSlug } = await supabase.from('posts').select('id').eq('slug', slug).maybeSingle();
+                    if (existingSlug) slug = `${slug}-${Date.now().toString().slice(-6)}`;
+                }
 
                 const postData = { title, slug, status, author_id: state.user.id, refined_content: contentHTML, category: $('#category').value, summary };
-                
-                const { data, error } = id ? await supabase.from('posts').update(postData).eq('id', id).select().single() : await supabase.from('posts').insert(postData).select().single();
-                if (error) throw error;
+
+                const query = id ? supabase.from('posts').update(postData).eq('id', id) : supabase.from('posts').insert(postData);
+                const { data, error } = await query.select().single();
+
+                if (error) {
+                    console.error('Supabase save error:', error);
+                    throw new Error(error.message);
+                }
+
                 showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
                 navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard');
-            } catch (error) { showToast(`저장 실패: ${error.message}`, true); } finally { button.disabled = false; button.textContent = originalBtnText; }
+
+            } catch (error) {
+                showToast(`저장 실패: ${error.message}`, true);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalBtnText;
+            }
         }
 
         function showToast(message, isError = false) {
@@ -570,7 +592,6 @@
                     handleRouting();
                     anime({ targets: '#app-loader', opacity: 0, duration: 400, complete: (anim) => anim.animatables[0].target.remove() });
                 } else if (userJustChanged) {
-                    // --- [FIX] Re-render current page with new auth state instead of redirecting ---
                     renderNav();
                     handleRouting();
                 }
@@ -586,7 +607,10 @@
                     switch (action) {
                         case 'auth': showAuthModal(); break;
                         case 'logout': handleLogout(); break;
-                        case 'filter-category': navigateTo(buildUrl('/', { page: 1, category: actionTarget.dataset.category })); break;
+                        case 'filter-category': 
+                            const category = actionTarget.dataset.category;
+                            navigateTo(buildUrl('/', { page: 1, category: category })); 
+                            break;
                     }
                 }
             });
