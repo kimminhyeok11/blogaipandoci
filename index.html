@@ -10,7 +10,8 @@
     <!-- End Google Tag Manager -->
 
     <!-- AdSense Script -->
-    <script async src="https://pagead2.googletydication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
+    <!-- FIX: Corrected typo from googletydication.com to googlesyndication.com -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,7 +36,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-    <!-- For Markdown Conversion -->
     <script src="https://unpkg.com/turndown/dist/turndown.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
@@ -66,7 +66,6 @@
         .btn.active{background-color:var(--accent); color:white; border-color:var(--accent)}
         .form-input,.form-textarea{font-size:.875rem;padding:.5rem .75rem;border:1px solid var(--border-color);border-radius:6px;width:100%;background-color:var(--bg-content);color:var(--text-primary);transition:all .2s ease;box-shadow:var(--shadow-sm)}
         .form-input:focus,.form-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px #3b82f633}
-        /* Prose (Article Content) Styles */
         .prose-custom{color:var(--text-secondary);line-height:1.75;font-size:0.95rem}
         .prose-custom>*:not(:first-child){margin-top:1.25em}
         .prose-custom p{margin-bottom:1.25em}
@@ -75,7 +74,6 @@
         .prose-custom h2{font-size:1.4rem}
         .prose-custom h3{font-size:1.2rem}
         .prose-custom a{color:var(--accent);text-decoration:none;font-weight:500;border-bottom:1px solid #93c5fd;transition:all .2s ease}
-        /* FIX: Added list styles */
         .prose-custom ul, .prose-custom ol { padding-left: 1.5em; margin-bottom: 1.25em; }
         .prose-custom li { margin-bottom: 0.5em; }
         .prose-custom ul { list-style-type: disc; }
@@ -85,7 +83,6 @@
         .prose-custom th,.prose-custom td{border:1px solid var(--border-color);padding:.6rem .8rem;text-align:left}
         .prose-custom th{background-color:var(--bg-content-secondary);font-weight:600;color:var(--text-primary)}
         .prose-custom hr { border: 0; border-top: 1px solid var(--border-color); margin: 2em 0; }
-        /* Editor Styles */
         #editor-container, #raw-editor-container{background-color:var(--bg-editor-main);border:1px solid var(--border-color);border-radius:8px;box-shadow:var(--shadow-sm)}
         #editor-container .ql-toolbar{border:none;border-bottom:1px solid var(--border-color);border-radius:8px 8px 0 0;background-color:var(--bg-editor-toolbar);padding:6px}
         #editor-container .ql-snow .ql-stroke{stroke:var(--text-secondary)}
@@ -102,7 +99,6 @@
     <div id="app-loader"><div class="loader-spinner"></div></div>
     <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-3"></header>
     
-    <!-- FIX: Mobile padding adjusted from px-3 to px-2 for better width utilization -->
     <div id="app-container" class="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <main id="main-content">
             <div id="view-library" class="app-view"></div>
@@ -126,7 +122,6 @@
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=css"></script>
 
     <script type="module">
-        // FIX: Supabase client library must be imported to be used.
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
         // --- CONFIGURATION ---
@@ -144,8 +139,6 @@
         const AD_SLOT_ID = "2069100221";
         
         // --- INITIALIZATION ---
-        // FIX: This was the cause of the infinite loading.
-        // It should be `createClient(...)`, not `supabase.createClient(...)`.
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const state = { user: null, quill: null, isAuthReady: false, currentEditorMode: 'normal' };
         const $ = (selector) => document.querySelector(selector);
@@ -158,14 +151,14 @@
         
         // --- VIEW RENDERING ---
         function renderNav() { $('#main-nav-container').innerHTML = `<nav class="w-full max-w-7xl flex items-center justify-between py-2 px-3 bg-gray-800/60 backdrop-blur-lg border border-gray-700 rounded-xl shadow-sm"><a href="/" data-route class="brand-logo">InsureLog</a><div class="flex items-center space-x-2">${state.user ? `<a href="/dashboard" data-route class="btn !px-3 !py-1.5">대시보드</a><button data-action="logout" class="btn !px-3 !py-1.5">로그아웃</button>` : `<button data-action="auth" class="btn btn-primary !px-3 !py-1.5">로그인 / 가입</button>`}</div></nav>`; }
-        async function renderLibraryView(container, page = 1) { updateMetaTags(); if (!sessionStorage.getItem('site_visited')) { supabase.from('site_visits').insert({}).then(); sessionStorage.setItem('site_visited', 'true'); } const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 }; const [{ count: totalVisits }, { data: posts, error, count: totalPosts }] = await Promise.all([supabase.from('site_visits').select('*', { count: 'exact', head: true }), supabase.from('posts').select('*', { count: 'exact' }).eq('status', 'published').order('created_at', { ascending: false }).range(from, to)]); if (error) { container.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러올 수 없습니다.</p>`; return; } const postsHtml = posts.length > 0 ? posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-5 bg-gray-800 border border-gray-700 hover:border-blue-600 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 group transform hover:-translate-y-1"><h2 class="text-base sm:text-lg font-bold font-heading mb-2 text-gray-100 group-hover:text-white transition-colors">${post.title}</h2><p class="text-gray-400 text-sm mb-3 line-clamp-2">${post.summary || ''}</p><div class="flex justify-between items-center text-xs text-gray-500 mt-4"><span>${new Date(post.created_at).toLocaleDateString('ko-KR')}</span><span>조회수 ${(post.view_count || 0).toLocaleString()}</span></div></a>`).join('') : `<div class="text-center py-20 text-gray-400 col-span-full"><p class="mb-5">아직 작성된 글이 없습니다.</p>${state.user ? '<a href="/writer" data-route class="btn btn-primary">첫 글 작성하기</a>' : ''}</div>`; container.innerHTML = `<div class="py-8"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="text-center mb-10"><h1 class="text-3xl sm:text-4xl font-extrabold font-heading mb-2 tracking-tight text-white">InsureLog</h1><p class="text-gray-400 text-base mb-3">AI, 기술, 그리고 보험에 대한 기록들</p><div class="text-xs text-gray-500">총 방문자: ${(totalVisits || 0).toLocaleString()}</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${postsHtml}</div>${renderPaginationControls(page, totalPosts, '/page/')}</div><aside class="lg:col-span-1 lg:block mt-10 lg:mt-0" id="sidebar-container"></aside></div></div>`; renderSidebar(container.querySelector('#sidebar-container')); }
-        async function renderPostView(container, slug) { if (!slug) { navigateTo('/'); return; } const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } (async () => { const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; if (!viewedPosts.includes(post.id)) { await supabase.rpc('increment_post_view', { post_slug: slug }); viewedPosts.push(post.id); sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts)); } })(); if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) { showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true); navigateTo('/'); return; } updateMetaTags(post); const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" class="btn" data-route>수정하기</a>` : ''; container.innerHTML = `<div class="py-8"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5 sm:p-8"><article class="prose-custom max-w-none"><div class="flex justify-between items-center mb-6"><div class="text-sm text-gray-400">${new Date(post.created_at).toLocaleDateString('ko-KR')} · 조회수 ${(post.view_count || 0).toLocaleString()}</div>${editButtonHtml}</div><h1 class="!mt-0">${post.title}</h1><div id="in-article-ad-container" class="my-6"></div><div id="post-content">${post.refined_content || ''}</div></article></div></div><aside class="lg:col-span-1 lg:block" id="sidebar-container"></aside></div></div>`; renderSidebar(container.querySelector('#sidebar-container')); lazyLoadImages(); if (window.PR) PR.prettyPrint(); renderAdSlot(container.querySelector('#in-article-ad-container')); }
+        async function renderLibraryView(container, page = 1) { updateMetaTags(); if (!sessionStorage.getItem('site_visited')) { supabase.from('site_visits').insert({}).then(); sessionStorage.setItem('site_visited', 'true'); } const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 }; const [{ count: totalVisits }, { data: posts, error, count: totalPosts }] = await Promise.all([supabase.from('site_visits').select('*', { count: 'exact', head: true }), supabase.from('posts').select('*', { count: 'exact' }).eq('status', 'published').order('created_at', { ascending: false }).range(from, to)]); if (error) { container.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러올 수 없습니다.</p>`; return; } const postsHtml = posts.length > 0 ? posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-5 bg-gray-800 border border-gray-700 hover:border-blue-600 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 group transform hover:-translate-y-1"><h2 class="text-base sm:text-lg font-bold font-heading mb-2 text-gray-100 group-hover:text-white transition-colors">${post.title}</h2><p class="text-gray-400 text-sm mb-3 line-clamp-2">${post.summary || ''}</p><div class="flex justify-between items-center text-xs text-gray-500 mt-4"><span>${new Date(post.created_at).toLocaleDateString('ko-KR')}</span><span>조회수 ${(post.view_count || 0).toLocaleString()}</span></div></a>`).join('') : `<div class="text-center py-20 text-gray-400 col-span-full"><p class="mb-5">아직 작성된 글이 없습니다.</p>${state.user ? '<a href="/writer" data-route class="btn btn-primary">첫 글 작성하기</a>' : ''}</div>`; container.innerHTML = `<div class="py-8"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="text-center mb-10"><h1 class="text-3xl sm:text-4xl font-extrabold font-heading mb-2 tracking-tight text-white">InsureLog</h1><p class="text-gray-400 text-base mb-3">AI, 기술, 그리고 보험에 대한 기록들</p><div class="text-xs text-gray-500">총 방문자: ${(totalVisits || 0).toLocaleString()}</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${postsHtml}</div>${renderPaginationControls(page, totalPosts, '/page/')}</div><aside class="lg:col-span-1 lg:block mt-16 lg:mt-0" id="sidebar-container"></aside></div></div>`; renderSidebar(container.querySelector('#sidebar-container')); }
+        async function renderPostView(container, slug) { if (!slug) { navigateTo('/'); return; } const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } (async () => { const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; if (!viewedPosts.includes(post.id)) { await supabase.rpc('increment_post_view', { post_slug: slug }); viewedPosts.push(post.id); sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts)); } })(); if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) { showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true); navigateTo('/'); return; } updateMetaTags(post); const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" class="btn" data-route>수정하기</a>` : ''; container.innerHTML = `<div class="py-8"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5 sm:p-8"><article class="prose-custom max-w-none"><div class="flex justify-between items-center mb-6"><div class="text-sm text-gray-400">${new Date(post.created_at).toLocaleDateString('ko-KR')} · 조회수 ${(post.view_count || 0).toLocaleString()}</div>${editButtonHtml}</div><h1 class="!mt-0">${post.title}</h1><div id="in-article-ad-container" class="my-6"></div><div id="post-content">${post.refined_content || ''}</div></article></div></div><aside class="lg:col-span-1 lg:block mt-16 lg:mt-0" id="sidebar-container"></aside></div></div>`; renderSidebar(container.querySelector('#sidebar-container')); lazyLoadImages(); if (window.PR) PR.prettyPrint(); renderAdSlot(container.querySelector('#in-article-ad-container')); }
         async function renderDashboardView(container, page = 1) { updateMetaTags(); const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 }; const { data, error, count } = await supabase.from('posts').select('*, view_count', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to); if (error) { container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; } const listHtml = data.length > 0 ? data.map(post => `<li class="p-3 flex flex-col sm:flex-row justify-between sm:items-center hover:bg-gray-800/50 rounded-lg transition-colors"><div class="mb-3 sm:mb-0"><a href="/post/${post.slug}" data-route class="font-semibold text-gray-200 hover:text-white">${post.title}</a>${post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : '<span class="ml-2 text-xs font-semibold bg-green-200 text-green-800 px-2 py-0.5 rounded-full">발행됨</span>'}<p class="text-xs text-gray-400 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')} / 조회수 ${(post.view_count || 0).toLocaleString()}</p></div><div class="flex-shrink-0 space-x-2"><a href="/writer/${post.slug}" class="btn !text-xs" data-route>수정</a><button class="btn btn-danger !text-xs" data-action="delete" data-id="${post.id}">삭제</button></div></li>`).join('') : '<li class="p-8 text-center text-gray-400">작성된 글이 없습니다.</li>'; container.innerHTML = `<div class="py-8"><div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6"><div><h1 class="text-xl sm:text-2xl font-bold font-heading">내 글 관리</h1><p class="text-gray-400 mt-1 text-sm">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn btn-primary mt-4 sm:mt-0" data-route>새 글 작성</a></div><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm"><ul class="divide-y divide-gray-700">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div>`; }
         async function renderWriterView(container, slug) { updateMetaTags(); let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [] }; if (slug) { const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !data || data.author_id !== state.user.id) { showToast(error ? '글 정보를 가져오지 못했습니다.' : '자신이 작성한 글만 수정할 수 있습니다.', true); navigateTo('/dashboard'); return; } post = data; } container.innerHTML = `<div class="py-6"><div class="mb-5 flex justify-between items-center"><button class="btn" data-action="back">← 대시보드로</button><div id="editor-mode-switcher" class="flex items-center space-x-1 bg-gray-900/50 p-1 rounded-lg"><button data-mode="normal" class="btn !px-3 !py-1 !text-xs active">일반</button><button data-mode="markdown" class="btn !px-3 !py-1 !text-xs">마크다운</button><button data-mode="html" class="btn !px-3 !py-1 !text-xs">HTML</button></div></div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-5">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-5"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><div><label for="title" class="block text-sm font-medium text-gray-300 mb-1">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-300 mb-1">요약</label><textarea id="summary" class="form-textarea" rows="2">${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-300 mb-1">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-300 mb-1">본문</label><div id="editor-container"><div id="editor"></div></div><div id="raw-editor-container" class="hidden"><textarea id="raw-editor"></textarea></div></div><div class="flex justify-end items-center space-x-2 pt-3"><button type="button" data-action="save-draft" class="btn">초안으로 저장</button><button type="button" data-action="publish" class="btn btn-primary">발행하기</button></div></form></div>`; initQuillEditor(post.refined_content || ''); addEditorModeSwitcherListeners(post.refined_content || ''); }
         async function renderSidebar(container) { if (!container) return; const { data: posts, error } = await supabase.from('posts').select('title, slug').eq('status', 'published').order('created_at', { ascending: false }).limit(5); let recentPostsHtml = ''; if (posts && posts.length > 0) { recentPostsHtml = posts.map(post => `<li><a href="/post/${post.slug}" data-route class="block py-2 text-sm text-gray-400 hover:text-white transition-colors font-medium">${post.title}</a></li>`).join(''); } container.innerHTML = `<div class="lg:sticky lg:top-20 space-y-6"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-4"><h3 class="font-bold font-heading mb-2 text-white text-base">최신 글</h3><ul class="divide-y divide-gray-700">${recentPostsHtml || '<li class="text-sm text-gray-500 py-2">최신 글이 없습니다.</li>'}</ul></div><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-4"><span class="text-xs text-gray-500">Advertisement</span><div id="sidebar-ad-container" class="mt-2 min-h-[250px] flex items-center justify-center"></div></div></div>`; renderAdSlot(container.querySelector('#sidebar-ad-container'), { format: 'auto', fullWidthResponsive: true }); }
         
         // --- EDITOR LOGIC ---
-        function initQuillEditor(initialContent) { const editorElement = $('#editor'); if (!editorElement) return; const BlockEmbed = Quill.import('blots/block/embed'); class DividerBlot extends BlockEmbed {} DividerBlot.blotName = 'divider'; DividerBlot.tagName = 'hr'; Quill.register(DividerBlot); const toolbarOptions = [ [{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], [{ 'color': [] }, { 'background': [] }], [{ 'align': [] }], ['blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], [{ 'script': 'sub'}, { 'script': 'super' }], [{ 'indent': '-1'}, { 'indent': '+1' }], ['link', 'image'], /*'table',*/ 'divider', ['clean'] ]; state.quill = new Quill('#editor', { modules: { toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler, 'divider': function() { const range = this.quill.getSelection(true); this.quill.insertText(range.index, '\n', Quill.sources.USER); this.quill.insertEmbed(range.index + 1, 'divider', true, Quill.sources.USER); this.quill.setSelection(range.index + 2, Quill.sources.SILENT); } } }, history: { delay: 2000, maxStack: 500, userOnly: true } }, placeholder: '여기에 글을 작성하세요...', theme: 'snow' }); if (initialContent) state.quill.clipboard.dangerouslyPasteHTML(0, initialContent); }
+        function initQuillEditor(initialContent) { const editorElement = $('#editor'); if (!editorElement) return; const BlockEmbed = Quill.import('blots/block/embed'); class DividerBlot extends BlockEmbed {} DividerBlot.blotName = 'divider'; DividerBlot.tagName = 'hr'; Quill.register(DividerBlot); const toolbarOptions = [ [{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], [{ 'color': [] }, { 'background': [] }], [{ 'align': [] }], ['blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], [{ 'script': 'sub'}, { 'script': 'super' }], [{ 'indent': '-1'}, { 'indent': '+1' }], ['link', 'image'], 'divider', ['clean'] ]; state.quill = new Quill('#editor', { modules: { toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler, 'divider': function() { const range = this.quill.getSelection(true); this.quill.insertText(range.index, '\n', Quill.sources.USER); this.quill.insertEmbed(range.index + 1, 'divider', true, Quill.sources.USER); this.quill.setSelection(range.index + 2, Quill.sources.SILENT); } } }, history: { delay: 2000, maxStack: 500, userOnly: true } }, placeholder: '여기에 글을 작성하세요...', theme: 'snow' }); if (initialContent) state.quill.clipboard.dangerouslyPasteHTML(0, initialContent); }
         function addEditorModeSwitcherListeners(initialContent) {
             const switcher = $('#editor-mode-switcher');
             if(!switcher) return;
@@ -179,13 +172,12 @@
                 const mode = button.dataset.mode;
                 if (mode === state.currentEditorMode) return;
 
-                // Content conversion logic
                 try {
                     if (state.currentEditorMode === 'normal') {
                         const html = state.quill.root.innerHTML;
                         if (mode === 'markdown') rawEditor.value = turndownService.turndown(html);
                         else if (mode === 'html') rawEditor.value = html;
-                    } else { // From raw (markdown/html) to normal
+                    } else { 
                         const rawValue = rawEditor.value;
                         if (mode === 'normal') {
                             const html = state.currentEditorMode === 'markdown' ? marked.parse(rawValue) : rawValue;
@@ -195,10 +187,9 @@
                 } catch (err) {
                     showToast('콘텐츠 변환 중 오류가 발생했습니다.', true);
                     console.error("Editor mode switch error:", err);
-                    return; // Prevent switching if conversion fails
+                    return;
                 }
                 
-                // UI update
                 quillContainer.classList.toggle('hidden', mode !== 'normal');
                 rawContainer.classList.toggle('hidden', mode === 'normal');
                 switcher.querySelector('.active').classList.remove('active');
@@ -277,4 +268,5 @@
     </script>
 </body>
 </html>
+
 
