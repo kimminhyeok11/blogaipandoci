@@ -41,60 +41,60 @@
 
     <style>
         :root {
-            /* Dark Mode is now the default theme */
+            /* Dark Mode is the default theme */
             --bg-main: #111827; --bg-content: #1F2937; --bg-content-secondary: #374151;
-            --border-color: #374151; --text-primary: #F9FAFB; --text-secondary: #D1D5DB;
-            --text-tertiary: #9CA3AF; --accent: #3B82F6; --accent-hover: #2563EB;
+            --bg-editor-toolbar: #2c3a4f; --bg-editor-main: #243041;
+            --border-color: #374151; --text-primary: #F0F2F5; --text-secondary: #b0b8c4;
+            --text-tertiary: #8a93a2; --accent: #3B82F6; --accent-hover: #2563EB;
             --danger: #EF4444; --danger-hover: #DC2626; --font-heading: 'Noto Sans KR', sans-serif;
-            --font-body: 'Noto Sans KR', sans-serif; --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --font-body: 'Noto Sans KR', sans-serif; --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.1);
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
         html{scroll-behavior:smooth}
-        body{font-family:var(--font-body);background-color:var(--bg-main);color:var(--text-primary);font-size:16px;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;display:flex;flex-direction:column;min-height:100vh;transition:background-color .3s ease, color .3s ease}
+        body{font-family:var(--font-body);background-color:var(--bg-main);color:var(--text-primary);font-size:15px;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;display:flex;flex-direction:column;min-height:100vh}
         #app-container{flex-grow:1}
         #app-loader{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;background-color:var(--bg-main);display:flex;align-items:center;justify-content:center;transition:opacity .5s ease}
-        .loader-spinner{width:32px;height:32px;border:3px solid var(--border-color);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+        .loader-spinner{width:28px;height:28px;border:3px solid var(--border-color);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
         .app-view{display:none}.app-view.active{display:block}
-        .brand-logo{font-family:var(--font-heading);font-weight:700;font-size:1.125rem;color:var(--text-primary);letter-spacing:-.5px}
-        .btn{padding:.5rem 1rem;font-size:.875rem;font-weight:500;border-radius:8px;transition:all .25s ease;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:1px solid var(--border-color);background-color:var(--bg-content);color:var(--text-secondary);cursor:pointer;box-shadow:var(--shadow-sm)}
+        .brand-logo{font-family:var(--font-heading);font-weight:700;font-size:1rem;color:var(--text-primary);letter-spacing:-.5px}
+        .btn{padding:.4rem .8rem;font-size:.8125rem;font-weight:500;border-radius:6px;transition:all .25s ease;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--border-color);background-color:var(--bg-content);color:var(--text-secondary);cursor:pointer;box-shadow:var(--shadow-sm)}
         .btn:hover{background-color:var(--bg-content-secondary);color:var(--text-primary);transform:translateY(-1px);box-shadow:var(--shadow-md)}
         .btn-primary{background-color:var(--accent);color:white;border-color:var(--accent)}
         .btn-primary:hover{background-color:var(--accent-hover);border-color:var(--accent-hover);color:white}
-        .btn-danger{background-color:var(--danger);color:white;border-color:var(--danger)}
-        .btn-danger:hover{background-color:var(--danger-hover);border-color:var(--danger-hover);color:white}
-        .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;background-color:var(--bg-content-secondary)!important;color:var(--text-secondary)!important}
-        .form-input,.form-textarea{font-size:.9rem;padding:.6rem .85rem;border:1px solid var(--border-color);border-radius:8px;width:100%;background-color:var(--bg-content);color:var(--text-primary);transition:all .2s ease;box-shadow:var(--shadow-sm)}
+        .form-input,.form-textarea{font-size:.875rem;padding:.5rem .75rem;border:1px solid var(--border-color);border-radius:6px;width:100%;background-color:var(--bg-content);color:var(--text-primary);transition:all .2s ease;box-shadow:var(--shadow-sm)}
         .form-input:focus,.form-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px #3b82f633}
-        .prose-custom{color:var(--text-secondary);line-height:1.8;font-size:1rem}
-        .prose-custom>*:not(:first-child){margin-top:1.5em}
-        .prose-custom p{margin-bottom:1.5em}
-        .prose-custom h1,.prose-custom h2,.prose-custom h3{color:var(--text-primary);font-family:var(--font-heading);font-weight:700;margin-top:2.2em;margin-bottom:.8em}
-        .prose-custom h1{font-size:2rem;border-bottom:1px solid var(--border-color);padding-bottom:.4em;letter-spacing:-0.02em;}
-        .prose-custom h2{font-size:1.6rem;letter-spacing:-0.01em;}
-        .prose-custom h3{font-size:1.3rem}
+        /* Prose (Article Content) Styles */
+        .prose-custom{color:var(--text-secondary);line-height:1.75;font-size:0.95rem}
+        .prose-custom>*:not(:first-child){margin-top:1.25em}
+        .prose-custom p{margin-bottom:1.25em}
+        .prose-custom h1,.prose-custom h2,.prose-custom h3{color:var(--text-primary);font-family:var(--font-heading);font-weight:700;margin-top:2em;margin-bottom:.8em}
+        .prose-custom h1{font-size:1.8rem;border-bottom:1px solid var(--border-color);padding-bottom:.4em}
+        .prose-custom h2{font-size:1.4rem}
+        .prose-custom h3{font-size:1.2rem}
         .prose-custom a{color:var(--accent);text-decoration:none;font-weight:500;border-bottom:1px solid #93c5fd;transition:all .2s ease}
         .prose-custom a:hover{color:var(--accent-hover); border-bottom-color:var(--accent)}
-        .prose-custom pre,.prose-custom blockquote{margin-top:2em;margin-bottom:2em}
-        .prose-custom code{background-color:var(--bg-content-secondary);padding:.2em .4em;border-radius:4px;font-size:.85em;color:var(--text-secondary)}
-        .prose-custom pre{background-color:var(--bg-main);border:1px solid var(--border-color); padding: 1rem; border-radius: 8px;}
         .prose-custom pre code{background-color:transparent;padding:0}
-        .prose-custom blockquote{border-left:4px solid var(--accent);padding:1rem 1.5rem;color:var(--text-primary);background-color:var(--bg-content-secondary);border-radius:8px;font-style:normal}
-        .prose-custom blockquote p:last-child{margin-bottom:0}
-        .prose-custom img{border-radius:12px;max-width:100%;height:auto;margin:2.5em 0;box-shadow:var(--shadow-md)}
-        .prose-custom ul,.prose-custom ol{padding-left:1.5em}
-        .prose-custom li{margin-bottom:.5em}
-        .prose-custom table{width:100%;border-collapse:collapse;margin:2em 0;border:1px solid var(--border-color);box-shadow:var(--shadow-sm);border-radius:12px;overflow:hidden}
-        .prose-custom th,.prose-custom td{border:1px solid var(--border-color);padding:.75rem 1rem;text-align:left}
+        .prose-custom blockquote{border-left:3px solid var(--accent);padding:.8rem 1.2rem;color:var(--text-primary);background-color:var(--bg-content-secondary);border-radius:8px;font-style:normal}
+        .prose-custom img{border-radius:10px;max-width:100%;height:auto;margin:2em 0;box-shadow:var(--shadow-md)}
+        .prose-custom ul,.prose-custom ol{padding-left:1.5em} .prose-custom li{margin-bottom:.5em}
+        .prose-custom table{width:100%;border-collapse:collapse;margin:2em 0;border:1px solid var(--border-color);box-shadow:var(--shadow-sm);border-radius:8px;overflow:hidden}
+        .prose-custom th,.prose-custom td{border:1px solid var(--border-color);padding:.6rem .8rem;text-align:left}
         .prose-custom th{background-color:var(--bg-content-secondary);font-weight:600;color:var(--text-primary)}
-        .prose-custom tr:nth-child(even){background-color:var(--bg-content-secondary)}
-        #editor-container{background-color:var(--bg-content);border:1px solid var(--border-color);border-radius:8px;box-shadow:var(--shadow-sm)}
-        #editor-container .ql-toolbar{border:none;border-bottom:1px solid var(--border-color);border-top-left-radius:8px;border-top-right-radius:8px;background-color:var(--bg-main);padding:8px}
+        .prose-custom hr { border: 0; border-top: 1px solid var(--border-color); margin: 2em 0; }
+        /* Editor Styles */
+        #editor-container{background-color:var(--bg-editor-main);border:1px solid var(--border-color);border-radius:8px;box-shadow:var(--shadow-sm)}
+        #editor-container .ql-toolbar{border:none;border-bottom:1px solid var(--border-color);border-radius:8px 8px 0 0;background-color:var(--bg-editor-toolbar);padding:6px}
+        #editor-container .ql-snow .ql-stroke{stroke:var(--text-secondary)}
+        #editor-container .ql-snow .ql-picker-label{color:var(--text-secondary)}
+        #editor-container .ql-snow .ql-active .ql-stroke{stroke:var(--accent)}
+        #editor-container .ql-snow .ql-active .ql-picker-label{color:var(--accent)}
         #editor-container .ql-container{border:none}
-        #editor-container .ql-editor{min-height:400px;font-size:1rem;line-height:1.8;color:var(--text-primary);padding:1.2rem 1.5rem}
-        #editor-container .ql-editor.ql-blank::before{color:var(--text-tertiary);font-style:normal;left:1.5rem}
-        #editor-container .ql-editor img{max-width:100%;height:auto;border-radius:8px;margin:1em 0}
-        @media (max-width:768px){body{font-size:15px}.prose-custom h1{font-size:1.8rem}.btn{padding:.5rem .8rem;font-size:.8rem}.brand-logo{font-size:1rem}header{padding-top:.5rem;padding-bottom:.5rem}}
+        #editor-container .ql-editor{min-height:450px;font-size:0.95rem;line-height:1.75;color:var(--text-primary);padding:1.2rem}
+        #editor-container .ql-editor.ql-blank::before{color:var(--text-tertiary);font-style:normal;left:1.2rem}
+        #editor-container .ql-editor table{border-collapse:collapse;width:100%;}
+        #editor-container .ql-editor th, #editor-container .ql-editor td{border:1px solid var(--border-color);padding:0.5em}
+        @media (max-width:768px){body{font-size:14px}.prose-custom h1{font-size:1.6rem}.btn{padding:.4rem .6rem;font-size:.75rem}.brand-logo{font-size:1rem}header{padding-top:.5rem;padding-bottom:.5rem}}
     </style>
 </head>
 <body class="antialiased">
@@ -102,9 +102,9 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <div id="app-loader"><div class="loader-spinner"></div></div>
-    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-4"></header>
+    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-4"></header>
     
-    <div id="app-container" class="w-full max-w-7xl mx-auto px-4 sm-px-6 lg:px-8">
+    <div id="app-container" class="w-full max-w-7xl mx-auto px-3 sm-px-6 lg:px-8">
         <main id="main-content">
             <div id="view-library" class="app-view"></div>
             <div id="view-post" class="app-view"></div>
@@ -113,16 +113,16 @@
         </main>
     </div>
 
-    <footer class="text-center py-8 px-4 border-t border-gray-800 mt-20">
-        <p class="text-sm text-gray-400">
+    <footer class="text-center py-6 px-4 border-t border-gray-800 mt-16">
+        <p class="text-sm text-gray-500">
             © 2024 InsureLog. 
-            개발 및 문의사항은 <a href="https://www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-300 hover:text-white transition-colors underline">Threads</a>로 연락 주세요.
+            개발 및 문의사항은 <a href="https://www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-400 hover:text-white transition-colors underline">Threads</a>로 연락 주세요.
         </p>
     </footer>
         
     <div id="structured-data-container"></div>
     <div id="modal-container"></div>
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+    <div id="toast-container" class="fixed bottom-3 right-3 z-50 space-y-2"></div>
     
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?lang=css"></script>
 
@@ -147,28 +147,125 @@
         const $ = (selector) => document.querySelector(selector);
         
         function navigateTo(path) { if (window.location.pathname !== path) history.pushState({ path }, '', path); handleRouting(); }
-        async function switchView(viewId, callback) { state.quill = null; const currentView = $('.app-view.active'); if (currentView) { await anime({ targets: currentView, translateY: [0, -10], opacity: [1, 0], duration: 300, easing: 'easeInCubic' }).finished; currentView.classList.remove('active'); currentView.innerHTML = ''; } const nextView = $(`#${viewId}`); if (nextView) { if (callback) await callback(nextView); nextView.classList.add('active'); anime({ targets: nextView, translateY: [10, 0], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); window.scrollTo(0, 0); } }
+        async function switchView(viewId, callback) { state.quill = null; const currentView = $('.app-view.active'); if (currentView) { await anime({ targets: currentView, translateY: [0, -10], opacity: [1, 0], duration: 250, easing: 'easeInCubic' }).finished; currentView.classList.remove('active'); currentView.innerHTML = ''; } const nextView = $(`#${viewId}`); if (nextView) { if (callback) await callback(nextView); nextView.classList.add('active'); anime({ targets: nextView, translateY: [10, 0], opacity: [0, 1], duration: 350, easing: 'easeOutCubic' }); window.scrollTo(0, 0); } }
         function handleRouting() { if (!state.isAuthReady) return; const path = window.location.pathname; window.dataLayer.push({ event: 'page_view', page_path: path, page_title: document.title }); const parts = path.substring(1).split('/'); let route = parts[0] || 'library'; let param = parts[1] || null; let page = 1; if (route === 'page') { page = parseInt(param, 10) || 1; route = 'library'; } else if (route === 'dashboard' && parts[1] === 'page') { page = parseInt(parts[2], 10) || 1; } if (!state.user && ['dashboard', 'writer'].includes(route)) { showToast('이 기능을 사용하려면 로그인이 필요합니다.', true); navigateTo('/'); return; } switch (route) { case 'post': switchView('view-post', el => renderPostView(el, param)); break; case 'dashboard': switchView('view-dashboard', el => renderDashboardView(el, page)); break; case 'writer': switchView('view-writer', el => renderWriterView(el, param)); break; default: switchView('view-library', el => renderLibraryView(el, page)); } }
-        function renderNav() { $('#main-nav-container').innerHTML = `<nav class="w-full max-w-7xl flex items-center justify-between py-2 px-4 bg-gray-800/70 backdrop-blur-lg border border-gray-700 rounded-xl shadow-sm"><a href="/" data-route class="brand-logo">InsureLog</a><div class="flex items-center space-x-3">${state.user ? `<a href="/dashboard" data-route class="btn !px-3 !py-1.5 !text-sm">대시보드</a><button data-action="logout" class="btn !px-3 !py-1.5 !text-sm">로그아웃</button>` : `<button data-action="auth" class="btn btn-primary !px-3 !py-1.5 !text-sm">로그인 / 가입</button>`}</div></nav>`; }
-        async function renderLibraryView(container, page = 1) { updateMetaTags(); if (!sessionStorage.getItem('site_visited')) { supabase.from('site_visits').insert({}).then(); sessionStorage.setItem('site_visited', 'true'); } const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 }; const [{ count: totalVisits }, { data: posts, error, count: totalPosts }] = await Promise.all([supabase.from('site_visits').select('*', { count: 'exact', head: true }), supabase.from('posts').select('*', { count: 'exact' }).eq('status', 'published').order('created_at', { ascending: false }).range(from, to)]); if (error) { container.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러올 수 없습니다.</p>`; return; } const postsHtml = posts.length > 0 ? posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-6 bg-gray-800 border border-gray-700 hover:border-blue-600 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group transform hover:-translate-y-1"><h2 class="text-lg sm:text-xl font-bold font-heading mb-2 text-gray-100 group-hover:text-white transition-colors">${post.title}</h2><p class="text-gray-400 text-base mb-4 line-clamp-2">${post.summary || ''}</p><div class="flex justify-between items-center text-sm text-gray-500 mt-5"><span>${new Date(post.created_at).toLocaleDateString('ko-KR')}</span><span>조회수 ${(post.view_count || 0).toLocaleString()}</span></div></a>`).join('') : `<div class="text-center py-20 text-gray-400 col-span-full"><p class="mb-6">아직 작성된 글이 없습니다.</p>${state.user ? '<a href="/writer" data-route class="btn btn-primary">첫 글 작성하기</a>' : ''}</div>`; container.innerHTML = `<div class="py-12"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="text-center mb-12"><h1 class="text-4xl sm:text-5xl font-extrabold font-heading mb-3 tracking-tight text-white">InsureLog</h1><p class="text-gray-400 text-lg mb-4">AI, 기술, 그리고 보험에 대한 기록들</p><div class="text-sm text-gray-500">총 방문자: ${(totalVisits || 0).toLocaleString()}</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6">${postsHtml}</div>${renderPaginationControls(page, totalPosts, '/page/')}</div><aside class="lg:col-span-1 lg:block mt-12 lg:mt-0" id="sidebar-container"></aside></div></div>`; renderSidebar($('#sidebar-container')); }
-        async function renderPostView(container, slug) { if (!slug) { navigateTo('/'); return; } const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } (async () => { const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; if (!viewedPosts.includes(post.id)) { await supabase.rpc('increment_post_view', { post_slug: slug }); viewedPosts.push(post.id); sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts)); } })(); if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) { showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true); navigateTo('/'); return; } updateMetaTags(post); const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" class="btn" data-route>수정하기</a>` : ''; container.innerHTML = `<div class="py-12"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-6 sm:p-8 md:p-12"><article class="prose-custom max-w-none"><div class="flex justify-between items-center mb-8"><div class="text-base text-gray-400">${new Date(post.created_at).toLocaleDateString('ko-KR')} · 조회수 ${(post.view_count || 0).toLocaleString()}</div>${editButtonHtml}</div><h1 class="!mt-0">${post.title}</h1><div id="in-article-ad-container" class="my-6"></div><div id="post-content">${post.refined_content || ''}</div></article></div><div id="bottom-ad-container" class="my-12"></div></div><aside class="lg:col-span-1 lg:block" id="sidebar-container"></aside></div></div>`; renderSidebar($('#sidebar-container')); lazyLoadImages(); if (window.PR) PR.prettyPrint(); renderAdSlot($('#in-article-ad-container'), { layout: 'in-article', format: 'fluid', textAlign: 'center' }); renderAdSlot($('#bottom-ad-container'), { format: 'auto', fullWidthResponsive: true }); }
-        async function renderDashboardView(container, page = 1) { updateMetaTags(); const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 }; const { data, error, count } = await supabase.from('posts').select('*, view_count', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to); if (error) { container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; } const listHtml = data.length > 0 ? data.map(post => `<li class="p-4 flex flex-col sm:flex-row justify-between sm:items-center hover:bg-gray-800/50 rounded-lg transition-colors"><div class="mb-3 sm:mb-0"><a href="/post/${post.slug}" data-route class="font-semibold text-gray-200 hover:text-white">${post.title}</a>${post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : '<span class="ml-2 text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">발행됨</span>'}<p class="text-sm text-gray-400 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')} / 조회수 ${(post.view_count || 0).toLocaleString()}</p></div><div class="flex-shrink-0 space-x-2"><a href="/writer/${post.slug}" class="btn text-sm" data-route>수정</a><button class="btn btn-danger text-sm" data-action="delete" data-id="${post.id}">삭제</button></div></li>`).join('') : '<li class="p-8 text-center text-gray-400">작성된 글이 없습니다.</li>'; container.innerHTML = `<div class="py-12"><div class="flex flex-col sm:flex-row justify-between sm:items-center mb-8"><div><h1 class="text-2xl sm:text-3xl font-bold font-heading">내 글 관리</h1><p class="text-gray-400 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn btn-primary mt-4 sm:mt-0" data-route>새 글 작성</a></div><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm"><ul class="divide-y divide-gray-700">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div>`; }
-        async function renderWriterView(container, slug) { updateMetaTags(); let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [] }; if (slug) { const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !data || data.author_id !== state.user.id) { showToast(error ? '글 정보를 가져오지 못했습니다.' : '자신이 작성한 글만 수정할 수 있습니다.', true); navigateTo('/dashboard'); return; } post = data; } container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="back">← 대시보드로 돌아가기</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><div><label for="title" class="block text-sm font-medium text-gray-300 mb-2">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-300 mb-2">요약 (비워두면 첫 문단에서 자동 생성)</label><textarea id="summary" class="form-textarea" rows="3">${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-300 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-300 mb-2">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-end items-center space-x-3 pt-4"><button type="button" data-action="save-draft" class="btn">초안으로 저장</button><button type="button" data-action="publish" class="btn btn-primary">발행하기</button></div></form></div>`; initQuillEditor(post.refined_content || ''); }
-        async function renderSidebar(container) { if (!container) return; const { data: posts, error } = await supabase.from('posts').select('title, slug').eq('status', 'published').order('created_at', { ascending: false }).limit(5); let recentPostsHtml = ''; if (posts && posts.length > 0) { recentPostsHtml = posts.map(post => `<li><a href="/post/${post.slug}" data-route class="block py-2.5 text-sm text-gray-400 hover:text-white transition-colors font-medium">${post.title}</a></li>`).join(''); } container.innerHTML = `<div class="lg:sticky lg:top-24 space-y-8"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5"><h3 class="font-bold font-heading mb-3 text-white">최신 글</h3><ul class="divide-y divide-gray-700">${recentPostsHtml || '<li class="text-sm text-gray-500 py-2">최신 글이 없습니다.</li>'}</ul></div><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5"><span class="text-xs text-gray-500">Advertisement</span><div id="sidebar-ad-container" class="mt-2 min-h-[250px] flex items-center justify-center"></div></div></div>`; renderAdSlot($('#sidebar-ad-container'), { format: 'auto', fullWidthResponsive: true }); }
+        function renderNav() { $('#main-nav-container').innerHTML = `<nav class="w-full max-w-7xl flex items-center justify-between py-2 px-4 bg-gray-800/60 backdrop-blur-lg border border-gray-700 rounded-xl shadow-sm"><a href="/" data-route class="brand-logo">InsureLog</a><div class="flex items-center space-x-2">${state.user ? `<a href="/dashboard" data-route class="btn !px-3 !py-1.5">대시보드</a><button data-action="logout" class="btn !px-3 !py-1.5">로그아웃</button>` : `<button data-action="auth" class="btn btn-primary !px-3 !py-1.5">로그인 / 가입</button>`}</div></nav>`; }
+        async function renderLibraryView(container, page = 1) { updateMetaTags(); if (!sessionStorage.getItem('site_visited')) { supabase.from('site_visits').insert({}).then(); sessionStorage.setItem('site_visited', 'true'); } const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 }; const [{ count: totalVisits }, { data: posts, error, count: totalPosts }] = await Promise.all([supabase.from('site_visits').select('*', { count: 'exact', head: true }), supabase.from('posts').select('*', { count: 'exact' }).eq('status', 'published').order('created_at', { ascending: false }).range(from, to)]); if (error) { container.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러올 수 없습니다.</p>`; return; } const postsHtml = posts.length > 0 ? posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-5 bg-gray-800 border border-gray-700 hover:border-blue-600 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 group transform hover:-translate-y-1"><h2 class="text-base sm:text-lg font-bold font-heading mb-2 text-gray-100 group-hover:text-white transition-colors">${post.title}</h2><p class="text-gray-400 text-sm mb-3 line-clamp-2">${post.summary || ''}</p><div class="flex justify-between items-center text-xs text-gray-500 mt-4"><span>${new Date(post.created_at).toLocaleDateString('ko-KR')}</span><span>조회수 ${(post.view_count || 0).toLocaleString()}</span></div></a>`).join('') : `<div class="text-center py-20 text-gray-400 col-span-full"><p class="mb-5">아직 작성된 글이 없습니다.</p>${state.user ? '<a href="/writer" data-route class="btn btn-primary">첫 글 작성하기</a>' : ''}</div>`; container.innerHTML = `<div class="py-8"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="text-center mb-10"><h1 class="text-3xl sm:text-4xl font-extrabold font-heading mb-2 tracking-tight text-white">InsureLog</h1><p class="text-gray-400 text-base mb-3">AI, 기술, 그리고 보험에 대한 기록들</p><div class="text-xs text-gray-500">총 방문자: ${(totalVisits || 0).toLocaleString()}</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${postsHtml}</div>${renderPaginationControls(page, totalPosts, '/page/')}</div><aside class="lg:col-span-1 lg:block mt-10 lg:mt-0" id="sidebar-container"></aside></div></div>`; renderSidebar($('#sidebar-container')); }
+        async function renderPostView(container, slug) { if (!slug) { navigateTo('/'); return; } const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } (async () => { const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; if (!viewedPosts.includes(post.id)) { await supabase.rpc('increment_post_view', { post_slug: slug }); viewedPosts.push(post.id); sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts)); } })(); if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) { showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true); navigateTo('/'); return; } updateMetaTags(post); const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" class="btn" data-route>수정하기</a>` : ''; container.innerHTML = `<div class="py-8"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5 sm:p-8 md:p-10"><article class="prose-custom max-w-none"><div class="flex justify-between items-center mb-6"><div class="text-sm text-gray-400">${new Date(post.created_at).toLocaleDateString('ko-KR')} · 조회수 ${(post.view_count || 0).toLocaleString()}</div>${editButtonHtml}</div><h1 class="!mt-0">${post.title}</h1><div id="in-article-ad-container" class="my-6"></div><div id="post-content">${post.refined_content || ''}</div></article></div><div id="bottom-ad-container" class="my-10"></div></div><aside class="lg:col-span-1 lg:block" id="sidebar-container"></aside></div></div>`; renderSidebar($('#sidebar-container')); lazyLoadImages(); if (window.PR) PR.prettyPrint(); renderAdSlot($('#in-article-ad-container'), { layout: 'in-article', format: 'fluid', textAlign: 'center' }); renderAdSlot($('#bottom-ad-container'), { format: 'auto', fullWidthResponsive: true }); }
+        async function renderDashboardView(container, page = 1) { updateMetaTags(); const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 }; const { data, error, count } = await supabase.from('posts').select('*, view_count', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to); if (error) { container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; } const listHtml = data.length > 0 ? data.map(post => `<li class="p-3 flex flex-col sm:flex-row justify-between sm:items-center hover:bg-gray-800/50 rounded-lg transition-colors"><div class="mb-3 sm:mb-0"><a href="/post/${post.slug}" data-route class="font-semibold text-gray-200 hover:text-white">${post.title}</a>${post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : '<span class="ml-2 text-xs font-semibold bg-green-200 text-green-800 px-2 py-0.5 rounded-full">발행됨</span>'}<p class="text-xs text-gray-400 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')} / 조회수 ${(post.view_count || 0).toLocaleString()}</p></div><div class="flex-shrink-0 space-x-2"><a href="/writer/${post.slug}" class="btn !text-xs" data-route>수정</a><button class="btn btn-danger !text-xs" data-action="delete" data-id="${post.id}">삭제</button></div></li>`).join('') : '<li class="p-8 text-center text-gray-400">작성된 글이 없습니다.</li>'; container.innerHTML = `<div class="py-8"><div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6"><div><h1 class="text-xl sm:text-2xl font-bold font-heading">내 글 관리</h1><p class="text-gray-400 mt-1 text-sm">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn btn-primary mt-4 sm:mt-0" data-route>새 글 작성</a></div><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm"><ul class="divide-y divide-gray-700">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div>`; }
+        async function renderWriterView(container, slug) { updateMetaTags(); let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [] }; if (slug) { const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !data || data.author_id !== state.user.id) { showToast(error ? '글 정보를 가져오지 못했습니다.' : '자신이 작성한 글만 수정할 수 있습니다.', true); navigateTo('/dashboard'); return; } post = data; } container.innerHTML = `<div class="py-6"><div class="mb-5"><button class="btn" data-action="back">← 대시보드로 돌아가기</button></div><h1 class="text-xl sm:text-2xl font-bold font-heading mb-5">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-5"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><div><label for="title" class="block text-sm font-medium text-gray-300 mb-1">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-300 mb-1">요약 (비워두면 첫 문단에서 자동 생성)</label><textarea id="summary" class="form-textarea" rows="2">${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-300 mb-1">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-300 mb-1">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-end items-center space-x-2 pt-3"><button type="button" data-action="save-draft" class="btn">초안으로 저장</button><button type="button" data-action="publish" class="btn btn-primary">발행하기</button></div></form></div>`; initQuillEditor(post.refined_content || ''); }
+        async function renderSidebar(container) { if (!container) return; const { data: posts, error } = await supabase.from('posts').select('title, slug').eq('status', 'published').order('created_at', { ascending: false }).limit(5); let recentPostsHtml = ''; if (posts && posts.length > 0) { recentPostsHtml = posts.map(post => `<li><a href="/post/${post.slug}" data-route class="block py-2 text-sm text-gray-400 hover:text-white transition-colors font-medium">${post.title}</a></li>`).join(''); } container.innerHTML = `<div class="lg:sticky lg:top-20 space-y-6"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-4"><h3 class="font-bold font-heading mb-2 text-white text-base">최신 글</h3><ul class="divide-y divide-gray-700">${recentPostsHtml || '<li class="text-sm text-gray-500 py-2">최신 글이 없습니다.</li>'}</ul></div><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-4"><span class="text-xs text-gray-500">Advertisement</span><div id="sidebar-ad-container" class="mt-2 min-h-[250px] flex items-center justify-center"></div></div></div>`; renderAdSlot($('#sidebar-ad-container'), { format: 'auto', fullWidthResponsive: true }); }
         function renderAdSlot(container, options = {}) { if (!container) return; container.innerHTML = ''; const ins = document.createElement('ins'); ins.className = 'adsbygoogle'; ins.style.display = 'block'; ins.dataset.adClient = AD_CLIENT; ins.dataset.adSlot = AD_SLOT_ID; if (options.layout) ins.dataset.adLayout = options.layout; if (options.format) ins.dataset.adFormat = options.format; if (options.fullWidthResponsive) ins.dataset.fullWidthResponsive = 'true'; if (options.textAlign) ins.style.textAlign = options.textAlign; container.appendChild(ins); try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error(`AdSense push error for slot ${AD_SLOT_ID}:`, e); } }
-        function initQuillEditor(initialContent) { const editorElement = document.querySelector('#editor'); if (!editorElement) return; const toolbarOptions = [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], ['blockquote', 'code-block'], [{ 'list': 'ordered' }, { 'list': 'bullet' }], [{ 'indent': '-1' }, { 'indent': '+1' }], ['link', 'image'], ['clean']]; state.quill = new Quill('#editor', { modules: { toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler } }, clipboard: { matchers: [['li', (node, delta) => { const listType = node.parentNode.tagName === 'OL' ? 'ordered' : 'bullet'; return delta.compose(new Quill.import('delta')().retain(delta.length(), { list: listType })); }]] } }, placeholder: '여기에 글을 작성하세요...', theme: 'snow' }); if (initialContent) state.quill.clipboard.dangerouslyPasteHTML(0, initialContent); }
+        
+        // --- START: ENHANCED QUILL EDITOR INITIALIZATION ---
+        function initQuillEditor(initialContent) {
+            const editorElement = $('#editor');
+            if (!editorElement) return;
+
+            // Define custom Divider Blot
+            const BlockEmbed = Quill.import('blots/block/embed');
+            class DividerBlot extends BlockEmbed {
+                static create() { return super.create(); }
+                static value() { return true; }
+            }
+            DividerBlot.blotName = 'divider';
+            DividerBlot.tagName = 'hr';
+            Quill.register(DividerBlot);
+
+            // Define toolbar options
+            const toolbarOptions = [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'align': [] }],
+                ['blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'script': 'sub'}, { 'script': 'super' }],
+                [{ 'indent': '-1'}, { 'indent': '+1' }],
+                ['link', 'image'],
+                ['table', 'divider'], // Custom buttons
+                ['clean']
+            ];
+
+            // Initialize Quill
+            state.quill = new Quill('#editor', {
+                modules: {
+                    toolbar: {
+                        container: toolbarOptions,
+                        handlers: {
+                            'image': quillImageHandler,
+                            'divider': function() {
+                                const range = this.quill.getSelection(true);
+                                this.quill.insertText(range.index, '\n', Quill.sources.USER);
+                                this.quill.insertEmbed(range.index + 1, 'divider', true, Quill.sources.USER);
+                                this.quill.setSelection(range.index + 2, Quill.sources.SILENT);
+                            },
+                            'table': function() {
+                                const range = this.quill.getSelection(true);
+                                this.quill.insertText(range.index, '\n');
+                                this.quill.insertEmbed(range.index + 1, 'table', '<table><tbody><tr><td><br></td><td><br></td></tr><tr><td><br></td><td><br></td></tr></tbody></table>');
+                                this.quill.setSelection(range.index + 2);
+                            }
+                        }
+                    },
+                    clipboard: {
+                        matchers: [
+                           ['table', (node, delta) => delta],
+                           ['tr', (node, delta) => delta],
+                           ['td', (node, delta) => delta],
+                           ['th', (node, delta) => delta],
+                           ['tbody', (node, delta) => delta],
+                           ['thead', (node, delta) => delta],
+                        ]
+                    },
+                    history: { delay: 2000, maxStack: 500, userOnly: true }
+                },
+                placeholder: '여기에 글을 작성하세요...',
+                theme: 'snow'
+            });
+
+            // Add custom button icons
+            $('.ql-divider').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15" /></svg>';
+            $('.ql-table').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-4 h-4"><path fill="currentColor" d="M448 32C483.3 32 512 60.65 512 96v320c0 35.35-28.65 64-64 64H64c-35.35 0-64-28.65-64-64V96c0-35.35 28.65-64 64-64H448zM224 256V160H64v96H224zM64 320v96h160V320H64zM288 416h160V320H288v96zM448 256V160H288v96H448z"/></svg>`;
+
+            // Auto-linking feature
+            state.quill.on('text-change', (delta, oldDelta, source) => {
+                if (source !== 'user') return;
+                const ops = delta.ops;
+                if (ops.length === 2 && ops[0].retain && ops[1].insert && (ops[1].insert === ' ' || ops[1].insert === '\n')) {
+                    const index = ops[0].retain;
+                    const [leaf] = state.quill.getLeaf(index);
+                    if (leaf && leaf.parent && leaf.parent.domNode.localName !== 'a') {
+                        const text = leaf.text.slice(0, index);
+                        const urlRegex = /(https?:\/\/[^\s]+)/g;
+                        const match = text.match(urlRegex);
+                        if (match) {
+                            const lastUrl = match[match.length - 1];
+                            const urlIndex = text.lastIndexOf(lastUrl);
+                            if (urlIndex !== -1 && urlIndex + lastUrl.length === index) {
+                                state.quill.formatText(urlIndex, lastUrl.length, 'link', lastUrl, 'user');
+                            }
+                        }
+                    }
+                }
+            });
+            
+            if (initialContent) state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
+        }
+        // --- END: ENHANCED QUILL EDITOR INITIALIZATION ---
+
         function quillImageHandler() { if (!state.user) { showToast('이미지를 업로드하려면 로그인이 필요합니다.', true); return; } const input = document.createElement('input'); input.setAttribute('type', 'file'); input.setAttribute('accept', 'image/*'); input.click(); input.onchange = async () => { const file = input.files[0]; if (!file) return; const buttons = $('#writer-form').querySelectorAll('button'); buttons.forEach(b => b.disabled = true); showToast('이미지 업로드 및 변환 중...'); try { const webpBlob = await convertToWebP(file); const imageUrl = await uploadImageFile(webpBlob); const range = state.quill.getSelection(true); state.quill.insertEmbed(range.index, 'image', imageUrl, 'user'); state.quill.setSelection(range.index + 1, 'silent'); showToast('이미지 업로드 완료!'); } catch (error) { showToast(`이미지 업로드 실패: ${error.message}`, true); } finally { buttons.forEach(b => b.disabled = false); } }; }
         function updateMetaTags(post = null) { const title = post ? `${post.title} | InsureLog` : defaultMeta.title; const description = post ? (post.summary || defaultMeta.description) : defaultMeta.description; const url = post ? `${SITE_URL}/post/${post.slug}` : SITE_URL; let imageUrl = defaultMeta.image; if (post && post.refined_content) { const match = post.refined_content.match(/<img[^>]+src="([^">]+)"/); if (match && match[1]) imageUrl = match[1]; } document.title = title; $('meta[name="description"]').setAttribute('content', description); $('link[rel="canonical"]').setAttribute('href', url); ['og:title', 'twitter:title'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content', title)); ['og:description', 'twitter:description'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content', description)); ['og:url', 'twitter:url'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content', url)); ['og:image', 'twitter:image'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content',imageUrl)); generateStructuredData(post ? 'Article' : 'WebSite', post); }
         function generateStructuredData(type, data = {}) { let schema = {}; if (type === 'WebSite') { schema = { "@context": "https://schema.org", "@type": "WebSite", "url": SITE_URL, "name": "InsureLog" }; } else if (type === 'Article' && data && data.refined_content) { const imageUrl = (data.refined_content.match(/<img[^>]+src="([^">]+)"/) || [])[1] || defaultMeta.image; schema = { "@context": "https://schema.org", "@type": "Article", "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/post/${data.slug}` }, "headline": data.title, "description": data.summary, "image": imageUrl, "author": { "@type": "Person", "name": "InsureLog Admin" }, "publisher": { "@type": "Organization", "name": "InsureLog", "logo": { "@type": "ImageObject", "url": defaultMeta.image } }, "datePublished": new Date(data.created_at).toISOString(), "dateModified": new Date(data.updated_at || data.created_at).toISOString() }; } let script = document.getElementById('json-ld-structured-data'); if (!script) { script = document.createElement('script'); script.type = 'application/ld+json'; script.id = 'json-ld-structured-data'; $('#structured-data-container').appendChild(script); } script.textContent = JSON.stringify(schema); }
-        function showToast(message, isError = false) { const toast = document.createElement('div'); toast.className = `py-2 px-4 rounded-lg shadow-lg text-sm font-medium border ${isError ? 'bg-red-50 border-red-300 text-red-800' : 'bg-green-50 border-green-300 text-green-800'}`; toast.textContent = message; $('#toast-container').appendChild(toast); anime({ targets: toast, translateX: [20, 0], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); setTimeout(async () => { await anime({ targets: toast, translateX: [0, 20], opacity: [1, 0], duration: 400, easing: 'easeInCubic' }).finished; toast.remove(); }, 3000); }
-        function renderModal({ title, content, confirmText, onConfirm, cancelText = '취소', onCancel = closeModal }) { const modalId = `modal-${Date.now()}`; const modalHtml = `<div id="${modalId}" class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div><div class="modal-content relative bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-lg p-6"><h3 class="text-lg font-bold font-heading mb-4 text-gray-900">${title}</h3><div class="text-gray-600 mb-6 text-sm">${content}</div><div class="flex justify-end space-x-3"><button type="button" class="btn" id="modal-cancel-btn">${cancelText}</button>${confirmText ? `<button type="button" class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>` : ''}</div></div></div>`; $('#modal-container').innerHTML = modalHtml; const modalEl = $(`#${modalId}`); if (onConfirm) $('#modal-confirm-btn').addEventListener('click', onConfirm); $('#modal-cancel-btn').addEventListener('click', onCancel); modalEl.querySelector('.modal-backdrop').addEventListener('click', onCancel); anime({ targets: modalEl.querySelector('.modal-backdrop'), opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); anime({ targets: modalEl.querySelector('.modal-content'), translateY: [20, 0], scale: [0.98, 1], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); }
+        function showToast(message, isError = false) { const toast = document.createElement('div'); toast.className = `py-2 px-3 rounded-md shadow-lg text-sm font-medium border ${isError ? 'bg-red-100 border-red-300 text-red-800' : 'bg-green-100 border-green-300 text-green-800'}`; toast.textContent = message; $('#toast-container').appendChild(toast); anime({ targets: toast, translateX: [20, 0], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); setTimeout(async () => { await anime({ targets: toast, translateX: [0, 20], opacity: [1, 0], duration: 400, easing: 'easeInCubic' }).finished; toast.remove(); }, 3000); }
+        function renderModal({ title, content, confirmText, onConfirm, cancelText = '취소', onCancel = closeModal }) { const modalId = `modal-${Date.now()}`; const modalHtml = `<div id="${modalId}" class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div><div class="modal-content relative bg-white rounded-lg shadow-xl w-full max-w-md p-6"><h3 class="text-base font-bold font-heading mb-3 text-gray-900">${title}</h3><div class="text-gray-600 mb-5 text-sm">${content}</div><div class="flex justify-end space-x-2"><button type="button" class="btn" id="modal-cancel-btn">${cancelText}</button>${confirmText ? `<button type="button" class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>` : ''}</div></div></div>`; $('#modal-container').innerHTML = modalHtml; const modalEl = $(`#${modalId}`); if (onConfirm) $('#modal-confirm-btn').addEventListener('click', onConfirm); $('#modal-cancel-btn').addEventListener('click', onCancel); modalEl.querySelector('.modal-backdrop').addEventListener('click', onCancel); anime({ targets: modalEl.querySelector('.modal-backdrop'), opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); anime({ targets: modalEl.querySelector('.modal-content'), translateY: [20, 0], scale: [0.98, 1], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); }
         async function closeModal() { const modal = $('#modal-container').firstElementChild; if (!modal) return; await Promise.all([anime({ targets: modal.querySelector('.modal-backdrop'), opacity: 0, duration: 300, easing: 'easeInCubic' }).finished, anime({ targets: modal.querySelector('.modal-content'), translateY: 20, scale: 0.98, opacity: 0, duration: 300, easing: 'easeInCubic' }).finished]); $('#modal-container').innerHTML = ''; }
-        function renderPaginationControls(currentPage, totalItems, baseLink) { const totalPages = Math.ceil(totalItems / POSTS_PER_PAGE); if (totalPages <= 1) return ''; return `<div class="flex justify-center items-center gap-3 mt-12 pagination-controls"><a href="${baseLink}${currentPage - 1}" data-route class="btn !py-1.5 !px-3 !text-sm ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}">이전</a><span class="text-sm font-medium text-gray-400">${currentPage} / ${totalPages} 페이지</span><a href="${baseLink}${currentPage + 1}" data-route class="btn !py-1.5 !px-3 !text-sm ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}">다음</a></div>`; }
+        function renderPaginationControls(currentPage, totalItems, baseLink) { const totalPages = Math.ceil(totalItems / POSTS_PER_PAGE); if (totalPages <= 1) return ''; return `<div class="flex justify-center items-center gap-2 mt-10 pagination-controls"><a href="${baseLink}${currentPage - 1}" data-route class="btn !py-1 !px-2.5 !text-xs ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}">이전</a><span class="text-xs font-medium text-gray-400">${currentPage} / ${totalPages}</span><a href="${baseLink}${currentPage + 1}" data-route class="btn !py-1 !px-2.5 !text-xs ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}">다음</a></div>`; }
         function lazyLoadImages() { const images = document.querySelectorAll('#post-content img'); const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; const observer = new IntersectionObserver((entries, obs) => { entries.forEach(entry => { if (entry.isIntersecting) { const img = entry.target; img.src = img.dataset.src; img.onload = () => { img.style.opacity = '1'; img.classList.remove('lazy'); }; obs.unobserve(img); } }); }, { rootMargin: '0px 0px 200px 0px' }); images.forEach(image => { if (image.src && !image.dataset.src) { image.dataset.src = image.src; image.src = placeholderSrc; image.style.transition = 'opacity 0.3s'; image.style.opacity = '0'; image.classList.add('lazy'); } observer.observe(image); }); }
         function showAuthModal() { const content = `<form id="auth-form" novalidate class="space-y-4"><div><label for="email" class="block text-sm font-medium text-gray-800 mb-1">이메일</label><input type="email" id="email" class="form-input !bg-white !text-black" required autocomplete="email"></div><div><label for="password" class="block text-sm font-medium text-gray-800 mb-1">비밀번호 (6자 이상)</label><input type="password" id="password" class="form-input !bg-white !text-black" required autocomplete="current-password" minlength="6"></div><div id="auth-error" class="text-red-500 text-xs h-3"></div></form>`; renderModal({ title: '시작하기', content, confirmText: '로그인', onConfirm: () => handleAuth('login') }); const signUpBtn = document.createElement('button'); signUpBtn.type = 'button'; signUpBtn.className = 'btn'; signUpBtn.textContent = '회원가입'; $('#modal-confirm-btn').insertAdjacentElement('beforebegin', signUpBtn); signUpBtn.addEventListener('click', () => handleAuth('signup')); }
         async function handleAuth(action) { const email = $('#email').value, password = $('#password').value, errorDiv = $('#auth-error'); errorDiv.textContent = ''; const { error } = action === 'login' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password }); if (error) { errorDiv.textContent = "인증 오류: " + error.message; } else { showToast(action === 'signup' ? '가입 완료! 이메일을 확인하여 인증해주세요.' : '로그인되었습니다.'); closeModal(); } }
         async function handleLogout() { await supabase.auth.signOut(); showToast('로그아웃되었습니다.'); navigateTo('/'); }
-        async function handlePostSave(status, button) { let title = $('#title').value.trim(); let summary = $('#summary').value.trim(); if (!title) { showToast('제목은 필수 항목입니다.', true); return; } if (!summary && state.quill) { const text = state.quill.getText(0, 500).trim(); if (text) { const firstParagraph = text.split('\n')[0]; summary = firstParagraph.substring(0, 155); if (firstParagraph.length > 155) summary += '...'; } } if (!summary) { showToast('요약은 필수 항목입니다. 본문을 작성하시면 자동으로 생성됩니다.', true); return; } const originalBtnText = button.textContent; button.disabled = true; button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`; try { const id = $('#post-id').value; let slug = $('#post-slug').value || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, ''); if (!id) { const { data } = await supabase.from('posts').select('id').eq('slug', slug).maybeSingle(); if (data) slug = `${slug}-${Date.now().toString().slice(-4)}`; } const postData = { title, summary, slug, status, author_id: state.user.id, refined_content: state.quill.root.innerHTML, tags: $('#tags').value.split(',').map(t => t.trim()).filter(Boolean) }; const { data, error } = id ? await supabase.from('posts').update(postData).eq('id', id).select().single() : await supabase.from('posts').insert(postData).select().single(); if (error) throw error; showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.'); navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard'); } catch (error) { showToast(`저장 실패: ${error.message}`, true); } finally { button.disabled = false; button.textContent = originalBtnText; } }
+        async function handlePostSave(status, button) { let title = $('#title').value.trim(); let summary = $('#summary').value.trim(); if (!title) { showToast('제목은 필수 항목입니다.', true); return; } if (!summary && state.quill) { const text = state.quill.getText(0, 500).trim(); if (text) { const firstParagraph = text.split('\n')[0]; summary = firstParagraph.substring(0, 155); if (firstParagraph.length > 155) summary += '...'; } } if (!summary) { showToast('요약은 필수 항목입니다. 본문을 작성하시면 자동으로 생성됩니다.', true); return; } const originalBtnText = button.textContent; button.disabled = true; button.innerHTML = `<div class="loader-spinner !w-4 !h-4 !border-2"></div>`; try { const id = $('#post-id').value; let slug = $('#post-slug').value || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, ''); if (!id) { const { data } = await supabase.from('posts').select('id').eq('slug', slug).maybeSingle(); if (data) slug = `${slug}-${Date.now().toString().slice(-4)}`; } const postData = { title, summary, slug, status, author_id: state.user.id, refined_content: state.quill.root.innerHTML, tags: $('#tags').value.split(',').map(t => t.trim()).filter(Boolean) }; const { data, error } = id ? await supabase.from('posts').update(postData).eq('id', id).select().single() : await supabase.from('posts').insert(postData).select().single(); if (error) throw error; showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.'); navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard'); } catch (error) { showToast(`저장 실패: ${error.message}`, true); } finally { button.disabled = false; button.textContent = originalBtnText; } }
         async function deletePostAndAssociatedImages(postId) { const { data: post } = await supabase.from('posts').select('refined_content').eq('id', postId).single(); if (post?.refined_content) { const imageUrls = post.refined_content.match(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g) || []; const imagePaths = imageUrls.map(url => url.split('/thought-images/')[1]).filter(Boolean); if (imagePaths.length > 0) await supabase.storage.from(IMAGE_BUCKET_NAME).remove(imagePaths); } await supabase.from('posts').delete().eq('id', postId); }
         async function uploadImageFile(imageFile) { if (!imageFile) throw new Error("이미지 파일이 없습니다."); const fileName = `${state.user.id}/${Date.now()}.webp`; const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, imageFile, { contentType: 'image/webp' }); if (error) { throw new Error(`이미지 업로드 실패: ${error.message}`); } const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName); return data.publicUrl; }
         function convertToWebP(file, maxWidth = 1200, quality = 0.8) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = e => { const img = new Image(); img.src = e.target.result; img.onload = () => { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); let { width, height } = img; if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; } canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height); canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas to Blob failed.')), 'image/webp', quality); }; img.onerror = reject; }; reader.onerror = reject; }); }
@@ -176,11 +273,9 @@
         function initializeApp() {
             const authTimeout = setTimeout(() => {
                 if (!state.isAuthReady) {
-                    console.error("Auth check timed out. Supabase might be unreachable or misconfigured.");
+                    console.error("Auth check timed out.");
                     const loader = $('#app-loader');
-                    if (loader) {
-                         loader.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">블로그를 불러오는 데 실패했습니다.<br>잠시 후 다시 시도해 주세요.</p>';
-                    }
+                    if (loader) loader.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">블로그를 불러오는 데 실패했습니다.<br>잠시 후 다시 시도해 주세요.</p>';
                 }
             }, 8000);
 
@@ -190,7 +285,6 @@
                     e.preventDefault();
                     const path = routeTarget.getAttribute('href');
                     if (window.location.pathname === path) return;
-                    // Minor delay to allow visual feedback on click
                     setTimeout(() => requestAnimationFrame(() => navigateTo(path)), 150); 
                     return;
                 }
@@ -214,8 +308,6 @@
             
             supabase.auth.onAuthStateChange((_event, session) => {
                 clearTimeout(authTimeout); 
-                console.log("Supabase auth state received.", session);
-
                 const userChanged = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
                 
@@ -236,4 +328,5 @@
     </script>
 </body>
 </html>
+
 
