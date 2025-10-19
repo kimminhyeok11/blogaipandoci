@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="dark">
 <head>
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -37,63 +37,64 @@
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <style>
-        :root{--bg-main:#F9FAFB;--bg-content:#FFFFFF;--border-color:#F0F0F0;--text-primary:#111827;--text-secondary:#6B7280;--accent:#3B82F6;--accent-hover:#2563EB;--font-heading:'Noto Sans KR',sans-serif;--font-body:'Noto Sans KR',sans-serif}
+        :root {
+            /* Dark Mode is now the default theme */
+            --bg-main: #111827; --bg-content: #1F2937; --bg-content-secondary: #374151;
+            --border-color: #374151; --text-primary: #F9FAFB; --text-secondary: #D1D5DB;
+            --text-tertiary: #9CA3AF; --accent: #3B82F6; --accent-hover: #2563EB;
+            --danger: #EF4444; --danger-hover: #DC2626; --font-heading: 'Noto Sans KR', sans-serif;
+            --font-body: 'Noto Sans KR', sans-serif; --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
         html{scroll-behavior:smooth}
-        body{font-family:var(--font-body);background-color:var(--bg-main);color:var(--text-primary);font-size:16px;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;display:flex;flex-direction:column;min-height:100vh}
+        body{font-family:var(--font-body);background-color:var(--bg-main);color:var(--text-primary);font-size:16px;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;display:flex;flex-direction:column;min-height:100vh;transition:background-color .3s ease, color .3s ease}
         #app-container{flex-grow:1}
         #app-loader{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;background-color:var(--bg-main);display:flex;align-items:center;justify-content:center;transition:opacity .5s ease}
         .loader-spinner{width:32px;height:32px;border:3px solid var(--border-color);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
         .app-view{display:none}.app-view.active{display:block}
         .brand-logo{font-family:var(--font-heading);font-weight:700;font-size:1.125rem;color:var(--text-primary);letter-spacing:-.5px}
-        .btn{padding:.5rem 1rem;font-size:.875rem;font-weight:500;border-radius:6px;transition:all .25s ease;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:1px solid #D1D5DB;background-color:var(--bg-content);color:#374151;cursor:pointer;box-shadow:0 1px 2px 0 #0000000d}
-        .btn:hover{background-color:#F9FAFB;color:var(--text-primary);transform:translateY(-1px);box-shadow:0 1px 3px 0 #0000001a,0 1px 2px -1px #0000001a}
+        .btn{padding:.5rem 1rem;font-size:.875rem;font-weight:500;border-radius:8px;transition:all .25s ease;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:1px solid var(--border-color);background-color:var(--bg-content);color:var(--text-secondary);cursor:pointer;box-shadow:var(--shadow-sm)}
+        .btn:hover{background-color:var(--bg-content-secondary);color:var(--text-primary);transform:translateY(-1px);box-shadow:var(--shadow-md)}
         .btn-primary{background-color:var(--accent);color:white;border-color:var(--accent)}
         .btn-primary:hover{background-color:var(--accent-hover);border-color:var(--accent-hover);color:white}
-        .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;background-color:#F3F4F6!important;color:var(--text-secondary)!important}
-        .form-input,.form-textarea{font-size:.9rem;padding:.6rem .85rem;border:1px solid #D1D5DB;border-radius:6px;width:100%;background-color:var(--bg-content);color:var(--text-primary);transition:all .2s ease;box-shadow:0 1px 2px 0 #0000000d}
+        .btn-danger{background-color:var(--danger);color:white;border-color:var(--danger)}
+        .btn-danger:hover{background-color:var(--danger-hover);border-color:var(--danger-hover);color:white}
+        .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;background-color:var(--bg-content-secondary)!important;color:var(--text-secondary)!important}
+        .form-input,.form-textarea{font-size:.9rem;padding:.6rem .85rem;border:1px solid var(--border-color);border-radius:8px;width:100%;background-color:var(--bg-content);color:var(--text-primary);transition:all .2s ease;box-shadow:var(--shadow-sm)}
         .form-input:focus,.form-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px #3b82f633}
-        .prose-custom{color:#374151;line-height:1.8;font-size:1rem}
-        .prose-custom>*:not(:first-child){margin-top:1.25em}
-        .prose-custom p{margin-bottom:1.25em}
-        .prose-custom h1,.prose-custom h2,.prose-custom h3{color:var(--text-primary);font-family:var(--font-heading);font-weight:600;margin-top:2em;margin-bottom:.8em}
-        .prose-custom h1{font-size:1.8rem;border-bottom:1px solid #E5E7EB;padding-bottom:.3em}
-        .prose-custom h2{font-size:1.5rem}
-        .prose-custom h3{font-size:1.2rem}
+        .prose-custom{color:var(--text-secondary);line-height:1.8;font-size:1rem}
+        .prose-custom>*:not(:first-child){margin-top:1.5em}
+        .prose-custom p{margin-bottom:1.5em}
+        .prose-custom h1,.prose-custom h2,.prose-custom h3{color:var(--text-primary);font-family:var(--font-heading);font-weight:700;margin-top:2.2em;margin-bottom:.8em}
+        .prose-custom h1{font-size:2rem;border-bottom:1px solid var(--border-color);padding-bottom:.4em;letter-spacing:-0.02em;}
+        .prose-custom h2{font-size:1.6rem;letter-spacing:-0.01em;}
+        .prose-custom h3{font-size:1.3rem}
         .prose-custom a{color:var(--accent);text-decoration:none;font-weight:500;border-bottom:1px solid #93c5fd;transition:all .2s ease}
-        .prose-custom a:hover{border-bottom-color:var(--accent)}
+        .prose-custom a:hover{color:var(--accent-hover); border-bottom-color:var(--accent)}
         .prose-custom pre,.prose-custom blockquote{margin-top:2em;margin-bottom:2em}
-        .prose-custom code{background-color:#E5E7EB;padding:.2em .4em;border-radius:4px;font-size:.85em;color:#4B5563}
+        .prose-custom code{background-color:var(--bg-content-secondary);padding:.2em .4em;border-radius:4px;font-size:.85em;color:var(--text-secondary)}
+        .prose-custom pre{background-color:var(--bg-main);border:1px solid var(--border-color); padding: 1rem; border-radius: 8px;}
         .prose-custom pre code{background-color:transparent;padding:0}
-        .prose-custom blockquote{border-left:4px solid var(--accent);padding:1rem 1.5rem;color:#212529;background-color:#EFF6FF;border-radius:6px;font-style:normal}
+        .prose-custom blockquote{border-left:4px solid var(--accent);padding:1rem 1.5rem;color:var(--text-primary);background-color:var(--bg-content-secondary);border-radius:8px;font-style:normal}
         .prose-custom blockquote p:last-child{margin-bottom:0}
-        .prose-custom img{border-radius:8px;max-width:100%;height:auto;margin:2.5em 0;box-shadow:0 4px 6px -1px #0000001a,0 2px 4px -2px #0000001a}
+        .prose-custom img{border-radius:12px;max-width:100%;height:auto;margin:2.5em 0;box-shadow:var(--shadow-md)}
         .prose-custom ul,.prose-custom ol{padding-left:1.5em}
         .prose-custom li{margin-bottom:.5em}
-        .prose-custom ul{list-style-type:disc}
-        .prose-custom ol{list-style-type:decimal}
-        .prose-custom table{width:100%;border-collapse:collapse;margin:2em 0;border:1px solid #e5e7eb;box-shadow:0 1px 3px 0 #0000001a,0 1px 2px -1px #0000001a;border-radius:8px;overflow:hidden}
-        .prose-custom th,.prose-custom td{border:1px solid #e5e7eb;padding:.75rem 1rem;text-align:left}
-        .prose-custom th{background-color:#f9fafb;font-weight:600;color:var(--text-primary)}
-        .prose-custom tr:nth-child(even){background-color:#f9fafb}
-        .pagination-controls a.disabled{pointer-events:none;opacity:.5}
-        #editor-container{background-color:white;border:1px solid #D1D5DB;border-radius:6px;box-shadow:0 1px 2px 0 #0000000d}
-        #editor-container .ql-toolbar{border:none;border-bottom:1px solid #D1D5DB;border-top-left-radius:6px;border-top-right-radius:6px;background-color:#F9FAFB;padding:8px}
+        .prose-custom table{width:100%;border-collapse:collapse;margin:2em 0;border:1px solid var(--border-color);box-shadow:var(--shadow-sm);border-radius:12px;overflow:hidden}
+        .prose-custom th,.prose-custom td{border:1px solid var(--border-color);padding:.75rem 1rem;text-align:left}
+        .prose-custom th{background-color:var(--bg-content-secondary);font-weight:600;color:var(--text-primary)}
+        .prose-custom tr:nth-child(even){background-color:var(--bg-content-secondary)}
+        #editor-container{background-color:var(--bg-content);border:1px solid var(--border-color);border-radius:8px;box-shadow:var(--shadow-sm)}
+        #editor-container .ql-toolbar{border:none;border-bottom:1px solid var(--border-color);border-top-left-radius:8px;border-top-right-radius:8px;background-color:var(--bg-main);padding:8px}
         #editor-container .ql-container{border:none}
-        #editor-container .ql-editor{min-height:400px;font-size:1rem;line-height:1.8;color:var(--text-primary);padding:1rem 1.2rem}
-        #editor-container .ql-editor.ql-blank::before{color:#adb5bd;font-style:normal;left:1.2rem}
+        #editor-container .ql-editor{min-height:400px;font-size:1rem;line-height:1.8;color:var(--text-primary);padding:1.2rem 1.5rem}
+        #editor-container .ql-editor.ql-blank::before{color:var(--text-tertiary);font-style:normal;left:1.5rem}
         #editor-container .ql-editor img{max-width:100%;height:auto;border-radius:8px;margin:1em 0}
-        #editor-container .ql-editor pre{background-color:#f3f4f6;border:1px solid #e5e7eb;border-radius:.5rem;padding:1rem;white-space:pre-wrap;color:#374151}
-        #editor-container .ql-editor blockquote{border-left:3px solid #d1d5db;margin:1rem 0;padding-left:1rem;color:#6b7280;background-color:#f9fafb}
-        /* .ql-toolbar .ql-ad::after style removed as requested by user */
-        img.lazy{background-color:#f0f0f0;aspect-ratio:16 / 9}
-        .pln{color:#4d4d4c}.str{color:#718c00}.kwd{color:#8959a8}.com{color:#8e908c}.typ{color:#4271ae}.lit{color:#f5871f}.pun,.opn,.clo{color:#4d4d4c}.tag{color:#c82829}.atn{color:#f5871f}.atv{color:#3e999f}.dec,.var{color:#c82829}.fun{color:#4271ae}
-        pre.prettyprint{font-family:Consolas,Monaco,'Andale Mono',monospace;border:1px solid #EAEAEA;border-radius:8px;padding:1.2rem;background:#F9FAFB;font-size:.875rem;white-space:pre-wrap;word-wrap:break-word;overflow-x:auto}
-        ol.linenums{margin:0}ol.linenums li{padding-left:10px;color:#999;line-height:1.8;list-style-type:decimal}
-        @media (max-width:768px){body{font-size:15px}.prose-custom h1{font-size:1.6rem}.btn{padding:.5rem .8rem;font-size:.8rem}.brand-logo{font-size:1rem}header{padding-top:.5rem;padding-bottom:.5rem}}
+        @media (max-width:768px){body{font-size:15px}.prose-custom h1{font-size:1.8rem}.btn{padding:.5rem .8rem;font-size:.8rem}.brand-logo{font-size:1rem}header{padding-top:.5rem;padding-bottom:.5rem}}
     </style>
 </head>
 <body class="antialiased">
@@ -101,18 +102,21 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <div id="app-loader"><div class="loader-spinner"></div></div>
-    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center px-4 py-3"></header>
-    <div id="app-container" class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-4"></header>
+    
+    <div id="app-container" class="w-full max-w-7xl mx-auto px-4 sm-px-6 lg:px-8">
         <main id="main-content">
-            <div id="view-library" class="app-view max-w-4xl mx-auto"></div>
-            <div id="view-post" class="app-view max-w-4xl mx-auto"></div>
+            <div id="view-library" class="app-view"></div>
+            <div id="view-post" class="app-view"></div>
             <div id="view-dashboard" class="app-view max-w-5xl mx-auto"></div>
             <div id="view-writer" class="app-view max-w-4xl mx-auto"></div>
         </main>
     </div>
-    <footer class="text-center py-8 px-4 border-t border-gray-200 mt-16">
-        <p class="text-sm text-gray-500">
-            개발 및 문의사항은 <a href="https://www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-700 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
+
+    <footer class="text-center py-8 px-4 border-t border-gray-800 mt-20">
+        <p class="text-sm text-gray-400">
+            © 2024 InsureLog. 
+            개발 및 문의사항은 <a href="https://www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-300 hover:text-white transition-colors underline">Threads</a>로 연락 주세요.
         </p>
     </footer>
         
@@ -127,12 +131,14 @@
         const SUPABASE_URL = 'https://ddehwkwzmmvcxltlplua.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
         const IMAGE_BUCKET_NAME = 'thought-images';
-        const POSTS_PER_PAGE = 5;
+        const POSTS_PER_PAGE = 6;
         const defaultMeta = {
             title: "InsureLog",
             description: "AI, 기술, 그리고 보험에 대한 깊이 있는 인사이트를 탐험하는 공간, InsureLog입니다.",
             image: 'https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp'
         };
+        const AD_CLIENT = "ca-pub-5239497835591112";
+        const AD_SLOT_ID = "2069100221";
         
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -140,454 +146,65 @@
         const state = { user: null, quill: null, isAuthReady: false };
         const $ = (selector) => document.querySelector(selector);
         
-        function updateMetaTags(post = null) {
-            const title = post ? post.title : defaultMeta.title;
-            const description = post ? (post.summary || defaultMeta.description) : defaultMeta.description;
-            const url = post ? `${SITE_URL}/post/${post.slug}` : SITE_URL;
-            let imageUrl = defaultMeta.image;
-            if (post && post.refined_content) {
-                const match = post.refined_content.match(/<img[^>]+src="([^">]+)"/);
-                if (match && match[1]) imageUrl = match[1];
-            }
-            document.title = title;
-            $('meta[name="description"]').setAttribute('content', description);
-            $('link[rel="canonical"]').setAttribute('href', url);
-            ['og:title', 'twitter:title'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content', title));
-            ['og:description', 'twitter:description'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content', description));
-            ['og:url', 'twitter:url'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content', url));
-            ['og:image', 'twitter:image'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content',imageUrl));
-            generateStructuredData(post ? 'Article' : 'WebSite', post);
-        }
-
-        function generateStructuredData(type, data = {}) {
-            let schema = {};
-            if (type === 'WebSite') {
-                schema = { "@context": "https://schema.org", "@type": "WebSite", "url": SITE_URL, "name": "InsureLog" };
-            } else if (type === 'Article' && data && data.refined_content) {
-                const imageUrl = (data.refined_content.match(/<img[^>]+src="([^">]+)"/) || [])[1] || defaultMeta.image;
-                schema = {
-                    "@context": "https://schema.org", "@type": "Article", "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/post/${data.slug}` },
-                    "headline": data.title, "description": data.summary, "image": imageUrl, "author": { "@type": "Person", "name": "InsureLog Admin" },
-                    "publisher": { "@type": "Organization", "name": "InsureLog", "logo": { "@type": "ImageObject", "url": defaultMeta.image } },
-                    "datePublished": new Date(data.created_at).toISOString(), "dateModified": new Date(data.updated_at || data.created_at).toISOString() 
-                };
-            }
-            let script = document.getElementById('json-ld-structured-data');
-            if (!script) {
-                script = document.createElement('script'); script.type = 'application/ld+json'; script.id = 'json-ld-structured-data';
-                $('#structured-data-container').appendChild(script);
-            }
-            script.textContent = JSON.stringify(schema);
-        }
-
-        const animations = {
-            pageEnter: (el) => anime({ targets: el, translateY: [20, 0], opacity: [0, 1], duration: 500, easing: 'easeOutCubic' }),
-            pageExit: (el) => anime({ targets: el, translateY: [0, -20], opacity: [1, 0], duration: 300, easing: 'easeInCubic' }).finished,
-        };
-        
-        function showToast(message, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = `py-2 px-4 rounded-lg shadow-lg text-sm font-medium border ${isError ? 'bg-red-50 border-red-300 text-red-800' : 'bg-green-50 border-green-300 text-green-800'}`;
-            toast.textContent = message;
-            $('#toast-container').appendChild(toast);
-            anime({ targets: toast, translateX: [20, 0], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' });
-            setTimeout(async () => {
-                await anime({ targets: toast, translateX: [0, 20], opacity: [1, 0], duration: 400, easing: 'easeInCubic' }).finished;
-                toast.remove();
-            }, 3000);
-        }
-
-        function renderModal({ title, content, confirmText, onConfirm, cancelText = '취소', onCancel = closeModal }) {
-            const modalId = `modal-${Date.now()}`;
-            const modalHtml = `<div id="${modalId}" class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div><div class="modal-content relative bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-lg p-6"><h3 class="text-lg font-bold font-heading mb-4">${title}</h3><div class="text-gray-500 mb-6 text-sm">${content}</div><div class="flex justify-end space-x-3"><button type="button" class="btn" id="modal-cancel-btn">${cancelText}</button>${confirmText ? `<button type="button" class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>` : ''}</div></div></div>`;
-            $('#modal-container').innerHTML = modalHtml;
-            const modalEl = $(`#${modalId}`);
-            if (onConfirm) $('#modal-confirm-btn').addEventListener('click', onConfirm);
-            $('#modal-cancel-btn').addEventListener('click', onCancel);
-            modalEl.querySelector('.modal-backdrop').addEventListener('click', onCancel);
-            anime({ targets: modalEl.querySelector('.modal-backdrop'), opacity: [0, 1], duration: 400, easing: 'easeOutCubic' });
-            anime({ targets: modalEl.querySelector('.modal-content'), translateY: [20, 0], scale: [0.98, 1], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' });
-        }
-        
-        async function closeModal() {
-            const modal = $('#modal-container').firstElementChild; if (!modal) return;
-            await Promise.all([
-                anime({ targets: modal.querySelector('.modal-backdrop'), opacity: 0, duration: 300, easing: 'easeInCubic' }).finished,
-                anime({ targets: modal.querySelector('.modal-content'), translateY: 20, scale: 0.98, opacity: 0, duration: 300, easing: 'easeInCubic' }).finished
-            ]);
-            $('#modal-container').innerHTML = '';
-        }
-
-        function showAuthModal() {
-            const content = `<form id="auth-form" novalidate class="space-y-4"><div><label for="email" class="block text-sm font-medium text-black mb-1">이메일</label><input type="email" id="email" class="form-input" required autocomplete="email"></div><div><label for="password" class="block text-sm font-medium text-black mb-1">비밀번호 (6자 이상)</label><input type="password" id="password" class="form-input" required autocomplete="current-password" minlength="6"></div><div id="auth-error" class="text-red-500 text-xs h-3"></div></form>`;
-            renderModal({ title: '시작하기', content, confirmText: '로그인', onConfirm: () => handleAuth('login') });
-            const signUpBtn = document.createElement('button');
-            signUpBtn.type = 'button'; signUpBtn.className = 'btn'; signUpBtn.textContent = '회원가입';
-            $('#modal-confirm-btn').insertAdjacentElement('beforebegin', signUpBtn);
-            signUpBtn.addEventListener('click', () => handleAuth('signup'));
-        }
-        
-        async function handleAuth(action) {
-            const email = $('#email').value, password = $('#password').value, errorDiv = $('#auth-error');
-            errorDiv.textContent = '';
-            const { error } = action === 'login' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password });
-            if (error) { errorDiv.textContent = "인증 오류: " + error.message; } 
-            else { showToast(action === 'signup' ? '가입 완료! 이메일을 확인하여 인증해주세요.' : '로그인되었습니다.'); closeModal(); }
-        }
-
-        async function handleLogout() {
-            await supabase.auth.signOut();
-            showToast('로그아웃되었습니다.');
-            navigateTo('/');
-        }
-        
-        function navigateTo(path) {
-            if (window.location.pathname !== path) {
-                history.pushState({ path }, '', path);
-            }
-            handleRouting();
-        }
-
-        async function switchView(viewId, callback) {
-            state.quill = null;
-            const currentView = $('.app-view.active');
-            if (currentView) {
-                await animations.pageExit(currentView);
-                currentView.classList.remove('active');
-                currentView.innerHTML = '';
-            }
-            const nextView = $(`#${viewId}`);
-            if (nextView) {
-                if (callback) await callback(nextView);
-                nextView.classList.add('active');
-                animations.pageEnter(nextView);
-                window.scrollTo(0, 0);
-            }
-        }
-        
-        function handleRouting() {
-            if (!state.isAuthReady) return;
-            const path = window.location.pathname;
-            window.dataLayer.push({ event: 'page_view', page_path: path, page_title: document.title });
-
-            const parts = path.substring(1).split('/');
-            let route = parts[0] || 'library';
-            let param = parts[1] || null;
-            let page = 1;
-
-            if (route === 'page') { page = parseInt(param, 10) || 1; route = 'library'; }
-            else if (route === 'dashboard' && parts[1] === 'page') { page = parseInt(parts[2], 10) || 1; }
-            
-            if (!state.user && ['dashboard', 'writer'].includes(route)) {
-                showToast('이 기능을 사용하려면 로그인이 필요합니다.', true);
-                navigateTo('/');
-                return;
-            }
-
-            switch (route) {
-                case 'post': switchView('view-post', el => renderPostView(el, param)); break;
-                case 'dashboard': switchView('view-dashboard', el => renderDashboardView(el, page)); break;
-                case 'writer': switchView('view-writer', el => renderWriterView(el, param)); break;
-                default: switchView('view-library', el => renderLibraryView(el, page));
-            }
-        }
-        
-        function renderNav() {
-            $('#main-nav-container').innerHTML = `
-                <nav class="w-full max-w-7xl flex items-center justify-between py-2 px-4 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl shadow-sm">
-                    <a href="/" data-route class="brand-logo">InsureLog</a>
-                    <div class="flex items-center space-x-2">
-                        ${state.user 
-                            ? `<a href="/dashboard" data-route class="btn !px-3 !py-1.5 !text-sm">대시보드</a>
-                               <button data-action="logout" class="btn !px-3 !py-1.5 !text-sm">로그아웃</button>` 
-                            : `<button data-action="auth" class="btn btn-primary !px-3 !py-1.5 !text-sm">로그인 / 가입</button>`
-                        }
-                    </div>
-                </nav>`;
-        }
-        
-        async function renderLibraryView(container, page = 1) {
-            updateMetaTags();
-            if (!sessionStorage.getItem('site_visited')) {
-                supabase.from('site_visits').insert({}).then();
-                sessionStorage.setItem('site_visited', 'true');
-            }
-
-            const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 };
-            const [{ count: totalVisits }, { data: posts, error, count: totalPosts }] = await Promise.all([
-                supabase.from('site_visits').select('*', { count: 'exact', head: true }),
-                supabase.from('posts').select('*', { count: 'exact' }).eq('status', 'published').order('created_at', { ascending: false }).range(from, to)
-            ]);
-            
-            if (error) { container.innerHTML = `<p class="text-center text-gray-500 py-20">글을 불러올 수 없습니다.</p>`; return; }
-            
-            const postsHtml = posts.length > 0 ? posts.map(post => `
-                <a href="/post/${post.slug}" data-route class="block p-5 bg-white border border-gray-200 hover:border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 group">
-                    <h2 class="text-lg sm:text-xl font-bold font-heading mb-2 text-gray-800 group-hover:text-black transition-colors">${post.title}</h2>
-                    <p class="text-gray-600 text-base mb-3">${post.summary || ''}</p>
-                    <div class="flex justify-between items-center text-sm text-gray-400 mt-4">
-                        <span>${new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
-                        <span>조회수 ${(post.view_count || 0).toLocaleString()}</span>
-                    </div>
-                </a>`).join('') : `<div class="text-center py-16 text-gray-500"><p class="mb-4">아직 작성된 글이 없습니다.</p>${state.user ? '<a href="/writer" data-route class="btn btn-primary">첫 글 작성하기</a>' : ''}</div>`;
-
-            container.innerHTML = `<div class="py-12"><h1 class="text-3xl sm:text-4xl font-extrabold text-center font-heading mb-3">Insurance Insights</h1><p class="text-center text-gray-500 text-base mb-4">AI, 기술, 그리고 보험에 대한 기록들</p><div class="text-center text-sm text-gray-400 mb-12">총 방문자: ${(totalVisits || 0).toLocaleString()}</div><div class="space-y-6">${postsHtml}</div>${renderPaginationControls(page, totalPosts, '/page/')}</div>`;
-        }
-        
-        async function renderPostView(container, slug) {
-            if (!slug) { navigateTo('/'); return; }
-            const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
-            if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; }
-
-            (async () => {
-                const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || [];
-                if (!viewedPosts.includes(post.id)) {
-                    await supabase.rpc('increment_post_view', { post_slug: slug });
-                    viewedPosts.push(post.id); sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts));
-                }
-            })();
-
-            if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) { showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true); navigateTo('/'); return; }
-            updateMetaTags(post);
-            
-            const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" class="btn" data-route>수정하기</a>` : '';
-            container.innerHTML = `<div class="py-12"><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 sm:p-8 md:p-12"><article class="prose-custom max-w-none"><div class="flex justify-between items-center mb-8"><div class="text-base text-gray-500">${new Date(post.created_at).toLocaleDateString('ko-KR')} · 조회수 ${(post.view_count || 0).toLocaleString()}</div>${editButtonHtml}</div><h1 class="!mt-0">${post.title}</h1><div id="post-content">${post.refined_content || ''}</div></article></div><div class="my-12 text-center"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div></div>`;
-            
-            lazyLoadImages();
-            if (window.PR) PR.prettyPrint();
-
-            setTimeout(() => { try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error("AdSense push error:", e); }}, 100);
-        }
-
-        async function renderDashboardView(container, page = 1) {
-            updateMetaTags();
-            const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 };
-            const { data, error, count } = await supabase.from('posts').select('*, view_count', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to);
-            if (error) { container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; }
-
-            const listHtml = data.length > 0 ? data.map(post => `
-                <li class="p-4 flex justify-between items-center hover:bg-gray-50 rounded-lg">
-                    <div><a href="/post/${post.slug}" data-route class="font-semibold text-gray-800 hover:text-black">${post.title}</a>${post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : ''}<p class="text-sm text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')} / 조회수 ${(post.view_count || 0).toLocaleString()}</p></div>
-                    <div class="space-x-2"><a href="/writer/${post.slug}" class="btn text-sm" data-route>수정</a><button class="btn text-sm !text-red-600 hover:!bg-red-50" data-action="delete" data-id="${post.id}">삭제</button></div>
-                </li>`).join('') : '<li class="p-8 text-center text-gray-500">작성된 글이 없습니다.</li>';
-
-            container.innerHTML = `<div class="py-12"><div class="flex justify-between items-center mb-6"><div><h1 class="text-2xl sm:text-3xl font-bold font-heading">내 글 관리</h1><p class="text-gray-500 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn btn-primary" data-route>새 글 작성</a></div><div class="bg-white border border-gray-200 rounded-xl shadow-sm"><ul class="divide-y divide-gray-200">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div>`;
-        }
-
-        async function renderWriterView(container, slug) {
-            updateMetaTags();
-            let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [] };
-            if (slug) {
-                const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
-                if (error || !data || data.author_id !== state.user.id) {
-                    showToast(error ? '글 정보를 가져오지 못했습니다.' : '자신이 작성한 글만 수정할 수 있습니다.', true);
-                    navigateTo('/dashboard');
-                    return;
-                }
-                post = data;
-            }
-
-            container.innerHTML = `<div class="py-8">
-                <div class="mb-6"><button class="btn" data-action="back">← 대시보드로 돌아가기</button></div>
-                <h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1>
-                <form id="writer-form" class="space-y-6">
-                    <input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}">
-                    <div><label for="title" class="block text-sm font-medium text-gray-700 mb-2">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div>
-                    <div><label for="summary" class="block text-sm font-medium text-gray-700 mb-2">요약 (메타 설명)</label><textarea id="summary" class="form-textarea" rows="3" required>${post.summary}</textarea></div>
-                    <div><label for="tags" class="block text-sm font-medium text-gray-700 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-2">본문</label><div id="editor-container"><div id="editor"></div></div></div>
-                    <div class="flex justify-end items-center space-x-3 pt-4"><button type="button" data-action="save-draft" class="btn">초안으로 저장</button><button type="button" data-action="publish" class="btn btn-primary">발행하기</button></div>
-                </form>
-            </div>`;
-            initQuillEditor(post.refined_content || '');
-        }
-        
-        function renderPaginationControls(currentPage, totalItems, baseLink) {
-            const totalPages = Math.ceil(totalItems / POSTS_PER_PAGE);
-            if (totalPages <= 1) return '';
-            return `<div class="flex justify-center items-center gap-3 mt-12 pagination-controls">
-                <a href="${baseLink}${currentPage - 1}" data-route class="btn !py-1.5 !px-3 !text-sm ${currentPage === 1 ? 'disabled' : ''}">이전</a>
-                <span class="text-sm font-medium text-gray-600">${currentPage} / ${totalPages} 페이지</span>
-                <a href="${baseLink}${currentPage + 1}" data-route class="btn !py-1.5 !px-3 !text-sm ${currentPage === totalPages ? 'disabled' : ''}">다음</a>
-            </div>`;
-        }
-
-        /* * quillAdHandler function removed as requested by the user 
-         * to delete automatic/AI-related features and focus on manual writing. 
-         */
-        
-        function initQuillEditor(initialContent) {
-            const editorElement = document.querySelector('#editor'); if (!editorElement) return;
-            
-            // Cleaned-up toolbar options focused on manual structure and formatting
-            const toolbarOptions = [
-                [{ 'header': [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                ['blockquote', 'code-block'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                [{ 'indent': '-1'}, { 'indent': '+1' }],
-                ['link', 'image'], // 'ad' button removed
-                ['clean']
-            ];
-            
-            state.quill = new Quill('#editor', { 
-                modules: { 
-                    toolbar: { 
-                        container: toolbarOptions, 
-                        handlers: { 
-                            'image': quillImageHandler,
-                            // 'ad': quillAdHandler handler removed
-                        }
-                    }
-                }, 
-                placeholder: '여기에 글을 작성하세요... (팁: 목록이나 표를 사용할 때는 붙여넣기 대신 에디터의 버튼을 사용하면 포맷이 유지됩니다.)', 
-                theme: 'snow' 
-            });
-            if (initialContent) { state.quill.clipboard.dangerouslyPasteHTML(0, initialContent); }
-        }
-
-        function quillImageHandler() {
-            if (!state.user) { showToast('이미지를 업로드하려면 로그인이 필요합니다.', true); return; }
-            const input = document.createElement('input');
-            input.setAttribute('type', 'file');
-            input.setAttribute('accept', 'image/*');
-            input.click();
-            input.onchange = async () => {
-                const file = input.files[0]; if (!file) return;
-                const writerForm = $('#writer-form');
-                const buttons = writerForm.querySelectorAll('button');
-                buttons.forEach(b => b.disabled = true);
-                
-                showToast('이미지 업로드 및 변환 중...');
-                try {
-                    const webpBlob = await convertToWebP(file);
-                    const imageUrl = await uploadImageFile(webpBlob);
-                    const range = state.quill.getSelection(true);
-                    state.quill.insertEmbed(range.index, 'image', imageUrl, 'user');
-                    state.quill.setSelection(range.index + 1, 'silent');
-                    showToast('이미지 업로드 완료!');
-                } catch (error) { showToast(`이미지 업로드 실패: ${error.message}`, true); }
-                finally { buttons.forEach(b => b.disabled = false); }
-            };
-        }
-
-        async function uploadImageFile(imageFile) {
-            if (!imageFile) throw new Error("이미지 파일이 없습니다.");
-            const fileName = `${state.user.id}/${Date.now()}.webp`;
-            const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, imageFile, { contentType: 'image/webp' });
-            if (error) { throw new Error(`이미지 업로드 실패: ${error.message}`); }
-            const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName);
-            return data.publicUrl;
-        }
-
-        function convertToWebP(file, maxWidth = 1200, quality = 0.8) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = e => {
-                    const img = new Image(); img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-                        let { width, height } = img;
-                        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
-                        canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas to Blob failed.')), 'image/webp', quality);
-                    };
-                    img.onerror = reject;
-                };
-                reader.onerror = reject;
-            });
-        }
-        
-        function lazyLoadImages() {
-            const images = document.querySelectorAll('#post-content img');
-            const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; 
-            const observer = new IntersectionObserver((entries, obs) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        img.src = img.dataset.src;
-                        img.onload = () => { img.style.opacity = '1'; img.classList.remove('lazy'); };
-                        obs.unobserve(img);
-                    }
-                });
-            }, { rootMargin: '0px 0px 200px 0px' });
-            images.forEach(image => {
-                if (image.src && !image.dataset.src) {
-                    image.dataset.src = image.src;
-                    image.src = placeholderSrc;
-                    image.style.transition = 'opacity 0.3s';
-                    image.style.opacity = '0';
-                    image.classList.add('lazy');
-                }
-                observer.observe(image);
-            });
-        }
-        
-        async function handlePostSave(status, button) {
-            const title = $('#title').value.trim(), summary = $('#summary').value.trim();
-            if (!title || !summary) { showToast('제목과 요약은 필수 항목입니다.', true); return; }
-
-            const originalBtnText = button.textContent;
-            button.disabled = true; button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`;
-
-            try {
-                const id = $('#post-id').value;
-                let slug = $('#post-slug').value || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
-                if (!id) {
-                    const { data } = await supabase.from('posts').select('id').eq('slug', slug).maybeSingle();
-                    if (data) slug = `${slug}-${Date.now().toString().slice(-4)}`;
-                }
-                const postData = { title, summary, slug, status, author_id: state.user.id, refined_content: state.quill.root.innerHTML, tags: $('#tags').value.split(',').map(t => t.trim()).filter(Boolean) };
-                
-                const { data, error } = id ? await supabase.from('posts').update(postData).eq('id', id).select().single() : await supabase.from('posts').insert(postData).select().single();
-                if (error) throw error;
-                
-                showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
-                navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard');
-            } catch (error) { showToast(`저장 실패: ${error.message}`, true);
-            } finally { button.disabled = false; button.textContent = originalBtnText; }
-        }
-        
-        async function deletePostAndAssociatedImages(postId) { 
-            const { data: post } = await supabase.from('posts').select('refined_content').eq('id', postId).single(); 
-            if (post?.refined_content) {
-                const imageUrls = post.refined_content.match(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g) || []; 
-                const imagePaths = imageUrls.map(url => url.split('/thought-images/')[1]).filter(Boolean); 
-                if (imagePaths.length > 0) await supabase.storage.from(IMAGE_BUCKET_NAME).remove(imagePaths);
-            }
-            await supabase.from('posts').delete().eq('id', postId); 
-        }
+        function navigateTo(path) { if (window.location.pathname !== path) history.pushState({ path }, '', path); handleRouting(); }
+        async function switchView(viewId, callback) { state.quill = null; const currentView = $('.app-view.active'); if (currentView) { await anime({ targets: currentView, translateY: [0, -10], opacity: [1, 0], duration: 300, easing: 'easeInCubic' }).finished; currentView.classList.remove('active'); currentView.innerHTML = ''; } const nextView = $(`#${viewId}`); if (nextView) { if (callback) await callback(nextView); nextView.classList.add('active'); anime({ targets: nextView, translateY: [10, 0], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); window.scrollTo(0, 0); } }
+        function handleRouting() { if (!state.isAuthReady) return; const path = window.location.pathname; window.dataLayer.push({ event: 'page_view', page_path: path, page_title: document.title }); const parts = path.substring(1).split('/'); let route = parts[0] || 'library'; let param = parts[1] || null; let page = 1; if (route === 'page') { page = parseInt(param, 10) || 1; route = 'library'; } else if (route === 'dashboard' && parts[1] === 'page') { page = parseInt(parts[2], 10) || 1; } if (!state.user && ['dashboard', 'writer'].includes(route)) { showToast('이 기능을 사용하려면 로그인이 필요합니다.', true); navigateTo('/'); return; } switch (route) { case 'post': switchView('view-post', el => renderPostView(el, param)); break; case 'dashboard': switchView('view-dashboard', el => renderDashboardView(el, page)); break; case 'writer': switchView('view-writer', el => renderWriterView(el, param)); break; default: switchView('view-library', el => renderLibraryView(el, page)); } }
+        function renderNav() { $('#main-nav-container').innerHTML = `<nav class="w-full max-w-7xl flex items-center justify-between py-2 px-4 bg-gray-800/70 backdrop-blur-lg border border-gray-700 rounded-xl shadow-sm"><a href="/" data-route class="brand-logo">InsureLog</a><div class="flex items-center space-x-3">${state.user ? `<a href="/dashboard" data-route class="btn !px-3 !py-1.5 !text-sm">대시보드</a><button data-action="logout" class="btn !px-3 !py-1.5 !text-sm">로그아웃</button>` : `<button data-action="auth" class="btn btn-primary !px-3 !py-1.5 !text-sm">로그인 / 가입</button>`}</div></nav>`; }
+        async function renderLibraryView(container, page = 1) { updateMetaTags(); if (!sessionStorage.getItem('site_visited')) { supabase.from('site_visits').insert({}).then(); sessionStorage.setItem('site_visited', 'true'); } const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 }; const [{ count: totalVisits }, { data: posts, error, count: totalPosts }] = await Promise.all([supabase.from('site_visits').select('*', { count: 'exact', head: true }), supabase.from('posts').select('*', { count: 'exact' }).eq('status', 'published').order('created_at', { ascending: false }).range(from, to)]); if (error) { container.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러올 수 없습니다.</p>`; return; } const postsHtml = posts.length > 0 ? posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-6 bg-gray-800 border border-gray-700 hover:border-blue-600 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group transform hover:-translate-y-1"><h2 class="text-lg sm:text-xl font-bold font-heading mb-2 text-gray-100 group-hover:text-white transition-colors">${post.title}</h2><p class="text-gray-400 text-base mb-4 line-clamp-2">${post.summary || ''}</p><div class="flex justify-between items-center text-sm text-gray-500 mt-5"><span>${new Date(post.created_at).toLocaleDateString('ko-KR')}</span><span>조회수 ${(post.view_count || 0).toLocaleString()}</span></div></a>`).join('') : `<div class="text-center py-20 text-gray-400 col-span-full"><p class="mb-6">아직 작성된 글이 없습니다.</p>${state.user ? '<a href="/writer" data-route class="btn btn-primary">첫 글 작성하기</a>' : ''}</div>`; container.innerHTML = `<div class="py-12"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="text-center mb-12"><h1 class="text-4xl sm:text-5xl font-extrabold font-heading mb-3 tracking-tight text-white">InsureLog</h1><p class="text-gray-400 text-lg mb-4">AI, 기술, 그리고 보험에 대한 기록들</p><div class="text-sm text-gray-500">총 방문자: ${(totalVisits || 0).toLocaleString()}</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6">${postsHtml}</div>${renderPaginationControls(page, totalPosts, '/page/')}</div><aside class="lg:col-span-1 lg:block mt-12 lg:mt-0" id="sidebar-container"></aside></div></div>`; renderSidebar($('#sidebar-container')); }
+        async function renderPostView(container, slug) { if (!slug) { navigateTo('/'); return; } const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } (async () => { const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; if (!viewedPosts.includes(post.id)) { await supabase.rpc('increment_post_view', { post_slug: slug }); viewedPosts.push(post.id); sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts)); } })(); if (post.status === 'draft' && (!state.user || post.author_id !== state.user.id)) { showToast('초안 상태의 글은 작성자만 볼 수 있습니다.', true); navigateTo('/'); return; } updateMetaTags(post); const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" class="btn" data-route>수정하기</a>` : ''; container.innerHTML = `<div class="py-12"><div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8"><div class="lg:col-span-2"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-6 sm:p-8 md:p-12"><article class="prose-custom max-w-none"><div class="flex justify-between items-center mb-8"><div class="text-base text-gray-400">${new Date(post.created_at).toLocaleDateString('ko-KR')} · 조회수 ${(post.view_count || 0).toLocaleString()}</div>${editButtonHtml}</div><h1 class="!mt-0">${post.title}</h1><div id="in-article-ad-container" class="my-6"></div><div id="post-content">${post.refined_content || ''}</div></article></div><div id="bottom-ad-container" class="my-12"></div></div><aside class="lg:col-span-1 lg:block" id="sidebar-container"></aside></div></div>`; renderSidebar($('#sidebar-container')); lazyLoadImages(); if (window.PR) PR.prettyPrint(); renderAdSlot($('#in-article-ad-container'), { layout: 'in-article', format: 'fluid', textAlign: 'center' }); renderAdSlot($('#bottom-ad-container'), { format: 'auto', fullWidthResponsive: true }); }
+        async function renderDashboardView(container, page = 1) { updateMetaTags(); const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 }; const { data, error, count } = await supabase.from('posts').select('*, view_count', { count: 'exact' }).eq('author_id', state.user.id).order('created_at', { ascending: false }).range(from, to); if (error) { container.innerHTML = `<p>내가 작성한 글을 불러올 수 없습니다.</p>`; return; } const listHtml = data.length > 0 ? data.map(post => `<li class="p-4 flex flex-col sm:flex-row justify-between sm:items-center hover:bg-gray-800/50 rounded-lg transition-colors"><div class="mb-3 sm:mb-0"><a href="/post/${post.slug}" data-route class="font-semibold text-gray-200 hover:text-white">${post.title}</a>${post.status === 'draft' ? '<span class="ml-2 text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">초안</span>' : '<span class="ml-2 text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">발행됨</span>'}<p class="text-sm text-gray-400 mt-1">${new Date(post.created_at).toLocaleString('ko-KR')} / 조회수 ${(post.view_count || 0).toLocaleString()}</p></div><div class="flex-shrink-0 space-x-2"><a href="/writer/${post.slug}" class="btn text-sm" data-route>수정</a><button class="btn btn-danger text-sm" data-action="delete" data-id="${post.id}">삭제</button></div></li>`).join('') : '<li class="p-8 text-center text-gray-400">작성된 글이 없습니다.</li>'; container.innerHTML = `<div class="py-12"><div class="flex flex-col sm:flex-row justify-between sm:items-center mb-8"><div><h1 class="text-2xl sm:text-3xl font-bold font-heading">내 글 관리</h1><p class="text-gray-400 mt-2">작성한 글을 수정하거나 삭제할 수 있습니다.</p></div><a href="/writer" class="btn btn-primary mt-4 sm:mt-0" data-route>새 글 작성</a></div><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm"><ul class="divide-y divide-gray-700">${listHtml}</ul></div>${renderPaginationControls(page, count, '/dashboard/page/')}</div>`; }
+        async function renderWriterView(container, slug) { updateMetaTags(); let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [] }; if (slug) { const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !data || data.author_id !== state.user.id) { showToast(error ? '글 정보를 가져오지 못했습니다.' : '자신이 작성한 글만 수정할 수 있습니다.', true); navigateTo('/dashboard'); return; } post = data; } container.innerHTML = `<div class="py-8"><div class="mb-6"><button class="btn" data-action="back">← 대시보드로 돌아가기</button></div><h1 class="text-2xl sm:text-3xl font-bold font-heading mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-6"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><div><label for="title" class="block text-sm font-medium text-gray-300 mb-2">제목</label><input type="text" id="title" class="form-input" required value="${post.title}"></div><div><label for="summary" class="block text-sm font-medium text-gray-300 mb-2">요약 (비워두면 첫 문단에서 자동 생성)</label><textarea id="summary" class="form-textarea" rows="3">${post.summary}</textarea></div><div><label for="tags" class="block text-sm font-medium text-gray-300 mb-2">태그 (쉼표로 구분)</label><input type="text" id="tags" class="form-input" value="${(post.tags || []).join(', ')}"></div><div><label class="block text-sm font-medium text-gray-300 mb-2">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-end items-center space-x-3 pt-4"><button type="button" data-action="save-draft" class="btn">초안으로 저장</button><button type="button" data-action="publish" class="btn btn-primary">발행하기</button></div></form></div>`; initQuillEditor(post.refined_content || ''); }
+        async function renderSidebar(container) { if (!container) return; const { data: posts, error } = await supabase.from('posts').select('title, slug').eq('status', 'published').order('created_at', { ascending: false }).limit(5); let recentPostsHtml = ''; if (posts && posts.length > 0) { recentPostsHtml = posts.map(post => `<li><a href="/post/${post.slug}" data-route class="block py-2.5 text-sm text-gray-400 hover:text-white transition-colors font-medium">${post.title}</a></li>`).join(''); } container.innerHTML = `<div class="lg:sticky lg:top-24 space-y-8"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5"><h3 class="font-bold font-heading mb-3 text-white">최신 글</h3><ul class="divide-y divide-gray-700">${recentPostsHtml || '<li class="text-sm text-gray-500 py-2">최신 글이 없습니다.</li>'}</ul></div><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5"><span class="text-xs text-gray-500">Advertisement</span><div id="sidebar-ad-container" class="mt-2 min-h-[250px] flex items-center justify-center"></div></div></div>`; renderAdSlot($('#sidebar-ad-container'), { format: 'auto', fullWidthResponsive: true }); }
+        function renderAdSlot(container, options = {}) { if (!container) return; container.innerHTML = ''; const ins = document.createElement('ins'); ins.className = 'adsbygoogle'; ins.style.display = 'block'; ins.dataset.adClient = AD_CLIENT; ins.dataset.adSlot = AD_SLOT_ID; if (options.layout) ins.dataset.adLayout = options.layout; if (options.format) ins.dataset.adFormat = options.format; if (options.fullWidthResponsive) ins.dataset.fullWidthResponsive = 'true'; if (options.textAlign) ins.style.textAlign = options.textAlign; container.appendChild(ins); try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error(`AdSense push error for slot ${AD_SLOT_ID}:`, e); } }
+        function initQuillEditor(initialContent) { const editorElement = document.querySelector('#editor'); if (!editorElement) return; const toolbarOptions = [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], ['blockquote', 'code-block'], [{ 'list': 'ordered' }, { 'list': 'bullet' }], [{ 'indent': '-1' }, { 'indent': '+1' }], ['link', 'image'], ['clean']]; state.quill = new Quill('#editor', { modules: { toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler } }, clipboard: { matchers: [['li', (node, delta) => { const listType = node.parentNode.tagName === 'OL' ? 'ordered' : 'bullet'; return delta.compose(new Quill.import('delta')().retain(delta.length(), { list: listType })); }]] } }, placeholder: '여기에 글을 작성하세요...', theme: 'snow' }); if (initialContent) state.quill.clipboard.dangerouslyPasteHTML(0, initialContent); }
+        function quillImageHandler() { if (!state.user) { showToast('이미지를 업로드하려면 로그인이 필요합니다.', true); return; } const input = document.createElement('input'); input.setAttribute('type', 'file'); input.setAttribute('accept', 'image/*'); input.click(); input.onchange = async () => { const file = input.files[0]; if (!file) return; const buttons = $('#writer-form').querySelectorAll('button'); buttons.forEach(b => b.disabled = true); showToast('이미지 업로드 및 변환 중...'); try { const webpBlob = await convertToWebP(file); const imageUrl = await uploadImageFile(webpBlob); const range = state.quill.getSelection(true); state.quill.insertEmbed(range.index, 'image', imageUrl, 'user'); state.quill.setSelection(range.index + 1, 'silent'); showToast('이미지 업로드 완료!'); } catch (error) { showToast(`이미지 업로드 실패: ${error.message}`, true); } finally { buttons.forEach(b => b.disabled = false); } }; }
+        function updateMetaTags(post = null) { const title = post ? `${post.title} | InsureLog` : defaultMeta.title; const description = post ? (post.summary || defaultMeta.description) : defaultMeta.description; const url = post ? `${SITE_URL}/post/${post.slug}` : SITE_URL; let imageUrl = defaultMeta.image; if (post && post.refined_content) { const match = post.refined_content.match(/<img[^>]+src="([^">]+)"/); if (match && match[1]) imageUrl = match[1]; } document.title = title; $('meta[name="description"]').setAttribute('content', description); $('link[rel="canonical"]').setAttribute('href', url); ['og:title', 'twitter:title'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content', title)); ['og:description', 'twitter:description'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content', description)); ['og:url', 'twitter:url'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content', url)); ['og:image', 'twitter:image'].forEach(p => $(`meta[property="${p}"]`).setAttribute('content',imageUrl)); generateStructuredData(post ? 'Article' : 'WebSite', post); }
+        function generateStructuredData(type, data = {}) { let schema = {}; if (type === 'WebSite') { schema = { "@context": "https://schema.org", "@type": "WebSite", "url": SITE_URL, "name": "InsureLog" }; } else if (type === 'Article' && data && data.refined_content) { const imageUrl = (data.refined_content.match(/<img[^>]+src="([^">]+)"/) || [])[1] || defaultMeta.image; schema = { "@context": "https://schema.org", "@type": "Article", "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/post/${data.slug}` }, "headline": data.title, "description": data.summary, "image": imageUrl, "author": { "@type": "Person", "name": "InsureLog Admin" }, "publisher": { "@type": "Organization", "name": "InsureLog", "logo": { "@type": "ImageObject", "url": defaultMeta.image } }, "datePublished": new Date(data.created_at).toISOString(), "dateModified": new Date(data.updated_at || data.created_at).toISOString() }; } let script = document.getElementById('json-ld-structured-data'); if (!script) { script = document.createElement('script'); script.type = 'application/ld+json'; script.id = 'json-ld-structured-data'; $('#structured-data-container').appendChild(script); } script.textContent = JSON.stringify(schema); }
+        function showToast(message, isError = false) { const toast = document.createElement('div'); toast.className = `py-2 px-4 rounded-lg shadow-lg text-sm font-medium border ${isError ? 'bg-red-50 border-red-300 text-red-800' : 'bg-green-50 border-green-300 text-green-800'}`; toast.textContent = message; $('#toast-container').appendChild(toast); anime({ targets: toast, translateX: [20, 0], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); setTimeout(async () => { await anime({ targets: toast, translateX: [0, 20], opacity: [1, 0], duration: 400, easing: 'easeInCubic' }).finished; toast.remove(); }, 3000); }
+        function renderModal({ title, content, confirmText, onConfirm, cancelText = '취소', onCancel = closeModal }) { const modalId = `modal-${Date.now()}`; const modalHtml = `<div id="${modalId}" class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div><div class="modal-content relative bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-lg p-6"><h3 class="text-lg font-bold font-heading mb-4 text-gray-900">${title}</h3><div class="text-gray-600 mb-6 text-sm">${content}</div><div class="flex justify-end space-x-3"><button type="button" class="btn" id="modal-cancel-btn">${cancelText}</button>${confirmText ? `<button type="button" class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>` : ''}</div></div></div>`; $('#modal-container').innerHTML = modalHtml; const modalEl = $(`#${modalId}`); if (onConfirm) $('#modal-confirm-btn').addEventListener('click', onConfirm); $('#modal-cancel-btn').addEventListener('click', onCancel); modalEl.querySelector('.modal-backdrop').addEventListener('click', onCancel); anime({ targets: modalEl.querySelector('.modal-backdrop'), opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); anime({ targets: modalEl.querySelector('.modal-content'), translateY: [20, 0], scale: [0.98, 1], opacity: [0, 1], duration: 400, easing: 'easeOutCubic' }); }
+        async function closeModal() { const modal = $('#modal-container').firstElementChild; if (!modal) return; await Promise.all([anime({ targets: modal.querySelector('.modal-backdrop'), opacity: 0, duration: 300, easing: 'easeInCubic' }).finished, anime({ targets: modal.querySelector('.modal-content'), translateY: 20, scale: 0.98, opacity: 0, duration: 300, easing: 'easeInCubic' }).finished]); $('#modal-container').innerHTML = ''; }
+        function renderPaginationControls(currentPage, totalItems, baseLink) { const totalPages = Math.ceil(totalItems / POSTS_PER_PAGE); if (totalPages <= 1) return ''; return `<div class="flex justify-center items-center gap-3 mt-12 pagination-controls"><a href="${baseLink}${currentPage - 1}" data-route class="btn !py-1.5 !px-3 !text-sm ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}">이전</a><span class="text-sm font-medium text-gray-400">${currentPage} / ${totalPages} 페이지</span><a href="${baseLink}${currentPage + 1}" data-route class="btn !py-1.5 !px-3 !text-sm ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}">다음</a></div>`; }
+        function lazyLoadImages() { const images = document.querySelectorAll('#post-content img'); const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; const observer = new IntersectionObserver((entries, obs) => { entries.forEach(entry => { if (entry.isIntersecting) { const img = entry.target; img.src = img.dataset.src; img.onload = () => { img.style.opacity = '1'; img.classList.remove('lazy'); }; obs.unobserve(img); } }); }, { rootMargin: '0px 0px 200px 0px' }); images.forEach(image => { if (image.src && !image.dataset.src) { image.dataset.src = image.src; image.src = placeholderSrc; image.style.transition = 'opacity 0.3s'; image.style.opacity = '0'; image.classList.add('lazy'); } observer.observe(image); }); }
+        function showAuthModal() { const content = `<form id="auth-form" novalidate class="space-y-4"><div><label for="email" class="block text-sm font-medium text-gray-800 mb-1">이메일</label><input type="email" id="email" class="form-input !bg-white !text-black" required autocomplete="email"></div><div><label for="password" class="block text-sm font-medium text-gray-800 mb-1">비밀번호 (6자 이상)</label><input type="password" id="password" class="form-input !bg-white !text-black" required autocomplete="current-password" minlength="6"></div><div id="auth-error" class="text-red-500 text-xs h-3"></div></form>`; renderModal({ title: '시작하기', content, confirmText: '로그인', onConfirm: () => handleAuth('login') }); const signUpBtn = document.createElement('button'); signUpBtn.type = 'button'; signUpBtn.className = 'btn'; signUpBtn.textContent = '회원가입'; $('#modal-confirm-btn').insertAdjacentElement('beforebegin', signUpBtn); signUpBtn.addEventListener('click', () => handleAuth('signup')); }
+        async function handleAuth(action) { const email = $('#email').value, password = $('#password').value, errorDiv = $('#auth-error'); errorDiv.textContent = ''; const { error } = action === 'login' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password }); if (error) { errorDiv.textContent = "인증 오류: " + error.message; } else { showToast(action === 'signup' ? '가입 완료! 이메일을 확인하여 인증해주세요.' : '로그인되었습니다.'); closeModal(); } }
+        async function handleLogout() { await supabase.auth.signOut(); showToast('로그아웃되었습니다.'); navigateTo('/'); }
+        async function handlePostSave(status, button) { let title = $('#title').value.trim(); let summary = $('#summary').value.trim(); if (!title) { showToast('제목은 필수 항목입니다.', true); return; } if (!summary && state.quill) { const text = state.quill.getText(0, 500).trim(); if (text) { const firstParagraph = text.split('\n')[0]; summary = firstParagraph.substring(0, 155); if (firstParagraph.length > 155) summary += '...'; } } if (!summary) { showToast('요약은 필수 항목입니다. 본문을 작성하시면 자동으로 생성됩니다.', true); return; } const originalBtnText = button.textContent; button.disabled = true; button.innerHTML = `<div class="loader-spinner" style="width: 1.25rem; height: 1.25rem; border-width: 2px;"></div>`; try { const id = $('#post-id').value; let slug = $('#post-slug').value || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, ''); if (!id) { const { data } = await supabase.from('posts').select('id').eq('slug', slug).maybeSingle(); if (data) slug = `${slug}-${Date.now().toString().slice(-4)}`; } const postData = { title, summary, slug, status, author_id: state.user.id, refined_content: state.quill.root.innerHTML, tags: $('#tags').value.split(',').map(t => t.trim()).filter(Boolean) }; const { data, error } = id ? await supabase.from('posts').update(postData).eq('id', id).select().single() : await supabase.from('posts').insert(postData).select().single(); if (error) throw error; showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.'); navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard'); } catch (error) { showToast(`저장 실패: ${error.message}`, true); } finally { button.disabled = false; button.textContent = originalBtnText; } }
+        async function deletePostAndAssociatedImages(postId) { const { data: post } = await supabase.from('posts').select('refined_content').eq('id', postId).single(); if (post?.refined_content) { const imageUrls = post.refined_content.match(/https:\/\/[^"]+\/storage\/v1\/object\/public\/thought-images\/[^"]+/g) || []; const imagePaths = imageUrls.map(url => url.split('/thought-images/')[1]).filter(Boolean); if (imagePaths.length > 0) await supabase.storage.from(IMAGE_BUCKET_NAME).remove(imagePaths); } await supabase.from('posts').delete().eq('id', postId); }
+        async function uploadImageFile(imageFile) { if (!imageFile) throw new Error("이미지 파일이 없습니다."); const fileName = `${state.user.id}/${Date.now()}.webp`; const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, imageFile, { contentType: 'image/webp' }); if (error) { throw new Error(`이미지 업로드 실패: ${error.message}`); } const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName); return data.publicUrl; }
+        function convertToWebP(file, maxWidth = 1200, quality = 0.8) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = e => { const img = new Image(); img.src = e.target.result; img.onload = () => { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); let { width, height } = img; if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; } canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height); canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas to Blob failed.')), 'image/webp', quality); }; img.onerror = reject; }; reader.onerror = reject; }); }
 
         function initializeApp() {
+            const authTimeout = setTimeout(() => {
+                if (!state.isAuthReady) {
+                    console.error("Auth check timed out. Supabase might be unreachable or misconfigured.");
+                    const loader = $('#app-loader');
+                    if (loader) {
+                         loader.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">블로그를 불러오는 데 실패했습니다.<br>잠시 후 다시 시도해 주세요.</p>';
+                    }
+                }
+            }, 8000);
+
             document.addEventListener('click', (e) => {
                 const routeTarget = e.target.closest('[data-route]');
                 if (routeTarget) {
                     e.preventDefault();
-                    navigateTo(routeTarget.getAttribute('href'));
+                    const path = routeTarget.getAttribute('href');
+                    if (window.location.pathname === path) return;
+                    // Minor delay to allow visual feedback on click
+                    setTimeout(() => requestAnimationFrame(() => navigateTo(path)), 150); 
                     return;
                 }
                 const actionTarget = e.target.closest('[data-action]');
                 if (actionTarget) {
                     const action = actionTarget.dataset.action;
-                    switch(action) {
+                    switch (action) {
                         case 'auth': showAuthModal(); break;
                         case 'logout': handleLogout(); break;
                         case 'back': navigateTo('/dashboard'); break;
                         case 'save-draft': handlePostSave('draft', actionTarget); break;
                         case 'publish': handlePostSave('published', actionTarget); break;
                         case 'delete':
-                            renderModal({ title: '정말 삭제하시겠습니까?', content: '이 작업은 되돌릴 수 없습니다. 글에 포함된 이미지도 함께 삭제됩니다.', confirmText: '삭제', onConfirm: async () => {
-                                const btn = $('#modal-confirm-btn');
-                                btn.disabled = true;
-                                btn.textContent = '삭제 중...';
-                                try { 
-                                    await deletePostAndAssociatedImages(actionTarget.dataset.id); 
-                                    showToast('글이 삭제되었습니다.'); 
-                                    handleRouting(); 
-                                } 
-                                catch (error) { showToast(`삭제 중 오류 발생: ${error.message}`, true); } 
-                                finally { closeModal(); }
-                            }});
+                            renderModal({ title: '정말 삭제하시겠습니까?', content: '이 작업은 되돌릴 수 없습니다. 글에 포함된 이미지도 함께 삭제됩니다.', confirmText: '삭제', onConfirm: async () => { const btn = $('#modal-confirm-btn'); btn.disabled = true; btn.textContent = '삭제 중...'; try { await deletePostAndAssociatedImages(actionTarget.dataset.id); showToast('글이 삭제되었습니다.'); handleRouting(); } catch (error) { showToast(`삭제 중 오류 발생: ${error.message}`, true); } finally { closeModal(); } } });
                             break;
                     }
                 }
@@ -596,12 +213,15 @@
             window.addEventListener('popstate', handleRouting);
             
             supabase.auth.onAuthStateChange((_event, session) => {
+                clearTimeout(authTimeout); 
+                console.log("Supabase auth state received.", session);
+
                 const userChanged = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
                 
                 if (!state.isAuthReady) {
                     state.isAuthReady = true;
-                    renderNav();
+                    renderNav(); 
                     handleRouting();
                     const loader = $('#app-loader');
                     anime({ targets: loader, opacity: 0, duration: 500, easing: 'easeOutCubic', complete: () => loader.remove() });
