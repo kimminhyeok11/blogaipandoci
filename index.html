@@ -30,7 +30,8 @@
             --bg-editor-toolbar: #2c3a4f; --bg-editor-main: #243041;
             --border-color: #374151; --text-primary: #F9FAFB; --text-secondary: #D1D5DB;
             --text-tertiary: #9CA3AF; --accent: #3B82F6; --accent-hover: #2563EB;
-            --warning: #F59E0B; --warning-hover: #D97706; --orange: #F97316;
+            --warning: #FBBF24; /* 노란색 계열로 변경 */ --warning-hover: #F59E0B;
+            --orange: #F97316;
             --font-heading: 'Noto Sans KR', sans-serif; --font-body: 'Noto Sans KR', sans-serif;
         }
         html, body { height: 100%; }
@@ -43,14 +44,14 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        /* Consistent spacing for main content container */
         main#app-container {
             flex-grow: 1; 
         }
         .app-view { display: none; opacity: 0; }
         .app-view.active { display: block; }
 
-        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--orange); }
+        /* H태그 색상을 눈이 편안한 기본 텍스트 색상으로 변경 */
+        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); }
         .prose-custom h1 { font-size: 1.5rem !important; }
         #editor-container .ql-editor { color: var(--text-primary); min-height: 300px; }
         .swiper-container { cursor: grab; }
@@ -111,7 +112,7 @@
 
         // --- 핵심 앱 로직 ---
         function navigateTo(path, replace = false) { const historyAction = replace ? 'replaceState' : 'pushState'; if (window.location.pathname !== path) history[historyAction]({ path }, '', path); handleRouting(); }
-        async function switchView(viewId, callback) { if(state.quill) state.quill = null; const currentView = $('.app-view.active'); if (currentView) { await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished; currentView.classList.remove('active'); currentView.innerHTML = ''; } const nextView = $(`#${viewId}`); if (nextView) { if (callback) await callback(nextView); nextView.classList.add('active'); anime({ targets: nextView, opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' }); window.scrollTo(0, 0); } }
+        async function switchView(viewId, callback) { if(state.quill) state.quill = null; const currentView = $('.app-view.active'); if (currentView) { await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished; currentView.classList.remove('active'); currentView.innerHTML = ''; } const nextView = $(`#${viewId}`); if (nextView) { nextView.innerHTML = ''; if (callback) await callback(nextView); nextView.classList.add('active'); anime({ targets: nextView, opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' }); window.scrollTo(0, 0); } }
         
         function handleRouting() {
             if (!state.isAuthReady) return;
@@ -144,8 +145,8 @@
                 `<button data-action="filter-category" data-category="${cat}" class="category-btn px-3 py-1 text-sm rounded-full ${cat === category ? 'active' : 'bg-gray-700 hover:bg-gray-600'}">${cat}</button>`
             ).join('');
 
-            // 메인 콘텐츠 컨테이너에 일관된 수직 패딩 적용
-            container.innerHTML = `<div class="py-8"><div class="text-center mb-10"><h1 class="text-3xl sm:text-4xl font-extrabold mb-2 text-white">InsureLog</h1><p class="text-gray-400">AI, 기술, 그리고 보험에 대한 기록들</p></div><div class="flex flex-wrap justify-center gap-2 mb-8">${categoryButtons}</div><div id="post-list-container" class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm"><div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
+            // 메인 로고 색상 노란색으로 변경 및 '최신 글' 제목 위치 조정
+            container.innerHTML = `<div class="py-8"><div class="text-center mb-10"><h1 class="text-3xl sm:text-4xl font-extrabold mb-2 text-yellow-400">InsureLog</h1><p class="text-gray-400">AI, 기술, 그리고 보험에 대한 기록들</p></div><div class="flex flex-wrap justify-center gap-2 mb-8">${categoryButtons}</div><h2 class="text-lg font-bold text-white mb-4">최신 글</h2><div id="post-list-container" class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm"><div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
             
             await renderPostList(page, category);
         }
@@ -172,8 +173,6 @@
                 return;
             }
 
-            // --- 게시판 디자인 수정 ---
-            // 테이블 대신 깔끔한 리스트 형태로 변경
             const postsHtml = posts.length > 0
                 ? `<div class="swiper-container">${posts.map(post => 
                     `<a href="/post/${post.slug}" data-route class="block p-4 border-b border-gray-700 transition-colors hover:bg-gray-700/50 last:border-b-0">
@@ -182,8 +181,7 @@
                 ).join('')}</div>`
                 : `<div class="text-center py-20 text-gray-400"><p class="mb-5">아직 작성된 글이 없습니다.</p>${state.user ? `<a href="/writer" data-route class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-500 text-black border-2 border-yellow-600 hover:bg-yellow-600">첫 글 작성하기</a>` : ''}</div>`;
             
-            // '최신 글' 헤더 추가 및 페이지네이션
-            listContainer.innerHTML = `<div class="p-2 sm:p-4"><h2 class="text-lg font-bold text-white mb-4 px-2">최신 글</h2>${postsHtml}</div>${renderPaginationControls(page, totalPosts, '/', { category })}`;
+            listContainer.innerHTML = `${postsHtml}${renderPaginationControls(page, totalPosts, '/', { category })}`;
 
             makeSwipable(listContainer.querySelector('.swiper-container'), 
                 () => { if (page > 1) navigateTo(buildUrl('/', { page: page - 1, category })); },
@@ -191,11 +189,79 @@
             );
         }
         
-        async function renderPostView(container, slug) { if (!slug) { navigateTo('/'); return; } const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } (async () => { const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; if (!viewedPosts.includes(post.id)) { await supabase.rpc('increment_post_view', { post_slug: slug }); viewedPosts.push(post.id); sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts)); } })(); updateMetaTags(post); const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-1.5 text-sm font-bold rounded-md transition bg-yellow-500 text-black border-2 border-yellow-600 hover:bg-yellow-600">수정하기</a>` : ''; container.innerHTML = `<div class="py-8 max-w-4xl mx-auto"><div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5 sm:p-8"><article class="prose prose-invert max-w-none prose-custom"><div class="flex justify-between items-center mb-6"><div class="text-sm text-gray-400"><span class="font-semibold bg-gray-700 px-2 py-1 rounded-md text-xs">${post.category || '미분류'}</span> · ${new Date(post.created_at).toLocaleDateString('ko-KR')}</div>${editButtonHtml}</div><h1>${post.title}</h1><div id="post-content">${post.refined_content || ''}</div></article></div></div>`; }
+        async function renderPostView(container, slug) { 
+            if (!slug) { navigateTo('/'); return; } 
+            
+            container.innerHTML = `<div class="py-8 max-w-4xl mx-auto"><div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div></div>`;
+
+            const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); 
+            if (error || !post) { showToast('글을 찾을 수 없습니다.', true); navigateTo('/'); return; } 
+
+            (async () => { 
+                const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; 
+                if (!viewedPosts.includes(post.id)) { 
+                    await supabase.rpc('increment_post_view', { post_slug: slug }); 
+                    viewedPosts.push(post.id); 
+                    sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts)); 
+                } 
+            })(); 
+
+            updateMetaTags(post); 
+            const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-1.5 text-sm font-bold rounded-md transition bg-yellow-400 text-black border-2 border-yellow-500 hover:bg-yellow-500">수정하기</a>` : ''; 
+            
+            // 본문과 최신 글 섹션을 담을 컨테이너 렌더링
+            container.innerHTML = `<div class="py-8 max-w-4xl mx-auto">
+                <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-5 sm:p-8">
+                    <article class="prose prose-invert max-w-none prose-custom">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="text-sm text-gray-400">
+                                <span class="font-semibold bg-gray-700 px-2 py-1 rounded-md text-xs">${post.category || '미분류'}</span> · ${new Date(post.created_at).toLocaleDateString('ko-KR')}
+                            </div>
+                            ${editButtonHtml}
+                        </div>
+                        <h1>${post.title}</h1>
+                        <div id="post-content">${post.refined_content || ''}</div>
+                    </article>
+                </div>
+                <div id="recent-posts-container" class="mt-16"></div>
+            </div>`; 
+
+            // 최신 글 목록을 올바른 위치에 렌더링
+            await renderRecentPosts($('#recent-posts-container'), post.id);
+        }
+
+        async function renderRecentPosts(container, currentPostId) {
+            const { data: posts, error } = await supabase
+                .from('posts')
+                .select('title, slug, summary')
+                .neq('id', currentPostId)
+                .eq('status', 'published')
+                .order('created_at', { ascending: false })
+                .limit(3);
+
+            if (error || !posts || posts.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const postsHtml = posts.map(post => `
+                <a href="/post/${post.slug}" data-route class="block bg-gray-800 border border-gray-700 rounded-xl p-4 transition hover:bg-gray-700/50">
+                    <h3 class="font-bold text-white">${post.title}</h3>
+                    <p class="text-sm text-gray-400 mt-2">${post.summary || ''}</p>
+                </a>
+            `).join('');
+
+            container.innerHTML = `
+                <h2 class="text-xl font-bold text-white mb-4">최신 글</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    ${postsHtml}
+                </div>
+            `;
+        }
         
         async function renderDashboardView(container, page) {
             updateMetaTags({ title: '대시보드' });
-            container.innerHTML = `<div class="py-8"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-white">대시보드</h1><a href="/writer" data-route class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-500 text-black border-2 border-yellow-600 hover:bg-yellow-600">새 글 작성</a></div><div id="dashboard-post-list" class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-4"><div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
+            container.innerHTML = `<div class="py-8"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold text-white">대시보드</h1><a href="/writer" data-route class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-400 text-black border-2 border-yellow-500 hover:bg-yellow-500">새 글 작성</a></div><div id="dashboard-post-list" class="bg-gray-800 border border-gray-700 rounded-xl shadow-sm p-4"><div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
             
             const listContainer = $('#dashboard-post-list');
             if (!state.user) {
@@ -219,7 +285,7 @@
             listContainer.innerHTML = postsHtml;
         }
 
-        async function renderWriterView(container, slug) { updateMetaTags({title: '글 작성'}); let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [], category: CATEGORIES[0] }; if (slug) { const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !data || data.author_id !== state.user.id) { showToast('수정 권한이 없습니다.', true); navigateTo('/dashboard'); return; } post = data; } const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join(''); container.innerHTML = `<div class="py-6"><h1 class="text-2xl font-bold mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-5"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><div><label class="block text-sm font-medium text-gray-300 mb-1">카테고리</label><select id="category" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">${categoryOptions}</select></div><div><label class="block text-sm font-medium text-gray-300 mb-1">제목</label><input type="text" id="title" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required value="${post.title}"></div><div><label class="block text-sm font-medium text-gray-300 mb-1">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-end items-center space-x-2 pt-3"><button type="submit" data-action="save-draft" class="px-4 py-2 text-sm font-medium rounded-md bg-gray-600 text-white hover:bg-gray-700">초안 저장</button><button type="submit" data-action="publish" class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-500 text-black border-2 border-yellow-600 hover:bg-yellow-600">발행하기</button></div></form></div>`; initQuillEditor(post.refined_content || ''); document.getElementById('writer-form').addEventListener('submit', (e) => { e.preventDefault(); const action = e.submitter.dataset.action; if (action) handlePostSave(action, e.submitter); }); }
+        async function renderWriterView(container, slug) { updateMetaTags({title: '글 작성'}); let post = { id: null, title: '', summary: '', refined_content: '', slug: '', tags: [], category: CATEGORIES[0] }; if (slug) { const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single(); if (error || !data || data.author_id !== state.user.id) { showToast('수정 권한이 없습니다.', true); navigateTo('/dashboard'); return; } post = data; } const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join(''); container.innerHTML = `<div class="py-6"><h1 class="text-2xl font-bold mb-6">${post.id ? '글 수정하기' : '새 글 작성하기'}</h1><form id="writer-form" class="space-y-5"><input type="hidden" id="post-id" value="${post.id || ''}"><input type="hidden" id="post-slug" value="${post.slug || ''}"><div><label class="block text-sm font-medium text-gray-300 mb-1">카테고리</label><select id="category" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">${categoryOptions}</select></div><div><label class="block text-sm font-medium text-gray-300 mb-1">제목</label><input type="text" id="title" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required value="${post.title}"></div><div><label class="block text-sm font-medium text-gray-300 mb-1">본문</label><div id="editor-container"><div id="editor"></div></div></div><div class="flex justify-end items-center space-x-2 pt-3"><button type="submit" data-action="save-draft" class="px-4 py-2 text-sm font-medium rounded-md bg-gray-600 text-white hover:bg-gray-700">초안 저장</button><button type="submit" data-action="publish" class="px-4 py-2 text-sm font-bold rounded-md transition bg-yellow-400 text-black border-2 border-yellow-500 hover:bg-yellow-500">발행하기</button></div></form></div>`; initQuillEditor(post.refined_content || ''); document.getElementById('writer-form').addEventListener('submit', (e) => { e.preventDefault(); const action = e.submitter.dataset.action; if (action) handlePostSave(action, e.submitter); }); }
         
         // --- 유틸리티 및 헬퍼 함수 ---
         function initQuillEditor(initialContent) { const editorElement = $('#editor'); if (!editorElement) return; const toolbarOptions = [ [{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], ['blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link', 'image'], ['clean'] ]; state.quill = new Quill('#editor', { modules: { syntax: { highlight: text => hljs.highlightAuto(text).value }, toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler } } }, theme: 'snow' }); if (initialContent) state.quill.clipboard.dangerouslyPasteHTML(0, initialContent); }
