@@ -327,7 +327,6 @@
 
             updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
 
-            // 1. 임시저장된 글 확인
             const savedDraft = JSON.parse(localStorage.getItem('unsaved_post_content'));
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: CATEGORIES[0] };
             let hasRestored = false;
@@ -342,7 +341,6 @@
                 localStorage.removeItem('unsaved_post_content');
             }
             
-            // 2. slug가 있고, 임시저장글을 복원하지 않은 경우 DB에서 글 불러오기
             if (slug && !hasRestored) {
                 const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
                 if (error || !data || data.author_id !== state.user.id) {
@@ -380,17 +378,21 @@
                 </form>
             </div>`;
             
+            // --- FIX: Use setTimeout with 0 delay to ensure DOM is ready before initialization ---
             setTimeout(() => {
-                if ($('#editor')) {
+                const writerForm = $('#writer-form');
+                if (writerForm) {
                     initQuillEditor(post.refined_content || '');
                     setupEditorModeSwitcher();
                     setupAutoSave();
-                    $('#writer-form').addEventListener('submit', (e) => { 
+                    writerForm.addEventListener('submit', (e) => { 
                         e.preventDefault(); 
-                        if (e.submitter?.dataset.action) handlePostSave(e.submitter.dataset.action, e.submitter); 
+                        if (e.submitter?.dataset.action) {
+                            handlePostSave(e.submitter.dataset.action, e.submitter); 
+                        }
                     });
                 }
-            }, 100);
+            }, 0);
         }
         
         // --- Utilities & Helpers ---
@@ -406,7 +408,7 @@
                 theme: 'snow'
             });
             if (initialContent) {
-                state.quill.setContents([]); // 기존 내용 초기화
+                state.quill.setContents([]); // Clear previous content before pasting
                 state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
             }
         }
@@ -455,14 +457,20 @@
         }
         
         function setupAutoSave() {
+            const form = $('#writer-form');
+            if (!form) return;
+            
             const saveContent = debounce(() => {
                 try {
                     let contentHTML = '';
                     if (state.editorMode === 'quill' && state.quill) {
                         contentHTML = state.quill.root.innerHTML;
                     } else {
-                        const rawContent = $('#raw-editor').value;
-                        contentHTML = state.editorMode === 'markdown' ? state.showdownConverter.makeHtml(rawContent) : rawContent;
+                        const rawEditor = $('#raw-editor');
+                        if (rawEditor) {
+                           const rawContent = rawEditor.value;
+                           contentHTML = state.editorMode === 'markdown' ? state.showdownConverter.makeHtml(rawContent) : rawContent;
+                        }
                     }
 
                     const draft = {
@@ -481,10 +489,8 @@
             if (state.quill) {
                 state.quill.on('text-change', saveContent);
             }
-            $('#raw-editor')?.addEventListener('input', saveContent);
-            $('#title')?.addEventListener('input', saveContent);
-            $('#summary')?.addEventListener('input', saveContent);
-            $('#category')?.addEventListener('change', saveContent);
+            form.addEventListener('input', saveContent);
+            form.addEventListener('change', saveContent);
         }
 
         function quillImageHandler() {
@@ -718,4 +724,5 @@
     </script>
 </body>
 </html>
+
 
