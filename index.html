@@ -379,26 +379,29 @@
             if (!state.user) { navigateTo('/'); return; }
             updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
 
-            const savedDraft = JSON.parse(localStorage.getItem('unsaved_post_content'));
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: CATEGORIES[0] };
-            let hasRestored = false;
 
-            if (savedDraft) {
-                const restore = await showConfirmationModal('임시저장된 글이 있습니다. 불러오시겠습니까?');
-                if (restore) {
-                    post = { ...post, ...savedDraft };
-                    hasRestored = true;
-                    showToast('임시저장된 글을 불러왔습니다.');
-                }
-                localStorage.removeItem('unsaved_post_content');
-            }
-            
-            if (slug && !hasRestored) {
+            // 글 수정 로직 (slug가 있을 경우)
+            if (slug) {
                 const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
                 if (error || !data || data.author_id !== state.user.id) {
-                    showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true); navigateTo('/dashboard'); return;
+                    showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true); 
+                    navigateTo('/dashboard'); 
+                    return;
                 }
                 post = data;
+            } 
+            // 새 글 작성 로직 (slug가 없을 경우)
+            else {
+                const savedDraft = JSON.parse(localStorage.getItem('unsaved_post_content'));
+                if (savedDraft) {
+                    const restore = await showConfirmationModal('임시저장된 글이 있습니다. 불러오시겠습니까?');
+                    if (restore) {
+                        post = { ...post, ...savedDraft };
+                        showToast('임시저장된 글을 불러왔습니다.');
+                    }
+                    localStorage.removeItem('unsaved_post_content');
+                }
             }
 
             const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
@@ -454,13 +457,11 @@
                 placeholder: '여기에 이야기를 작성하세요...'
             });
 
-            // FIX: Changed to a more robust method for loading HTML content.
             if (initialContent) {
                 const delta = state.quill.clipboard.convert(initialContent);
                 state.quill.setContents(delta, 'silent');
             }
             
-            // Custom styles for Quill to match the new design
             $('.ql-toolbar').style.cssText = 'border: none; border-bottom: 1px solid var(--border-color); padding: 12px;';
             $('.ql-container').style.cssText = 'border: none; font-size: 18px;';
             $('.ql-editor').style.cssText = 'min-height: 450px; padding: 2rem;';
@@ -472,6 +473,10 @@
             
             const performAutoSave = () => {
                 if (!state.quill) return;
+                // 새 글 작성 시에만 자동 저장
+                const postId = $('#post-id').value;
+                if(postId) return;
+
                 const draft = {
                     title: $('#title').value,
                     summary: $('#summary').value,
@@ -548,7 +553,11 @@
                 if (error) throw error;
 
                 localStorage.removeItem('unsaved_post_content');
-                if (state.autoSaveTimer) clearTimeout(state.autoSaveTimer);
+                if (state.autoSaveTimer) {
+                    clearTimeout(state.autoSaveTimer.timeout);
+                    state.quill.off('text-change', state.autoSaveTimer);
+                    $('#writer-form').removeEventListener('input', state.autoSaveTimer);
+                }
 
                 showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
                 navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard');
