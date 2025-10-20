@@ -453,9 +453,14 @@
                 theme: 'snow',
                 placeholder: '여기에 이야기를 작성하세요...'
             });
+
+            // FIX: Use setContents for more reliable content loading
             if (initialContent) {
-                state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
+                const delta = state.quill.clipboard.convert(initialContent);
+                state.quill.setContents(delta, 'silent');
             }
+            
+            // Custom styles for Quill to match the new design
             $('.ql-toolbar').style.cssText = 'border: none; border-bottom: 1px solid var(--border-color); padding: 12px;';
             $('.ql-container').style.cssText = 'border: none; font-size: 18px;';
             $('.ql-editor').style.cssText = 'min-height: 450px; padding: 2rem;';
