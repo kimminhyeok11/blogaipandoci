@@ -454,10 +454,9 @@
                 placeholder: '여기에 이야기를 작성하세요...'
             });
 
-            // FIX: Use setContents for more reliable content loading
+            // FIX: Reverted to a more direct and robust way of loading HTML content.
             if (initialContent) {
-                const delta = state.quill.clipboard.convert(initialContent);
-                state.quill.setContents(delta, 'silent');
+                state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
             }
             
             // Custom styles for Quill to match the new design
