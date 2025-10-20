@@ -454,9 +454,10 @@
                 placeholder: '여기에 이야기를 작성하세요...'
             });
 
-            // FIX: Reverted to a more direct and robust way of loading HTML content.
+            // FIX: Changed to a more robust method for loading HTML content.
             if (initialContent) {
-                state.quill.clipboard.dangerouslyPasteHTML(0, initialContent);
+                const delta = state.quill.clipboard.convert(initialContent);
+                state.quill.setContents(delta, 'silent');
             }
             
             // Custom styles for Quill to match the new design
@@ -512,7 +513,7 @@
             };
         }
 
-        async function handlePostSave(status, button) {
+        async function handlePostSave(action, button) {
             if (!state.quill) { showToast('에디터가 초기화되지 않았습니다.', true); return; }
             const originalBtnText = button.textContent;
             button.disabled = true;
@@ -521,6 +522,8 @@
             try {
                 const title = $('#title').value.trim();
                 if (!title) throw new Error('제목은 필수 항목입니다.');
+
+                const status = action === 'publish' ? 'published' : 'draft';
 
                 const contentHTML = state.quill.root.innerHTML;
                 let summary = $('#summary').value.trim();
@@ -688,5 +691,4 @@
     </script>
 </body>
 </html>
-
 
