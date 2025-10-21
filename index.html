@@ -113,7 +113,6 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
         const IMAGE_BUCKET_NAME = 'thought-images';
         
-        // FIX 1: 테이블 이름을 'posts'로 다시 수정했습니다.
         const DB_TABLE_NAME = 'posts'; 
         const POSTS_PER_PAGE = 10;
         const CATEGORIES = ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"];
@@ -231,7 +230,6 @@
             listContainer.innerHTML = `<div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
 
             const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 };
-            // FIX 2: 스키마에 맞춰 'title', 'summary' 컬럼을 명시적으로 요청합니다.
             let query = supabase.from(DB_TABLE_NAME).select('id, title, slug, summary', { count: 'exact' });
             if (category && category !== '전체') query = query.eq('category', category);
             query = query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
@@ -299,18 +297,16 @@
                 </nav>`;
             
             updateMetaTags(post); 
-            const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="ml-auto px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200">수정</a>` : ''; 
+            const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200">수정</a>` : ''; 
             
-            // FIX 3: 본문 상단 UI를 미니멀하게 재구성했습니다.
             container.innerHTML = `
                 <div class="max-w-4xl mx-auto py-12 sm:py-16">
                     <article class="prose-custom max-w-none">
                         <header class="mb-12">
-                            <h1 class="text-4xl sm:text-5xl font-black text-black tracking-tighter !mt-0 !mb-5">${post.title}</h1>
-                            <div class="flex items-center text-sm text-gray-500">
+                             <p class="text-sm font-semibold text-gray-500 mb-3">${post.category || '미분류'}</p>
+                            <h1 class="text-4xl sm:text-5xl font-black text-black tracking-tighter !mt-0 !mb-4">${post.title}</h1>
+                            <div class="flex items-center justify-between text-sm text-gray-500">
                                 <span>${new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                <span class="mx-2">·</span>
-                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">${post.category || '미분류'}</span>
                                 ${editButtonHtml}
                             </div>
                         </header>
@@ -523,7 +519,6 @@
                     if (existingSlug) slug = `${slug}-${Date.now().toString().slice(-6)}`;
                 }
                 
-                // FIX 4: 스키마에 맞춰 저장할 데이터를 구성합니다. ('title', 'refined_content' 등)
                 const postData = { 
                     title, 
                     slug, 
