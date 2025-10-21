@@ -353,7 +353,9 @@
 
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: CATEGORIES[0] };
 
+            // Logic Adjustment: Only check for drafts on new posts.
             if (slug) {
+                // Editing an existing post
                 const { data, error } = await supabase.from(DB_TABLE_NAME).select('*').eq('slug', slug).single();
                 if (error || !data || data.author_id !== state.user.id) {
                     console.error("Error fetching post to edit or auth error:", error);
@@ -362,8 +364,8 @@
                     return;
                 }
                 post = data;
-            } 
-            else {
+            } else {
+                // Creating a new post, check for a saved draft
                 const savedDraft = JSON.parse(localStorage.getItem('unsaved_post_content'));
                 if (savedDraft) {
                     const restore = await showConfirmationModal('임시저장된 글이 있습니다. 불러오시겠습니까?');
@@ -371,6 +373,7 @@
                         post = { ...post, ...savedDraft };
                         showToast('임시저장된 글을 불러왔습니다.');
                     }
+                    // Always remove draft after asking, regardless of choice.
                     localStorage.removeItem('unsaved_post_content');
                 }
             }
@@ -399,6 +402,7 @@
                 </form>
             </div>`;
             
+            // Use a short timeout to ensure the DOM is fully updated before initializing Quill
             setTimeout(() => {
                 const writerForm = $('#writer-form');
                 if (writerForm) {
@@ -443,9 +447,8 @@
             if (!form || !state.quill) return;
             
             const performAutoSave = () => {
-                if (!state.quill) return;
-                const postId = $('#post-id').value;
-                if(postId) return;
+                // Auto-save should only work for NEW posts, not for existing ones.
+                if (!state.quill || $('#post-id').value) return;
 
                 const draft = {
                     title: $('#title').value,
@@ -457,7 +460,7 @@
                 showToast('자동 저장됨', false);
             };
 
-            state.autoSaveTimer = debounce(performAutoSave, 2000);
+            state.autoSaveTimer = debounce(performAutoSave, 3000); // Increased debounce time
 
             state.quill.on('text-change', state.autoSaveTimer);
             form.addEventListener('input', state.autoSaveTimer);
@@ -533,11 +536,15 @@
                 const { data, error } = await query.select().single();
                 if (error) throw error;
 
+                // --- FIX: Correctly clean up auto-save ---
                 localStorage.removeItem('unsaved_post_content');
                 if (state.autoSaveTimer) {
-                    clearTimeout(state.autoSaveTimer.timeout);
+                    // Remove listeners to stop the debounced function from being called again
                     state.quill.off('text-change', state.autoSaveTimer);
-                    $('#writer-form')?.removeEventListener('input', state.autoSaveTimer);
+                    const writerForm = $('#writer-form');
+                    if(writerForm) {
+                       writerForm.removeEventListener('input', state.autoSaveTimer);
+                    }
                 }
 
                 showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
