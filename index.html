@@ -457,7 +457,9 @@
                 });
 
                 if (initialContent) {
-                    quillInstance.pasteHTML(initialContent);
+                    // BUG FIX: The pasteHTML method requires an index as the first argument.
+                    // Inserting the content at the beginning (index 0).
+                    quillInstance.pasteHTML(0, initialContent);
                 }
             }
         }
