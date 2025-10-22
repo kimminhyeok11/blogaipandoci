@@ -150,11 +150,13 @@
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
+        // --- FIX: REMOVED QUILL FROM GLOBAL STATE ---
+        // The global state no longer needs to track the Quill instance,
+        // preventing race conditions during view transitions.
         const state = { 
             user: null, 
             isAuthReady: false, 
             currentCategory: '전체',
-            quill: null,
         };
         const $ = (selector) => document.querySelector(selector);
         
@@ -167,13 +169,12 @@
             }
             handleRouting();
         }
-
+        
+        // --- FIX: REMOVED QUILL CLEANUP LOGIC ---
+        // Since we no longer use a global state for the editor,
+        // there's no need to manually clean it up here.
         async function switchView(viewId, callback) {
             const currentView = $('.app-view.active');
-            if (currentView && currentView.querySelector('#quill-editor')) {
-                state.quill = null;
-            }
-            
             if (currentView) {
                 await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
                 currentView.classList.remove('active');
@@ -446,22 +447,16 @@
         
         // --- Editor and Image Handling Functions ---
 
-        // --- FIX: SIMPLIFIED QUILL INITIALIZATION ---
-        // This revised function simplifies how content is loaded into Quill.
-        // Instead of programmatically setting the content after initialization,
-        // we now set the innerHTML of the editor's container element *before*
-        // Quill is initialized. Quill's constructor will then automatically
-        // parse this HTML, which is a more robust and direct method.
         function initQuillEditor(initialContent) {
             const editorElement = $('#quill-editor');
             if (editorElement) {
-                // Set the raw HTML content before Quill takes over.
                 if (initialContent) {
                     editorElement.innerHTML = initialContent;
                 }
                 
-                // Initialize Quill. It will automatically process the existing HTML.
-                state.quill = new Quill(editorElement, {
+                // --- FIX: Initialize Quill without assigning to global state ---
+                // Quill will manage its own instance attached to the DOM element.
+                new Quill(editorElement, {
                     theme: 'snow',
                     modules: {
                         toolbar: {
@@ -481,9 +476,12 @@
                 });
             }
         }
-        // --- END FIX ---
 
+        // --- FIX: Use `this.quill` for Image Handler ---
+        // Quill automatically provides the correct editor instance via `this.quill`
+        // in toolbar handlers, making it independent of global state.
         function quillImageHandler() {
+            const quill = this.quill;
             const input = document.createElement('input');
             input.setAttribute('type', 'file');
             input.setAttribute('accept', 'image/*');
@@ -493,20 +491,20 @@
                 const file = input.files[0];
                 if (file) {
                     showToast('이미지 업로드 중...');
-                    const range = state.quill.getSelection(true);
-                    state.quill.enable(false);
+                    const range = quill.getSelection(true);
+                    quill.enable(false);
 
                     try {
                         const webpBlob = await convertToWebP(file);
                         const publicUrl = await uploadImageToSupabase(webpBlob);
-                        state.quill.enable(true);
-                        state.quill.insertEmbed(range.index, 'image', publicUrl);
-                        state.quill.setSelection(range.index + 1, Quill.sources.SILENT);
+                        quill.enable(true);
+                        quill.insertEmbed(range.index, 'image', publicUrl);
+                        quill.setSelection(range.index + 1, Quill.sources.SILENT);
                         showToast('업로드 완료!', false);
                     } catch (error) {
                         console.error('Image upload failed:', error);
                         showToast(`이미지 업로드 실패: ${error.message}`, true);
-                        state.quill.enable(true);
+                        quill.enable(true);
                     }
                 }
             };
@@ -591,8 +589,14 @@
             });
         }
 
+        // --- FIX: Find Quill Instance from DOM ---
+        // This function now robustly finds the Quill instance from the editor's
+        // DOM element, making it immune to global state issues.
         async function handlePostSave(action, button) {
-            if (!state.quill) {
+            const editorElement = $('#quill-editor');
+            const quillInstance = editorElement ? Quill.find(editorElement) : null;
+
+            if (!quillInstance) {
                 showToast('에디터가 초기화되지 않았습니다.', true);
                 return;
             }
@@ -605,12 +609,12 @@
                 if (!title) throw new Error('제목은 필수 항목입니다.');
 
                 const status = action === 'publish' ? 'published' : 'draft';
-                const contentHTML = state.quill.root.innerHTML; 
+                const contentHTML = quillInstance.root.innerHTML; 
                 if (contentHTML === '<p><br></p>') throw new Error('본문 내용이 비어있습니다.');
                 
                 let summary = $('#summary').value.trim();
                 if (!summary) {
-                    const textContent = state.quill.getText().trim().replace(/\s+/g, ' ');
+                    const textContent = quillInstance.getText().trim().replace(/\s+/g, ' ');
                     summary = textContent.slice(0, 150) + (textContent.length > 150 ? '...' : '');
                 }
 
