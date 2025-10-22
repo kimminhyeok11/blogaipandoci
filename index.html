@@ -457,9 +457,11 @@
                 });
 
                 if (initialContent) {
-                    // BUG FIX: The pasteHTML method requires an index as the first argument.
-                    // Inserting the content at the beginning (index 0).
-                    quillInstance.pasteHTML(0, initialContent);
+                    // BUG FIX: Use the most robust method to set content.
+                    // 1. Convert the raw HTML to Quill's internal Delta format.
+                    const delta = quillInstance.clipboard.convert(initialContent);
+                    // 2. Set the editor's contents using the Delta.
+                    quillInstance.setContents(delta, 'silent');
                 }
             }
         }
@@ -771,5 +773,20 @@
     </script>
 </body>
 </html>
+
+핵심 수정 내용
+initQuillEditor 함수 내부의 코드가 다음과 같이 변경되었습니다.
+기존 코드:
+if (initialContent) {
+    quillInstance.pasteHTML(0, initialContent);
+}
+
+새로운 코드:
+if (initialContent) {
+    // 1. HTML 내용을 Quill의 내부 데이터 형식(Delta)으로 변환합니다.
+    const delta = quillInstance.clipboard.convert(initialContent);
+    // 2. 변환된 Delta를 사용하여 에디터의 내용을 설정합니다.
+    quillInstance.setContents(delta, 'silent');
+}
 
 
