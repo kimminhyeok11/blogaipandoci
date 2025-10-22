@@ -544,6 +544,7 @@
             }
         }
         
+        // --- START OF CODE FIX ---
         function initQuillEditor() {
             const editorElement = $('#quill-editor');
             if (!editorElement) {
@@ -575,7 +576,15 @@
                         ],
                         handlers: { 'image': quillImageHandler }
                     },
-                    syntax: true 
+                    syntax: true,
+                    // FIX: 클립보드 모듈을 추가하여 붙여넣기 시 서식(특히 리스트)이
+                    // 깨지는 현상을 방지합니다.
+                    // matchVisual: true는 시각적 서식을 기반으로 매칭을 시도하여
+                    // Word나 웹사이트에서 복사/붙여넣기 할 때의 호환성을 높여줍니다.
+                    clipboard: {
+                        matchVisual: true
+                    }
+                    // --- END OF CODE FIX ---
                 }
             });
 
@@ -612,16 +621,11 @@
             };
         }
 
-        // --- START OF CODE FIX ---
         async function uploadImageToSupabase(file) {
             const isWebP = file.type === 'image/webp';
             const fileExtension = isWebP ? 'webp' : file.name.split('.').pop();
             
-            // --- FIX: 파일 경로에서 'public/' 접두사를 제거했습니다. ---
-            // 'thought-images' 버킷 자체가 public으로 설정되어 있다고 가정하므로,
-            // 경로는 버킷 루트('/thought-images')에서부터 시작해야 합니다.
-            // 'public/'을 경로에 포함하면 URL이 '.../public/thought-images/public/...'이 되어버립니다.
-            // 기존 경로: `public/${state.user.id}/${Date.now()}.${fileExtension}`
+            // FIX: 'public/' 접두사 제거 (버킷 레벨에서 이미 경로 지정됨)
             const filePath = `${state.user.id}/${Date.now()}.${fileExtension}`;
             
             const { error: uploadError } = await supabase.storage
@@ -630,17 +634,12 @@
 
             if (uploadError) {
                 console.error('Supabase storage upload error:', uploadError);
-                // 이 오류가 계속 발생한다면, Supabase 대시보드에서 다음 사항을 확인하세요:
-                // 1. 'thought-images' 버킷이 'Public'으로 설정되어 있습니까?
-                // 2. 'thought-images' 버킷에 인증된(authenticated) 사용자가 'INSERT' 작업을 수행할 수 있도록
-                //    Storage 정책(Policy)이 올바르게 설정되어 있습니까?
-                //    (예: `(bucket_id = 'thought-images' AND (storage.foldername(name))[1] = auth.uid())`)
                 throw new Error(`업로드 실패: ${uploadError.message}`);
             }
             
             const { data } = supabase.storage
                 .from(IMAGE_BUCKET_NAME)
-                .getPublicUrl(filePath); // 이제 이 경로는 업로드된 파일의 실제 경로와 일치합니다.
+                .getPublicUrl(filePath); 
                 
             if (!data || !data.publicUrl) {
                 console.error('getPublicUrl failed after upload. Data:', data);
@@ -649,7 +648,6 @@
 
             return data.publicUrl;
         }
-        // --- END OF CODE FIX ---
         
         function getOrientation(file) {
             return new Promise((resolve) => {
@@ -939,4 +937,5 @@
     </script>
 </body>
 </html>
+
 
