@@ -329,10 +329,14 @@
 
             const postsHtml = safePosts.length > 0
                 ? `<div class="divide-y divide-gray-200/80">${safePosts.map(post => {
+                    
+                    // --- START OF CODE FIX (Alignment) ---
+                    // 썸네일이 있든 없든 항상 동일한 레이아웃을 유지하도록 수정
                     const thumbHtml = post.thumbnail_url
                         ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100"></div>`
-                        : '';
-                    
+                        : `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"></div>`; // 썸네일이 없어도 공간을 차지하는 div 렌더링
+                    // --- END OF CODE FIX (Alignment) ---
+
                     return `
                     <a href="/post/${post.slug}" data-route class="flex items-start p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80">
                         ${thumbHtml}
@@ -544,7 +548,7 @@
             }
         }
         
-        // --- START OF CODE FIX ---
+        // --- START OF CODE FIX (Pasting) ---
         function initQuillEditor() {
             const editorElement = $('#quill-editor');
             if (!editorElement) {
@@ -577,16 +581,30 @@
                         handlers: { 'image': quillImageHandler }
                     },
                     syntax: true,
-                    // FIX: 클립보드 모듈을 추가하여 붙여넣기 시 서식(특히 리스트)이
-                    // 깨지는 현상을 방지합니다.
-                    // matchVisual: true는 시각적 서식을 기반으로 매칭을 시도하여
-                    // Word나 웹사이트에서 복사/붙여넣기 할 때의 호환성을 높여줍니다.
                     clipboard: {
-                        matchVisual: true
+                        matchVisual: true // 시각적 서식 매칭 유지
                     }
-                    // --- END OF CODE FIX ---
                 }
             });
+
+            // --- NEW PASTE FIX ---
+            // <li> 태그에 대한 커스텀 매처(Matcher)를 추가하여 붙여넣기 시
+            // 리스트 서식을 강제로 적용합니다.
+            quillInstance.clipboard.addMatcher('LI', (node, delta) => {
+                // 부모 태그를 확인하여 ordered (OL) 또는 bullet (UL) 리스트인지 확인
+                const listType = node.parentNode.tagName === 'OL' ? 'ordered' : 'bullet';
+                
+                // <li> 내부의 모든 텍스트(op)에 'list' 속성을 적용
+                delta.ops = delta.ops.map(op => {
+                    if (op.insert && !op.attributes?.list) {
+                        op.attributes = { ...op.attributes, list: listType };
+                    }
+                    return op;
+                });
+        
+                return delta;
+            });
+            // --- END OF CODE FIX (Pasting) ---
 
             return quillInstance; 
         }
