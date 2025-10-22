@@ -550,7 +550,7 @@
             }
         }
         
-        // --- START OF CODE FIX (Editor Bug) ---
+        // --- START OF CODE FIX (Editor Stability) ---
         function initQuillEditor() {
             const editorElement = $('#quill-editor');
             if (!editorElement) {
@@ -562,9 +562,10 @@
                 return Quill.find(editorElement);
             }
 
+            // highlight.js는 여전히 로드되어 있어야 합니다 (발행된 글 보기에 필요)
             if (typeof hljs === 'undefined') {
-                console.error("highlight.js is not loaded. Syntax module will fail.");
-                showToast("코드 하이라이팅 모듈 로드 실패.", true);
+                console.warn("highlight.js is not loaded. Published posts might not highlight code.");
+                // 글쓰기 에디터에서는 치명적이지 않으므로 showToast는 제거
             }
 
             const quillInstance = new Quill(editorElement, {
@@ -574,7 +575,7 @@
                         container: [
                             [{ 'header': [1, 2, 3, false] }],
                             ['bold', 'italic', 'underline', 'strike'],
-                            ['blockquote', 'code-block'],
+                            ['blockquote', 'code-block'], // 'code-block'은 구문 강조 없이도 작동합니다.
                             [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                             [{ 'indent': '-1'}, { 'indent': '+1' }],
                             ['link', 'image'],
@@ -582,21 +583,14 @@
                         ],
                         handlers: { 'image': quillImageHandler }
                     },
-                    syntax: true,
+                    // 'syntax: true' 모듈을 제거하여 에디터 안정성 확보
+                    // 'syntax: true,' (이 줄을 주석 처리 또는 삭제)
                     clipboard: {
-                        // 'matchVisual: true'는 대부분의 서식 붙여넣기를
-                        // 올바르게 처리하는 표준 방식입니다.
                         matchVisual: true
                     }
                 }
             });
-
-            // --- REMOVED PASTE FIX ---
-            // 이전에 추가했던 'LI' 태그용 커스텀 매처(Matcher)를 제거했습니다.
-            // 이 로직이 Quill의 내부 상태와 충돌하여
-            // 텍스트 삭제 시 오류를 일으키는 원인으로 추정됩니다.
-            // quillInstance.clipboard.addMatcher('LI', ...) <-- 이 블록 전체 삭제
-            // --- END OF CODE FIX (Editor Bug) ---
+            // --- END OF CODE FIX (Editor Stability) ---
 
             return quillInstance; 
         }
@@ -635,7 +629,6 @@
             const isWebP = file.type === 'image/webp';
             const fileExtension = isWebP ? 'webp' : file.name.split('.').pop();
             
-            // FIX: 'public/' 접두사 제거 (버킷 레벨에서 이미 경로 지정됨)
             const filePath = `${state.user.id}/${Date.now()}.${fileExtension}`;
             
             const { error: uploadError } = await supabase.storage
