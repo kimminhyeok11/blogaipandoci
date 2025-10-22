@@ -169,25 +169,22 @@
         }
 
         async function switchView(viewId, callback) {
-            // --- FIX 4 (Quill Cleanup) ---
-            // Explicitly clean up Quill instance before switching views
-            // to prevent potential memory/event listener leaks.
-            if (state.quill) {
-                const editorEl = document.querySelector('#quill-editor');
-                if (editorEl) {
-                    // Clear the contents of the Quill container
-                    editorEl.innerHTML = '';
-                }
-                state.quill = null; // Set state to null
+            // --- FIX: Targeted Quill Cleanup ---
+            // The previous cleanup logic was too aggressive and could cause race conditions.
+            // This version ensures we only nullify the Quill instance when we are
+            // demonstrably navigating away from the view that contains the editor.
+            const currentView = $('.app-view.active');
+            if (currentView && currentView.querySelector('#quill-editor')) {
+                state.quill = null;
             }
             // --- END FIX ---
             
-            const currentView = $('.app-view.active');
             if (currentView) {
                 await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
                 currentView.classList.remove('active');
                 currentView.innerHTML = '';
             }
+
             const nextView = $(`#${viewId}`);
             if (nextView) {
                 nextView.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
@@ -852,5 +849,4 @@
     </script>
 </body>
 </html>
-
 
