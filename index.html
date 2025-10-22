@@ -21,12 +21,10 @@
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     
-    <!-- --- FIX 2 (XSS) & 5 (EXIF) --- -->
     <!-- Add DOMPurify for XSS sanitization -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
     <!-- Add exif-js for image orientation handling -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
-    <!-- --- END FIX --- -->
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -92,29 +90,22 @@
         .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; border-color: #D1D5DB; }
         .ql-container.ql-snow { border-radius: 0 0 12px 12px; border-color: #D1D5DB; }
         
-        /* --- UX IMPROVEMENT --- */
         /* Sticky footer for writer controls on mobile */
         @media (max-width: 639px) { /* Tailwind 'sm' breakpoint */
             .writer-controls-sticky {
                 position: sticky;
                 bottom: 0;
-                background-color: rgba(255, 255, 255, 0.95); /* Add blur for modern feel */
+                background-color: rgba(255, 255, 255, 0.95);
                 backdrop-filter: blur(8px);
                 -webkit-backdrop-filter: blur(8px);
                 padding: 1rem;
-                border-top: 1px solid #E5E7EB; /* Lighter border */
-                
-                /* Counteract the 'px-4' on the main container to be full-width */
+                border-top: 1px solid #E5E7EB;
                 margin-left: -1rem;
                 margin-right: -1rem;
-                
-                /* Remove the original padding-top from the classlist */
                 padding-top: 1rem !important; 
-                
-                z-index: 30; /* Ensure it's above content */
+                z-index: 30;
             }
         }
-        /* --- END IMPROVEMENT --- */
     </style>
 </head>
 <body>
@@ -150,9 +141,6 @@
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // --- FIX: REMOVED QUILL FROM GLOBAL STATE ---
-        // The global state no longer needs to track the Quill instance,
-        // preventing race conditions during view transitions.
         const state = { 
             user: null, 
             isAuthReady: false, 
@@ -170,9 +158,6 @@
             handleRouting();
         }
         
-        // --- FIX: REMOVED QUILL CLEANUP LOGIC ---
-        // Since we no longer use a global state for the editor,
-        // there's no need to manually clean it up here.
         async function switchView(viewId, callback) {
             const currentView = $('.app-view.active');
             if (currentView) {
@@ -447,16 +432,15 @@
         
         // --- Editor and Image Handling Functions ---
 
+        // --- FIX: ROBUST QUILL INITIALIZATION AND CONTENT LOADING ---
+        // This function now follows the most stable pattern:
+        // 1. Initialize a blank Quill editor on the target DOM element.
+        // 2. If initial content exists, use the instance's `pasteHTML` method,
+        //    which is the recommended way to load raw HTML.
         function initQuillEditor(initialContent) {
             const editorElement = $('#quill-editor');
             if (editorElement) {
-                if (initialContent) {
-                    editorElement.innerHTML = initialContent;
-                }
-                
-                // --- FIX: Initialize Quill without assigning to global state ---
-                // Quill will manage its own instance attached to the DOM element.
-                new Quill(editorElement, {
+                const quillInstance = new Quill(editorElement, {
                     theme: 'snow',
                     modules: {
                         toolbar: {
@@ -474,12 +458,14 @@
                         syntax: true
                     }
                 });
+
+                // Safely load content after initialization if it exists.
+                if (initialContent) {
+                    quillInstance.pasteHTML(initialContent);
+                }
             }
         }
-
-        // --- FIX: Use `this.quill` for Image Handler ---
-        // Quill automatically provides the correct editor instance via `this.quill`
-        // in toolbar handlers, making it independent of global state.
+        
         function quillImageHandler() {
             const quill = this.quill;
             const input = document.createElement('input');
@@ -589,15 +575,12 @@
             });
         }
 
-        // --- FIX: Find Quill Instance from DOM ---
-        // This function now robustly finds the Quill instance from the editor's
-        // DOM element, making it immune to global state issues.
         async function handlePostSave(action, button) {
             const editorElement = $('#quill-editor');
             const quillInstance = editorElement ? Quill.find(editorElement) : null;
 
             if (!quillInstance) {
-                showToast('에디터가 초기화되지 않았습니다.', true);
+                showToast('에디터를 찾을 수 없습니다. 다시 시도해 주세요.', true);
                 return;
             }
             const originalBtnText = button.textContent;
