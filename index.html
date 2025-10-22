@@ -16,7 +16,6 @@
     <!-- Scripts & Stylesheets -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-    <!-- REMOVED: Quill and Highlight.js CSS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -95,7 +94,7 @@
     <footer class="text-center py-8 px-4 border-t border-gray-200 mt-24">
         <p class="text-sm text-gray-600">
             © 2024 InsureLog. 
-            개발 및 문의사항은 <a href="https.www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-500 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
+            개발 및 문의사항은 <a href="https://www.threads.net/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-500 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
         </p>
     </footer>
     <div id="modal-container"></div>
@@ -108,7 +107,6 @@
         const SITE_URL = 'https://blogaipandoci.vercel.app';
         const SUPABASE_URL = 'https://ddehwkwzmmvcxltlplua.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
-        // REMOVED: IMAGE_BUCKET_NAME (no longer used)
         
         const DB_TABLE_NAME = 'posts'; 
         const POSTS_PER_PAGE = 10;
@@ -116,7 +114,6 @@
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // REMOVED: Quill and autoSaveTimer from state
         const state = { 
             user: null, 
             isAuthReady: false, 
@@ -124,8 +121,6 @@
         };
         const $ = (selector) => document.querySelector(selector);
         
-        // REMOVED: Debounce Helper (no longer needed)
-
         // --- Core App Logic ---
         function navigateTo(path, replace = false) {
             const newPath = path || '/';
@@ -137,7 +132,6 @@
         }
 
         async function switchView(viewId, callback) {
-            // REMOVED: Quill and autoSaveTimer cleanup
             const currentView = $('.app-view.active');
             if (currentView) {
                 await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
@@ -218,7 +212,7 @@
             listContainer.innerHTML = `<div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
 
             const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 };
-            let query = supabase.from(DB_TABLE_NAME).select('id, title, slug, summary', { count: 'exact' });
+            let query = supabase.from(DB_TABLE_NAME).select('id, title, slug, summary, category', { count: 'exact' });
             if (category && category !== '전체') query = query.eq('category', category);
             query = query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
 
@@ -231,7 +225,7 @@
             }
 
             const postsHtml = posts.length > 0
-                ? `<div class="space-y-1">${posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-4 transition-all duration-300 rounded-2xl bg-transparent hover:bg-gray-50"><h3 class="text-gray-800 text-lg font-bold">${post.title}</h3><p class="text-sm text-gray-500 mt-1">${post.summary || ''}</p></a>`).join('')}</div>`
+                ? `<div class="space-y-1">${posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-4 transition-all duration-300 rounded-2xl bg-transparent hover:bg-gray-50"><p class="text-sm font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-lg font-bold">${post.title}</h3><p class="text-sm text-gray-500 mt-1">${post.summary || ''}</p></a>`).join('')}</div>`
                 : `<div class="text-center py-20 text-gray-500"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${state.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
             
             listContainer.innerHTML = `${postsHtml}${renderPaginationControls(page, totalPosts, '/', { category })}`;
@@ -291,14 +285,13 @@
                 <div class="max-w-4xl mx-auto py-12 sm:py-16">
                     <article class="prose-custom max-w-none">
                         <header class="mb-12">
-                             <p class="text-sm font-semibold text-gray-500 mb-3">${post.category || '미분류'}</p>
+                             <p class="text-sm font-semibold text-fuchsia-500 mb-3">${post.category || '미분류'}</p>
                             <h1 class="text-4xl sm:text-5xl font-black text-black tracking-tighter !mt-0 !mb-4">${post.title}</h1>
                             <div class="flex items-center justify-between text-sm text-gray-500">
                                 <span>${new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                 ${editButtonHtml}
                             </div>
                         </header>
-                        <!-- CHANGED: Added whitespace-pre-wrap to respect line breaks -->
                         <div id="post-content" class="whitespace-pre-wrap">${post.refined_content || ''}</div>
                     </article>
                     
@@ -314,7 +307,6 @@
             } catch (e) {
                 console.error("Adsense push error:", e);
             }
-            // REMOVED: highlight.js call
         }
         
         async function renderDashboardView(container) {
@@ -351,11 +343,8 @@
                     return;
                 }
                 post = data;
-            } else {
-                // 새 글 작성 시 임시저장 기능은 제거되었습니다.
-                // const savedDraft = JSON.parse(localStorage.getItem('unsaved_post_content'));
             }
-
+            
             const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
             
             container.innerHTML = `<div class="max-w-4xl mx-auto py-12">
@@ -371,10 +360,8 @@
                     </div>
                     <div>
                        <label for="refined_content" class="block text-lg font-bold text-black mb-3">본문 (Content)</label>
-                       <!-- CHANGED: Replaced Quill div with simple textarea -->
                        <textarea id="refined_content" name="refined_content" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500 font-mono" rows="25" placeholder="여기에 이야기를 작성하세요... (일반 텍스트만 저장됩니다)">${post.refined_content || ''}</textarea>
                     </div>
-                    <!-- FIXED: Added Delete Button from previous fix -->
                     <div class="flex justify-between items-center pt-5">
                         <div>
                             ${post.id ? `<button type="button" data-action="delete" class="px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">삭제하기</button>` : ''}
@@ -387,11 +374,8 @@
                 </form>
             </div>`;
             
-            // REMOVED: setTimeout and Quill initialization
             const writerForm = $('#writer-form');
             if (writerForm) {
-                // REMOVED: initQuillEditor() and setupAutoSave()
-                
                 writerForm.addEventListener('submit', (e) => { 
                     e.preventDefault(); 
                     if (e.submitter?.dataset.action) {
@@ -410,13 +394,7 @@
         }
         
         // --- Utilities & Helpers ---
-        
-        // REMOVED: initQuillEditor(initialContent)
-        // REMOVED: setupAutoSave()
-        // REMOVED: quillImageHandler()
-
         async function handlePostSave(action, button) {
-            // REMOVED: Quill check
             const originalBtnText = button.textContent;
             button.disabled = true;
             button.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
@@ -426,13 +404,10 @@
                 if (!title) throw new Error('제목은 필수 항목입니다.');
 
                 const status = action === 'publish' ? 'published' : 'draft';
-
-                // CHANGED: Read from textarea.value instead of Quill
                 const contentHTML = $('#refined_content').value; 
                 
                 let summary = $('#summary').value.trim();
                 if (!summary) {
-                    // Generate summary from plain text
                     const textContent = contentHTML.trim().replace(/\s+/g, ' ');
                     summary = textContent.slice(0, 150) + (textContent.length > 150 ? '...' : '');
                 }
@@ -449,40 +424,48 @@
                     slug, 
                     status, 
                     author_id: state.user.id, 
-                    refined_content: contentHTML, // This is now plain text
-                    category: $('#category').value, 
-                    summary 
+                    refined_content: contentHTML,
+                    summary,
+                    // --- FIX ---
+                    // The error "Could not find the 'category' column" happens because this 'category' field
+                    // is being sent, but the 'posts' table in your Supabase database doesn't have this column.
+                    // To fix this, you must add a 'category' column to your table.
+                    // See the explanation below the code editor for the SQL command to run.
+                    category: $('#category').value 
                 };
 
+                // When the code tries to insert or update with the 'postData' object,
+                // Supabase can't find where to put the 'category' value and throws the error.
                 const query = id ? supabase.from(DB_TABLE_NAME).update(postData).eq('id', id) : supabase.from(DB_TABLE_NAME).insert(postData);
                 const { data, error } = await query.select().single();
-                if (error) throw error;
 
-                // REMOVED: Auto-save cleanup logic
-                localStorage.removeItem('unsaved_post_content'); // Keep this just in case
+                if (error) {
+                    // Re-throw the detailed error from Supabase
+                    throw error;
+                }
+
+                localStorage.removeItem('unsaved_post_content');
 
                 showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
                 navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard');
 
             } catch (error) { 
                 console.error("Error saving post:", error);
+                // Display the actual error message from Supabase to the user
                 showToast(`저장 실패: ${error.message}`, true);
-            } finally { button.disabled = false; button.textContent = originalBtnText; }
+            } finally { 
+                button.disabled = false; 
+                button.textContent = originalBtnText; 
+            }
         }
 
-        // --- Kept Delete Functionality ---
         async function handlePostDelete(postId) {
             if (!postId) return;
-
             const confirmed = await showDeleteConfirmationModal('정말로 이 글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');
             
             if (confirmed) {
                 showToast('글을 삭제하는 중...');
-                const { error } = await supabase
-                    .from(DB_TABLE_NAME)
-                    .delete()
-                    .eq('id', postId);
-                    
+                const { error } = await supabase.from(DB_TABLE_NAME).delete().eq('id', postId);
                 if (error) {
                     console.error("Error deleting post:", error);
                     showToast(`삭제 실패: ${error.message}`, true);
@@ -530,8 +513,6 @@
                 $('#delete-btn-no').addEventListener('click', () => closeModal(false));
             });
         }
-        // --- End of Delete Functionality ---
-
 
         function showToast(message, isError = false) {
             const toast = document.createElement('div');
@@ -555,8 +536,6 @@
             return `<div class="flex justify-center items-center gap-4 mt-12"><a href="${prevUrl}" data-route class="px-4 py-2 text-sm rounded-full bg-gray-100 ${currentPage === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">이전</a><span class="text-sm font-medium text-gray-500">${currentPage} / ${totalPages}</span><a href="${nextUrl}" data-route class="px-4 py-2 text-sm rounded-full bg-gray-100 ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">다음</a></div>`;
         }
 
-        // REMOVED: convertToWebP (no image uploads)
-
         async function handleLogout() { await supabase.auth.signOut(); showToast('로그아웃되었습니다.'); navigateTo('/', true); }
         
         function showAuthModal() {
@@ -577,20 +556,6 @@
             $('#auth-modal').addEventListener('click', (e) => { if (e.target.id === 'auth-modal') closeModal(); });
         }
         
-        // This is for the draft modal, which is no longer used, but let's keep it in case
-        async function showConfirmationModal(message) {
-            return new Promise(resolve => {
-                if ($('#confirm-modal')) return;
-                const modalHtml = `<div id="confirm-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"><div id="confirm-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8"><p class="text-center text-black text-lg mb-8">${message}</p><div class="flex justify-center gap-4"><button id="confirm-btn-no" class="px-6 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">새로 작성</button><button id="confirm-btn-yes" class="px-6 py-2.5 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">불러오기</button></div></div></div>`;
-                $('#modal-container').innerHTML = modalHtml;
-                const closeModal = (result) => { anime({ targets: '#confirm-modal', opacity: 0, duration: 200, easing: 'easeInQuad', complete: () => { $('#modal-container').innerHTML = ''; resolve(result); }}); };
-                anime({ targets: '#confirm-modal', opacity: [0, 1], duration: 200 });
-                anime({ targets: '#confirm-modal-content', scale: [0.9, 1], opacity: [0, 1], duration: 300, easing: 'easeOutQuad' });
-                $('#confirm-btn-yes').addEventListener('click', () => closeModal(true));
-                $('#confirm-btn-no').addEventListener('click', () => closeModal(false));
-            });
-        }
-
         function updateMetaTags(post = null) {
             const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
             const description = post ? post.summary : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
@@ -621,7 +586,6 @@
                 if (routeTarget && routeTarget.getAttribute('href') !== '#') { e.preventDefault(); navigateTo(routeTarget.getAttribute('href')); return; }
                 
                 const actionTarget = e.target.closest('[data-action]');
-                // FIXED: Check that the button is NOT inside a form
                 if (actionTarget && !actionTarget.closest('form')) { 
                     e.preventDefault();
                     const action = actionTarget.dataset.action;
@@ -632,7 +596,6 @@
                             const category = actionTarget.dataset.category;
                             navigateTo(buildUrl('/', { page: 1, category: category })); 
                             break;
-                        // 'delete' action is now handled by the event listener in renderWriterView
                     }
                 }
             });
@@ -643,5 +606,4 @@
     </script>
 </body>
 </html>
-
 
