@@ -18,8 +18,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    
+    <!-- *** FIX: highlight.js MUST be loaded BEFORE quill.js *** -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     
     <!-- Add DOMPurify for XSS sanitization -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
@@ -54,7 +56,6 @@
             flex-direction: column;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            /* --- STYLE CHANGE: Base font size and line height adjusted --- */
             font-size: 16px;
             line-height: 1.75;
         }
@@ -65,15 +66,12 @@
         .app-view.active { display: block; }
 
         /* Prose styling for rendered HTML content */
-        /* --- STYLE CHANGE: Headings margin-top adjusted --- */
         .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2.25em; margin-bottom: 1em; }
-        /* --- STYLE CHANGE: Paragraph margin-bottom adjusted --- */
         .prose-custom p { margin-bottom: 1.5em; color: var(--text-secondary); }
         .prose-custom a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); transition: all 0.2s ease; }
         .prose-custom a:hover { background-color: var(--accent); color: white; border-bottom-color: transparent; }
         .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-style: italic; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; margin-bottom: 1.5em; }
         
-        /* --- STYLE CHANGE: List styles added/adjusted --- */
         .prose-custom ul { list-style-type: disc; margin-bottom: 1.5em; padding-left: 1.75em; }
         .prose-custom ol { list-style-type: decimal; margin-bottom: 1.5em; padding-left: 1.75em; }
         .prose-custom li { margin-bottom: 0.6em; }
@@ -82,7 +80,6 @@
         .prose-custom pre { background-color: #282c34; color: #abb2bf; padding: 1.5em; border-radius: 12px; margin-bottom: 1.5em; overflow-x: auto; }
         .prose-custom img { max-width: 100%; height: auto; border-radius: 12px; margin-top: 2em; margin-bottom: 2em; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
 
-        /* --- STYLE CHANGE: Table styles added --- */
         .prose-custom table {
             width: 100%;
             border-collapse: collapse;
@@ -110,7 +107,6 @@
             background-color: var(--bg-content-secondary);
         }
 
-
         .category-btn { 
             transition: all 0.2s ease-in-out; border-radius: 9999px; padding: 0.25rem 0.875rem;
             font-weight: 500; background-color: var(--bg-content-secondary); color: var(--text-primary); border: 1px solid transparent;
@@ -126,6 +122,7 @@
         #quill-editor { min-height: 400px; font-size: 16px; }
         .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; border-color: #D1D5DB; }
         .ql-container.ql-snow { border-radius: 0 0 12px 12px; border-color: #D1D5DB; }
+        #quill-editor-container { position: relative; } /* Added for loader positioning */
         
         /* Sticky footer for writer controls on mobile */
         @media (max-width: 639px) { /* Tailwind 'sm' breakpoint */
@@ -268,7 +265,6 @@
                 <div class="max-w-4xl mx-auto py-12 sm:py-16">
                     <div class="text-center mb-12"><h1 class="text-5xl sm:text-7xl font-black mb-4 text-black tracking-tighter">InsureLog</h1><p class="text-lg text-gray-500">AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.</p></div>
                     <div class="flex items-center justify-center gap-2 mb-8 flex-wrap">${categoryButtons}</div>
-                    <!-- --- STYLE CHANGE: List container updated for cleaner look --- -->
                     <div id="post-list-container" class="border border-gray-200/80 rounded-2xl overflow-hidden"></div>
                 </div>`;
             
@@ -281,7 +277,6 @@
             listContainer.innerHTML = `<div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
 
             const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 };
-            // --- LOGIC CHANGE: Added thumbnail_url to select query ---
             let query = supabase.from(DB_TABLE_NAME).select('id, title, slug, summary, category, thumbnail_url', { count: 'exact' });
             if (category && category !== '전체') query = query.eq('category', category);
             query = query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
@@ -297,10 +292,8 @@
             
             const safePosts = Array.isArray(posts) ? posts : [];
 
-            // --- STYLE CHANGE: Reworked post list item to include thumbnail and adjust layout/font size ---
             const postsHtml = safePosts.length > 0
                 ? `<div class="divide-y divide-gray-200/80">${safePosts.map(post => {
-                    // Logic to create thumbnail HTML if thumbnail_url exists
                     const thumbHtml = post.thumbnail_url
                         ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100"></div>`
                         : '';
@@ -348,7 +341,6 @@
                 .order('view_count', { ascending: false, nullsFirst: false })
                 .limit(5);
 
-            // --- STYLE CHANGE: Added text-base to popular post links ---
             let popularPostsHtml = popularPosts?.length > 0 ? `
                 <div class="mt-20">
                     <h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2>
@@ -362,7 +354,6 @@
             const { data: prevPost } = await supabase.from(DB_TABLE_NAME).select('title, slug').lt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: false }).limit(1).single();
             const { data: nextPost } = await supabase.from(DB_TABLE_NAME).select('title, slug').gt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: true }).limit(1).single();
 
-            // --- STYLE CHANGE: Changed h4 font size from text-lg to text-base ---
             const nextPrevLinksHtml = `
                 <nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10">
                     <div>${prevPost ? `<a href="/post/${prevPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prevPost.title}</h4></a>` : ''}</div>
@@ -377,7 +368,6 @@
                     <article>
                         <header class="mb-12">
                              <p class="text-sm font-semibold text-fuchsia-500 mb-3">${post.category || '미분류'}</p>
-                            <!-- --- STYLE CHANGE: Title font size reduced --- -->
                             <h1 class="text-3xl sm:text-4xl font-black text-black tracking-tighter !mt-0 !mb-4">${post.title}</h1>
                             <div class="flex items-center justify-between text-sm text-gray-500">
                                 <span>${new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
@@ -395,14 +385,21 @@
                 </div>`; 
             
             const safeContent = (typeof DOMPurify !== 'undefined') 
-                ? DOMPurify.sanitize(post.refined_content || '', { ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead"] }) // Allow tables
+                ? DOMPurify.sanitize(post.refined_content || '', { ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead"] }) 
                 : (post.refined_content || '');
             $('#post-content').innerHTML = safeContent;
 
             try { (adsbygoogle = window.adsbygoogle || []).push({}); } 
             catch (e) { console.warn("Adsense push error:", e); }
             
-            setTimeout(() => hljs.highlightAll(), 0);
+            // Highlight.js needs to be manually run on the new content
+            setTimeout(() => {
+                if (typeof hljs !== 'undefined') {
+                    $('#post-content').querySelectorAll('pre').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                }
+            }, 0);
         }
         
         async function renderDashboardView(container) {
@@ -456,10 +453,9 @@
                     </div>
                     <div>
                        <label for="quill-editor" class="block text-lg font-bold text-black mb-3">본문 (Content)</label>
-                       <!-- Add a temporary loader for the editor -->
                        <div id="quill-editor-container">
                            <div id="quill-editor"></div>
-                           <div id="quill-loader" class="absolute inset-0 bg-gray-50/50 flex items-center justify-center rounded-b-xl" style="display: none; min-height: 400px;">
+                           <div id="quill-loader" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-b-xl" style="display: none; min-height: 400px; z-index: 10;">
                                <div class="loader-spinner"></div>
                            </div>
                        </div>
@@ -476,23 +472,21 @@
                 </form>
             </div>`;
             
-            // --- LOGIC CHANGE: More robust Quill initialization ---
-            // Use a small delay to ensure the DOM is ready.
             const loader = $('#quill-loader');
             if(loader) loader.style.display = 'flex';
 
             setTimeout(() => {
-                const quill = initQuillEditor(); // Init editor, get instance
+                const quill = initQuillEditor(); 
                 if (quill && post.refined_content) {
                     try {
-                        quill.pasteHTML(post.refined_content); // Paste content
+                        quill.pasteHTML(post.refined_content); 
                     } catch (qError) {
                         console.error("Quill pasteHTML error:", qError);
-                        quill.setText('본문을 불러오는 중 오류가 발생했습니다. 수동으로 복사해주세요.');
+                        quill.setText('본문을 불러오는 중 오류가 발생했습니다.');
                     }
                 }
-                if(loader) loader.style.display = 'none'; // Hide loader
-            }, 50); // 50ms delay, more reliable than 0
+                if(loader) loader.style.display = 'none'; 
+            }, 50); 
 
             const writerForm = $('#writer-form');
             if (writerForm) {
@@ -513,7 +507,6 @@
             }
         }
         
-        // --- LOGIC CHANGE: Removed parameter, now returns the instance ---
         function initQuillEditor() {
             const editorElement = $('#quill-editor');
             if (!editorElement) {
@@ -521,9 +514,14 @@
                 return null;
             }
             
-            // Avoid re-initializing if it already exists
             if (Quill.find(editorElement)) {
                 return Quill.find(editorElement);
+            }
+
+            // Ensure hljs is available
+            if (typeof hljs === 'undefined') {
+                console.error("highlight.js is not loaded. Syntax module will fail.");
+                showToast("코드 하이라이팅 모듈 로드 실패.", true);
             }
 
             const quillInstance = new Quill(editorElement, {
@@ -541,11 +539,11 @@
                         ],
                         handlers: { 'image': quillImageHandler }
                     },
-                    syntax: true
+                    syntax: true // This should now work
                 }
             });
 
-            return quillInstance; // Return the instance
+            return quillInstance; 
         }
         
         function quillImageHandler() {
@@ -687,7 +685,6 @@
                     summary = textContent.slice(0, 150) + (textContent.length > 150 ? '...' : '');
                 }
 
-                // --- LOGIC CHANGE: Extract first image for thumbnail ---
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = contentHTML;
                 const firstImg = tempDiv.querySelector('img');
@@ -705,7 +702,7 @@
                     author_id: state.user.id, 
                     refined_content: contentHTML,
                     category: $('#category').value, 
-                    thumbnail_url: thumbnail_url // Add thumbnail_url to post data
+                    thumbnail_url: thumbnail_url 
                 };
 
                 const query = id ? supabase.from(DB_TABLE_NAME).update(postData).eq('id', id) : supabase.from(DB_TABLE_NAME).insert(postData);
@@ -796,7 +793,8 @@
         
         function showAuthModal() {
             if ($('#auth-modal')) return;
-            const modalHtml = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"><div id="auth-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8 relative"><button id="close-modal-btn" aria-label="인증 모달 닫기" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold text-center mb-4 text-black">로그인 또는 가입</h2><p class="text-center text-gray-500 mb-8">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-blue-500 focus:border-blue-500"><button type="submit" class="w-full px-4 py-3 font-bold rounded-lg transition bg-[#D946EF] text-white hover:bg-[#C026D3]">매직 링크 받기</button></form></div></div>`;
+            const modalHtml = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"><div id="auth-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8 relative"><button id="close-modal-btn" aria-label="인증 모달 
+닫기" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold text-center mb-4 text-black">로그인 또는 가입</h2><p class="text-center text-gray-500 mb-8">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-blue-500 focus:border-blue-500"><button type="submit" class="w-full px-4 py-3 font-bold rounded-lg transition bg-[#D946EF] text-white hover:bg-[#C026D3]">매직 링크 받기</button></form></div></div>`;
             $('#modal-container').innerHTML = modalHtml;
             const closeModal = () => anime({ targets: '#auth-modal', opacity: 0, duration: 200, easing: 'easeInQuad', complete: () => $('#modal-container').innerHTML = '' });
             anime({ targets: '#auth-modal', opacity: [0, 1], duration: 200 });
@@ -816,20 +814,36 @@
             const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
             const description = post ? post.summary : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
             const url = post ? `${SITE_URL}/post/${post.slug}` : SITE_URL;
-            const image = post ? post.thumbnail_url : null; // Add image for OG tag
+            const image = post ? post.thumbnail_url : null; 
             
             document.title = title; 
             $('meta[name="description"]')?.setAttribute('content', description); 
             $('meta[property="og:title"]')?.setAttribute('content', title);
             $('meta[property="og:description"]')?.setAttribute('content', description); 
             $('meta[property="og:url"]')?.setAttribute('content', url);
+            
+            const ogImageEl = $('meta[property="og:image"]');
             if (image) {
-                $('meta[property="og:image"]')?.setAttribute('content', image);
+                if (ogImageEl) {
+                    ogImageEl.setAttribute('content', image);
+                } else {
+                    const newOgImage = document.createElement('meta');
+                    newOgImage.setAttribute('property', 'og:image');
+                    newOgImage.setAttribute('content', image);
+                    document.head.appendChild(newOgImage);
+                }
+            } else if (ogImageEl) {
+                ogImageEl.remove(); // Remove og:image if post has no image
             }
         }
 
         // --- App Initialization ---
         function initializeApp() {
+            // Check for hljs just in case, before anything else
+            if (typeof hljs === 'undefined') {
+                console.error("CRITICAL: highlight.js is not loaded. Syntax highlighting will not work.");
+            }
+
             supabase.auth.onAuthStateChange((event, session) => {
                 const userJustChanged = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
