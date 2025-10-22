@@ -16,10 +16,7 @@
     <!-- Scripts & Stylesheets -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- REMOVED: Quill and Highlight.js CSS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -98,7 +95,7 @@
     <footer class="text-center py-8 px-4 border-t border-gray-200 mt-24">
         <p class="text-sm text-gray-600">
             © 2024 InsureLog. 
-            개발 및 문의사항은 <a href="https://www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-500 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
+            개발 및 문의사항은 <a href="https.www.threads.com/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-500 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
         </p>
     </footer>
     <div id="modal-container"></div>
@@ -111,30 +108,23 @@
         const SITE_URL = 'https://blogaipandoci.vercel.app';
         const SUPABASE_URL = 'https://ddehwkwzmmvcxltlplua.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
-        const IMAGE_BUCKET_NAME = 'thought-images';
+        // REMOVED: IMAGE_BUCKET_NAME (no longer used)
         
         const DB_TABLE_NAME = 'posts'; 
         const POSTS_PER_PAGE = 10;
         const CATEGORIES = ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"];
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // REMOVED: Quill and autoSaveTimer from state
         const state = { 
             user: null, 
-            quill: null, 
             isAuthReady: false, 
             currentCategory: '전체',
-            autoSaveTimer: null,
         };
         const $ = (selector) => document.querySelector(selector);
         
-        // --- Debounce Helper ---
-        function debounce(func, delay) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), delay);
-            };
-        }
+        // REMOVED: Debounce Helper (no longer needed)
 
         // --- Core App Logic ---
         function navigateTo(path, replace = false) {
@@ -147,9 +137,7 @@
         }
 
         async function switchView(viewId, callback) {
-            if (state.quill) { state.quill = null; }
-            if (state.autoSaveTimer) { clearTimeout(state.autoSaveTimer); state.autoSaveTimer = null; }
-
+            // REMOVED: Quill and autoSaveTimer cleanup
             const currentView = $('.app-view.active');
             if (currentView) {
                 await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
@@ -310,7 +298,8 @@
                                 ${editButtonHtml}
                             </div>
                         </header>
-                        <div id="post-content">${post.refined_content || ''}</div>
+                        <!-- CHANGED: Added whitespace-pre-wrap to respect line breaks -->
+                        <div id="post-content" class="whitespace-pre-wrap">${post.refined_content || ''}</div>
                     </article>
                     
                     <div class="my-16"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
@@ -325,7 +314,7 @@
             } catch (e) {
                 console.error("Adsense push error:", e);
             }
-            document.querySelectorAll('#post-content pre code').forEach(el => hljs.highlightElement(el));
+            // REMOVED: highlight.js call
         }
         
         async function renderDashboardView(container) {
@@ -353,9 +342,7 @@
 
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: CATEGORIES[0] };
 
-            // Logic Adjustment: Only check for drafts on new posts.
             if (slug) {
-                // Editing an existing post
                 const { data, error } = await supabase.from(DB_TABLE_NAME).select('*').eq('slug', slug).single();
                 if (error || !data || data.author_id !== state.user.id) {
                     console.error("Error fetching post to edit or auth error:", error);
@@ -365,17 +352,8 @@
                 }
                 post = data;
             } else {
-                // Creating a new post, check for a saved draft
-                const savedDraft = JSON.parse(localStorage.getItem('unsaved_post_content'));
-                if (savedDraft) {
-                    const restore = await showConfirmationModal('임시저장된 글이 있습니다. 불러오시겠습니까?');
-                    if (restore) {
-                        post = { ...post, ...savedDraft };
-                        showToast('임시저장된 글을 불러왔습니다.');
-                    }
-                    // Always remove draft after asking, regardless of choice.
-                    localStorage.removeItem('unsaved_post_content');
-                }
+                // 새 글 작성 시 임시저장 기능은 제거되었습니다.
+                // const savedDraft = JSON.parse(localStorage.getItem('unsaved_post_content'));
             }
 
             const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
@@ -388,114 +366,57 @@
                         <textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required>${post.title || ''}</textarea>
                     </div>
                     <div>
-                       <label class="block text-lg font-bold text-black mb-3">요약 (Summary)</label>
-                       <textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea>
+                       <label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label>
+                       <textarea id="summary" name="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea>
                     </div>
                     <div>
-                       <label class="block text-lg font-bold text-black mb-3">본문 (Content)</label>
-                       <div id="editor-container" class="bg-white border border-gray-300 rounded-xl overflow-hidden"><div id="editor"></div></div>
+                       <label for="refined_content" class="block text-lg font-bold text-black mb-3">본문 (Content)</label>
+                       <!-- CHANGED: Replaced Quill div with simple textarea -->
+                       <textarea id="refined_content" name="refined_content" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500 font-mono" rows="25" placeholder="여기에 이야기를 작성하세요... (일반 텍스트만 저장됩니다)">${post.refined_content || ''}</textarea>
                     </div>
-                    <div class="flex justify-end items-center space-x-3 pt-5">
-                        <button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button>
-                        <button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>
+                    <!-- FIXED: Added Delete Button from previous fix -->
+                    <div class="flex justify-between items-center pt-5">
+                        <div>
+                            ${post.id ? `<button type="button" data-action="delete" class="px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">삭제하기</button>` : ''}
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button>
+                            <button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>
+                        </div>
                     </div>
                 </form>
             </div>`;
             
-            // Use a short timeout to ensure the DOM is fully updated before initializing Quill
-            setTimeout(() => {
-                const writerForm = $('#writer-form');
-                if (writerForm) {
-                    initQuillEditor(post.refined_content || '');
-                    setupAutoSave();
-                    writerForm.addEventListener('submit', (e) => { 
-                        e.preventDefault(); 
-                        if (e.submitter?.dataset.action) {
-                            handlePostSave(e.submitter.dataset.action, e.submitter); 
-                        }
+            // REMOVED: setTimeout and Quill initialization
+            const writerForm = $('#writer-form');
+            if (writerForm) {
+                // REMOVED: initQuillEditor() and setupAutoSave()
+                
+                writerForm.addEventListener('submit', (e) => { 
+                    e.preventDefault(); 
+                    if (e.submitter?.dataset.action) {
+                        handlePostSave(e.submitter.dataset.action, e.submitter); 
+                    }
+                });
+
+                const deleteButton = writerForm.querySelector('[data-action="delete"]');
+                if (deleteButton) {
+                    deleteButton.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        handlePostDelete(post.id);
                     });
                 }
-            }, 0);
+            }
         }
         
         // --- Utilities & Helpers ---
-        function initQuillEditor(initialContent) {
-            if (!$('#editor')) return;
-            const toolbarOptions = [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], ['blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link', 'image'], ['clean']];
-            state.quill = new Quill('#editor', {
-                modules: {
-                    syntax: { highlight: text => hljs.highlightAuto(text).value },
-                    toolbar: { container: toolbarOptions, handlers: { 'image': quillImageHandler } },
-                    clipboard: { matchVisual: false }
-                },
-                theme: 'snow',
-                placeholder: '여기에 이야기를 작성하세요...'
-            });
-
-            if (initialContent) {
-                const delta = state.quill.clipboard.convert(initialContent);
-                state.quill.setContents(delta, 'silent');
-            }
-            
-            $('.ql-toolbar').style.cssText = 'border: none; border-bottom: 1px solid var(--border-color); padding: 12px;';
-            $('.ql-container').style.cssText = 'border: none; font-size: 18px;';
-            $('.ql-editor').style.cssText = 'min-height: 450px; padding: 2rem;';
-        }
-
-        function setupAutoSave() {
-            const form = $('#writer-form');
-            if (!form || !state.quill) return;
-            
-            const performAutoSave = () => {
-                // Auto-save should only work for NEW posts, not for existing ones.
-                if (!state.quill || $('#post-id').value) return;
-
-                const draft = {
-                    title: $('#title').value,
-                    summary: $('#summary').value,
-                    category: $('#category').value,
-                    refined_content: state.quill.root.innerHTML
-                };
-                localStorage.setItem('unsaved_post_content', JSON.stringify(draft));
-                showToast('자동 저장됨', false);
-            };
-
-            state.autoSaveTimer = debounce(performAutoSave, 3000); // Increased debounce time
-
-            state.quill.on('text-change', state.autoSaveTimer);
-            form.addEventListener('input', state.autoSaveTimer);
-        }
-
-        function quillImageHandler() {
-            if (!state.user) { showToast('이미지를 업로드하려면 로그인이 필요합니다.', true); return; }
-
-            const input = document.createElement('input');
-            input.setAttribute('type', 'file'); input.setAttribute('accept', 'image/*');
-            input.click();
-
-            input.onchange = async () => {
-                const file = input.files[0];
-                if (!file) return;
-                showToast('이미지 업로드 중...');
-                try {
-                    const webpBlob = await convertToWebP(file);
-                    const fileName = `${state.user.id}/${Date.now()}.webp`;
-                    const { error } = await supabase.storage.from(IMAGE_BUCKET_NAME).upload(fileName, webpBlob);
-                    if (error) throw error;
-                    const { data } = supabase.storage.from(IMAGE_BUCKET_NAME).getPublicUrl(fileName);
-                    const range = state.quill.getSelection(true);
-                    state.quill.insertEmbed(range.index, 'image', data.publicUrl);
-                    state.quill.setSelection(range.index + 1);
-                    showToast('업로드 완료!');
-                } catch (error) { 
-                    console.error("Image upload error:", error);
-                    showToast(`업로드 실패: ${error.message}`, true); 
-                }
-            };
-        }
+        
+        // REMOVED: initQuillEditor(initialContent)
+        // REMOVED: setupAutoSave()
+        // REMOVED: quillImageHandler()
 
         async function handlePostSave(action, button) {
-            if (!state.quill) { showToast('에디터가 초기화되지 않았습니다.', true); return; }
+            // REMOVED: Quill check
             const originalBtnText = button.textContent;
             button.disabled = true;
             button.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
@@ -506,12 +427,13 @@
 
                 const status = action === 'publish' ? 'published' : 'draft';
 
-                const contentHTML = state.quill.root.innerHTML;
+                // CHANGED: Read from textarea.value instead of Quill
+                const contentHTML = $('#refined_content').value; 
+                
                 let summary = $('#summary').value.trim();
                 if (!summary) {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = contentHTML;
-                    const textContent = tempDiv.textContent.trim().replace(/\s+/g, ' ');
+                    // Generate summary from plain text
+                    const textContent = contentHTML.trim().replace(/\s+/g, ' ');
                     summary = textContent.slice(0, 150) + (textContent.length > 150 ? '...' : '');
                 }
 
@@ -527,7 +449,7 @@
                     slug, 
                     status, 
                     author_id: state.user.id, 
-                    refined_content: contentHTML, 
+                    refined_content: contentHTML, // This is now plain text
                     category: $('#category').value, 
                     summary 
                 };
@@ -536,16 +458,8 @@
                 const { data, error } = await query.select().single();
                 if (error) throw error;
 
-                // --- FIX: Correctly clean up auto-save ---
-                localStorage.removeItem('unsaved_post_content');
-                if (state.autoSaveTimer) {
-                    // Remove listeners to stop the debounced function from being called again
-                    state.quill.off('text-change', state.autoSaveTimer);
-                    const writerForm = $('#writer-form');
-                    if(writerForm) {
-                       writerForm.removeEventListener('input', state.autoSaveTimer);
-                    }
-                }
+                // REMOVED: Auto-save cleanup logic
+                localStorage.removeItem('unsaved_post_content'); // Keep this just in case
 
                 showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
                 navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard');
@@ -555,6 +469,69 @@
                 showToast(`저장 실패: ${error.message}`, true);
             } finally { button.disabled = false; button.textContent = originalBtnText; }
         }
+
+        // --- Kept Delete Functionality ---
+        async function handlePostDelete(postId) {
+            if (!postId) return;
+
+            const confirmed = await showDeleteConfirmationModal('정말로 이 글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');
+            
+            if (confirmed) {
+                showToast('글을 삭제하는 중...');
+                const { error } = await supabase
+                    .from(DB_TABLE_NAME)
+                    .delete()
+                    .eq('id', postId);
+                    
+                if (error) {
+                    console.error("Error deleting post:", error);
+                    showToast(`삭제 실패: ${error.message}`, true);
+                } else {
+                    showToast('글이 삭제되었습니다.');
+                    navigateTo('/dashboard');
+                }
+            }
+        }
+        
+        async function showDeleteConfirmationModal(message) {
+            return new Promise(resolve => {
+                if ($('#delete-confirm-modal')) return;
+                const modalHtml = `
+                    <div id="delete-confirm-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+                        <div id="delete-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8">
+                            <p class="text-center text-black text-lg mb-8">${message}</p>
+                            <div class="flex justify-center gap-4">
+                                <button id="delete-btn-no" class="px-6 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">취소</button>
+                                <button id="delete-btn-yes" class="px-6 py-2.5 text-sm font-bold rounded-full bg-red-600 text-white hover:bg-red-700 transition">삭제 확인</button>
+                            </div>
+                        </div>
+                    </div>`;
+                $('#modal-container').innerHTML = modalHtml;
+                
+                const closeModal = (result) => {
+                    const modal = $('#delete-confirm-modal');
+                    if (!modal) return;
+                    anime({ 
+                        targets: modal, 
+                        opacity: 0, 
+                        duration: 200, 
+                        easing: 'easeInQuad', 
+                        complete: () => {
+                            $('#modal-container').innerHTML = ''; 
+                            resolve(result); 
+                        }
+                    });
+                };
+                
+                anime({ targets: '#delete-confirm-modal', opacity: [0, 1], duration: 200 });
+                anime({ targets: '#delete-modal-content', scale: [0.9, 1], opacity: [0, 1], duration: 300, easing: 'easeOutQuad' });
+                
+                $('#delete-btn-yes').addEventListener('click', () => closeModal(true));
+                $('#delete-btn-no').addEventListener('click', () => closeModal(false));
+            });
+        }
+        // --- End of Delete Functionality ---
+
 
         function showToast(message, isError = false) {
             const toast = document.createElement('div');
@@ -578,22 +555,8 @@
             return `<div class="flex justify-center items-center gap-4 mt-12"><a href="${prevUrl}" data-route class="px-4 py-2 text-sm rounded-full bg-gray-100 ${currentPage === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">이전</a><span class="text-sm font-medium text-gray-500">${currentPage} / ${totalPages}</span><a href="${nextUrl}" data-route class="px-4 py-2 text-sm rounded-full bg-gray-100 ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">다음</a></div>`;
         }
 
-        async function convertToWebP(file, maxWidth = 1200, quality = 0.8) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = e => {
-                    const img = new Image(); img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas'); let { width, height } = img;
-                        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
-                        canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas to Blob failed')), 'image/webp', quality);
-                    }; img.onerror = reject;
-                }; reader.onerror = reject;
-            });
-        }
-        
+        // REMOVED: convertToWebP (no image uploads)
+
         async function handleLogout() { await supabase.auth.signOut(); showToast('로그아웃되었습니다.'); navigateTo('/', true); }
         
         function showAuthModal() {
@@ -614,6 +577,7 @@
             $('#auth-modal').addEventListener('click', (e) => { if (e.target.id === 'auth-modal') closeModal(); });
         }
         
+        // This is for the draft modal, which is no longer used, but let's keep it in case
         async function showConfirmationModal(message) {
             return new Promise(resolve => {
                 if ($('#confirm-modal')) return;
@@ -655,8 +619,10 @@
             document.addEventListener('click', (e) => {
                 const routeTarget = e.target.closest('[data-route]');
                 if (routeTarget && routeTarget.getAttribute('href') !== '#') { e.preventDefault(); navigateTo(routeTarget.getAttribute('href')); return; }
+                
                 const actionTarget = e.target.closest('[data-action]');
-                if (actionTarget) {
+                // FIXED: Check that the button is NOT inside a form
+                if (actionTarget && !actionTarget.closest('form')) { 
                     e.preventDefault();
                     const action = actionTarget.dataset.action;
                     switch (action) {
@@ -666,6 +632,7 @@
                             const category = actionTarget.dataset.category;
                             navigateTo(buildUrl('/', { page: 1, category: category })); 
                             break;
+                        // 'delete' action is now handled by the event listener in renderWriterView
                     }
                 }
             });
