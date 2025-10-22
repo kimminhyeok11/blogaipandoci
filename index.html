@@ -56,25 +56,46 @@
             flex-direction: column;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            font-size: 16px;
-            line-height: 1.75;
+            
+            /* --- STYLE CHANGE: Mobile-first font size and line height --- */
+            font-size: 15px;
+            line-height: 1.7;
         }
+        /* --- STYLE CHANGE: Increase font size on desktop --- */
+        @media (min-width: 640px) {
+            body {
+                font-size: 16px;
+                line-height: 1.75;
+            }
+        }
+
+        /* --- STYLE CHANGE: Reduce main padding on mobile --- */
         main#app-container {
-            flex-grow: 1; 
+            padding-left: 0.75rem; /* 12px */
+            padding-right: 0.75rem;
         }
+        @media (min-width: 640px) {
+            main#app-container {
+                padding-left: 1rem; /* 16px */
+                padding-right: 1rem;
+            }
+        }
+
+
         .app-view { display: none; opacity: 0; }
         .app-view.active { display: block; }
 
         /* Prose styling for rendered HTML content */
-        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2.25em; margin-bottom: 1em; }
-        .prose-custom p { margin-bottom: 1.5em; color: var(--text-secondary); }
+        /* --- STYLE CHANGE: Reduced prose margins for density --- */
+        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
+        .prose-custom p { margin-bottom: 1.3em; color: var(--text-secondary); }
         .prose-custom a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); transition: all 0.2s ease; }
         .prose-custom a:hover { background-color: var(--accent); color: white; border-bottom-color: transparent; }
-        .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-style: italic; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; margin-bottom: 1.5em; }
+        .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-style: italic; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; margin-bottom: 1.3em; }
         
-        .prose-custom ul { list-style-type: disc; margin-bottom: 1.5em; padding-left: 1.75em; }
-        .prose-custom ol { list-style-type: decimal; margin-bottom: 1.5em; padding-left: 1.75em; }
-        .prose-custom li { margin-bottom: 0.6em; }
+        .prose-custom ul { list-style-type: disc; margin-bottom: 1.3em; padding-left: 1.75em; }
+        .prose-custom ol { list-style-type: decimal; margin-bottom: 1.3em; padding-left: 1.75em; }
+        .prose-custom li { margin-bottom: 0.5em; }
         .prose-custom ul ul, .prose-custom ol ol, .prose-custom ul ol, .prose-custom ol ul { margin-top: 0.5em; margin-bottom: 0.5em; margin-left: 1.25em; }
 
         .prose-custom pre { background-color: #282c34; color: #abb2bf; padding: 1.5em; border-radius: 12px; margin-bottom: 1.5em; overflow-x: auto; }
@@ -122,9 +143,9 @@
         #quill-editor { min-height: 400px; font-size: 16px; }
         .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; border-color: #D1D5DB; }
         .ql-container.ql-snow { border-radius: 0 0 12px 12px; border-color: #D1D5DB; }
-        #quill-editor-container { position: relative; } /* Added for loader positioning */
+        #quill-editor-container { position: relative; }
         
-        /* Sticky footer for writer controls on mobile */
+        /* --- STYLE CHANGE: Mobile-specific styles --- */
         @media (max-width: 639px) { /* Tailwind 'sm' breakpoint */
             .writer-controls-sticky {
                 position: sticky;
@@ -134,24 +155,36 @@
                 -webkit-backdrop-filter: blur(8px);
                 padding: 1rem;
                 border-top: 1px solid #E5E7EB;
-                margin-left: -1rem;
-                margin-right: -1rem;
+                margin-left: -0.75rem; /* Match new main padding */
+                margin-right: -0.75rem; /* Match new main padding */
                 padding-top: 1rem !important; 
                 z-index: 30;
+            }
+
+            /* --- STYLE CHANGE: Full-bleed images on mobile --- */
+            .prose-custom img {
+                width: calc(100% + 1.5rem); /* 100% + 2 * 0.75rem (main padding) */
+                margin-left: -0.75rem;
+                margin-right: -0.75rem;
+                max-width: none;
+                border-radius: 0;
+                box-shadow: none;
             }
         }
     </style>
 </head>
-<body>
+<!-- --- STYLE CHANGE: Reduced footer margin-top on mobile --- -->
+<body class="antialiased">
     <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center"><div class="loader-spinner"></div></div>
     <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-4"></header>
-    <main id="app-container" class="w-full px-4">
+    <main id="app-container" class="w-full">
         <div id="view-library" class="app-view"></div>
         <div id="view-post" class="app-view"></div>
         <div id="view-dashboard" class="app-view"></div>
         <div id="view-writer" class="app-view"></div>
     </main>
-    <footer class="text-center py-8 px-4 border-t border-gray-200 mt-24">
+    <!-- --- STYLE CHANGE: Reduced footer margin-top on mobile --- -->
+    <footer class="text-center py-8 px-4 border-t border-gray-200 mt-16 sm:mt-24">
         <p class="text-sm text-gray-600">
             © 2025 InsureLog. 
             개발 및 문의사항은 <a href="https://www.threads.net/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-500 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
@@ -243,8 +276,9 @@
         
         // --- View Rendering ---
         function renderNav() {
+            // --- STYLE CHANGE: Reduced padding on mobile (py-2 px-4) ---
             $('#main-nav-container').innerHTML = `
-                <nav class="w-full flex items-center justify-between py-3 px-5 bg-white/50 backdrop-blur-xl border border-black/10 rounded-3xl shadow-lg">
+                <nav class="w-full flex items-center justify-between py-2 px-4 sm:py-3 sm:px-5 bg-white/50 backdrop-blur-xl border border-black/10 rounded-3xl shadow-lg">
                     <a href="/" data-route class="font-black text-xl text-gray-900 tracking-tighter">InsureLog</a>
                     <div class="flex items-center space-x-3">
                         ${state.user 
@@ -261,8 +295,9 @@
                 `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}">${cat}</button>`
             ).join('');
             
+            // --- STYLE CHANGE: Reduced top/bottom padding on mobile (py-8) ---
             container.innerHTML = `
-                <div class="max-w-4xl mx-auto py-12 sm:py-16">
+                <div class="max-w-4xl mx-auto py-8 sm:py-16">
                     <div class="text-center mb-12"><h1 class="text-5xl sm:text-7xl font-black mb-4 text-black tracking-tighter">InsureLog</h1><p class="text-lg text-gray-500">AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.</p></div>
                     <div class="flex items-center justify-center gap-2 mb-8 flex-wrap">${categoryButtons}</div>
                     <div id="post-list-container" class="border border-gray-200/80 rounded-2xl overflow-hidden"></div>
@@ -295,7 +330,7 @@
             const postsHtml = safePosts.length > 0
                 ? `<div class="divide-y divide-gray-200/80">${safePosts.map(post => {
                     const thumbHtml = post.thumbnail_url
-                        ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100"></div>`
+                        ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100"></div>`
                         : '';
                     
                     return `
@@ -363,10 +398,11 @@
             updateMetaTags(post); 
             const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200">수정</a>` : ''; 
             
+            // --- STYLE CHANGE: Reduced top/bottom padding (py-8) and header margin (mb-8) on mobile ---
             container.innerHTML = `
-                <div class="max-w-4xl mx-auto py-12 sm:py-16">
+                <div class="max-w-4xl mx-auto py-8 sm:py-16">
                     <article>
-                        <header class="mb-12">
+                        <header class="mb-8 sm:mb-12">
                              <p class="text-sm font-semibold text-fuchsia-500 mb-3">${post.category || '미분류'}</p>
                             <h1 class="text-3xl sm:text-4xl font-black text-black tracking-tighter !mt-0 !mb-4">${post.title}</h1>
                             <div class="flex items-center justify-between text-sm text-gray-500">
@@ -392,7 +428,6 @@
             try { (adsbygoogle = window.adsbygoogle || []).push({}); } 
             catch (e) { console.warn("Adsense push error:", e); }
             
-            // Highlight.js needs to be manually run on the new content
             setTimeout(() => {
                 if (typeof hljs !== 'undefined') {
                     $('#post-content').querySelectorAll('pre').forEach((block) => {
@@ -404,7 +439,8 @@
         
         async function renderDashboardView(container) {
             updateMetaTags({ title: '대시보드' });
-            container.innerHTML = `<div class="max-w-4xl mx-auto py-12"><div class="flex justify-between items-center mb-10"><h1 class="text-4xl font-black text-black tracking-tighter">대시보드</h1><a href="/writer" data-route class="px-5 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">새 글 작성</a></div><div id="dashboard-post-list" class="bg-transparent space-y-2"><div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
+            // --- STYLE CHANGE: Reduced padding (py-8) and margin (mb-8) on mobile ---
+            container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><div class="flex justify-between items-center mb-8 sm:mb-10"><h1 class="text-4xl font-black text-black tracking-tighter">대시보드</h1><a href="/writer" data-route class="px-5 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">새 글 작성</a></div><div id="dashboard-post-list" class="bg-transparent space-y-2"><div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
             const listContainer = $('#dashboard-post-list');
             if (!state.user) return;
 
@@ -440,7 +476,8 @@
             
             const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
             
-            container.innerHTML = `<div class="max-w-4xl mx-auto py-12">
+            // --- STYLE CHANGE: Reduced padding (py-8) on mobile ---
+            container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12">
                 <form id="writer-form" class="space-y-8 sm:pb-0 pb-20">
                     <input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}">
                     <div>
@@ -518,7 +555,6 @@
                 return Quill.find(editorElement);
             }
 
-            // Ensure hljs is available
             if (typeof hljs === 'undefined') {
                 console.error("highlight.js is not loaded. Syntax module will fail.");
                 showToast("코드 하이라이팅 모듈 로드 실패.", true);
@@ -539,7 +575,7 @@
                         ],
                         handlers: { 'image': quillImageHandler }
                     },
-                    syntax: true // This should now work
+                    syntax: true 
                 }
             });
 
@@ -793,8 +829,7 @@
         
         function showAuthModal() {
             if ($('#auth-modal')) return;
-            const modalHtml = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"><div id="auth-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8 relative"><button id="close-modal-btn" aria-label="인증 모달 
-닫기" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold text-center mb-4 text-black">로그인 또는 가입</h2><p class="text-center text-gray-500 mb-8">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-blue-500 focus:border-blue-500"><button type="submit" class="w-full px-4 py-3 font-bold rounded-lg transition bg-[#D946EF] text-white hover:bg-[#C026D3]">매직 링크 받기</button></form></div></div>`;
+            const modalHtml = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"><div id="auth-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8 relative"><button id="close-modal-btn" aria-label="인증 모달 닫기" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold text-center mb-4 text-black">로그인 또는 가입</h2><p class="text-center text-gray-500 mb-8">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-blue-500 focus:border-blue-500"><button type="submit" class="w-full px-4 py-3 font-bold rounded-lg transition bg-[#D946EF] text-white hover:bg-[#C026D3]">매직 링크 받기</button></form></div></div>`;
             $('#modal-container').innerHTML = modalHtml;
             const closeModal = () => anime({ targets: '#auth-modal', opacity: 0, duration: 200, easing: 'easeInQuad', complete: () => $('#modal-container').innerHTML = '' });
             anime({ targets: '#auth-modal', opacity: [0, 1], duration: 200 });
@@ -833,13 +868,12 @@
                     document.head.appendChild(newOgImage);
                 }
             } else if (ogImageEl) {
-                ogImageEl.remove(); // Remove og:image if post has no image
+                ogImageEl.remove(); 
             }
         }
 
         // --- App Initialization ---
         function initializeApp() {
-            // Check for hljs just in case, before anything else
             if (typeof hljs === 'undefined') {
                 console.error("CRITICAL: highlight.js is not loaded. Syntax highlighting will not work.");
             }
