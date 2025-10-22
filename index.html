@@ -91,6 +91,30 @@
         #quill-editor { min-height: 400px; font-size: 16px; }
         .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; border-color: #D1D5DB; }
         .ql-container.ql-snow { border-radius: 0 0 12px 12px; border-color: #D1D5DB; }
+        
+        /* --- UX IMPROVEMENT --- */
+        /* Sticky footer for writer controls on mobile */
+        @media (max-width: 639px) { /* Tailwind 'sm' breakpoint */
+            .writer-controls-sticky {
+                position: sticky;
+                bottom: 0;
+                background-color: rgba(255, 255, 255, 0.95); /* Add blur for modern feel */
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                padding: 1rem;
+                border-top: 1px solid #E5E7EB; /* Lighter border */
+                
+                /* Counteract the 'px-4' on the main container to be full-width */
+                margin-left: -1rem;
+                margin-right: -1rem;
+                
+                /* Remove the original padding-top from the classlist */
+                padding-top: 1rem !important; 
+                
+                z-index: 30; /* Ensure it's above content */
+            }
+        }
+        /* --- END IMPROVEMENT --- */
     </style>
 </head>
 <body>
@@ -391,7 +415,10 @@
             const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
             
             container.innerHTML = `<div class="max-w-4xl mx-auto py-12">
-                <form id="writer-form" class="space-y-8">
+                <!-- --- UX IMPROVEMENT --- -->
+                <!-- Add padding-bottom on mobile to prevent sticky bar from overlapping content -->
+                <form id="writer-form" class="space-y-8 sm:pb-0 pb-20">
+                <!-- --- END IMPROVEMENT --- -->
                     <input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}">
                     <div>
                         <select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4">${categoryOptions}</select>
@@ -405,7 +432,10 @@
                        <label for="quill-editor" class="block text-lg font-bold text-black mb-3">본문 (Content)</label>
                        <div id="quill-editor"></div>
                     </div>
-                    <div class="flex justify-between items-center pt-5">
+                    <!-- --- UX IMPROVEMENT --- -->
+                    <!-- Add 'writer-controls-sticky' class and responsive padding 'pt-8 sm:pt-5' -->
+                    <div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky">
+                    <!-- --- END IMPROVEMENT --- -->
                         <div>
                             ${post.id ? `<button type="button" data-action="delete" class="px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">삭제하기</button>` : ''}
                         </div>
@@ -461,15 +491,33 @@
                     }
                 });
                 
-                // --- FINAL FIX (From original code) ---
-                // This is the most reliable method for loading existing HTML into Quill.
-                // 1. `convert()`: Transforms the raw HTML string into Quill's internal 'Delta' format, which Quill understands perfectly.
-                // 2. `setContents()`: Programmatically and safely sets the editor's content using the converted Delta.
-                // This avoids the instability of direct DOM manipulation (`innerHTML`) and `pasteHTML()`.
+                // --- FIX (CONTENT LOAD TIMING) ---
+                // The editor might not be fully initialized and ready to accept
+                // content immediately after the constructor (which happens in the
+                // main `setTimeout` in renderWriterView).
+                // We wrap the content-loading logic in another minimal `setTimeout`
+                // to push it to the end of the execution queue, ensuring the editor is ready.
                 if (initialContent) {
-                    const delta = state.quill.clipboard.convert(initialContent);
-                    state.quill.setContents(delta, 'silent');
+                    setTimeout(() => {
+                        if (state.quill) { // Check if quill still exists (e.g., view hasn't changed)
+                            try {
+                                // Use the preferred method from the original code
+                                const delta = state.quill.clipboard.convert(initialContent);
+                                state.quill.setContents(delta, 'silent');
+                            } catch (e) {
+                                console.error("Error loading content into Quill with convert/setContents:", e);
+                                // Fallback to pasteHTML which is also robust
+                                try {
+                                    state.quill.pasteHTML(initialContent);
+                                    console.log("Fallback to pasteHTML successful.");
+                                } catch (e2) {
+                                     console.error("Quill pasteHTML fallback also failed:", e2);
+                                }
+                            }
+                        }
+                    }, 0); // 0ms timeout defers execution until stack is clear
                 }
+                // --- END FIX ---
             }
         }
 
@@ -804,4 +852,5 @@
     </script>
 </body>
 </html>
+
 
