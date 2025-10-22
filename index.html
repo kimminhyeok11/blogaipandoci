@@ -462,10 +462,12 @@
             });
 
             if (initialContent) {
-                // FINAL BUG FIX: This is the most direct and reliable way.
-                // It sets the innerHTML of the editor's root element.
-                // This bypasses complex conversion APIs and solves timing issues.
-                quillInstance.root.innerHTML = initialContent;
+                // *** FIX ***
+                // Using pasteHTML is the recommended way to insert HTML.
+                // It ensures Quill's internal model is updated correctly
+                // and avoids the race condition of setting innerHTML
+                // before the editor's DOM is fully ready.
+                quillInstance.pasteHTML(initialContent);
             }
         }
         
@@ -776,5 +778,4 @@
     </script>
 </body>
 </html>
-
 
