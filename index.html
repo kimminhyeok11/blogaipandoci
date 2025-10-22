@@ -612,23 +612,44 @@
             };
         }
 
+        // --- START OF CODE FIX ---
         async function uploadImageToSupabase(file) {
             const isWebP = file.type === 'image/webp';
             const fileExtension = isWebP ? 'webp' : file.name.split('.').pop();
-            const filePath = `public/${state.user.id}/${Date.now()}.${fileExtension}`;
+            
+            // --- FIX: 파일 경로에서 'public/' 접두사를 제거했습니다. ---
+            // 'thought-images' 버킷 자체가 public으로 설정되어 있다고 가정하므로,
+            // 경로는 버킷 루트('/thought-images')에서부터 시작해야 합니다.
+            // 'public/'을 경로에 포함하면 URL이 '.../public/thought-images/public/...'이 되어버립니다.
+            // 기존 경로: `public/${state.user.id}/${Date.now()}.${fileExtension}`
+            const filePath = `${state.user.id}/${Date.now()}.${fileExtension}`;
             
             const { error: uploadError } = await supabase.storage
                 .from(IMAGE_BUCKET_NAME)
                 .upload(filePath, file);
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+                console.error('Supabase storage upload error:', uploadError);
+                // 이 오류가 계속 발생한다면, Supabase 대시보드에서 다음 사항을 확인하세요:
+                // 1. 'thought-images' 버킷이 'Public'으로 설정되어 있습니까?
+                // 2. 'thought-images' 버킷에 인증된(authenticated) 사용자가 'INSERT' 작업을 수행할 수 있도록
+                //    Storage 정책(Policy)이 올바르게 설정되어 있습니까?
+                //    (예: `(bucket_id = 'thought-images' AND (storage.foldername(name))[1] = auth.uid())`)
+                throw new Error(`업로드 실패: ${uploadError.message}`);
+            }
             
             const { data } = supabase.storage
                 .from(IMAGE_BUCKET_NAME)
-                .getPublicUrl(filePath);
+                .getPublicUrl(filePath); // 이제 이 경로는 업로드된 파일의 실제 경로와 일치합니다.
+                
+            if (!data || !data.publicUrl) {
+                console.error('getPublicUrl failed after upload. Data:', data);
+                throw new Error('파일 업로드 후 Public URL을 가져오는 데 실패했습니다.');
+            }
 
             return data.publicUrl;
         }
+        // --- END OF CODE FIX ---
         
         function getOrientation(file) {
             return new Promise((resolve) => {
@@ -918,5 +939,4 @@
     </script>
 </body>
 </html>
-
 
