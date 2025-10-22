@@ -169,15 +169,10 @@
         }
 
         async function switchView(viewId, callback) {
-            // --- FIX: Targeted Quill Cleanup ---
-            // The previous cleanup logic was too aggressive and could cause race conditions.
-            // This version ensures we only nullify the Quill instance when we are
-            // demonstrably navigating away from the view that contains the editor.
             const currentView = $('.app-view.active');
             if (currentView && currentView.querySelector('#quill-editor')) {
                 state.quill = null;
             }
-            // --- END FIX ---
             
             if (currentView) {
                 await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
@@ -205,12 +200,9 @@
             const path = window.location.pathname;
             const params = new URLSearchParams(window.location.search);
             
-            // --- Minor Fix (Routing) ---
-            // Use filter(Boolean) for cleaner parsing of path parts.
             const parts = path.split('/').filter(Boolean);
             const route = parts[0] || 'library';
             const param = parts[1] || null;
-            // --- END FIX ---
             
             if (!state.user && ['dashboard', 'writer'].includes(route)) {
                 showToast('이 기능을 사용하려면 로그인이 필요합니다.', true);
@@ -277,10 +269,7 @@
                 return;
             }
             
-            // --- FIX 8 (Error Handling) ---
-            // Ensure posts is a valid array, even if data is null/undefined.
             const safePosts = Array.isArray(posts) ? posts : [];
-            // --- END FIX ---
 
             const postsHtml = safePosts.length > 0
                 ? `<div class="space-y-1">${safePosts.map(post => `<a href="/post/${post.slug}" data-route class="block p-4 transition-all duration-300 rounded-2xl bg-transparent hover:bg-gray-50"><p class="text-sm font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-lg font-bold">${post.title}</h3><p class="text-sm text-gray-500 mt-1">${post.summary || ''}</p></a>`).join('')}</div>`
@@ -359,14 +348,10 @@
                     ${nextPrevLinksHtml}
                 </div>`; 
             
-            // --- FIX 2 (XSS) ---
-            // Sanitize HTML content before rendering to prevent XSS attacks.
-            // DOMPurify is loaded from CDN in the <head>.
             const safeContent = (typeof DOMPurify !== 'undefined') 
                 ? DOMPurify.sanitize(post.refined_content || '') 
-                : (post.refined_content || ''); // Fallback if DOMPurify fails to load
+                : (post.refined_content || '');
             $('#post-content').innerHTML = safeContent;
-            // --- END FIX ---
 
             try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error("Adsense push error:", e); }
             
@@ -412,10 +397,7 @@
             const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
             
             container.innerHTML = `<div class="max-w-4xl mx-auto py-12">
-                <!-- --- UX IMPROVEMENT --- -->
-                <!-- Add padding-bottom on mobile to prevent sticky bar from overlapping content -->
                 <form id="writer-form" class="space-y-8 sm:pb-0 pb-20">
-                <!-- --- END IMPROVEMENT --- -->
                     <input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}">
                     <div>
                         <select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4">${categoryOptions}</select>
@@ -429,10 +411,7 @@
                        <label for="quill-editor" class="block text-lg font-bold text-black mb-3">본문 (Content)</label>
                        <div id="quill-editor"></div>
                     </div>
-                    <!-- --- UX IMPROVEMENT --- -->
-                    <!-- Add 'writer-controls-sticky' class and responsive padding 'pt-8 sm:pt-5' -->
                     <div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky">
-                    <!-- --- END IMPROVEMENT --- -->
                         <div>
                             ${post.id ? `<button type="button" data-action="delete" class="px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">삭제하기</button>` : ''}
                         </div>
@@ -467,9 +446,22 @@
         
         // --- Editor and Image Handling Functions ---
 
+        // --- FIX: SIMPLIFIED QUILL INITIALIZATION ---
+        // This revised function simplifies how content is loaded into Quill.
+        // Instead of programmatically setting the content after initialization,
+        // we now set the innerHTML of the editor's container element *before*
+        // Quill is initialized. Quill's constructor will then automatically
+        // parse this HTML, which is a more robust and direct method.
         function initQuillEditor(initialContent) {
-            if ($('#quill-editor')) {
-                state.quill = new Quill('#quill-editor', {
+            const editorElement = $('#quill-editor');
+            if (editorElement) {
+                // Set the raw HTML content before Quill takes over.
+                if (initialContent) {
+                    editorElement.innerHTML = initialContent;
+                }
+                
+                // Initialize Quill. It will automatically process the existing HTML.
+                state.quill = new Quill(editorElement, {
                     theme: 'snow',
                     modules: {
                         toolbar: {
@@ -487,36 +479,9 @@
                         syntax: true
                     }
                 });
-                
-                // --- FIX (CONTENT LOAD TIMING) ---
-                // The editor might not be fully initialized and ready to accept
-                // content immediately after the constructor (which happens in the
-                // main `setTimeout` in renderWriterView).
-                // We wrap the content-loading logic in another minimal `setTimeout`
-                // to push it to the end of the execution queue, ensuring the editor is ready.
-                if (initialContent) {
-                    setTimeout(() => {
-                        if (state.quill) { // Check if quill still exists (e.g., view hasn't changed)
-                            try {
-                                // Use the preferred method from the original code
-                                const delta = state.quill.clipboard.convert(initialContent);
-                                state.quill.setContents(delta, 'silent');
-                            } catch (e) {
-                                console.error("Error loading content into Quill with convert/setContents:", e);
-                                // Fallback to pasteHTML which is also robust
-                                try {
-                                    state.quill.pasteHTML(initialContent);
-                                    console.log("Fallback to pasteHTML successful.");
-                                } catch (e2) {
-                                     console.error("Quill pasteHTML fallback also failed:", e2);
-                                }
-                            }
-                        }
-                    }, 0); // 0ms timeout defers execution until stack is clear
-                }
-                // --- END FIX ---
             }
         }
+        // --- END FIX ---
 
         function quillImageHandler() {
             const input = document.createElement('input');
@@ -532,10 +497,7 @@
                     state.quill.enable(false);
 
                     try {
-                        // --- FIX 5 (EXIF) ---
-                        // Use the modified function that handles EXIF orientation
                         const webpBlob = await convertToWebP(file);
-                        // --- END FIX ---
                         const publicUrl = await uploadImageToSupabase(webpBlob);
                         state.quill.enable(true);
                         state.quill.insertEmbed(range.index, 'image', publicUrl);
@@ -558,13 +520,6 @@
 
             if (uploadError) throw uploadError;
             
-            // --- NOTE (Ref: Critique 6) ---
-            // We are using getPublicUrl, which assumes the 'public/'
-            // folder within the 'thought-images' bucket is set to PUBLIC.
-            // If this bucket were private, we would need to use
-            // createSignedUrl(...) instead, which returns a temporary URL.
-            // --- END NOTE ---
-
             const { data } = supabase.storage
                 .from(IMAGE_BUCKET_NAME)
                 .getPublicUrl(filePath);
@@ -572,14 +527,11 @@
             return data.publicUrl;
         }
         
-        // --- FIX 5 (EXIF) ---
-        // Helper function to get EXIF orientation
         function getOrientation(file) {
             return new Promise((resolve) => {
-                // EXIF is loaded from CDN
                 if (typeof EXIF === 'undefined') {
                     console.warn('EXIF.js not loaded. Cannot check orientation.');
-                    resolve(1); // Default to 1 (normal)
+                    resolve(1);
                     return;
                 }
                 EXIF.getData(file, function() {
@@ -588,7 +540,6 @@
             });
         }
 
-        // Modified convertToWebP function to handle EXIF orientation
         function convertToWebP(file, quality = 0.8) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -605,8 +556,7 @@
                         let width = img.width;
                         let height = img.height;
 
-                        // Adjust canvas size based on orientation
-                        if (orientation >= 5 && orientation <= 8) { // 90 or 270 deg rotation
+                        if (orientation >= 5 && orientation <= 8) {
                             canvas.width = height;
                             canvas.height = width;
                         } else {
@@ -614,8 +564,6 @@
                             canvas.height = height;
                         }
 
-                        // Apply rotation/transform based on orientation
-                        // (From https://stackoverflow.com/questions/20600800/js-client-side-exif-orientation-correction)
                         switch (orientation) {
                             case 2: ctx.transform(-1, 0, 0, 1, width, 0); break;
                             case 3: ctx.transform(-1, 0, 0, -1, width, height); break;
@@ -627,10 +575,8 @@
                             default: ctx.transform(1, 0, 0, 1, 0, 0);
                         }
 
-                        // Draw the image onto the transformed context
                         ctx.drawImage(img, 0, 0);
                         
-                        // Get the blob
                         canvas.toBlob((blob) => {
                             if (blob) {
                                 resolve(blob);
@@ -644,8 +590,6 @@
                 reader.onerror = (error) => reject(error);
             });
         }
-        // --- END FIX ---
-
 
         async function handlePostSave(action, button) {
             if (!state.quill) {
@@ -752,10 +696,7 @@
         function buildUrl(path, params) {
             const url = new URL(path, SITE_URL);
             Object.entries(params).forEach(([key, value]) => { 
-                // --- FIX 7 (buildUrl Falsy Values) ---
-                // Allow '0' or false, but filter out undefined, null, empty string, and '전체'.
                 if (value !== undefined && value !== null && value !== '전체' && value !== '') {
-                // --- END FIX ---
                     url.searchParams.append(key, value); 
                 }
             });
@@ -763,10 +704,7 @@
         }
 
         function renderPaginationControls(currentPage, totalItems, basePath, params) {
-            // --- FIX 3 (Pagination) ---
-            // Default totalItems to 0 if it's not a valid number (e.g., undefined, null)
             const safeTotalItems = (typeof totalItems === 'number' && !isNaN(totalItems)) ? totalItems : 0;
-            // --- END FIX ---
             
             const totalPages = Math.ceil(safeTotalItems / POSTS_PER_PAGE);
             if (totalPages <= 1) return '';
@@ -823,8 +761,6 @@
             });
 
             document.addEventListener('click', (e) => {
-                // Note (Ref: Minor Critique): This only intercepts links WITH [data-route].
-                // External links (without data-route) will work normally.
                 const routeTarget = e.target.closest('[data-route]');
                 if (routeTarget && routeTarget.getAttribute('href') !== '#') { e.preventDefault(); navigateTo(routeTarget.getAttribute('href')); return; }
                 
@@ -849,4 +785,5 @@
     </script>
 </body>
 </html>
+
 
