@@ -21,6 +21,13 @@
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     
+    <!-- --- FIX 2 (XSS) & 5 (EXIF) --- -->
+    <!-- Add DOMPurify for XSS sanitization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+    <!-- Add exif-js for image orientation handling -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+    <!-- --- END FIX --- -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -138,7 +145,19 @@
         }
 
         async function switchView(viewId, callback) {
-            if (state.quill) { state.quill = null; }
+            // --- FIX 4 (Quill Cleanup) ---
+            // Explicitly clean up Quill instance before switching views
+            // to prevent potential memory/event listener leaks.
+            if (state.quill) {
+                const editorEl = document.querySelector('#quill-editor');
+                if (editorEl) {
+                    // Clear the contents of the Quill container
+                    editorEl.innerHTML = '';
+                }
+                state.quill = null; // Set state to null
+            }
+            // --- END FIX ---
+            
             const currentView = $('.app-view.active');
             if (currentView) {
                 await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
@@ -164,7 +183,13 @@
             if (!state.isAuthReady) return;
             const path = window.location.pathname;
             const params = new URLSearchParams(window.location.search);
-            const [_, route = 'library', param = null] = path.split('/');
+            
+            // --- Minor Fix (Routing) ---
+            // Use filter(Boolean) for cleaner parsing of path parts.
+            const parts = path.split('/').filter(Boolean);
+            const route = parts[0] || 'library';
+            const param = parts[1] || null;
+            // --- END FIX ---
             
             if (!state.user && ['dashboard', 'writer'].includes(route)) {
                 showToast('이 기능을 사용하려면 로그인이 필요합니다.', true);
@@ -230,9 +255,14 @@
                 listContainer.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러오는 중 오류가 발생했습니다.</p>`;
                 return;
             }
+            
+            // --- FIX 8 (Error Handling) ---
+            // Ensure posts is a valid array, even if data is null/undefined.
+            const safePosts = Array.isArray(posts) ? posts : [];
+            // --- END FIX ---
 
-            const postsHtml = posts.length > 0
-                ? `<div class="space-y-1">${posts.map(post => `<a href="/post/${post.slug}" data-route class="block p-4 transition-all duration-300 rounded-2xl bg-transparent hover:bg-gray-50"><p class="text-sm font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-lg font-bold">${post.title}</h3><p class="text-sm text-gray-500 mt-1">${post.summary || ''}</p></a>`).join('')}</div>`
+            const postsHtml = safePosts.length > 0
+                ? `<div class="space-y-1">${safePosts.map(post => `<a href="/post/${post.slug}" data-route class="block p-4 transition-all duration-300 rounded-2xl bg-transparent hover:bg-gray-50"><p class="text-sm font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-lg font-bold">${post.title}</h3><p class="text-sm text-gray-500 mt-1">${post.summary || ''}</p></a>`).join('')}</div>`
                 : `<div class="text-center py-20 text-gray-500"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${state.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
             
             listContainer.innerHTML = `${postsHtml}${renderPaginationControls(page, totalPosts, '/', { category })}`;
@@ -308,7 +338,14 @@
                     ${nextPrevLinksHtml}
                 </div>`; 
             
-            $('#post-content').innerHTML = post.refined_content || '';
+            // --- FIX 2 (XSS) ---
+            // Sanitize HTML content before rendering to prevent XSS attacks.
+            // DOMPurify is loaded from CDN in the <head>.
+            const safeContent = (typeof DOMPurify !== 'undefined') 
+                ? DOMPurify.sanitize(post.refined_content || '') 
+                : (post.refined_content || ''); // Fallback if DOMPurify fails to load
+            $('#post-content').innerHTML = safeContent;
+            // --- END FIX ---
 
             try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error("Adsense push error:", e); }
             
@@ -328,7 +365,7 @@
                 listContainer.innerHTML = '<p class="text-center text-gray-400">글 목록을 불러오는 데 실패했습니다.</p>'; 
                 return; 
             }
-            if (posts.length === 0) { listContainer.innerHTML = '<p class="text-center text-gray-400 py-10">작성한 글이 없습니다.</p>'; return; }
+            if (!posts || posts.length === 0) { listContainer.innerHTML = '<p class="text-center text-gray-400 py-10">작성한 글이 없습니다.</p>'; return; }
             
             const postsHtml = `<ul class="w-full">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-black hover:text-[#D946EF]">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black">수정</a></li>`).join('')}</ul>`;
             listContainer.innerHTML = postsHtml;
@@ -424,7 +461,7 @@
                     }
                 });
                 
-                // --- FINAL FIX ---
+                // --- FINAL FIX (From original code) ---
                 // This is the most reliable method for loading existing HTML into Quill.
                 // 1. `convert()`: Transforms the raw HTML string into Quill's internal 'Delta' format, which Quill understands perfectly.
                 // 2. `setContents()`: Programmatically and safely sets the editor's content using the converted Delta.
@@ -450,7 +487,10 @@
                     state.quill.enable(false);
 
                     try {
+                        // --- FIX 5 (EXIF) ---
+                        // Use the modified function that handles EXIF orientation
                         const webpBlob = await convertToWebP(file);
+                        // --- END FIX ---
                         const publicUrl = await uploadImageToSupabase(webpBlob);
                         state.quill.enable(true);
                         state.quill.insertEmbed(range.index, 'image', publicUrl);
@@ -472,6 +512,13 @@
                 .upload(filePath, file);
 
             if (uploadError) throw uploadError;
+            
+            // --- NOTE (Ref: Critique 6) ---
+            // We are using getPublicUrl, which assumes the 'public/'
+            // folder within the 'thought-images' bucket is set to PUBLIC.
+            // If this bucket were private, we would need to use
+            // createSignedUrl(...) instead, which returns a temporary URL.
+            // --- END NOTE ---
 
             const { data } = supabase.storage
                 .from(IMAGE_BUCKET_NAME)
@@ -479,20 +526,66 @@
 
             return data.publicUrl;
         }
+        
+        // --- FIX 5 (EXIF) ---
+        // Helper function to get EXIF orientation
+        function getOrientation(file) {
+            return new Promise((resolve) => {
+                // EXIF is loaded from CDN
+                if (typeof EXIF === 'undefined') {
+                    console.warn('EXIF.js not loaded. Cannot check orientation.');
+                    resolve(1); // Default to 1 (normal)
+                    return;
+                }
+                EXIF.getData(file, function() {
+                    resolve(EXIF.getTag(this, 'Orientation') || 1);
+                });
+            });
+        }
 
+        // Modified convertToWebP function to handle EXIF orientation
         function convertToWebP(file, quality = 0.8) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = (event) => {
+                reader.onload = async (event) => {
                     const img = new Image();
                     img.src = event.target.result;
-                    img.onload = () => {
+                    
+                    img.onload = async () => {
+                        const orientation = await getOrientation(file);
                         const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
                         const ctx = canvas.getContext('2d');
+
+                        let width = img.width;
+                        let height = img.height;
+
+                        // Adjust canvas size based on orientation
+                        if (orientation >= 5 && orientation <= 8) { // 90 or 270 deg rotation
+                            canvas.width = height;
+                            canvas.height = width;
+                        } else {
+                            canvas.width = width;
+                            canvas.height = height;
+                        }
+
+                        // Apply rotation/transform based on orientation
+                        // (From https://stackoverflow.com/questions/20600800/js-client-side-exif-orientation-correction)
+                        switch (orientation) {
+                            case 2: ctx.transform(-1, 0, 0, 1, width, 0); break;
+                            case 3: ctx.transform(-1, 0, 0, -1, width, height); break;
+                            case 4: ctx.transform(1, 0, 0, -1, 0, height); break;
+                            case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+                            case 6: ctx.transform(0, 1, -1, 0, height, 0); break;
+                            case 7: ctx.transform(0, -1, -1, 0, height, width); break;
+                            case 8: ctx.transform(0, -1, 1, 0, 0, width); break;
+                            default: ctx.transform(1, 0, 0, 1, 0, 0);
+                        }
+
+                        // Draw the image onto the transformed context
                         ctx.drawImage(img, 0, 0);
+                        
+                        // Get the blob
                         canvas.toBlob((blob) => {
                             if (blob) {
                                 resolve(blob);
@@ -501,11 +594,13 @@
                             }
                         }, 'image/webp', quality);
                     };
-                    img.onerror = (error) => reject(error);
+                    img.onerror = (error) => reject(new Error('Image failed to load'));
                 };
                 reader.onerror = (error) => reject(error);
             });
         }
+        // --- END FIX ---
+
 
         async function handlePostSave(action, button) {
             if (!state.quill) {
@@ -611,12 +706,24 @@
 
         function buildUrl(path, params) {
             const url = new URL(path, SITE_URL);
-            Object.entries(params).forEach(([key, value]) => { if (value && value !== '전체') url.searchParams.append(key, value); });
+            Object.entries(params).forEach(([key, value]) => { 
+                // --- FIX 7 (buildUrl Falsy Values) ---
+                // Allow '0' or false, but filter out undefined, null, empty string, and '전체'.
+                if (value !== undefined && value !== null && value !== '전체' && value !== '') {
+                // --- END FIX ---
+                    url.searchParams.append(key, value); 
+                }
+            });
             return url.pathname + url.search;
         }
 
         function renderPaginationControls(currentPage, totalItems, basePath, params) {
-            const totalPages = Math.ceil(totalItems / POSTS_PER_PAGE);
+            // --- FIX 3 (Pagination) ---
+            // Default totalItems to 0 if it's not a valid number (e.g., undefined, null)
+            const safeTotalItems = (typeof totalItems === 'number' && !isNaN(totalItems)) ? totalItems : 0;
+            // --- END FIX ---
+            
+            const totalPages = Math.ceil(safeTotalItems / POSTS_PER_PAGE);
             if (totalPages <= 1) return '';
             const prevUrl = currentPage > 1 ? buildUrl(basePath, { ...params, page: currentPage - 1 }) : '#';
             const nextUrl = currentPage < totalPages ? buildUrl(basePath, { ...params, page: currentPage + 1 }) : '#';
@@ -671,6 +778,8 @@
             });
 
             document.addEventListener('click', (e) => {
+                // Note (Ref: Minor Critique): This only intercepts links WITH [data-route].
+                // External links (without data-route) will work normally.
                 const routeTarget = e.target.closest('[data-route]');
                 if (routeTarget && routeTarget.getAttribute('href') !== '#') { e.preventDefault(); navigateTo(routeTarget.getAttribute('href')); return; }
                 
@@ -695,5 +804,4 @@
     </script>
 </body>
 </html>
-
 
