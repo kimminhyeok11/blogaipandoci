@@ -330,23 +330,24 @@
             const postsHtml = safePosts.length > 0
                 ? `<div class="divide-y divide-gray-200/80">${safePosts.map(post => {
                     
-                    // --- START OF CODE FIX (Alignment) ---
-                    // 1. 썸네일이 없는 경우 placeholder 대신 빈 문자열을 반환 (원상 복구)
                     const thumbHtml = post.thumbnail_url
                         ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100"></div>`
-                        : ''; // 썸네일 없으면 아무것도 렌더링하지 않음
+                        : '';
                     
-                    // 2. flex 컨테이너의 정렬을 'items-start' (상단 정렬)에서 'items-center' (수직 중앙 정렬)로 변경
+                    // --- START OF FONT SIZE FIX ---
+                    // 폰트 크기 수정: 
+                    // 카테고리/요약: text-sm (14px) -> text-xs (12px)
+                    // 제목: text-base (16px) -> text-sm (14px)
                     return `
                     <a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80">
                         ${thumbHtml}
                         <div class="flex-grow">
-                            <p class="text-sm font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p>
-                            <h3 class="text-gray-800 text-base font-bold">${post.title}</h3>
-                            <p class="text-sm text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p>
+                            <p class="text-xs font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p>
+                            <h3 class="text-gray-800 text-sm font-bold">${post.title}</h3>
+                            <p class="text-xs text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p>
                         </div>
                     </a>`;
-                    // --- END OF CODE FIX (Alignment) ---
+                    // --- END OF FONT SIZE FIX ---
 
                 }).join('')}</div>`
                 : `<div class="text-center py-20 text-gray-500"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${state.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
@@ -550,7 +551,7 @@
             }
         }
         
-        // --- START OF CODE FIX (Editor Stability & Paste) ---
+        // --- START OF CODE FIX (Quill Paste) ---
         function initQuillEditor() {
             const editorElement = $('#quill-editor');
             if (!editorElement) {
@@ -580,23 +581,23 @@
                             ['clean']
                         ],
                         handlers: { 'image': quillImageHandler }
-                    },
-                    // 'syntax: true' 모듈은 안정성을 위해 제거된 상태 유지
-                    clipboard: {
-                        // --- FIX for Paste Issue ---
-                        // matchVisual: true 는 클립보드의 HTML(<ul>, <li> 등)을 무시하고
-                        // 보이는 대로 형식을 추측하려다 리스트에서 실패합니다.
-                        // false로 설정하면 Quill이 내장 HTML 매처를 사용해
-                        // 리스트, 인용구 등을 올바르게 파싱합니다.
-                        matchVisual: false
-                        // --- END OF FIX ---
                     }
+                    // --- FIX for Paste Issue ---
+                    // 'clipboard' 모듈 설정을 아예 제거합니다.
+                    // 이렇게 하면 Quill이 기본적으로 내장된 HTML <-> Delta 변환기를 사용하여
+                    // <ul>, <li>, <blockquote> 등의 태그를
+                    // 훨씬 더 안정적으로 파싱(해석)합니다.
+                    // 
+                    // clipboard: {
+                    //    matchVisual: false 
+                    // } 
+                    // --- END OF FIX ---
                 }
             });
-            // --- END OF CODE FIX (Editor Stability & Paste) ---
 
             return quillInstance; 
         }
+        // --- END OF CODE FIX (Quill Paste) ---
         
         function quillImageHandler() {
             const quill = this.quill;
@@ -943,4 +944,5 @@
     </script>
 </body>
 </html>
+
 
