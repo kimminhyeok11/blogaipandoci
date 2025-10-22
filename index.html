@@ -127,7 +127,7 @@
         };
         const $ = (selector) => document.querySelector(selector);
         
-        // --- Core App Logic --- (No changes in this section)
+        // --- Core App Logic ---
         function navigateTo(path, replace = false) {
             const newPath = path || '/';
             const historyAction = replace ? 'replaceState' : 'pushState';
@@ -183,7 +183,7 @@
             }
         }
         
-        // --- View Rendering --- (No changes in this section)
+        // --- View Rendering ---
         function renderNav() {
             $('#main-nav-container').innerHTML = `
                 <nav class="w-full flex items-center justify-between py-3 px-5 bg-white/50 backdrop-blur-xl border border-black/10 rounded-3xl shadow-lg">
@@ -424,13 +424,14 @@
                     }
                 });
                 
-                // --- FIX ---
-                // The previous method `state.quill.root.innerHTML = initialContent` was unreliable.
-                // It directly manipulated the DOM, bypassing Quill's internal model, which caused the issue.
-                // `pasteHTML()` is the correct, robust way to load existing HTML content.
-                // It uses Quill's own conversion tools to safely interpret the HTML and load it.
+                // --- FINAL FIX ---
+                // This is the most reliable method for loading existing HTML into Quill.
+                // 1. `convert()`: Transforms the raw HTML string into Quill's internal 'Delta' format, which Quill understands perfectly.
+                // 2. `setContents()`: Programmatically and safely sets the editor's content using the converted Delta.
+                // This avoids the instability of direct DOM manipulation (`innerHTML`) and `pasteHTML()`.
                 if (initialContent) {
-                    state.quill.pasteHTML(initialContent);
+                    const delta = state.quill.clipboard.convert(initialContent);
+                    state.quill.setContents(delta, 'silent');
                 }
             }
         }
@@ -556,7 +557,7 @@
             } finally { button.disabled = false; button.textContent = originalBtnText; }
         }
 
-        // --- Other Utilities & Auth --- (No changes in this section)
+        // --- Other Utilities & Auth ---
         async function handlePostDelete(postId) {
             if (!postId) return;
             const confirmed = await showDeleteConfirmationModal('정말로 이 글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');
