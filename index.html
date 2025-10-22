@@ -54,8 +54,9 @@
             flex-direction: column;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            font-size: 17px;
-            line-height: 1.8;
+            /* --- STYLE CHANGE: Base font size and line height adjusted --- */
+            font-size: 16px;
+            line-height: 1.75;
         }
         main#app-container {
             flex-grow: 1; 
@@ -64,15 +65,51 @@
         .app-view.active { display: block; }
 
         /* Prose styling for rendered HTML content */
-        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
-        .prose-custom p { margin-bottom: 1.25em; color: var(--text-secondary); }
+        /* --- STYLE CHANGE: Headings margin-top adjusted --- */
+        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2.25em; margin-bottom: 1em; }
+        /* --- STYLE CHANGE: Paragraph margin-bottom adjusted --- */
+        .prose-custom p { margin-bottom: 1.5em; color: var(--text-secondary); }
         .prose-custom a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); transition: all 0.2s ease; }
         .prose-custom a:hover { background-color: var(--accent); color: white; border-bottom-color: transparent; }
-        .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-style: italic; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; margin-bottom: 1.25em; }
-        .prose-custom ul, .prose-custom ol { margin-bottom: 1.25em; padding-left: 1.5em; }
-        .prose-custom li { margin-bottom: 0.5em; }
+        .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-style: italic; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; margin-bottom: 1.5em; }
+        
+        /* --- STYLE CHANGE: List styles added/adjusted --- */
+        .prose-custom ul { list-style-type: disc; margin-bottom: 1.5em; padding-left: 1.75em; }
+        .prose-custom ol { list-style-type: decimal; margin-bottom: 1.5em; padding-left: 1.75em; }
+        .prose-custom li { margin-bottom: 0.6em; }
+        .prose-custom ul ul, .prose-custom ol ol, .prose-custom ul ol, .prose-custom ol ul { margin-top: 0.5em; margin-bottom: 0.5em; margin-left: 1.25em; }
+
         .prose-custom pre { background-color: #282c34; color: #abb2bf; padding: 1.5em; border-radius: 12px; margin-bottom: 1.5em; overflow-x: auto; }
         .prose-custom img { max-width: 100%; height: auto; border-radius: 12px; margin-top: 2em; margin-bottom: 2em; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+
+        /* --- STYLE CHANGE: Table styles added --- */
+        .prose-custom table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2em;
+            margin-bottom: 2em;
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .prose-custom th, .prose-custom td {
+            border: 1px solid var(--border-color);
+            padding: 0.75em 1em;
+            text-align: left;
+        }
+        .prose-custom th {
+            background-color: var(--bg-content-secondary);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .prose-custom tr:nth-child(odd) {
+            background-color: var(--bg-main);
+        }
+        .prose-custom tr:nth-child(even) {
+            background-color: var(--bg-content-secondary);
+        }
+
 
         .category-btn { 
             transition: all 0.2s ease-in-out; border-radius: 9999px; padding: 0.25rem 0.875rem;
@@ -231,7 +268,8 @@
                 <div class="max-w-4xl mx-auto py-12 sm:py-16">
                     <div class="text-center mb-12"><h1 class="text-5xl sm:text-7xl font-black mb-4 text-black tracking-tighter">InsureLog</h1><p class="text-lg text-gray-500">AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.</p></div>
                     <div class="flex items-center justify-center gap-2 mb-8 flex-wrap">${categoryButtons}</div>
-                    <div id="post-list-container" class="space-y-1"></div>
+                    <!-- --- STYLE CHANGE: List container updated for cleaner look --- -->
+                    <div id="post-list-container" class="border border-gray-200/80 rounded-2xl overflow-hidden"></div>
                 </div>`;
             
             await renderPostList(page, category);
@@ -243,12 +281,13 @@
             listContainer.innerHTML = `<div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
 
             const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 };
-            let query = supabase.from(DB_TABLE_NAME).select('id, title, slug, summary, category', { count: 'exact' });
+            // --- LOGIC CHANGE: Added thumbnail_url to select query ---
+            let query = supabase.from(DB_TABLE_NAME).select('id, title, slug, summary, category, thumbnail_url', { count: 'exact' });
             if (category && category !== '전체') query = query.eq('category', category);
             query = query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
 
             const { data: posts, error, count } = await query;
-            const totalPosts = count ?? 0; // Ensure totalPosts is always a number
+            const totalPosts = count ?? 0;
 
             if (error) {
                 console.error("Error fetching post list:", error);
@@ -258,8 +297,24 @@
             
             const safePosts = Array.isArray(posts) ? posts : [];
 
+            // --- STYLE CHANGE: Reworked post list item to include thumbnail and adjust layout/font size ---
             const postsHtml = safePosts.length > 0
-                ? `<div class="space-y-1">${safePosts.map(post => `<a href="/post/${post.slug}" data-route class="block p-4 transition-all duration-300 rounded-2xl bg-transparent hover:bg-gray-50"><p class="text-sm font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-lg font-bold">${post.title}</h3><p class="text-sm text-gray-500 mt-1">${post.summary || ''}</p></a>`).join('')}</div>`
+                ? `<div class="divide-y divide-gray-200/80">${safePosts.map(post => {
+                    // Logic to create thumbnail HTML if thumbnail_url exists
+                    const thumbHtml = post.thumbnail_url
+                        ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100"></div>`
+                        : '';
+                    
+                    return `
+                    <a href="/post/${post.slug}" data-route class="flex items-start p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80">
+                        ${thumbHtml}
+                        <div class="flex-grow">
+                            <p class="text-sm font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p>
+                            <h3 class="text-gray-800 text-base font-bold">${post.title}</h3>
+                            <p class="text-sm text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p>
+                        </div>
+                    </a>`;
+                }).join('')}</div>`
                 : `<div class="text-center py-20 text-gray-500"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${state.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
             
             listContainer.innerHTML = `${postsHtml}${renderPaginationControls(page, totalPosts, '/', { category })}`;
@@ -276,7 +331,6 @@
                 return; 
             } 
             
-            // Increment view count (fire-and-forget)
             void (async () => { 
                 const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; 
                 if (!viewedPosts.includes(post.id)) { 
@@ -294,12 +348,13 @@
                 .order('view_count', { ascending: false, nullsFirst: false })
                 .limit(5);
 
+            // --- STYLE CHANGE: Added text-base to popular post links ---
             let popularPostsHtml = popularPosts?.length > 0 ? `
                 <div class="mt-20">
                     <h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2>
                     <div class="border-t border-gray-200">${popularPosts.map(p => `
                         <a href="/post/${p.slug}" data-route class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50">
-                            <h4 class="font-semibold text-gray-800">${p.title}</h4>
+                            <h4 class="font-semibold text-gray-800 text-base">${p.title}</h4>
                         </a>`).join('')}
                     </div>
                 </div>` : '';
@@ -307,10 +362,11 @@
             const { data: prevPost } = await supabase.from(DB_TABLE_NAME).select('title, slug').lt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: false }).limit(1).single();
             const { data: nextPost } = await supabase.from(DB_TABLE_NAME).select('title, slug').gt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: true }).limit(1).single();
 
+            // --- STYLE CHANGE: Changed h4 font size from text-lg to text-base ---
             const nextPrevLinksHtml = `
                 <nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10">
-                    <div>${prevPost ? `<a href="/post/${prevPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-lg">${prevPost.title}</h4></a>` : ''}</div>
-                    <div class="text-left md:text-right">${nextPost ? `<a href="/post/${nextPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-lg">${nextPost.title}</h4></a>` : ''}</div>
+                    <div>${prevPost ? `<a href="/post/${prevPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prevPost.title}</h4></a>` : ''}</div>
+                    <div class="text-left md:text-right">${nextPost ? `<a href="/post/${nextPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${nextPost.title}</h4></a>` : ''}</div>
                 </nav>`;
             
             updateMetaTags(post); 
@@ -321,7 +377,8 @@
                     <article>
                         <header class="mb-12">
                              <p class="text-sm font-semibold text-fuchsia-500 mb-3">${post.category || '미분류'}</p>
-                            <h1 class="text-4xl sm:text-5xl font-black text-black tracking-tighter !mt-0 !mb-4">${post.title}</h1>
+                            <!-- --- STYLE CHANGE: Title font size reduced --- -->
+                            <h1 class="text-3xl sm:text-4xl font-black text-black tracking-tighter !mt-0 !mb-4">${post.title}</h1>
                             <div class="flex items-center justify-between text-sm text-gray-500">
                                 <span>${new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                 ${editButtonHtml}
@@ -338,7 +395,7 @@
                 </div>`; 
             
             const safeContent = (typeof DOMPurify !== 'undefined') 
-                ? DOMPurify.sanitize(post.refined_content || '') 
+                ? DOMPurify.sanitize(post.refined_content || '', { ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead"] }) // Allow tables
                 : (post.refined_content || '');
             $('#post-content').innerHTML = safeContent;
 
@@ -399,7 +456,13 @@
                     </div>
                     <div>
                        <label for="quill-editor" class="block text-lg font-bold text-black mb-3">본문 (Content)</label>
-                       <div id="quill-editor"></div>
+                       <!-- Add a temporary loader for the editor -->
+                       <div id="quill-editor-container">
+                           <div id="quill-editor"></div>
+                           <div id="quill-loader" class="absolute inset-0 bg-gray-50/50 flex items-center justify-center rounded-b-xl" style="display: none; min-height: 400px;">
+                               <div class="loader-spinner"></div>
+                           </div>
+                       </div>
                     </div>
                     <div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky">
                         <div>
@@ -413,8 +476,23 @@
                 </form>
             </div>`;
             
-            // The setTimeout is still useful to ensure the DOM is painted.
-            setTimeout(() => initQuillEditor(post.refined_content || ''), 0);
+            // --- LOGIC CHANGE: More robust Quill initialization ---
+            // Use a small delay to ensure the DOM is ready.
+            const loader = $('#quill-loader');
+            if(loader) loader.style.display = 'flex';
+
+            setTimeout(() => {
+                const quill = initQuillEditor(); // Init editor, get instance
+                if (quill && post.refined_content) {
+                    try {
+                        quill.pasteHTML(post.refined_content); // Paste content
+                    } catch (qError) {
+                        console.error("Quill pasteHTML error:", qError);
+                        quill.setText('본문을 불러오는 중 오류가 발생했습니다. 수동으로 복사해주세요.');
+                    }
+                }
+                if(loader) loader.style.display = 'none'; // Hide loader
+            }, 50); // 50ms delay, more reliable than 0
 
             const writerForm = $('#writer-form');
             if (writerForm) {
@@ -435,11 +513,17 @@
             }
         }
         
-        function initQuillEditor(initialContent) {
+        // --- LOGIC CHANGE: Removed parameter, now returns the instance ---
+        function initQuillEditor() {
             const editorElement = $('#quill-editor');
             if (!editorElement) {
                 console.error("Quill container not found, cannot initialize.");
-                return;
+                return null;
+            }
+            
+            // Avoid re-initializing if it already exists
+            if (Quill.find(editorElement)) {
+                return Quill.find(editorElement);
             }
 
             const quillInstance = new Quill(editorElement, {
@@ -461,14 +545,7 @@
                 }
             });
 
-            if (initialContent) {
-                // *** FIX ***
-                // Using pasteHTML is the recommended way to insert HTML.
-                // It ensures Quill's internal model is updated correctly
-                // and avoids the race condition of setting innerHTML
-                // before the editor's DOM is fully ready.
-                quillInstance.pasteHTML(initialContent);
-            }
+            return quillInstance; // Return the instance
         }
         
         function quillImageHandler() {
@@ -610,6 +687,12 @@
                     summary = textContent.slice(0, 150) + (textContent.length > 150 ? '...' : '');
                 }
 
+                // --- LOGIC CHANGE: Extract first image for thumbnail ---
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = contentHTML;
+                const firstImg = tempDiv.querySelector('img');
+                const thumbnail_url = firstImg ? firstImg.src : null;
+
                 const id = $('#post-id').value;
                 let slug = $('#post-slug').value.trim() || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
                 if (!id) {
@@ -622,6 +705,7 @@
                     author_id: state.user.id, 
                     refined_content: contentHTML,
                     category: $('#category').value, 
+                    thumbnail_url: thumbnail_url // Add thumbnail_url to post data
                 };
 
                 const query = id ? supabase.from(DB_TABLE_NAME).update(postData).eq('id', id) : supabase.from(DB_TABLE_NAME).insert(postData);
@@ -732,8 +816,16 @@
             const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
             const description = post ? post.summary : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
             const url = post ? `${SITE_URL}/post/${post.slug}` : SITE_URL;
-            document.title = title; $('meta[name="description"]')?.setAttribute('content', description); $('meta[property="og:title"]')?.setAttribute('content', title);
-            $('meta[property="og:description"]')?.setAttribute('content', description); $('meta[property="og:url"]')?.setAttribute('content', url);
+            const image = post ? post.thumbnail_url : null; // Add image for OG tag
+            
+            document.title = title; 
+            $('meta[name="description"]')?.setAttribute('content', description); 
+            $('meta[property="og:title"]')?.setAttribute('content', title);
+            $('meta[property="og:description"]')?.setAttribute('content', description); 
+            $('meta[property="og:url"]')?.setAttribute('content', url);
+            if (image) {
+                $('meta[property="og:image"]')?.setAttribute('content', image);
+            }
         }
 
         // --- App Initialization ---
@@ -778,4 +870,5 @@
     </script>
 </body>
 </html>
+
 
