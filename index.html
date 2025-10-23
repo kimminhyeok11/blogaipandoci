@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <!-- Meta tags -->
-    <meta charset="UTF-8">
+    <meta charset="UTF-R">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InsureLog</title>
     <meta name="description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
@@ -14,7 +14,7 @@
     <meta property="og:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
     
     <!-- Scripts & Stylesheets (OPTIMIZED: Deferred loading where possible) -->
-    <script src="https://cdn.tailwindcss.com" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
@@ -22,10 +22,6 @@
     <!-- *** FIX: highlight.js BEFORE quill.js *** -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js" defer></script>
-    
-    <!-- Quill Better Table 모듈 (테이블 붙여넣기 지원) -->
-    <script src="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.10/dist/quill-better-table.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.10/dist/quill-better-table.css">
     
     <!-- DOMPurify & EXIF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js" defer></script>
@@ -357,91 +353,40 @@
         };
         
         let quillInstance = null; // OPTIMIZED: Global Quill instance for reuse
+        
         const initQuillEditor = () => {
             const el = $('#quill-editor');
             if (!el) return null;
             if (quillInstance) return quillInstance;
             
-            if (typeof hljs === 'undefined') console.warn("hljs not loaded.");
-            
-            // ADVANCED: Custom Clipboard (cached import)
-            if (!window.AdvancedClipboard) {
-                const Clipboard = Quill.import('modules/clipboard');
-                const Delta = Quill.import('delta');
-                class AdvancedClipboard extends Clipboard {
-                    convert(html) {
-                        if (typeof html !== 'string') return super.convert(html);
-                        // 빠른 파싱: 정규식으로 태그/스타일 제거 (DOM 대신)
-                        const cleanHtml = html.replace(/<style>.*?<\/style>|<script>.*?<\/script>/gi, '')
-                                              .replace(/style="[^"]*"/gi, '');  // 스타일 속성 제거
-                        this.container.innerHTML = cleanHtml;
-                        const text = this.container.innerText;  // 텍스트만 추출
-                        this.container.innerHTML = '';
-                        return new Delta().insert(text);  // Delta로 효율적 삽입
-                    }
-                }
-                Quill.register('modules/clipboard', AdvancedClipboard, true);
-                window.AdvancedClipboard = true;
-            }
-            
-            // 테이블 모듈 등록 (성능 최적화: 필요 시만)
-            if (typeof QuillBetterTable !== 'undefined') {
-                QuillBetterTable.register({ theme: 'snow' });  // Snow 테마와 통합
-            }
-            
             quillInstance = new Quill(el, {
                 theme: 'snow',
                 modules: {
-                    toolbar: {
-                        container: [{ 'header': [1, 2, 3, false] }, ['bold', 'italic', 'underline', 'strike'], ['blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], [{ 'indent': '-1'}, { 'indent': '+1' }], ['link', 'image'], ['clean']],
-                        handlers: { image: quillImageHandler }
-                    },
-                    'better-table': {  // 테이블 모듈 활성화
-                        operationMenu: {  // 우클릭 메뉴 커스텀
-                            items: {
-                                unmergeCells: { text: '셀 합치기 해제' },
-                                splitCells: { text: '셀 분할' }
-                            }
-                        },
-                        tableCellStyles: {  // 셀 스타일 제한으로 성능 향상
-                            backgroundColor: true,
-                            color: true,
-                            width: true,
-                            height: true
-                        }
-                    },
-                    history: { delay: 5000, userOnly: true },
-                    syntax: false,  // 테이블 포스트면 off로 (성능)
-                    clipboard: {}
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }], 
+                        ['bold', 'italic', 'underline', 'strike'], 
+                        ['blockquote', 'code-block'], 
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
+                        [{ 'indent': '-1'}, { 'indent': '+1' }], 
+                        ['link', 'image'], 
+                        ['clean']
+                    ],
+                    history: { delay: 5000, userOnly: true }
                 }
             });
             
-            // 붙여넣기 후 테이블 자동 변환 (Clipboard matcher 추가)
-            const tableMatcher = (node, delta) => {
-                if (node.tagName === 'TABLE') {
-                    // Delta로 테이블 변환 로직 (quill-better-table가 처리)
-                    return delta;  // 모듈이 자동 핸들링
-                }
-            };
-            Quill.import('modules/clipboard').addMatcher(Node.TABLE, tableMatcher);
+            // 이미지 업로드 핸들러
+            quillInstance.getModule('toolbar').addHandler('image', quillImageHandler);
             
-            // OPTIMIZED: Debounced auto-save
+            // 자동 저장
             let timer;
             const autoSave = debounce(() => {
-                if (state.user && quillInstance.getLength() > 1) console.log('Auto-saving...'); // Placeholder
+                if (state.user && quillInstance.getLength() > 1) console.log('Auto-saving...');
             }, 30000);
-            quillInstance.on('text-change', () => { clearTimeout(timer); timer = setTimeout(autoSave, 5000); });
-            
-            // ADVANCED: Keyboard binding (cached)
-            if (!window.QuillKeyboardBound) {
-                const Keyboard = Quill.import('modules/keyboard');
-                quillInstance.keyboard.addBinding({ key: 'K', shortKey: true, handler: (range) => {
-                    const url = prompt('링크 URL 입력:');
-                    if (url) quillInstance.formatText(range.index, range.length, 'link', url);
-                    return true;
-                } });
-                window.QuillKeyboardBound = true;
-            }
+            quillInstance.on('text-change', () => { 
+                clearTimeout(timer); 
+                timer = setTimeout(autoSave, 5000); 
+            });
             
             return quillInstance;
         };
@@ -764,3 +709,4 @@
     </script>
 </body>
 </html>
+
