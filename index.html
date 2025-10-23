@@ -91,7 +91,11 @@
         .app-view { display: none; opacity: 0; }
         .app-view.active { display: block; }
         .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
-        .prose-custom p { margin-bottom: 1.3em; color: var(--text-secondary); }
+        .prose-custom p { margin: 0 0 1.3em; color: var(--text-secondary); }
+        /* Ensure spacing even if paragraphs come as <div> blocks */
+        .prose-custom div { margin-bottom: 1.3em; }
+        /* Make manual line breaks more readable */
+        .prose-custom p br { display: block; margin-bottom: 0.75em; }
         .prose-custom a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); transition: all 0.2s ease; }
         .prose-custom a:hover { background-color: var(--accent); color: white; border-bottom-color: transparent; }
         .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-style: italic; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; margin-bottom: 1.3em; }
