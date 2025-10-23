@@ -27,10 +27,10 @@ const escapeXml = (unsafe) => {
 
 export default async function handler(req, res) {
   try {
-    // Fetch the latest 10 published posts
+    // Fetch the latest 10 published posts (썸네일 포함)
     const { data: posts, error } = await supabase
       .from('posts')
-      .select('title, summary, slug, created_at, updated_at')
+      .select('title, summary, slug, created_at, updated_at, thumbnail_url')
       .eq('status', 'published') // ADDED: Only fetch published posts
       .order('created_at', { ascending: false })
       .limit(10);
@@ -57,7 +57,15 @@ export default async function handler(req, res) {
           <link>${SITE_URL}/post/${post.slug}</link>
           <guid isPermaLink="true">${SITE_URL}/post/${post.slug}</guid>
           <pubDate>${new Date(lastModified).toUTCString()}</pubDate>
-          <description><![CDATA[${post.summary}]]></description>
+          <description><![CDATA[${post.summary}]]></description>`;
+      
+      // Add enclosure for thumbnail image (RSS 피드에서 이미지 미리보기 지원)
+      if (post.thumbnail_url) {
+        xml += `
+          <enclosure url="${post.thumbnail_url}" type="image/jpeg" length="0" />`;
+      }
+      
+      xml += `
         </item>`;
     });
 
