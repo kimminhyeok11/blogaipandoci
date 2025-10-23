@@ -14,10 +14,10 @@ const SITE_URL = 'https://blogaipandoci.vercel.app';
 
 export default async function handler(req, res) {
   try {
-    // Fetch all published posts from Supabase
+    // Fetch all published posts from Supabase (이미지 포함)
     const { data: posts, error } = await supabase
       .from('posts')
-      .select('slug, updated_at, created_at')
+      .select('slug, updated_at, created_at, thumbnail_url')
       .eq('status', 'published') // Only include published posts
       .order('created_at', { ascending: false });
 
@@ -25,9 +25,9 @@ export default async function handler(req, res) {
       throw error;
     }
     
-    // Start building the XML string
+    // Start building the XML string with image namespace
     let xml = `<?xml version="1.0" encoding="UTF-8"?>`;
-    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">`;
 
     // Add the homepage URL
     xml += `
@@ -47,7 +47,19 @@ export default async function handler(req, res) {
           <loc>${SITE_URL}/post/${post.slug}</loc>
           <lastmod>${new Date(lastModified).toISOString()}</lastmod>
           <changefreq>weekly</changefreq>
-          <priority>0.80</priority>
+          <priority>0.80</priority>`;
+      
+      // Add image tag if thumbnail exists (SEO for images)
+      if (post.thumbnail_url) {
+        xml += `
+          <image:image>
+            <image:loc>${post.thumbnail_url}</image:loc>
+            <image:title>${post.title}</image:title>
+            <image:caption>${post.summary || ''}</image:caption>
+          </image:image>`;
+      }
+      
+      xml += `
         </url>`;
     });
 
