@@ -2,33 +2,55 @@
 <html lang="ko">
 <head>
     <!-- Meta tags -->
-    <meta charset="UTF-R">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InsureLog</title>
     <meta name="description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <link rel="canonical" href="https://blogaipandoci.vercel.app">
+    <meta name="robots" content="index,follow">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.quilljs.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://cdn.quilljs.com https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://blogaipandoci.vercel.app">
     <meta property="og:title" content="InsureLog - AI, 기술, 그리고 보험">
     <meta property="og:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <meta property="og:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
+    <meta property="og:site_name" content="InsureLog">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="InsureLog - AI, 기술, 그리고 보험">
+    <meta name="twitter:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     
     <!-- Scripts & Stylesheets (OPTIMIZED: Deferred loading where possible) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <!-- quill-better-table CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.8/dist/quill-better-table.css">
     
     <!-- *** FIX: highlight.js BEFORE quill.js *** -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js" defer crossorigin="anonymous"></script>
+    <!-- quill-better-table JS -->
+    <script src="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.8/dist/quill-better-table.js" defer></script>
     
     <!-- DOMPurify & EXIF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js" defer crossorigin="anonymous"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.quilljs.com" crossorigin>
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
+    <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <!-- Google AdSense -->
@@ -121,7 +143,7 @@
     <div id="modal-container"></div>
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3"></div>
     
-    <script type="module">
+    <script type="module" nonce="r4nd0m">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
         // --- OPTIMIZED Config & State ---
@@ -305,6 +327,7 @@
             updateMetaTags(post);
             const editBtn = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200" aria-label="글 수정">수정</a>` : '';
             
+            const adTestAttr = ['localhost','127.0.0.1'].includes(window.location.hostname) ? ' data-adtest="on"' : '';
             container.innerHTML = `
                 <div class="max-w-4xl mx-auto py-8 sm:py-16">
                     <article role="article">
@@ -318,18 +341,41 @@
                         </header>
                         <div id="post-content" class="prose-custom max-w-none"></div>
                     </article>
-                    <div class="my-16"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
+                    <div class="my-16"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"${adTestAttr}></ins></div>
                     ${popularHtml}${navHtml}
                 </div>`;
             
-            const safeContent = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(post.refined_content || '', { ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead"] }) : (post.refined_content || '');
+            // DOMPurify: allow essential table attributes and whitelist limited styles
+            const setupDomPurify = () => {
+                if (!window.__dompurifyHooked && typeof DOMPurify !== 'undefined') {
+                    DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
+                        if (data.attrName === 'style') {
+                            try {
+                                const style = (data.attrValue || '').toLowerCase();
+                                const allowed = [];
+                                const mAlign = style.match(/text-align\s*:\s*(left|center|right|justify)/);
+                                if (mAlign) allowed.push(`text-align:${mAlign[1]}`);
+                                const mWidth = style.match(/(?:^|;|\s)width\s*:\s*([0-9]+(?:\.[0-9]+)?)(px|%)/);
+                                if (mWidth) allowed.push(`width:${mWidth[1]}${mWidth[2]}`);
+                                data.attrValue = allowed.join(';');
+                                if (!data.attrValue) data.keepAttr = false;
+                            } catch (_) { data.keepAttr = false; }
+                        }
+                    });
+                    window.__dompurifyHooked = true;
+                }
+            };
+            setupDomPurify();
+
+            const safeContent = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(post.refined_content || '', { ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead", "tfoot", "col", "colgroup"], ADD_ATTR: ["rowspan","colspan","style","class","width","height","align"] }) : (post.refined_content || '');
             $('#post-content').innerHTML = safeContent;
             
             try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("Adsense error:", e); }
             
             setTimeout(() => {
                 if (typeof hljs !== 'undefined') $('#post-content').querySelectorAll('pre code').forEach(hljs.highlightElement);
-                $('#post-content').querySelectorAll('img').forEach(img => { img.loading = 'lazy'; });
+                $('#post-content').querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async'; });
+                $('#post-content').querySelectorAll('a[target="_blank"]').forEach(a => { a.rel = 'noopener noreferrer'; });
             }, 100);
         };
         
@@ -352,6 +398,10 @@
             list.innerHTML = `<ul class="w-full" role="list">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors" role="listitem"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-black hover:text-[#D946EF]" aria-label="글 보기: ${post.title}">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black" aria-label="글 수정: ${post.title}">수정</a></li>`).join('')}</ul>`;
         };
         
+        // Register quill-better-table if available
+        if (window.Quill && window.QuillBetterTable) {
+            window.Quill.register({ 'modules/better-table': window.QuillBetterTable }, true);
+        }
         let quillInstance = null; // OPTIMIZED: Global Quill instance for reuse
         
         const initQuillEditor = () => {
@@ -371,7 +421,10 @@
                         ['link', 'image'], 
                         ['clean']
                     ],
-                    history: { delay: 5000, userOnly: true }
+                    history: { delay: 5000, userOnly: true },
+                    table: false,
+                    'better-table': { operationMenu: { } },
+                    keyboard: window.QuillBetterTable ? { bindings: QuillBetterTable.keyboardBindings } : {}
                 }
             });
             
@@ -408,7 +461,7 @@
             }
             
             const categoryOpts = CONFIG.CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
-            container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate><input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}"><div><select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select><textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea></div><div><label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label><textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea></div><div><label for="quill-editor" class="block text-lg font-bold text-black mb-3">본문 (Content)</label><div id="quill-editor-container"><div id="quill-editor" aria-label="본문 에디터"></div><div id="quill-loader" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-b-xl" style="display: none; min-height: 400px; z-index: 10;"><div class="loader-spinner"></div></div></div></div><div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky"><div>${post.id ? `<button type="button" data-action="delete" class="px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제하기</button>` : ''}</div><div class="flex items-center space-x-3"><button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button><button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button></div></div></form></div>`;
+            container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate><input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}"><div><select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select><textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea></div><div><label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label><textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea></div><div><label for="quill-editor" class="block text-lg font-bold text-black mb-3">본문 (Content)</label><div id="quill-editor-container"><div id="quill-editor" aria-label="본문 에디터"></div><div id="quill-loader" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-b-xl" style="display: none; min-height: 400px; z-index: 10;"><div class="loader-spinner"></div></div></div></div><div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky"><div class="flex items-center gap-2"><button type="button" id="insert-table-btn" class="px-3 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition" aria-label="표 삽입">표 삽입</button><button type="button" data-action="table-help" class="px-3 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-100 text-black hover:bg-gray-200 transition" aria-label="표 안내">표 안내</button>${post.id ? `<button type="button" data-action="delete" class="px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제하기</button>` : ''}</div><div class="flex items-center space-x-3"><button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button><button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button></div></div></form></div>`;
             
             const loader = $('#quill-loader');
             loader.style.display = 'flex';
@@ -423,7 +476,11 @@
                         parent.removeChild(container);  // Unmount
                         
                         quill.setContents([]);  // 초기화
-                        quill.pasteHTML(post.refined_content);  // Set
+                        if (quill.clipboard && quill.clipboard.dangerouslyPasteHTML) {
+                            quill.clipboard.dangerouslyPasteHTML(post.refined_content);
+                        } else if (quill.pasteHTML) {
+                            quill.pasteHTML(post.refined_content);
+                        }
                         
                         parent.insertBefore(container, parent.children[index]);  // Remount
                     } catch (e) { console.error("Paste error:", e); quill.setText('본문을 불러오는 중 오류가 발생했습니다.'); }
@@ -440,6 +497,17 @@
             
             const delBtn = form.querySelector('[data-action="delete"]');
             if (delBtn) delBtn.addEventListener('click', (e) => { e.preventDefault(); handlePostDelete(post.id); });
+            
+            const insertTableBtn = $('#insert-table-btn');
+            if (insertTableBtn) insertTableBtn.addEventListener('click', () => {
+                const quill = initQuillEditor();
+                const bt = quill && quill.getModule('better-table');
+                if (bt && typeof bt.insertTable === 'function') {
+                    bt.insertTable(3, 3);
+                } else {
+                    showToast('표 모듈을 불러오지 못했습니다.', true);
+                }
+            });
             
             // OPTIMIZED: Debounced slug update
             const titleEl = $('#title');
@@ -639,19 +707,32 @@
             $('#close-modal-btn').onclick = close;
             $('#auth-modal').onclick = (e) => { if (e.target.id === 'auth-modal') close(); };
         };
+
+        const showTableHelpModal = () => {
+            if ($('#table-help-modal')) return;
+            const html = `<div id="table-help-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="table-help-title"><div class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-md p-6 relative"><button id="close-table-help-btn" aria-label="닫기" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button><h2 id="table-help-title" class="text-2xl font-bold mb-4 text-black">표 사용 안내</h2><div class="space-y-3 text-sm text-gray-700"><p>붙여넣기 시 <code>rowspan</code>/<code>colspan</code>은 보존됩니다. 일부 스타일(<code>text-align</code>, <code>width</code>)만 허용됩니다.</p><ul class="list-disc pl-5 space-y-1"><li><b>Tab / Shift+Tab</b>: 다음/이전 셀 이동</li><li><b>Enter</b>: 셀 내 줄바꿈</li><li><b>Ctrl + B/I</b>: 굵게/기울임 등 기본 서식</li></ul><p class="text-xs text-gray-500">표 관련 컨트롤은 에디터 툴바를 활용하세요. 붙여넣기/서식 적용 후 저장 전 미리보기로 확인해주세요.</p></div></div></div>`;
+            $('#modal-container').innerHTML = html;
+            const close = () => animateSwitch($('#table-help-modal'), false).then(() => $('#modal-container').innerHTML = '');
+            animateSwitch($('#table-help-modal'));
+            document.querySelector('#close-table-help-btn').onclick = close;
+            $('#table-help-modal').onclick = (e) => { if (e.target.id === 'table-help-modal') close(); };
+        };
         
         const updateMetaTags = (post = null) => {
             const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
             const desc = post ? post.summary : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
             const url = post ? `${CONFIG.SITE_URL}/post/${post.slug}` : CONFIG.SITE_URL;
             const img = post?.thumbnail_url || null;
+            const updatedIso = post ? new Date(post.updated_at || post.created_at || Date.now()).toISOString() : new Date().toISOString();
             
+            // Title & description
             document.title = title;
             $('meta[name="description"]')?.setAttribute('content', desc);
+            
+            // Open Graph
             $('meta[property="og:title"]')?.setAttribute('content', title);
             $('meta[property="og:description"]')?.setAttribute('content', desc);
             $('meta[property="og:url"]')?.setAttribute('content', url);
-            
             let ogImg = $('meta[property="og:image"]');
             if (img) {
                 if (ogImg) ogImg.setAttribute('content', img);
@@ -662,6 +743,43 @@
                     document.head.appendChild(meta);
                 }
             } else if (ogImg) ogImg.remove();
+            // site_name (static)
+            if (!$('meta[property="og:site_name"]')) { const m = document.createElement('meta'); m.setAttribute('property','og:site_name'); m.setAttribute('content','InsureLog'); document.head.appendChild(m); }
+            // updated_time
+            let ogUpd = $('meta[property="og:updated_time"]');
+            if (!ogUpd) { ogUpd = document.createElement('meta'); ogUpd.setAttribute('property','og:updated_time'); document.head.appendChild(ogUpd); }
+            ogUpd.setAttribute('content', updatedIso);
+            
+            // Canonical
+            let canonical = document.querySelector('link[rel="canonical"]');
+            if (!canonical) { canonical = document.createElement('link'); canonical.setAttribute('rel','canonical'); document.head.appendChild(canonical); }
+            canonical.setAttribute('href', url);
+            
+            // JSON-LD
+            const prevLd = document.getElementById('ld-json');
+            if (prevLd) prevLd.remove();
+            const ld = document.createElement('script');
+            ld.type = 'application/ld+json';
+            ld.id = 'ld-json';
+            const ldData = post ? {
+                "@context": "https://schema.org",
+                "@type": "BlogPosting",
+                "headline": post.title,
+                "datePublished": post.created_at,
+                "dateModified": post.updated_at || post.created_at,
+                "author": { "@type": "Organization", "name": "InsureLog" },
+                "image": img ? [img] : undefined,
+                "mainEntityOfPage": { "@type": "WebPage", "@id": url },
+                "description": desc
+            } : {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "name": "InsureLog",
+                "url": CONFIG.SITE_URL,
+                "description": desc
+            };
+            ld.textContent = JSON.stringify(ldData, (k,v) => v === undefined ? undefined : v);
+            document.head.appendChild(ld);
         };
         
         // --- Event Listeners (OPTIMIZED: Single listener with delegation) ---
@@ -677,6 +795,7 @@
                     case 'auth': return showAuthModal();
                     case 'logout': return handleLogout();
                     case 'filter-category': return navigateTo(buildUrl('/', { page: 1, category: action.dataset.category }));
+                    case 'table-help': return showTableHelpModal();
                 }
             }
         });
@@ -709,4 +828,3 @@
     </script>
 </body>
 </html>
-
