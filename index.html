@@ -398,34 +398,61 @@
             list.innerHTML = `<ul class="w-full" role="list">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors" role="listitem"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-black hover:text-[#D946EF]" aria-label="글 보기: ${post.title}">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black" aria-label="글 수정: ${post.title}">수정</a></li>`).join('')}</ul>`;
         };
         
-        // Register quill-better-table if available
-        if (window.Quill && window.QuillBetterTable) {
-            window.Quill.register({ 'modules/better-table': window.QuillBetterTable }, true);
-        }
+        // Register quill-better-table JIT within init to avoid race
         let quillInstance = null; // OPTIMIZED: Global Quill instance for reuse
         
         const initQuillEditor = () => {
             const el = $('#quill-editor');
             if (!el) return null;
             if (quillInstance) return quillInstance;
+
+            // JIT registration for quill-better-table to avoid race with external script load
+            if (window.Quill && window.QuillBetterTable) {
+                try {
+                    if (!Quill.imports['modules/better-table']) {
+                        Quill.register({ 'modules/better-table': window.QuillBetterTable }, true);
+                    }
+                } catch (e) {
+                    console.warn('Failed to register quill-better-table:', e);
+                }
+            } else {
+                console.warn('QuillBetterTable not found. Table features will be disabled.');
+            }
             
+            const modules = {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }], 
+                    ['bold', 'italic', 'underline', 'strike'], 
+                    ['blockquote', 'code-block'], 
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
+                    [{ 'indent': '-1'}, { 'indent': '+1' }], 
+                    ['link', 'image'], 
+                    ['clean']
+                ],
+                history: { delay: 5000, userOnly: true }
+            };
+
+            if (window.Quill && window.QuillBetterTable && Quill.imports['modules/better-table']) {
+                modules['better-table'] = {
+                    operationMenu: {
+                        items: {
+                            unmergeCells: { text: '셀 병합 해제' },
+                            deleteRow: { text: '행 삭제' },
+                            deleteColumn: { text: '열 삭제' },
+                            insertRowAbove: { text: '위에 행 삽입' },
+                            insertRowBelow: { text: '아래에 행 삽입' },
+                            insertColumnLeft: { text: '왼쪽에 열 삽입' },
+                            insertColumnRight: { text: '오른쪽에 열 삽입' },
+                            deleteTable: { text: '표 삭제' }
+                        }
+                    }
+                };
+                modules.keyboard = { bindings: QuillBetterTable.keyboardBindings };
+            }
+
             quillInstance = new Quill(el, {
                 theme: 'snow',
-                modules: {
-                    toolbar: [
-                        [{ 'header': [1, 2, 3, false] }], 
-                        ['bold', 'italic', 'underline', 'strike'], 
-                        ['blockquote', 'code-block'], 
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
-                        [{ 'indent': '-1'}, { 'indent': '+1' }], 
-                        ['link', 'image'], 
-                        ['clean']
-                    ],
-                    history: { delay: 5000, userOnly: true },
-                    table: false,
-                    'better-table': { operationMenu: { } },
-                    keyboard: window.QuillBetterTable ? { bindings: QuillBetterTable.keyboardBindings } : {}
-                }
+                modules
             });
             
             // 이미지 업로드 핸들러
@@ -467,23 +494,33 @@
             loader.style.display = 'flex';
             requestAnimationFrame(() => {
                 const quill = initQuillEditor();
-                if (quill && post.refined_content) {
-                    try {
-                        // Unmount 트릭: 긴 HTML 로딩 최적화
-                        const container = quill.container;
-                        const parent = container.parentNode;
-                        const index = Array.from(parent.children).indexOf(container);
-                        parent.removeChild(container);  // Unmount
-                        
-                        quill.setContents([]);  // 초기화
-                        if (quill.clipboard && quill.clipboard.dangerouslyPasteHTML) {
-                            quill.clipboard.dangerouslyPasteHTML(post.refined_content);
-                        } else if (quill.pasteHTML) {
-                            quill.pasteHTML(post.refined_content);
-                        }
-                        
-                        parent.insertBefore(container, parent.children[index]);  // Remount
-                    } catch (e) { console.error("Paste error:", e); quill.setText('본문을 불러오는 중 오류가 발생했습니다.'); }
+                if (quill) {
+                    // Graceful degradation: hide table UI if module unavailable
+                    if (!quill.getModule('better-table')) {
+                        const insertTableBtn = $('#insert-table-btn');
+                        if (insertTableBtn) insertTableBtn.style.display = 'none';
+                        const tableHelpBtn = container.querySelector('[data-action="table-help"]');
+                        if (tableHelpBtn) tableHelpBtn.style.display = 'none';
+                    }
+
+                    if (post.refined_content) {
+                        try {
+                            // Unmount 트릭: 긴 HTML 로딩 최적화
+                            const containerEl = quill.container;
+                            const parent = containerEl.parentNode;
+                            const index = Array.from(parent.children).indexOf(containerEl);
+                            parent.removeChild(containerEl);  // Unmount
+                            
+                            quill.setContents([]);  // 초기화
+                            if (quill.clipboard && quill.clipboard.dangerouslyPasteHTML) {
+                                quill.clipboard.dangerouslyPasteHTML(post.refined_content);
+                            } else if (quill.pasteHTML) {
+                                quill.pasteHTML(post.refined_content);
+                            }
+                            
+                            parent.insertBefore(containerEl, parent.children[index]);  // Remount
+                        } catch (e) { console.error("Paste error:", e); quill.setText('본문을 불러오는 중 오류가 발생했습니다.'); }
+                    }
                 }
                 loader.style.display = 'none';
             });
