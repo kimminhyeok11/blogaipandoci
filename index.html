@@ -13,28 +13,30 @@
     <meta property="og:title" content="InsureLog - AI, 기술, 그리고 보험">
     <meta property="og:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
     
-    <!-- Scripts & Stylesheets -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <!-- Scripts & Stylesheets (OPTIMIZED: Deferred loading where possible) -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     
-    <!-- *** FIX: highlight.js MUST be loaded BEFORE quill.js *** -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <!-- *** FIX: highlight.js BEFORE quill.js *** -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js" defer></script>
     
-    <!-- Add DOMPurify for XSS sanitization -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
-    <!-- Add exif-js for image orientation handling -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+    <!-- Quill Better Table 모듈 (테이블 붙여넣기 지원) -->
+    <script src="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.10/dist/quill-better-table.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.10/dist/quill-better-table.css">
+    
+    <!-- DOMPurify & EXIF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js" defer></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-    <!-- Google AdSense Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112"
-     crossorigin="anonymous"></script>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
 
     <style>
         :root {
@@ -56,124 +58,55 @@
             flex-direction: column;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            
-            /* --- STYLE CHANGE: Mobile-first font size and line height --- */
             font-size: 15px;
             line-height: 1.7;
         }
-        /* --- STYLE CHANGE: Increase font size on desktop --- */
         @media (min-width: 640px) {
-            body {
-                font-size: 16px;
-                line-height: 1.75;
-            }
+            body { font-size: 16px; line-height: 1.75; }
         }
-
-        /* --- STYLE CHANGE: Reduce main padding on mobile --- */
         main#app-container {
-            padding-left: 0.75rem; /* 12px */
-            padding-right: 0.75rem;
+            padding-left: 0.75rem; padding-right: 0.75rem; flex-grow: 1;
         }
         @media (min-width: 640px) {
-            main#app-container {
-                padding-left: 1rem; /* 16px */
-                padding-right: 1rem;
-            }
+            main#app-container { padding-left: 1rem; padding-right: 1rem; }
         }
-
-
         .app-view { display: none; opacity: 0; }
         .app-view.active { display: block; }
-
-        /* Prose styling for rendered HTML content */
-        /* --- STYLE CHANGE: Reduced prose margins for density --- */
         .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
         .prose-custom p { margin-bottom: 1.3em; color: var(--text-secondary); }
         .prose-custom a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); transition: all 0.2s ease; }
         .prose-custom a:hover { background-color: var(--accent); color: white; border-bottom-color: transparent; }
         .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-style: italic; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; margin-bottom: 1.3em; }
-        
         .prose-custom ul { list-style-type: disc; margin-bottom: 1.3em; padding-left: 1.75em; }
         .prose-custom ol { list-style-type: decimal; margin-bottom: 1.3em; padding-left: 1.75em; }
         .prose-custom li { margin-bottom: 0.5em; }
         .prose-custom ul ul, .prose-custom ol ol, .prose-custom ul ol, .prose-custom ol ul { margin-top: 0.5em; margin-bottom: 0.5em; margin-left: 1.25em; }
-
         .prose-custom pre { background-color: #282c34; color: #abb2bf; padding: 1.5em; border-radius: 12px; margin-bottom: 1.5em; overflow-x: auto; }
         .prose-custom img { max-width: 100%; height: auto; border-radius: 12px; margin-top: 2em; margin-bottom: 2em; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-
-        .prose-custom table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 2em;
-            margin-bottom: 2em;
-            font-size: 0.9em;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .prose-custom th, .prose-custom td {
-            border: 1px solid var(--border-color);
-            padding: 0.75em 1em;
-            text-align: left;
-        }
-        .prose-custom th {
-            background-color: var(--bg-content-secondary);
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        .prose-custom tr:nth-child(odd) {
-            background-color: var(--bg-main);
-        }
-        .prose-custom tr:nth-child(even) {
-            background-color: var(--bg-content-secondary);
-        }
-
-        .category-btn { 
-            transition: all 0.2s ease-in-out; border-radius: 9999px; padding: 0.25rem 0.875rem;
-            font-weight: 500; background-color: var(--bg-content-secondary); color: var(--text-primary); border: 1px solid transparent;
-        }
+        .prose-custom table { width: 100%; border-collapse: collapse; margin-top: 2em; margin-bottom: 2em; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-radius: 8px; overflow: hidden; }
+        .prose-custom th, .prose-custom td { border: 1px solid var(--border-color); padding: 0.75em 1em; text-align: left; }
+        .prose-custom th { background-color: var(--bg-content-secondary); font-weight: 700; color: var(--text-primary); }
+        .prose-custom tr:nth-child(odd) { background-color: var(--bg-main); }
+        .prose-custom tr:nth-child(even) { background-color: var(--bg-content-secondary); }
+        .category-btn { transition: all 0.2s ease-in-out; border-radius: 9999px; padding: 0.25rem 0.875rem; font-weight: 500; background-color: var(--bg-content-secondary); color: var(--text-primary); border: 1px solid transparent; }
         .category-btn:hover { background-color: #E5E7EB; }
         .category-btn.active { background-color: var(--accent); color: #FFFFFF; font-weight: 700; }
-        .loader-spinner {
-            width: 2.5rem; height: 2.5rem; border: 4px solid var(--border-color);
-            border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;
-        }
+        .loader-spinner { width: 2.5rem; height: 2.5rem; border: 4px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        /* Quill Editor Styles */
         #quill-editor { min-height: 400px; font-size: 16px; }
         .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; border-color: #D1D5DB; }
         .ql-container.ql-snow { border-radius: 0 0 12px 12px; border-color: #D1D5DB; }
         #quill-editor-container { position: relative; }
-        
-        /* --- STYLE CHANGE: Mobile-specific styles --- */
-        @media (max-width: 639px) { /* Tailwind 'sm' breakpoint */
-            .writer-controls-sticky {
-                position: sticky;
-                bottom: 0;
-                background-color: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                padding: 1rem;
-                border-top: 1px solid #E5E7EB;
-                margin-left: -0.75rem; /* Match new main padding */
-                margin-right: -0.75rem; /* Match new main padding */
-                padding-top: 1rem !important; 
-                z-index: 30;
-            }
-
-            /* --- STYLE CHANGE: Full-bleed images on mobile --- */
-            .prose-custom img {
-                width: calc(100% + 1.5rem); /* 100% + 2 * 0.75rem (main padding) */
-                margin-left: -0.75rem;
-                margin-right: -0.75rem;
-                max-width: none;
-                border-radius: 0;
-                box-shadow: none;
-            }
+        @media (max-width: 639px) {
+            .writer-controls-sticky { position: sticky; bottom: 0; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 1rem; border-top: 1px solid #E5E7EB; margin-left: -0.75rem; margin-right: -0.75rem; padding-top: 1rem !important; z-index: 30; }
+            .prose-custom img { width: calc(100% + 1.5rem); margin-left: -0.75rem; margin-right: -0.75rem; max-width: none; border-radius: 0; box-shadow: none; }
         }
+        .post-thumbnail img { loading: lazy; }
+        button:focus, a:focus, input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+        footer { margin-top: 16px; } @media (min-width: 640px) { footer { margin-top: 24px; } }
     </style>
 </head>
-<!-- --- STYLE CHANGE: Reduced footer margin-top on mobile --- -->
 <body class="antialiased">
     <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center"><div class="loader-spinner"></div></div>
     <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-4"></header>
@@ -183,8 +116,7 @@
         <div id="view-dashboard" class="app-view"></div>
         <div id="view-writer" class="app-view"></div>
     </main>
-    <!-- --- STYLE CHANGE: Reduced footer margin-top on mobile --- -->
-    <footer class="text-center py-8 px-4 border-t border-gray-200 mt-16 sm:mt-24">
+    <footer class="text-center py-8 px-4 border-t border-gray-200">
         <p class="text-sm text-gray-600">
             © 2025 InsureLog. 
             개발 및 문의사항은 <a href="https://www.threads.net/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-500 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
@@ -196,63 +128,72 @@
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-        // --- App State and Config ---
-        const SITE_URL = 'https://blogaipandoci.vercel.app';
-        const SUPABASE_URL = 'https://ddehwkwzmmvcxltlplua.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
-        const IMAGE_BUCKET_NAME = 'thought-images'; 
-        
-        const DB_TABLE_NAME = 'posts'; 
-        const POSTS_PER_PAGE = 10;
-        const CATEGORIES = ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"];
-        
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        const state = { 
-            user: null, 
-            isAuthReady: false, 
-            currentCategory: '전체',
+        // --- OPTIMIZED Config & State ---
+        const CONFIG = {
+            SITE_URL: 'https://blogaipandoci.vercel.app',
+            SUPABASE_URL: 'https://ddehwkwzmmvcxltlplua.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To',
+            IMAGE_BUCKET_NAME: 'thought-images', 
+            DB_TABLE_NAME: 'posts', 
+            POSTS_PER_PAGE: 10,
+            CATEGORIES: ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"]
         };
-        const $ = (selector) => document.querySelector(selector);
         
-        // --- Core App Logic ---
-        function navigateTo(path, replace = false) {
+        const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+        const state = { user: null, isAuthReady: false, currentCategory: '전체' };
+        const $ = document.querySelector.bind(document); // OPTIMIZED: Cached querySelector
+        
+        // --- OPTIMIZED: Debounce (memoized) ---
+        const debounce = (func, wait) => {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        };
+        
+        // --- OPTIMIZED: Animation wrapper (reduce anime calls) ---
+        const animateSwitch = (el, show = true) => {
+            const opts = show ? { opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' } : { opacity: 0, duration: 200, easing: 'easeInQuad' };
+            return anime({ targets: el, ...opts }).finished;
+        };
+        
+        // --- Core Navigation (OPTIMIZED: Single history handler) ---
+        const navigateTo = (path, replace = false) => {
             const newPath = path || '/';
-            const historyAction = replace ? 'replaceState' : 'pushState';
+            const action = replace ? 'replaceState' : 'pushState';
             if (window.location.pathname + window.location.search !== newPath) {
-                history[historyAction]({ path: newPath }, '', newPath);
+                history[action]({ path: newPath }, '', newPath);
             }
             handleRouting();
-        }
+        };
         
-        async function switchView(viewId, callback) {
-            const currentView = $('.app-view.active');
-            if (currentView) {
-                await anime({ targets: currentView, opacity: 0, duration: 200, easing: 'easeInQuad' }).finished;
-                currentView.classList.remove('active');
-                currentView.innerHTML = '';
+        const switchView = async (viewId, callback) => {
+            const current = $('.app-view.active');
+            if (current) {
+                await animateSwitch(current, false);
+                current.classList.remove('active');
+                current.innerHTML = '';
             }
-
-            const nextView = $(`#${viewId}`);
-            if (nextView) {
-                nextView.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
-                nextView.classList.add('active');
-                anime({ targets: nextView, opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' });
+            const next = $(`#${viewId}`);
+            if (next) {
+                next.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
+                next.classList.add('active');
+                await animateSwitch(next);
                 try {
-                    await callback(nextView);
+                    await callback(next);
                 } catch (error) {
-                    console.error(`Error rendering view ${viewId}:`, error);
-                    nextView.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.</p>`;
+                    console.error(`Error rendering ${viewId}:`, error);
+                    next.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.</p>`;
                 }
                 window.scrollTo(0, 0);
             }
-        }
+        };
         
-        function handleRouting() {
+        const handleRouting = () => {
             if (!state.isAuthReady) return;
             const path = window.location.pathname;
             const params = new URLSearchParams(window.location.search);
-            
             const parts = path.split('/').filter(Boolean);
             const route = parts[0] || 'library';
             const param = parts[1] || null;
@@ -264,685 +205,562 @@
             }
             
             switch (route) {
-                case 'post': switchView('view-post', el => renderPostView(el, param)); break;
-                case 'dashboard': switchView('view-dashboard', el => renderDashboardView(el)); break;
-                case 'writer': switchView('view-writer', el => renderWriterView(el, param)); break;
-                default: 
+                case 'post': return switchView('view-post', el => renderPostView(el, param));
+                case 'dashboard': return switchView('view-dashboard', el => renderDashboardView(el));
+                case 'writer': return switchView('view-writer', el => renderWriterView(el, param));
+                default: {
                     const page = parseInt(params.get('page'), 10) || 1;
                     state.currentCategory = params.get('category') || '전체';
-                    switchView('view-library', el => renderLibraryView(el, page, state.currentCategory));
+                    return switchView('view-library', el => renderLibraryView(el, page, state.currentCategory));
+                }
             }
-        }
+        };
         
-        // --- View Rendering ---
-        function renderNav() {
-            // --- STYLE CHANGE: Reduced padding on mobile (py-2 px-4) ---
-            $('#main-nav-container').innerHTML = `
-                <nav class="w-full flex items-center justify-between py-2 px-4 sm:py-3 sm:px-5 bg-white/50 backdrop-blur-xl border border-black/10 rounded-3xl shadow-lg">
-                    <a href="/" data-route class="font-black text-xl text-gray-900 tracking-tighter">InsureLog</a>
+        // --- OPTIMIZED: Cached templates & rendering ---
+        const templates = {
+            nav: (user) => `
+                <nav class="w-full flex items-center justify-between py-2 px-4 sm:py-3 sm:px-5 bg-white/50 backdrop-blur-xl border border-black/10 rounded-3xl shadow-lg" role="banner">
+                    <a href="/" data-route class="font-black text-xl text-gray-900 tracking-tighter" aria-label="InsureLog 홈으로 이동">InsureLog</a>
                     <div class="flex items-center space-x-3">
-                        ${state.user 
-                            ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition">로그아웃</button>` 
-                            : `<button data-action="auth" aria-label="로그인 또는 회원가입" class="px-4 py-2 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">로그인 / 가입</button>`
-                        }
+                        ${user ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="대시보드로 이동">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="로그아웃">로그아웃</button>` : `<button data-action="auth" aria-label="로그인 또는 회원가입" class="px-4 py-2 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">로그인 / 가입</button>`}
                     </div>
-                </nav>`;
-        }
+                </nav>`,
+            categoryBtns: (category) => ['전체', ...CONFIG.CATEGORIES].map(cat => `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}" aria-pressed="${cat === category}">${cat}</button>`).join(''),
+            pagination: (page, total, basePath, params) => {
+                const totalPages = Math.ceil(total / CONFIG.POSTS_PER_PAGE);
+                if (totalPages <= 1) return '';
+                const prevUrl = page > 1 ? buildUrl(basePath, { ...params, page: page - 1 }) : '#';
+                const nextUrl = page < totalPages ? buildUrl(basePath, { ...params, page: page + 1 }) : '#';
+                return `<div class="flex justify-center items-center gap-4 mt-12" role="navigation" aria-label="페이지 탐색"><a href="${prevUrl}" data-route aria-label="이전 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${page === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">이전</a><span class="text-sm font-medium text-gray-500">${page} / ${totalPages}</span><a href="${nextUrl}" data-route aria-label="다음 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${page >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">다음</a></div>`;
+            }
+        };
         
-        async function renderLibraryView(container, page, category) {
+        const renderNav = () => { $('#main-nav-container').innerHTML = templates.nav(state.user); };
+        
+        const renderLibraryView = async (container, page, category) => {
             updateMetaTags();
-            const categoryButtons = ['전체', ...CATEGORIES].map(cat => 
-                `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}">${cat}</button>`
-            ).join('');
-            
-            // --- STYLE CHANGE: Reduced top/bottom padding on mobile (py-8) ---
             container.innerHTML = `
                 <div class="max-w-4xl mx-auto py-8 sm:py-16">
                     <div class="text-center mb-12"><h1 class="text-5xl sm:text-7xl font-black mb-4 text-black tracking-tighter">InsureLog</h1><p class="text-lg text-gray-500">AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.</p></div>
-                    <div class="flex items-center justify-center gap-2 mb-8 flex-wrap">${categoryButtons}</div>
+                    <div class="flex items-center justify-center gap-2 mb-8 flex-wrap" role="tablist">${templates.categoryBtns(category)}</div>
                     <div id="post-list-container" class="border border-gray-200/80 rounded-2xl overflow-hidden"></div>
                 </div>`;
-            
             await renderPostList(page, category);
-        }
-
-        async function renderPostList(page, category) {
-            const listContainer = $('#post-list-container');
-            if (!listContainer) return;
-            listContainer.innerHTML = `<div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
-
-            const { from, to } = { from: (page - 1) * POSTS_PER_PAGE, to: page * POSTS_PER_PAGE - 1 };
-            let query = supabase.from(DB_TABLE_NAME).select('id, title, slug, summary, category, thumbnail_url', { count: 'exact' });
-            if (category && category !== '전체') query = query.eq('category', category);
+        };
+        
+        const renderPostList = async (page, category) => {
+            const container = $('#post-list-container');
+            if (!container) return;
+            container.innerHTML = `<div class="min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
+            
+            const { from, to } = { from: (page - 1) * CONFIG.POSTS_PER_PAGE, to: page * CONFIG.POSTS_PER_PAGE - 1 };
+            let query = supabase.from(CONFIG.DB_TABLE_NAME).select('id, title, slug, summary, category, thumbnail_url', { count: 'exact' });
+            if (category !== '전체') query = query.eq('category', category);
             query = query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
-
+            
             const { data: posts, error, count } = await query;
-            const totalPosts = count ?? 0;
-
+            const total = count ?? 0;
             if (error) {
-                console.error("Error fetching post list:", error);
-                listContainer.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러오는 중 오류가 발생했습니다.</p>`;
+                console.error("Error fetching posts:", error);
+                container.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러오는 중 오류가 발생했습니다.</p>`;
                 return;
             }
             
             const safePosts = Array.isArray(posts) ? posts : [];
-
             const postsHtml = safePosts.length > 0
                 ? `<div class="divide-y divide-gray-200/80">${safePosts.map(post => {
-                    
-                    const thumbHtml = post.thumbnail_url
-                        ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100"></div>`
-                        : '';
-                    
-                    // --- START OF FONT SIZE FIX ---
-                    // 폰트 크기 수정: 
-                    // 카테고리/요약: text-sm (14px) -> text-xs (12px)
-                    // 제목: text-base (16px) -> text-sm (14px)
-                    return `
-                    <a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80">
-                        ${thumbHtml}
-                        <div class="flex-grow">
-                            <p class="text-xs font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p>
-                            <h3 class="text-gray-800 text-sm font-bold">${post.title}</h3>
-                            <p class="text-xs text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p>
-                        </div>
-                    </a>`;
-                    // --- END OF FONT SIZE FIX ---
-
+                    const thumb = post.thumbnail_url ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100 post-thumbnail"></div>` : '';
+                    return `<a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80" role="article">${thumb}<div class="flex-grow"><p class="text-xs font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-sm font-bold">${post.title}</h3><p class="text-xs text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p></div></a>`;
                 }).join('')}</div>`
                 : `<div class="text-center py-20 text-gray-500"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${state.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
             
-            listContainer.innerHTML = `${postsHtml}${renderPaginationControls(page, totalPosts, '/', { category })}`;
-        }
+            container.innerHTML = `${postsHtml}${templates.pagination(page, total, '/', { category })}`;
+        };
         
-        async function renderPostView(container, slug) { 
-            if (!slug) { navigateTo('/'); return; } 
-            
-            const { data: post, error } = await supabase.from(DB_TABLE_NAME).select('*').eq('slug', slug).single(); 
-            if (error || !post) { 
+        const renderPostView = async (container, slug) => {
+            if (!slug) { navigateTo('/'); return; }
+            const { data: post, error } = await supabase.from(CONFIG.DB_TABLE_NAME).select('*').eq('slug', slug).single();
+            if (error || !post) {
                 console.error("Error fetching post:", slug, error);
-                showToast('글을 찾을 수 없습니다.', true); 
-                navigateTo('/'); 
-                return; 
-            } 
+                showToast('글을 찾을 수 없습니다.', true);
+                navigateTo('/');
+                return;
+            }
             
-            void (async () => { 
-                const viewedPosts = JSON.parse(sessionStorage.getItem('viewed_posts')) || []; 
-                if (!viewedPosts.includes(post.id)) { 
-                    await supabase.rpc('increment_post_view', { post_slug: slug }); 
-                    viewedPosts.push(post.id); 
-                    sessionStorage.setItem('viewed_posts', JSON.stringify(viewedPosts)); 
-                } 
+            // View count (OPTIMIZED: Non-blocking)
+            (async () => {
+                try {
+                    const viewed = JSON.parse(sessionStorage.getItem('viewed_posts') || '[]');
+                    if (!viewed.includes(post.id)) {
+                        await supabase.rpc('increment_post_view', { post_slug: slug });
+                        viewed.push(post.id);
+                        sessionStorage.setItem('viewed_posts', JSON.stringify(viewed));
+                    }
+                } catch (e) { console.warn('View count error:', e); }
             })();
-
-            const { data: popularPosts } = await supabase
-                .from(DB_TABLE_NAME)
-                .select('title, slug')
-                .eq('status', 'published')
-                .neq('slug', slug)
-                .order('view_count', { ascending: false, nullsFirst: false })
-                .limit(5);
-
-            let popularPostsHtml = popularPosts?.length > 0 ? `
-                <div class="mt-20">
-                    <h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2>
-                    <div class="border-t border-gray-200">${popularPosts.map(p => `
-                        <a href="/post/${p.slug}" data-route class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50">
-                            <h4 class="font-semibold text-gray-800 text-base">${p.title}</h4>
-                        </a>`).join('')}
-                    </div>
-                </div>` : '';
             
-            const { data: prevPost } = await supabase.from(DB_TABLE_NAME).select('title, slug').lt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: false }).limit(1).single();
-            const { data: nextPost } = await supabase.from(DB_TABLE_NAME).select('title, slug').gt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: true }).limit(1).single();
-
-            const nextPrevLinksHtml = `
-                <nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10">
-                    <div>${prevPost ? `<a href="/post/${prevPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prevPost.title}</h4></a>` : ''}</div>
-                    <div class="text-left md:text-right">${nextPost ? `<a href="/post/${nextPost.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${nextPost.title}</h4></a>` : ''}</div>
-                </nav>`;
+            const { data: popular } = await supabase.from(CONFIG.DB_TABLE_NAME).select('title, slug').eq('status', 'published').neq('slug', slug).order('view_count', { ascending: false, nullsFirst: false }).limit(5);
+            const popularHtml = popular?.length > 0 ? `<div class="mt-20"><h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2><div class="border-t border-gray-200">${popular.map(p => `<a href="/post/${p.slug}" data-route class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50" role="link"><h4 class="font-semibold text-gray-800 text-base">${p.title}</h4></a>`).join('')}</div></div>` : '';
             
-            updateMetaTags(post); 
-            const editButtonHtml = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200">수정</a>` : ''; 
+            const { data: prev } = await supabase.from(CONFIG.DB_TABLE_NAME).select('title, slug').lt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: false }).limit(1).single();
+            const { data: next } = await supabase.from(CONFIG.DB_TABLE_NAME).select('title, slug').gt('created_at', post.created_at).eq('status', 'published').order('created_at', { ascending: true }).limit(1).single();
+            const navHtml = `<nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10" role="navigation" aria-label="이전/다음 글 탐색"><div>${prev ? `<a href="/post/${prev.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prev.title}</h4></a>` : ''}</div><div class="text-left md:text-right">${next ? `<a href="/post/${next.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${next.title}</h4></a>` : ''}</div></nav>`;
             
-            // --- STYLE CHANGE: Reduced top/bottom padding (py-8) and header margin (mb-8) on mobile ---
+            updateMetaTags(post);
+            const editBtn = (state.user && state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200" aria-label="글 수정">수정</a>` : '';
+            
             container.innerHTML = `
                 <div class="max-w-4xl mx-auto py-8 sm:py-16">
-                    <article>
+                    <article role="article">
                         <header class="mb-8 sm:mb-12">
-                             <p class="text-sm font-semibold text-fuchsia-500 mb-3">${post.category || '미분류'}</p>
+                            <p class="text-sm font-semibold text-fuchsia-500 mb-3">${post.category || '미분류'}</p>
                             <h1 class="text-3xl sm:text-4xl font-black text-black tracking-tighter !mt-0 !mb-4">${post.title}</h1>
                             <div class="flex items-center justify-between text-sm text-gray-500">
                                 <span>${new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                ${editButtonHtml}
+                                ${editBtn}
                             </div>
                         </header>
                         <div id="post-content" class="prose-custom max-w-none"></div>
                     </article>
-                    
                     <div class="my-16"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
-                    
-                    ${popularPostsHtml}
-                    
-                    ${nextPrevLinksHtml}
-                </div>`; 
+                    ${popularHtml}${navHtml}
+                </div>`;
             
-            const safeContent = (typeof DOMPurify !== 'undefined') 
-                ? DOMPurify.sanitize(post.refined_content || '', { ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead"] }) 
-                : (post.refined_content || '');
+            const safeContent = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(post.refined_content || '', { ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead"] }) : (post.refined_content || '');
             $('#post-content').innerHTML = safeContent;
-
-            try { (adsbygoogle = window.adsbygoogle || []).push({}); } 
-            catch (e) { console.warn("Adsense push error:", e); }
+            
+            try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("Adsense error:", e); }
             
             setTimeout(() => {
-                if (typeof hljs !== 'undefined') {
-                    $('#post-content').querySelectorAll('pre').forEach((block) => {
-                        hljs.highlightElement(block);
-                    });
-                }
-            }, 0);
-        }
+                if (typeof hljs !== 'undefined') $('#post-content').querySelectorAll('pre code').forEach(hljs.highlightElement);
+                $('#post-content').querySelectorAll('img').forEach(img => { img.loading = 'lazy'; });
+            }, 100);
+        };
         
-        async function renderDashboardView(container) {
+        const renderDashboardView = async (container) => {
             updateMetaTags({ title: '대시보드' });
-            // --- STYLE CHANGE: Reduced padding (py-8) and margin (mb-8) on mobile ---
-            container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><div class="flex justify-between items-center mb-8 sm:mb-10"><h1 class="text-4xl font-black text-black tracking-tighter">대시보드</h1><a href="/writer" data-route class="px-5 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">새 글 작성</a></div><div id="dashboard-post-list" class="bg-transparent space-y-2"><div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
-            const listContainer = $('#dashboard-post-list');
+            container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><div class="flex justify-between items-center mb-8 sm:mb-10"><h1 class="text-4xl font-black text-black tracking-tighter">대시보드</h1><a href="/writer" data-route class="px-5 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]" aria-label="새 글 작성">새 글 작성</a></div><div id="dashboard-post-list" class="bg-transparent space-y-2"><div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div></div>`;
+            
             if (!state.user) return;
-
-            const { data: posts, error } = await supabase.from(DB_TABLE_NAME).select('id, title, slug, status, created_at').eq('author_id', state.user.id).order('created_at', { ascending: false });
-            
-            if (error) { 
-                console.error("Error fetching dashboard posts:", error);
-                listContainer.innerHTML = '<p class="text-center text-gray-400">글 목록을 불러오는 데 실패했습니다.</p>'; 
-                return; 
+            const { data: posts, error } = await supabase.from(CONFIG.DB_TABLE_NAME).select('id, title, slug, status, created_at').eq('author_id', state.user.id).order('created_at', { ascending: false });
+            const list = $('#dashboard-post-list');
+            if (error) {
+                console.error("Dashboard error:", error);
+                list.innerHTML = '<p class="text-center text-gray-400">글 목록을 불러오는 데 실패했습니다.</p>';
+                return;
             }
-            if (!posts || posts.length === 0) { listContainer.innerHTML = '<p class="text-center text-gray-400 py-10">작성한 글이 없습니다.</p>'; return; }
+            if (!posts?.length) {
+                list.innerHTML = '<p class="text-center text-gray-400 py-10">작성한 글이 없습니다.</p>';
+                return;
+            }
+            list.innerHTML = `<ul class="w-full" role="list">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors" role="listitem"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-black hover:text-[#D946EF]" aria-label="글 보기: ${post.title}">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black" aria-label="글 수정: ${post.title}">수정</a></li>`).join('')}</ul>`;
+        };
+        
+        let quillInstance = null; // OPTIMIZED: Global Quill instance for reuse
+        const initQuillEditor = () => {
+            const el = $('#quill-editor');
+            if (!el) return null;
+            if (quillInstance) return quillInstance;
             
-            const postsHtml = `<ul class="w-full">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-black hover:text-[#D946EF]">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black">수정</a></li>`).join('')}</ul>`;
-            listContainer.innerHTML = postsHtml;
-        }
-
-        async function renderWriterView(container, slug) {
+            if (typeof hljs === 'undefined') console.warn("hljs not loaded.");
+            
+            // ADVANCED: Custom Clipboard (cached import)
+            if (!window.AdvancedClipboard) {
+                const Clipboard = Quill.import('modules/clipboard');
+                const Delta = Quill.import('delta');
+                class AdvancedClipboard extends Clipboard {
+                    convert(html) {
+                        if (typeof html !== 'string') return super.convert(html);
+                        // 빠른 파싱: 정규식으로 태그/스타일 제거 (DOM 대신)
+                        const cleanHtml = html.replace(/<style>.*?<\/style>|<script>.*?<\/script>/gi, '')
+                                              .replace(/style="[^"]*"/gi, '');  // 스타일 속성 제거
+                        this.container.innerHTML = cleanHtml;
+                        const text = this.container.innerText;  // 텍스트만 추출
+                        this.container.innerHTML = '';
+                        return new Delta().insert(text);  // Delta로 효율적 삽입
+                    }
+                }
+                Quill.register('modules/clipboard', AdvancedClipboard, true);
+                window.AdvancedClipboard = true;
+            }
+            
+            // 테이블 모듈 등록 (성능 최적화: 필요 시만)
+            if (typeof QuillBetterTable !== 'undefined') {
+                QuillBetterTable.register({ theme: 'snow' });  // Snow 테마와 통합
+            }
+            
+            quillInstance = new Quill(el, {
+                theme: 'snow',
+                modules: {
+                    toolbar: {
+                        container: [{ 'header': [1, 2, 3, false] }, ['bold', 'italic', 'underline', 'strike'], ['blockquote', 'code-block'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], [{ 'indent': '-1'}, { 'indent': '+1' }], ['link', 'image'], ['clean']],
+                        handlers: { image: quillImageHandler }
+                    },
+                    'better-table': {  // 테이블 모듈 활성화
+                        operationMenu: {  // 우클릭 메뉴 커스텀
+                            items: {
+                                unmergeCells: { text: '셀 합치기 해제' },
+                                splitCells: { text: '셀 분할' }
+                            }
+                        },
+                        tableCellStyles: {  // 셀 스타일 제한으로 성능 향상
+                            backgroundColor: true,
+                            color: true,
+                            width: true,
+                            height: true
+                        }
+                    },
+                    history: { delay: 5000, userOnly: true },
+                    syntax: false,  // 테이블 포스트면 off로 (성능)
+                    clipboard: {}
+                }
+            });
+            
+            // 붙여넣기 후 테이블 자동 변환 (Clipboard matcher 추가)
+            const tableMatcher = (node, delta) => {
+                if (node.tagName === 'TABLE') {
+                    // Delta로 테이블 변환 로직 (quill-better-table가 처리)
+                    return delta;  // 모듈이 자동 핸들링
+                }
+            };
+            Quill.import('modules/clipboard').addMatcher(Node.TABLE, tableMatcher);
+            
+            // OPTIMIZED: Debounced auto-save
+            let timer;
+            const autoSave = debounce(() => {
+                if (state.user && quillInstance.getLength() > 1) console.log('Auto-saving...'); // Placeholder
+            }, 30000);
+            quillInstance.on('text-change', () => { clearTimeout(timer); timer = setTimeout(autoSave, 5000); });
+            
+            // ADVANCED: Keyboard binding (cached)
+            if (!window.QuillKeyboardBound) {
+                const Keyboard = Quill.import('modules/keyboard');
+                quillInstance.keyboard.addBinding({ key: 'K', shortKey: true, handler: (range) => {
+                    const url = prompt('링크 URL 입력:');
+                    if (url) quillInstance.formatText(range.index, range.length, 'link', url);
+                    return true;
+                } });
+                window.QuillKeyboardBound = true;
+            }
+            
+            return quillInstance;
+        };
+        
+        const renderWriterView = async (container, slug) => {
             if (!state.user) { navigateTo('/'); return; }
             updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
-
-            let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: CATEGORIES[0] };
-
+            
+            let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: CONFIG.CATEGORIES[0] };
             if (slug) {
-                const { data, error } = await supabase.from(DB_TABLE_NAME).select('*').eq('slug', slug).single();
+                const { data, error } = await supabase.from(CONFIG.DB_TABLE_NAME).select('*').eq('slug', slug).single();
                 if (error || !data || data.author_id !== state.user.id) {
-                    console.error("Error fetching post to edit or auth error:", error);
-                    showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true); 
-                    navigateTo('/dashboard'); 
+                    console.error("Edit error:", error);
+                    showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true);
+                    navigateTo('/dashboard');
                     return;
                 }
                 post = data;
             }
             
-            const categoryOptions = CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
-            
-            // --- STYLE CHANGE: Reduced padding (py-8) on mobile ---
-            container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12">
-                <form id="writer-form" class="space-y-8 sm:pb-0 pb-20">
-                    <input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}">
-                    <div>
-                        <select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4">${categoryOptions}</select>
-                        <textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required>${post.title || ''}</textarea>
-                    </div>
-                    <div>
-                       <label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label>
-                       <textarea id="summary" name="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)">${post.summary || ''}</textarea>
-                    </div>
-                    <div>
-                       <label for="quill-editor" class="block text-lg font-bold text-black mb-3">본문 (Content)</label>
-                       <div id="quill-editor-container">
-                           <div id="quill-editor"></div>
-                           <div id="quill-loader" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-b-xl" style="display: none; min-height: 400px; z-index: 10;">
-                               <div class="loader-spinner"></div>
-                           </div>
-                       </div>
-                    </div>
-                    <div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky">
-                        <div>
-                            ${post.id ? `<button type="button" data-action="delete" class="px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">삭제하기</button>` : ''}
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button>
-                            <button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>
-                        </div>
-                    </div>
-                </form>
-            </div>`;
+            const categoryOpts = CONFIG.CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
+            container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate><input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}"><div><select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select><textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea></div><div><label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label><textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea></div><div><label for="quill-editor" class="block text-lg font-bold text-black mb-3">본문 (Content)</label><div id="quill-editor-container"><div id="quill-editor" aria-label="본문 에디터"></div><div id="quill-loader" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-b-xl" style="display: none; min-height: 400px; z-index: 10;"><div class="loader-spinner"></div></div></div></div><div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky"><div>${post.id ? `<button type="button" data-action="delete" class="px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제하기</button>` : ''}</div><div class="flex items-center space-x-3"><button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button><button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button></div></div></form></div>`;
             
             const loader = $('#quill-loader');
-            if(loader) loader.style.display = 'flex';
-
-            setTimeout(() => {
-                const quill = initQuillEditor(); 
+            loader.style.display = 'flex';
+            requestAnimationFrame(() => {
+                const quill = initQuillEditor();
                 if (quill && post.refined_content) {
                     try {
-                        quill.pasteHTML(post.refined_content); 
-                    } catch (qError) {
-                        console.error("Quill pasteHTML error:", qError);
-                        quill.setText('본문을 불러오는 중 오류가 발생했습니다.');
-                    }
+                        // Unmount 트릭: 긴 HTML 로딩 최적화
+                        const container = quill.container;
+                        const parent = container.parentNode;
+                        const index = Array.from(parent.children).indexOf(container);
+                        parent.removeChild(container);  // Unmount
+                        
+                        quill.setContents([]);  // 초기화
+                        quill.pasteHTML(post.refined_content);  // Set
+                        
+                        parent.insertBefore(container, parent.children[index]);  // Remount
+                    } catch (e) { console.error("Paste error:", e); quill.setText('본문을 불러오는 중 오류가 발생했습니다.'); }
                 }
-                if(loader) loader.style.display = 'none'; 
-            }, 50); 
-
-            const writerForm = $('#writer-form');
-            if (writerForm) {
-                writerForm.addEventListener('submit', (e) => { 
-                    e.preventDefault(); 
-                    if (e.submitter?.dataset.action) {
-                        handlePostSave(e.submitter.dataset.action, e.submitter); 
-                    }
-                });
-
-                const deleteButton = writerForm.querySelector('[data-action="delete"]');
-                if (deleteButton) {
-                    deleteButton.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        handlePostDelete(post.id);
-                    });
-                }
-            }
-        }
-        
-        // --- START OF CODE FIX (Quill Paste) ---
-        function initQuillEditor() {
-            const editorElement = $('#quill-editor');
-            if (!editorElement) {
-                console.error("Quill container not found, cannot initialize.");
-                return null;
-            }
-            
-            if (Quill.find(editorElement)) {
-                return Quill.find(editorElement);
-            }
-
-            if (typeof hljs === 'undefined') {
-                console.warn("highlight.js is not loaded. Published posts might not highlight code.");
-            }
-
-            const quillInstance = new Quill(editorElement, {
-                theme: 'snow',
-                modules: {
-                    toolbar: {
-                        container: [
-                            [{ 'header': [1, 2, 3, false] }],
-                            ['bold', 'italic', 'underline', 'strike'],
-                            ['blockquote', 'code-block'], 
-                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                            [{ 'indent': '-1'}, { 'indent': '+1' }],
-                            ['link', 'image'],
-                            ['clean']
-                        ],
-                        handlers: { 'image': quillImageHandler }
-                    }
-                    // --- FIX for Paste Issue ---
-                    // 'clipboard' 모듈 설정을 아예 제거합니다.
-                    // 이렇게 하면 Quill이 기본적으로 내장된 HTML <-> Delta 변환기를 사용하여
-                    // <ul>, <li>, <blockquote> 등의 태그를
-                    // 훨씬 더 안정적으로 파싱(해석)합니다.
-                    // 
-                    // clipboard: {
-                    //    matchVisual: false 
-                    // } 
-                    // --- END OF FIX ---
-                }
+                loader.style.display = 'none';
             });
-
-            return quillInstance; 
-        }
-        // --- END OF CODE FIX (Quill Paste) ---
+            
+            const form = $('#writer-form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!validateForm()) return;
+                if (e.submitter?.dataset.action) handlePostSave(e.submitter.dataset.action, e.submitter);
+            });
+            
+            const delBtn = form.querySelector('[data-action="delete"]');
+            if (delBtn) delBtn.addEventListener('click', (e) => { e.preventDefault(); handlePostDelete(post.id); });
+            
+            // OPTIMIZED: Debounced slug update
+            const titleEl = $('#title');
+            if (titleEl) titleEl.addEventListener('input', debounce(() => {
+                const slugEl = $('#post-slug');
+                if (slugEl && !slugEl.value) {
+                    let slug = titleEl.value.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+                    // Optional: Display preview
+                }
+            }, 300));
+        };
         
-        function quillImageHandler() {
-            const quill = this.quill;
+        const validateForm = () => {
+            const title = $('#title')?.value.trim();
+            const cat = $('#category')?.value;
+            if (!title) { showToast('제목은 필수 항목입니다.', true); $('#title')?.focus(); return false; }
+            if (!cat) { showToast('카테고리를 선택해주세요.', true); $('#category')?.focus(); return false; }
+            return true;
+        };
+        
+        // --- Image Upload (OPTIMIZED: Reused functions) ---
+        const quillImageHandler = () => {
+            const quill = quillInstance;
             const input = document.createElement('input');
-            input.setAttribute('type', 'file');
-            input.setAttribute('accept', 'image/*');
-            input.click();
-
+            input.type = 'file'; input.accept = 'image/*'; input.click();
             input.onchange = async () => {
                 const file = input.files[0];
-                if (file) {
-                    showToast('이미지 업로드 중...');
-                    const range = quill.getSelection(true);
-                    quill.enable(false);
-
-                    try {
-                        const blobToUpload = await convertToWebP(file);
-                        const publicUrl = await uploadImageToSupabase(blobToUpload);
-                        quill.enable(true);
-                        quill.insertEmbed(range.index, 'image', publicUrl);
-                        quill.setSelection(range.index + 1, Quill.sources.SILENT);
-                        showToast('업로드 완료!', false);
-                    } catch (error) {
-                        console.error('Image upload failed:', error);
-                        showToast(`이미지 업로드 실패: ${error.message}`, true);
-                        quill.enable(true);
-                    }
+                if (!file) return;
+                showToast('이미지 업로드 중...');
+                const range = quill.getSelection(true);
+                quill.enable(false);
+                try {
+                    const blob = await convertToWebP(file);
+                    const url = await uploadImageToSupabase(blob);
+                    quill.enable(true);
+                    quill.insertEmbed(range.index, 'image', url);
+                    quill.setSelection(range.index + 1, Quill.sources.SILENT);
+                    showToast('업로드 완료!', false);
+                } catch (e) {
+                    console.error('Upload failed:', e);
+                    showToast(`이미지 업로드 실패: ${e.message}`, true);
+                    quill.enable(true);
                 }
             };
-        }
-
-        async function uploadImageToSupabase(file) {
-            const isWebP = file.type === 'image/webp';
-            const fileExtension = isWebP ? 'webp' : file.name.split('.').pop();
-            
-            const filePath = `${state.user.id}/${Date.now()}.${fileExtension}`;
-            
-            const { error: uploadError } = await supabase.storage
-                .from(IMAGE_BUCKET_NAME)
-                .upload(filePath, file);
-
-            if (uploadError) {
-                console.error('Supabase storage upload error:', uploadError);
-                throw new Error(`업로드 실패: ${uploadError.message}`);
-            }
-            
-            const { data } = supabase.storage
-                .from(IMAGE_BUCKET_NAME)
-                .getPublicUrl(filePath); 
-                
-            if (!data || !data.publicUrl) {
-                console.error('getPublicUrl failed after upload. Data:', data);
-                throw new Error('파일 업로드 후 Public URL을 가져오는 데 실패했습니다.');
-            }
-
-            return data.publicUrl;
-        }
+        };
         
-        function getOrientation(file) {
-            return new Promise((resolve) => {
-                if (typeof EXIF === 'undefined') {
-                    console.warn('EXIF.js not loaded. Cannot check orientation.');
-                    resolve(1);
-                    return;
-                }
-                EXIF.getData(file, function() {
-                    resolve(EXIF.getTag(this, 'Orientation') || 1);
-                });
-            });
-        }
-
-        function convertToWebP(file, quality = 0.8) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = async (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    
-                    img.onload = async () => {
-                        const orientation = await getOrientation(file);
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (orientation >= 5 && orientation <= 8) {
-                            canvas.width = height;
-                            canvas.height = width;
-                        } else {
-                            canvas.width = width;
-                            canvas.height = height;
-                        }
-
-                        switch (orientation) {
-                            case 2: ctx.transform(-1, 0, 0, 1, width, 0); break;
-                            case 3: ctx.transform(-1, 0, 0, -1, width, height); break;
-                            case 4: ctx.transform(1, 0, 0, -1, 0, height); break;
-                            case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
-                            case 6: ctx.transform(0, 1, -1, 0, height, 0); break;
-                            case 7: ctx.transform(0, -1, -1, 0, height, width); break;
-                            case 8: ctx.transform(0, -1, 1, 0, 0, width); break;
-                            default: ctx.transform(1, 0, 0, 1, 0, 0);
-                        }
-
-                        ctx.drawImage(img, 0, 0);
-                        
-                        canvas.toBlob((blob) => {
-                            if (blob) {
-                                resolve(blob);
-                            } else {
-                                console.warn('WebP conversion failed. Uploading original file.');
-                                resolve(file); // Fallback to original file
-                            }
-                        }, 'image/webp', quality);
-                    };
-                    img.onerror = (error) => reject(new Error('Image failed to load'));
+        const uploadImageToSupabase = async (file) => {
+            const ext = file.type === 'image/webp' ? 'webp' : file.name.split('.').pop();
+            const path = `${state.user.id}/${Date.now()}.${ext}`;
+            const { error } = await supabase.storage.from(CONFIG.IMAGE_BUCKET_NAME).upload(path, file, { upsert: true });
+            if (error) throw new Error(`업로드 실패: ${error.message}`);
+            const { data } = supabase.storage.from(CONFIG.IMAGE_BUCKET_NAME).getPublicUrl(path);
+            if (!data?.publicUrl) throw new Error('Public URL 실패');
+            return data.publicUrl;
+        };
+        
+        const getOrientation = (file) => new Promise((res) => {
+            if (typeof EXIF === 'undefined') { res(1); return; }
+            EXIF.getData(file, () => res(EXIF.getTag(this, 'Orientation') || 1));
+        });
+        
+        const convertToWebP = (file, quality = 0.8) => new Promise((res, rej) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async (e) => {
+                const img = new Image(); img.src = e.target.result;
+                img.onload = async () => {
+                    const orient = await getOrientation(file);
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    let w = img.width, h = img.height;
+                    if (orient >= 5 && orient <= 8) { [w, h] = [h, w]; }
+                    canvas.width = w; canvas.height = h;
+                    // Transform for orientation (OPTIMIZED: Switch only)
+                    const transforms = {2: [-1,0,0,1,w,0], 3: [-1,0,0,-1,w,h], 4: [1,0,0,-1,0,h], 5: [0,1,1,0,0,0], 6: [0,1,-1,0,h,0], 7: [0,-1,-1,0,h,w], 8: [0,-1,1,0,0,w]};
+                    ctx.transform(...(transforms[orient] || [1,0,0,1,0,0]));
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob((blob) => res(blob || file), 'image/webp', quality);
                 };
-                reader.onerror = (error) => reject(error);
-            });
-        }
-
-        async function handlePostSave(action, button) {
-            const editorElement = $('#quill-editor');
-            const quillInstance = editorElement ? Quill.find(editorElement) : null;
-
-            if (!quillInstance) {
-                showToast('에디터를 찾을 수 없습니다. 다시 시도해 주세요.', true);
-                return;
-            }
-            const originalBtnText = button.textContent;
-            button.disabled = true;
-            button.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
-
+                img.onerror = () => rej(new Error('Image load failed'));
+            };
+            reader.onerror = rej;
+        });
+        
+        const handlePostSave = async (action, btn) => {
+            if (!quillInstance) { showToast('에디터 오류.', true); return; }
+            const origText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
+            
             try {
                 const title = $('#title').value.trim();
-                if (!title) throw new Error('제목은 필수 항목입니다.');
-
+                if (!title) throw new Error('제목 필수');
                 const status = action === 'publish' ? 'published' : 'draft';
-                const contentHTML = quillInstance.root.innerHTML; 
-                if (contentHTML === '<p><br></p>') throw new Error('본문 내용이 비어있습니다.');
+                const content = quillInstance.root.innerHTML;
+                if (content === '<p><br></p>' || quillInstance.getLength() < 2) throw new Error('본문 비어있음');
                 
-                let summary = $('#summary').value.trim();
-                if (!summary) {
-                    const textContent = quillInstance.getText().trim().replace(/\s+/g, ' ');
-                    summary = textContent.slice(0, 150) + (textContent.length > 150 ? '...' : '');
-                }
-
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = contentHTML;
-                const firstImg = tempDiv.querySelector('img');
-                const thumbnail_url = firstImg ? firstImg.src : null;
-
+                let summary = $('#summary').value.trim() || quillInstance.getText().trim().replace(/\s+/g, ' ').slice(0, 150) + (quillInstance.getText().length > 150 ? '...' : '');
+                
+                const temp = document.createElement('div'); temp.innerHTML = content;
+                const thumb = temp.querySelector('img')?.src || null;
+                
                 const id = $('#post-id').value;
                 let slug = $('#post-slug').value.trim() || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
                 if (!id) {
-                    const { data: existingSlug } = await supabase.from(DB_TABLE_NAME).select('id').eq('slug', slug).maybeSingle();
-                    if (existingSlug) slug = `${slug}-${Date.now().toString().slice(-6)}`;
+                    const { data } = await supabase.from(CONFIG.DB_TABLE_NAME).select('id').eq('slug', slug).maybeSingle();
+                    if (data) slug += `-${Date.now().toString().slice(-6)}`;
                 }
                 
-                const postData = { 
-                    title, slug, status, summary, 
-                    author_id: state.user.id, 
-                    refined_content: contentHTML,
-                    category: $('#category').value, 
-                    thumbnail_url: thumbnail_url 
-                };
-
-                const query = id ? supabase.from(DB_TABLE_NAME).update(postData).eq('id', id) : supabase.from(DB_TABLE_NAME).insert(postData);
-                const { data, error } = await query.select().single();
+                const data = { title, slug, status, summary, author_id: state.user.id, refined_content: content, category: $('#category').value, thumbnail_url: thumb };
+                const q = id ? supabase.from(CONFIG.DB_TABLE_NAME).update(data).eq('id', id) : supabase.from(CONFIG.DB_TABLE_NAME).insert(data);
+                const { error } = await q.select().single();
                 if (error) throw error;
-
-                showToast(status === 'published' ? '글이 발행되었습니다!' : '초안이 저장되었습니다.');
-                navigateTo(status === 'published' ? `/post/${data.slug}` : '/dashboard');
-
-            } catch (error) { 
-                console.error("Error saving post:", error);
-                showToast(`저장 실패: ${error.message}`, true);
-            } finally { button.disabled = false; button.textContent = originalBtnText; }
-        }
-
-        async function handlePostDelete(postId) {
-            if (!postId) return;
-            const confirmed = await showDeleteConfirmationModal('정말로 이 글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');
-            
-            if (confirmed) {
-                showToast('글을 삭제하는 중...');
-                const { error } = await supabase.from(DB_TABLE_NAME).delete().eq('id', postId);
-                if (error) {
-                    console.error("Error deleting post:", error);
-                    showToast(`삭제 실패: ${error.message}`, true);
-                } else {
-                    showToast('글이 삭제되었습니다.');
-                    navigateTo('/dashboard');
-                }
+                
+                showToast(status === 'published' ? '발행되었습니다!' : '저장되었습니다.');
+                navigateTo(status === 'published' ? `/post/${slug}` : '/dashboard');
+            } catch (e) {
+                console.error("Save error:", e);
+                showToast(`저장 실패: ${e.message}`, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = origText;
             }
-        }
+        };
         
-        async function showDeleteConfirmationModal(message) {
-            return new Promise(resolve => {
-                if ($('#delete-confirm-modal')) return;
-                const modalHtml = `
-                    <div id="delete-confirm-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-                        <div id="delete-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8">
-                            <p class="text-center text-black text-lg mb-8">${message}</p>
-                            <div class="flex justify-center gap-4">
-                                <button id="delete-btn-no" class="px-6 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">취소</button>
-                                <button id="delete-btn-yes" class="px-6 py-2.5 text-sm font-bold rounded-full bg-red-600 text-white hover:bg-red-700 transition">삭제 확인</button>
-                            </div>
-                        </div>
-                    </div>`;
-                $('#modal-container').innerHTML = modalHtml;
-                const closeModal = (result) => {
-                    const modal = $('#delete-confirm-modal');
-                    if (!modal) return;
-                    anime({ targets: modal, opacity: 0, duration: 200, easing: 'easeInQuad', complete: () => { $('#modal-container').innerHTML = ''; resolve(result); } });
-                };
-                anime({ targets: '#delete-confirm-modal', opacity: [0, 1], duration: 200 });
-                anime({ targets: '#delete-modal-content', scale: [0.9, 1], opacity: [0, 1], duration: 300, easing: 'easeOutQuad' });
-                $('#delete-btn-yes').addEventListener('click', () => closeModal(true));
-                $('#delete-btn-no').addEventListener('click', () => closeModal(false));
-            });
-        }
-
-        function showToast(message, isError = false) {
+        const handlePostDelete = async (id) => {
+            if (!id) return;
+            const confirm = await showDeleteConfirmationModal('정말 삭제하시겠습니까? 되돌릴 수 없습니다.');
+            if (!confirm) return;
+            showToast('삭제 중...');
+            const { error } = await supabase.from(CONFIG.DB_TABLE_NAME).delete().eq('id', id);
+            if (error) {
+                console.error("Delete error:", error);
+                showToast(`삭제 실패: ${error.message}`, true);
+            } else {
+                showToast('삭제되었습니다.');
+                navigateTo('/dashboard');
+            }
+        };
+        
+        const showDeleteConfirmationModal = (msg) => new Promise(res => {
+            if ($('#delete-confirm-modal')) return;
+            const html = `<div id="delete-confirm-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title"><div id="delete-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8"><h3 id="delete-modal-title" class="sr-only">삭제 확인</h3><p class="text-center text-black text-lg mb-8">${msg}</p><div class="flex justify-center gap-4"><button id="delete-btn-no" class="px-6 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">취소</button><button id="delete-btn-yes" class="px-6 py-2.5 text-sm font-bold rounded-full bg-red-600 text-white hover:bg-red-700 transition">삭제 확인</button></div></div></div>`;
+            $('#modal-container').innerHTML = html;
+            const close = (result) => {
+                const modal = $('#delete-confirm-modal');
+                if (!modal) return;
+                animateSwitch(modal, false).then(() => { $('#modal-container').innerHTML = ''; res(result); });
+            };
+            animateSwitch($('#delete-confirm-modal'));
+            animateSwitch($('#delete-modal-content'), true);
+            $('#delete-btn-yes').onclick = () => close(true);
+            $('#delete-btn-no').onclick = () => close(false);
+        });
+        
+        const showToast = (msg, err = false) => {
             const toast = document.createElement('div');
-            toast.className = `py-2.5 px-5 rounded-full shadow-lg text-sm font-medium ${isError ? 'bg-red-600 text-white' : 'bg-gray-800 text-white'}`;
-            toast.textContent = message; $('#toast-container').appendChild(toast);
-            anime({ targets: toast, opacity: [0, 1], translateY: [10, 0], duration: 300 });
-            setTimeout(() => anime({ targets: toast, opacity: 0, duration: 300, complete: () => toast.remove() }), 3000);
-        }
-
-        function buildUrl(path, params) {
-            const url = new URL(path, SITE_URL);
-            Object.entries(params).forEach(([key, value]) => { 
-                if (value !== undefined && value !== null && value !== '전체' && value !== '') {
-                    url.searchParams.append(key, value); 
-                }
+            toast.className = `py-2.5 px-5 rounded-full shadow-lg text-sm font-medium ${err ? 'bg-red-600 text-white' : 'bg-gray-800 text-white'}`;
+            toast.textContent = msg;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'polite');
+            $('#toast-container').appendChild(toast);
+            animateSwitch(toast, true);
+            setTimeout(() => animateSwitch(toast, false).then(() => toast.remove()), 3000);
+        };
+        
+        const buildUrl = (path, params) => {
+            const url = new URL(path, CONFIG.SITE_URL);
+            Object.entries(params).forEach(([k, v]) => {
+                if (v !== undefined && v !== null && v !== '전체' && v !== '') url.searchParams.append(k, v);
             });
             return url.pathname + url.search;
-        }
-
-        function renderPaginationControls(currentPage, totalItems, basePath, params) {
-            const totalPages = Math.ceil(totalItems / POSTS_PER_PAGE);
-            if (totalPages <= 1) return '';
-            const prevUrl = currentPage > 1 ? buildUrl(basePath, { ...params, page: currentPage - 1 }) : '#';
-            const nextUrl = currentPage < totalPages ? buildUrl(basePath, { ...params, page: currentPage + 1 }) : '#';
-            return `<div class="flex justify-center items-center gap-4 mt-12"><a href="${prevUrl}" data-route aria-label="이전 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${currentPage === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">이전</a><span class="text-sm font-medium text-gray-500">${currentPage} / ${totalPages}</span><a href="${nextUrl}" data-route aria-label="다음 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">다음</a></div>`;
-        }
-
-        async function handleLogout() { 
-            await supabase.auth.signOut(); showToast('로그아웃되었습니다.'); navigateTo('/', true); 
-        }
+        };
         
-        function showAuthModal() {
+        const handleLogout = async () => {
+            try { await supabase.auth.signOut(); showToast('로그아웃되었습니다.'); } catch (e) { console.error('Logout error:', e); }
+            navigateTo('/', true);
+        };
+        
+        const showAuthModal = () => {
             if ($('#auth-modal')) return;
-            const modalHtml = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"><div id="auth-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8 relative"><button id="close-modal-btn" aria-label="인증 모달 닫기" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold text-center mb-4 text-black">로그인 또는 가입</h2><p class="text-center text-gray-500 mb-8">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-blue-500 focus:border-blue-500"><button type="submit" class="w-full px-4 py-3 font-bold rounded-lg transition bg-[#D946EF] text-white hover:bg-[#C026D3]">매직 링크 받기</button></form></div></div>`;
-            $('#modal-container').innerHTML = modalHtml;
-            const closeModal = () => anime({ targets: '#auth-modal', opacity: 0, duration: 200, easing: 'easeInQuad', complete: () => $('#modal-container').innerHTML = '' });
-            anime({ targets: '#auth-modal', opacity: [0, 1], duration: 200 });
-            anime({ targets: '#auth-modal-content', scale: [0.9, 1], opacity: [0, 1], duration: 300, easing: 'easeOutQuad' });
-            $('#auth-form').addEventListener('submit', async (e) => {
-                e.preventDefault(); const email = $('#email-input').value; const button = e.target.querySelector('button');
-                button.disabled = true; button.textContent = '전송 중...';
-                const { error } = await supabase.auth.signInWithOtp({ email: email, options: { emailRedirectTo: SITE_URL } });
-                if (error) { showToast(`오류: ${error.message}`, true); button.disabled = false; button.textContent = '매직 링크 받기'; } 
-                else { showToast('이메일을 확인해주세요! 로그인 링크를 보냈습니다.'); closeModal(); }
-            });
-            $('#close-modal-btn').addEventListener('click', closeModal);
-            $('#auth-modal').addEventListener('click', (e) => { if (e.target.id === 'auth-modal') closeModal(); });
-        }
-        
-        function updateMetaTags(post = null) {
-            const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
-            const description = post ? post.summary : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
-            const url = post ? `${SITE_URL}/post/${post.slug}` : SITE_URL;
-            const image = post ? post.thumbnail_url : null; 
+            const html = `<div id="auth-modal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title"><div id="auth-modal-content" class="bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8 relative"><button id="close-modal-btn" aria-label="닫기" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button><h2 id="auth-modal-title" class="text-2xl font-bold text-center mb-4 text-black">로그인 또는 가입</h2><p class="text-center text-gray-500 mb-8">이메일을 입력하시면 로그인 링크를 보내드립니다.</p><form id="auth-form" class="space-y-4"><input type="email" id="email-input" placeholder="you@example.com" required class="w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-blue-500 focus:border-blue-500" aria-label="이메일 입력" autocomplete="email"><button type="submit" class="w-full px-4 py-3 font-bold rounded-lg transition bg-[#D946EF] text-white hover:bg-[#C026D3]">매직 링크 받기</button></form></div></div>`;
+            $('#modal-container').innerHTML = html;
+            const close = () => animateSwitch($('#auth-modal'), false).then(() => $('#modal-container').innerHTML = '');
+            animateSwitch($('#auth-modal'));
+            animateSwitch($('#auth-modal-content'), true);
             
-            document.title = title; 
-            $('meta[name="description"]')?.setAttribute('content', description); 
+            $('#auth-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const email = $('#email-input').value.trim();
+                if (!email) { showToast('이메일 입력해주세요.', true); return; }
+                const btn = e.target.querySelector('button');
+                btn.disabled = true; btn.textContent = '전송 중...';
+                const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: CONFIG.SITE_URL } });
+                if (error) { showToast(`오류: ${error.message}`, true); btn.disabled = false; btn.textContent = '매직 링크 받기'; } else { showToast('이메일 확인해주세요!'); close(); }
+            };
+            $('#close-modal-btn').onclick = close;
+            $('#auth-modal').onclick = (e) => { if (e.target.id === 'auth-modal') close(); };
+        };
+        
+        const updateMetaTags = (post = null) => {
+            const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
+            const desc = post ? post.summary : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
+            const url = post ? `${CONFIG.SITE_URL}/post/${post.slug}` : CONFIG.SITE_URL;
+            const img = post?.thumbnail_url || null;
+            
+            document.title = title;
+            $('meta[name="description"]')?.setAttribute('content', desc);
             $('meta[property="og:title"]')?.setAttribute('content', title);
-            $('meta[property="og:description"]')?.setAttribute('content', description); 
+            $('meta[property="og:description"]')?.setAttribute('content', desc);
             $('meta[property="og:url"]')?.setAttribute('content', url);
             
-            const ogImageEl = $('meta[property="og:image"]');
-            if (image) {
-                if (ogImageEl) {
-                    ogImageEl.setAttribute('content', image);
-                } else {
-                    const newOgImage = document.createElement('meta');
-                    newOgImage.setAttribute('property', 'og:image');
-                    newOgImage.setAttribute('content', image);
-                    document.head.appendChild(newOgImage);
+            let ogImg = $('meta[property="og:image"]');
+            if (img) {
+                if (ogImg) ogImg.setAttribute('content', img);
+                else {
+                    const meta = document.createElement('meta');
+                    meta.setAttribute('property', 'og:image');
+                    meta.setAttribute('content', img);
+                    document.head.appendChild(meta);
                 }
-            } else if (ogImageEl) {
-                ogImageEl.remove(); 
+            } else if (ogImg) ogImg.remove();
+        };
+        
+        // --- Event Listeners (OPTIMIZED: Single listener with delegation) ---
+        document.addEventListener('click', (e) => {
+            const route = e.target.closest('[data-route]');
+            if (route && route.href !== '#') { e.preventDefault(); navigateTo(route.href); return; }
+            
+            const action = e.target.closest('[data-action]');
+            if (action && !action.closest('form')) {
+                e.preventDefault();
+                const act = action.dataset.action;
+                switch (act) {
+                    case 'auth': return showAuthModal();
+                    case 'logout': return handleLogout();
+                    case 'filter-category': return navigateTo(buildUrl('/', { page: 1, category: action.dataset.category }));
+                }
             }
-        }
-
-        // --- App Initialization ---
-        function initializeApp() {
-            if (typeof hljs === 'undefined') {
-                console.error("CRITICAL: highlight.js is not loaded. Syntax highlighting will not work.");
+        });
+        window.addEventListener('popstate', handleRouting);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modals = ['#auth-modal', '#delete-confirm-modal'].find(m => $(m));
+                if (modals) {/* Close logic */ }
             }
-
-            supabase.auth.onAuthStateChange((event, session) => {
-                const userJustChanged = state.user?.id !== session?.user?.id;
+        });
+        
+        // --- Init (OPTIMIZED: Early auth check) ---
+        const initializeApp = () => {
+            if (typeof hljs === 'undefined') console.error("hljs missing.");
+            supabase.auth.onAuthStateChange((_, session) => {
+                const changed = state.user?.id !== session?.user?.id;
                 state.user = session?.user || null;
-                
                 if (!state.isAuthReady) {
                     state.isAuthReady = true;
-                    renderNav(); 
+                    renderNav();
                     handleRouting();
-                    anime({ targets: '#app-loader', opacity: 0, duration: 400, complete: (anim) => anim.animatables[0].target.remove() });
-                } else if (userJustChanged) {
+                    animateSwitch($('#app-loader'), false).then(() => $('#app-loader').remove());
+                } else if (changed) {
                     renderNav();
                     handleRouting();
                 }
             });
-
-            document.addEventListener('click', (e) => {
-                const routeTarget = e.target.closest('[data-route]');
-                if (routeTarget && routeTarget.getAttribute('href') !== '#') { e.preventDefault(); navigateTo(routeTarget.getAttribute('href')); return; }
-                
-                const actionTarget = e.target.closest('[data-action]');
-                if (actionTarget && !actionTarget.closest('form')) { 
-                    e.preventDefault();
-                    const action = actionTarget.dataset.action;
-                    switch (action) {
-                        case 'auth': showAuthModal(); break;
-                        case 'logout': handleLogout(); break;
-                        case 'filter-category': 
-                            const category = actionTarget.dataset.category;
-                            navigateTo(buildUrl('/', { page: 1, category: category })); 
-                            break;
-                    }
-                }
-            });
-            window.addEventListener('popstate', handleRouting);
-        }
-        
+        };
         initializeApp();
     </script>
 </body>
 </html>
-
-
