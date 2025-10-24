@@ -597,21 +597,55 @@
             };
         };
         
+        // *** MODIFIED FUNCTION ***
         const uploadImageToSupabase = async (file) => {
-            const ext = file.type === 'image/webp' ? 'webp' : file.name.split('.').pop();
-            const path = `${state.user.id}/${Date.now()}.${ext}`;
+            // file은 원본 File 객체이거나, convertToWebP에서 생성된 새 File 객체 (e.g., my-photo.webp)
+            let baseName = 'upload';
+            let ext = 'bin';
+
+            if (file.name) {
+                const parts = file.name.split('.');
+                if (parts.length > 1) {
+                    ext = parts.pop().toLowerCase(); // 'jpg', 'webp' 등
+                    baseName = parts.join('.'); // 'my-photo'
+                } else {
+                    // 확장자 없는 파일명 (e.g., 'my-photo')
+                    baseName = file.name;
+                    // MIME 타입에서 확장자 추측
+                    if (file.type === 'image/jpeg') ext = 'jpg';
+                    else if (file.type === 'image/png') ext = 'png';
+                    else if (file.type === 'image/webp') ext = 'webp';
+                    // else ext는 'bin' 유지
+                }
+            } else {
+                 // 이름 없는 Blob 객체 (convertToWebP가 실패하고 File도 아닌 경우 - 거의 발생 안함)
+                 if (file.type === 'image/jpeg') ext = 'jpg';
+                 else if (file.type === 'image/png') ext = 'png';
+                 else if (file.type === 'image/webp') ext = 'webp';
+                 // else baseName='upload', ext='bin'
+            }
+            
+            // 파일명 중복을 피하기 위해 타임스탬프 추가
+            const path = `${state.user.id}/${baseName}-${Date.now()}.${ext}`;
+
             const { error } = await supabase.storage.from(CONFIG.IMAGE_BUCKET_NAME).upload(path, file, { upsert: true });
             if (error) throw new Error(`업로드 실패: ${error.message}`);
+            
             const { data } = supabase.storage.from(CONFIG.IMAGE_BUCKET_NAME).getPublicUrl(path);
             if (!data?.publicUrl) throw new Error('Public URL 실패');
             return data.publicUrl;
         };
         
+        // *** MODIFIED FUNCTION ***
         const getOrientation = (file) => new Promise((res) => {
             if (typeof EXIF === 'undefined') { res(1); return; }
-            EXIF.getData(file, () => res(EXIF.getTag(this, 'Orientation') || 1));
+            // 'this' 컨텍스트를 위해 화살표 함수 대신 function() 사용
+            EXIF.getData(file, function() { 
+                res(EXIF.getTag(this, 'Orientation') || 1);
+            });
         });
         
+        // *** MODIFIED FUNCTION ***
         const convertToWebP = (file, quality = 0.8) => new Promise((res, rej) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -628,7 +662,22 @@
                     const transforms = {2: [-1,0,0,1,w,0], 3: [-1,0,0,-1,w,h], 4: [1,0,0,-1,0,h], 5: [0,1,1,0,0,0], 6: [0,1,-1,0,h,0], 7: [0,-1,-1,0,h,w], 8: [0,-1,1,0,0,w]};
                     ctx.transform(...(transforms[orient] || [1,0,0,1,0,0]));
                     ctx.drawImage(img, 0, 0);
-                    canvas.toBlob((blob) => res(blob || file), 'image/webp', quality);
+                    
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            // Blob을 File 객체로 변환. 원본 파일명에서 확장자만 .webp로 변경
+                            let baseName = 'image';
+                            if (file.name) {
+                                const parts = file.name.split('.');
+                                if (parts.length > 1) parts.pop(); // 확장자 제거
+                                baseName = parts.join('.');
+                            }
+                            const webpFile = new File([blob], `${baseName}.webp`, { type: 'image/webp' });
+                            res(webpFile); // 새 File 객체 반환
+                        } else {
+                             res(file); // 변환 실패 시 원본 File 객체 반환
+                        }
+                    }, 'image/webp', quality);
                 };
                 img.onerror = () => rej(new Error('Image load failed'));
             };
@@ -871,3 +920,4 @@
     </script>
 </body>
 </html>
+
