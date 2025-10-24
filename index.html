@@ -473,93 +473,99 @@
                     }
 
                     if (typeof Quill !== 'undefined' && typeof QuillBetterTable !== 'undefined') {
-                        console.log('Quill and QuillBetterTable are loaded.');
                         
+                        // [FIX] 모듈 초기화 로직 전체를 try...catch로 감쌉니다.
                         try {
+                            console.log('Quill and QuillBetterTable are loaded.');
+                        
                             if (!Quill.imports || !Quill.imports['modules/better-table']) {
                                 Quill.register({ 'modules/better-table': window.QuillBetterTable }, true);
                                 console.log('QuillBetterTable registered successfully.');
                             }
-                        } catch (e) {
-                            console.warn('Failed to register quill-better-table:', e);
-                        }
 
-                        // [FIX] Delta 임포트
-                        const Delta = Quill.import('delta');
-
-                        // [FIX] 모듈 구성: 툴바 + 클립보드 강화
-                        const modules = {
-                            toolbar: [
-                                [{ 'header': [1, 2, 3, false] }], 
-                                ['bold', 'italic', 'underline', 'strike'], 
-                                [{ 'color': [] }, { 'background': [] }], // 색상, 배경색 추가
-                                ['blockquote', 'code-block'], 
-                                [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
-                                [{ 'align': [] }], // 정렬 추가
-                                [{ 'indent': '-1'}, { 'indent': '+1' }], 
-                                ['link', 'image'], 
-                                ['clean']
-                            ],
-                            history: { delay: 5000, userOnly: true },
-                            clipboard: {
-                                matchers: [
-                                    // Match SPAN 태그 for color and background
-                                    ['span', (node, delta) => {
-                                        const attributes = {};
-                                        if (node.style.color) attributes.color = node.style.color;
-                                        if (node.style.backgroundColor) attributes.background = node.style.backgroundColor;
-                                        
-                                        if (Object.keys(attributes).length > 0) {
-                                            return delta.compose(new Delta().retain(delta.length(), attributes));
-                                        }
-                                        return delta;
-                                    }],
-                                    // Match block 태그 for text-align
-                                    ['p, h1, h2, h3, h4, li, div', (node, delta) => {
-                                        if (node.style.textAlign) {
-                                            const align = node.style.textAlign.toLowerCase();
-                                            if (['center', 'right', 'justify'].includes(align)) {
-                                                return delta.compose(new Delta().retain(delta.length(), { align: align }));
-                                            }
-                                        }
-                                        return delta;
-                                    }]
-                                ]
+                            const Delta = Quill.import('delta');
+                            if (!Delta) {
+                                // Quill은 로드됐지만 Delta 모듈 임포트 실패
+                                throw new Error("Quill Delta module could not be imported.");
                             }
-                        };
-
-                        // 테이블 모듈이 로드되었으면 modules 객체에 추가
-                        if (Quill.imports && Quill.imports['modules/better-table']) {
-                            modules['better-table'] = {
-                                operationMenu: {
-                                    items: {
-                                        unmergeCells: { text: '셀 병합 해제' },
-                                        deleteRow: { text: '행 삭제' },
-                                        deleteColumn: { text: '열 삭제' },
-                                        insertRowAbove: { text: '위에 행 삽입' },
-                                        insertRowBelow: { text: '아래에 행 삽입' },
-                                        insertColumnLeft: { text: '왼쪽에 열 삽입' },
-                                        insertColumnRight: { text: '오른쪽에 열 삽입' },
-                                        deleteTable: { text: '표 삭제' }
-                                    }
+                            
+                            const modules = {
+                                toolbar: [
+                                    [{ 'header': [1, 2, 3, false] }], 
+                                    ['bold', 'italic', 'underline', 'strike'], 
+                                    [{ 'color': [] }, { 'background': [] }], // 색상, 배경색 추가
+                                    ['blockquote', 'code-block'], 
+                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
+                                    [{ 'align': [] }], // 정렬 추가
+                                    [{ 'indent': '-1'}, { 'indent': '+1' }], 
+                                    ['link', 'image'], 
+                                    ['clean']
+                                ],
+                                history: { delay: 5000, userOnly: true },
+                                clipboard: {
+                                    matchers: [
+                                        ['span', (node, delta) => {
+                                            const attributes = {};
+                                            if (node.style.color) attributes.color = node.style.color;
+                                            if (node.style.backgroundColor) attributes.background = node.style.backgroundColor;
+                                            
+                                            if (Object.keys(attributes).length > 0) {
+                                                return delta.compose(new Delta().retain(delta.length(), attributes));
+                                            }
+                                            return delta;
+                                        }],
+                                        ['p, h1, h2, h3, h4, li, div', (node, delta) => {
+                                            if (node.style.textAlign) {
+                                                const align = node.style.textAlign.toLowerCase();
+                                                if (['center', 'right', 'justify'].includes(align)) {
+                                                    return delta.compose(new Delta().retain(delta.length(), { align: align }));
+                                                }
+                                            }
+                                            return delta;
+                                        }]
+                                    ]
                                 }
                             };
-                            modules.keyboard = { bindings: QuillBetterTable.keyboardBindings };
-                        } else {
-                            console.warn('quill-better-table module failed to load. Table button will be hidden.');
+
+                            if (Quill.imports && Quill.imports['modules/better-table']) {
+                                modules['better-table'] = {
+                                    operationMenu: {
+                                        items: {
+                                            unmergeCells: { text: '셀 병합 해제' },
+                                            deleteRow: { text: '행 삭제' },
+                                            deleteColumn: { text: '열 삭제' },
+                                            insertRowAbove: { text: '위에 행 삽입' },
+                                            insertRowBelow: { text: '아래에 행 삽입' },
+                                            insertColumnLeft: { text: '왼쪽에 열 삽입' },
+                                            insertColumnRight: { text: '오른쪽에 열 삽입' },
+                                            deleteTable: { text: '표 삭제' }
+                                        }
+                                    }
+                                };
+                                modules.keyboard = { bindings: QuillBetterTable.keyboardBindings };
+                            } else {
+                                console.warn('quill-better-table module failed to load. Table button will be hidden.');
+                            }
+
+                            QuillEditor.instance = new Quill(containerSelector, {
+                                theme: 'snow',
+                                modules
+                            });
+                            
+                            QuillEditor.instance.getModule('toolbar').addHandler('image', QuillEditor.imageHandler);
+                            
+                            loader.style.display = 'none'; // 성공 시 로더 숨김
+                            resolve(QuillEditor.instance);
+
+                        } catch (e) {
+                            // Delta 임포트 실패 또는 모듈 구성 오류
+                            console.error("Quill init failed inside attempt:", e);
+                            loader.innerHTML = `<p class="text-red-500 font-bold p-4 text-center">에디터 모듈 구성 오류.<br>새로고침 해주세요.</p>`;
+                            return reject(e); // Promise 거부
                         }
 
-                        // 강화된 modules 객체로 Quill 인스턴스 생성
-                        QuillEditor.instance = new Quill(containerSelector, {
-                            theme: 'snow',
-                            modules
-                        });
-                        
-                        QuillEditor.instance.getModule('toolbar').addHandler('image', QuillEditor.imageHandler);
-                        
-                        loader.style.display = 'none';
-                        resolve(QuillEditor.instance);
                     } else {
+                        // 스크립트가 아직 로드되지 않음
                         if (typeof Quill === 'undefined') console.log('Waiting for Quill.js...');
                         if (typeof QuillBetterTable === 'undefined') console.log('Waiting for QuillBetterTable.js...');
                         setTimeout(() => attempt(retries - 1), 500);
@@ -568,6 +574,7 @@
                 
                 attempt();
             }),
+
 
             destroy: () => {
                 if (QuillEditor.instance) {
@@ -793,6 +800,10 @@
                                     const mPadding = style.match(/padding\s*:\s*([0-9]+(px|em|rem)(\s+[0-9]+(px|em|rem))?)/);
                                     if (mPadding) allowedStyles.push(`padding:${mPadding[1]}`);
                                     
+                                    // [FIX] 붙여넣기 기능 강화에 맞춰 color 속성 허용
+                                    const mColor = style.match(/color\s*:\s*(#[0-9a-f]{3,8}|rgb\([0-9,\s]+\)|rgba\([0-9,.\s]+\))/);
+                                    if (mColor) allowedStyles.push(`color:${mColor[1]}`);
+
                                     data.attrValue = allowedStyles.join(';');
                                     if (!data.attrValue) data.keepAttr = false;
                                 } catch (_) { data.keepAttr = false; }
@@ -800,7 +811,10 @@
                         });
                         window.__dompurifyHooked = true;
                     }
-                    const safeContent = DOMPurify.sanitize(post.refined_content || '', { ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead", "tfoot", "col", "colgroup"], ADD_ATTR: ["rowspan","colspan","style","class","width","height","align"] });
+                    const safeContent = DOMPurify.sanitize(post.refined_content || '', { 
+                        ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead", "tfoot", "col", "colgroup", "span"], 
+                        ADD_ATTR: ["rowspan","colspan","style","class","width","height","align"] 
+                    });
                     DOM.$('#post-content').innerHTML = safeContent;
                 } else {
                     DOM.$('#post-content').innerHTML = post.refined_content || ''; // DOMPurify 로드 실패 시
@@ -874,7 +888,7 @@
 
                 } catch (error) {
                     console.error("에디터 초기화 실패:", error);
-                    // 로더가 이미 오류 메시지를 표시하고 있음
+                    // QuillEditor.init 내부에서 이미 로더에 오류 메시지를 표시함
                 }
 
                 // 이벤트 리스너 바인딩
