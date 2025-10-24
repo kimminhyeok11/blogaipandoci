@@ -484,19 +484,51 @@
                             console.warn('Failed to register quill-better-table:', e);
                         }
 
+                        // [FIX] Delta 임포트
+                        const Delta = Quill.import('delta');
+
+                        // [FIX] 모듈 구성: 툴바 + 클립보드 강화
                         const modules = {
                             toolbar: [
                                 [{ 'header': [1, 2, 3, false] }], 
                                 ['bold', 'italic', 'underline', 'strike'], 
+                                [{ 'color': [] }, { 'background': [] }], // 색상, 배경색 추가
                                 ['blockquote', 'code-block'], 
                                 [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
+                                [{ 'align': [] }], // 정렬 추가
                                 [{ 'indent': '-1'}, { 'indent': '+1' }], 
                                 ['link', 'image'], 
                                 ['clean']
                             ],
-                            history: { delay: 5000, userOnly: true }
+                            history: { delay: 5000, userOnly: true },
+                            clipboard: {
+                                matchers: [
+                                    // Match SPAN 태그 for color and background
+                                    ['span', (node, delta) => {
+                                        const attributes = {};
+                                        if (node.style.color) attributes.color = node.style.color;
+                                        if (node.style.backgroundColor) attributes.background = node.style.backgroundColor;
+                                        
+                                        if (Object.keys(attributes).length > 0) {
+                                            return delta.compose(new Delta().retain(delta.length(), attributes));
+                                        }
+                                        return delta;
+                                    }],
+                                    // Match block 태그 for text-align
+                                    ['p, h1, h2, h3, h4, li, div', (node, delta) => {
+                                        if (node.style.textAlign) {
+                                            const align = node.style.textAlign.toLowerCase();
+                                            if (['center', 'right', 'justify'].includes(align)) {
+                                                return delta.compose(new Delta().retain(delta.length(), { align: align }));
+                                            }
+                                        }
+                                        return delta;
+                                    }]
+                                ]
+                            }
                         };
 
+                        // 테이블 모듈이 로드되었으면 modules 객체에 추가
                         if (Quill.imports && Quill.imports['modules/better-table']) {
                             modules['better-table'] = {
                                 operationMenu: {
@@ -517,6 +549,7 @@
                             console.warn('quill-better-table module failed to load. Table button will be hidden.');
                         }
 
+                        // 강화된 modules 객체로 Quill 인스턴스 생성
                         QuillEditor.instance = new Quill(containerSelector, {
                             theme: 'snow',
                             modules
@@ -542,19 +575,17 @@
                 }
             },
 
+            // [FIX] 본문 로딩 오류 수정
             setContent: (html) => {
                 const quill = QuillEditor.instance;
                 if (!quill) return;
                 try {
-                    quill.setText('');
-                    if (quill.clipboard && quill.clipboard.dangerouslyPasteHTML) {
-                        quill.clipboard.dangerouslyPasteHTML(0, html);
-                    } else {
-                        quill.root.innerHTML = html; // Fallback
-                    }
+                    // `dangerouslyPasteHTML` 대신 `innerHTML`을 사용해야
+                    // 외부 붙여넣기 로직(matcher)을 타지 않고 저장된 내용을 그대로 로드합니다.
+                    quill.root.innerHTML = html; 
                     quill.setSelection(quill.getLength(), 0, 'silent');
-                } catch (e) {
-                    console.error("Error pasting HTML content:", e);
+                } catch (e) { 
+                    console.error("Error setting content:", e); 
                     quill.root.innerHTML = `<p style="color: red; font-weight: bold;">[오류] 본문을 불러오는 데 실패했습니다.</p>`;
                 }
             },
@@ -827,6 +858,8 @@
                 // Quill 초기화
                 try {
                     const quill = await QuillEditor.init('#quill-editor', '#quill-loader');
+                    
+                    // [FIX] 수정된 로직으로 콘텐츠 로드
                     if (post.refined_content) {
                         QuillEditor.setContent(post.refined_content);
                     }
@@ -948,12 +981,12 @@
                     <button data-action="close-modal" aria-label="닫기" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button>
                     <h2 id="table-help-title" class="text-2xl font-bold mb-4 text-black">표 사용 안내</h2>
                     <div class="space-y-3 text-sm text-gray-700">
-                        <p>붙여넣기 시 <code>rowspan</code>/<code>colspan</code>은 보존됩니다. 일부 스타일(<code>text-align</code>, <code>width</code>)만 허용됩니다.</p>
+                        <p>이제 외부에서 복사한 표, 텍스트 색상, 배경색, 정렬이 대부분 유지됩니다.</p>
                         <ul class="list-disc pl-5 space-y-1">
                             <li><b>Tab / Shift+Tab</b>: 다음/이전 셀 이동</li>
                             <li><b>Enter</b>: 셀 내 줄바꿈</li>
                         </ul>
-                        <p class="text-xs text-gray-500">표 관련 컨트롤은 에디터 툴바를 활용하세요.</p>
+                        <p class="text-xs text-gray-500">툴바에 새로 추가된 색상, 정렬 버튼을 사용해 직접 수정할 수도 있습니다.</p>
                     </div>
                 </div>`;
                 DOM.showModal(modalId, html);
