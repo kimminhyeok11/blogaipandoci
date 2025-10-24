@@ -178,8 +178,16 @@
         
         // --- OPTIMIZED: Animation wrapper (reduce anime calls) ---
         const animateSwitch = (el, show = true) => {
+            if (!el) return Promise.resolve();
             const opts = show ? { opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' } : { opacity: 0, duration: 200, easing: 'easeInQuad' };
-            return anime({ targets: el, ...opts }).finished;
+            // Check for anime function
+            if (typeof anime === 'function') {
+                return anime({ targets: el, ...opts }).finished;
+            } else {
+                // Fallback if anime.js fails to load
+                el.style.opacity = show ? 1 : 0;
+                return Promise.resolve();
+            }
         };
         
         // --- Core Navigation (OPTIMIZED: Single history handler) ---
@@ -379,7 +387,9 @@
             try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("Adsense error:", e); }
             
             setTimeout(() => {
-                if (typeof hljs !== 'undefined') $('#post-content').querySelectorAll('pre code').forEach(hljs.highlightElement);
+                if (typeof hljs !== 'undefined') {
+                    $('#post-content').querySelectorAll('pre code').forEach(hljs.highlightElement);
+                }
                 $('#post-content').querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async'; });
                 $('#post-content').querySelectorAll('a[target="_blank"]').forEach(a => { a.rel = 'noopener noreferrer'; });
             }, 100);
@@ -410,19 +420,21 @@
         const initQuillEditor = () => {
             const el = $('#quill-editor');
             if (!el) return null;
-            if (quillInstance) return quillInstance;
+            if (quillInstance) return quillInstance; // 재사용
 
             // JIT registration for quill-better-table to avoid race with external script load
             if (window.Quill && window.QuillBetterTable) {
                 try {
-                    if (!Quill.imports['modules/better-table']) {
+                    // Quill.imports 대신 Quill.imports['modules/better-table']을 확인합니다.
+                    if (!Quill.imports || !Quill.imports['modules/better-table']) {
                         Quill.register({ 'modules/better-table': window.QuillBetterTable }, true);
+                        console.log('QuillBetterTable registered successfully.');
                     }
                 } catch (e) {
                     console.warn('Failed to register quill-better-table:', e);
                 }
             } else {
-                console.warn('QuillBetterTable not found. Table features will be disabled.');
+                console.warn('Quill or QuillBetterTable not found. Table features may be disabled.');
             }
             
             const modules = {
@@ -438,7 +450,8 @@
                 history: { delay: 5000, userOnly: true }
             };
 
-            if (window.Quill && window.QuillBetterTable && Quill.imports['modules/better-table']) {
+            // 모듈이 성공적으로 등록되었는지 다시 확인
+            if (window.Quill && window.QuillBetterTable && Quill.imports && Quill.imports['modules/better-table']) {
                 modules['better-table'] = {
                     operationMenu: {
                         items: {
@@ -481,6 +494,11 @@
             if (!state.user) { navigateTo('/'); return; }
             updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
             
+            // 전역 quillInstance가 남아있는 경우 파괴
+            if (quillInstance) {
+                quillInstance = null; 
+            }
+            
             let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: CONFIG.CATEGORIES[0] };
             if (slug) {
                 const { data, error } = await supabase.from(CONFIG.DB_TABLE_NAME).select('*').eq('slug', slug).single();
@@ -498,49 +516,66 @@
             
             const loader = $('#quill-loader');
             loader.style.display = 'flex';
-            
-            // *** START: 수정된 로직 ***
-            requestAnimationFrame(() => {
-                const quill = initQuillEditor();
-                if (quill) {
-                    // Graceful degradation: hide table UI if module unavailable
-                    if (!quill.getModule('better-table')) {
-                        const insertTableBtn = $('#insert-table-btn');
-                        if (insertTableBtn) insertTableBtn.style.display = 'none';
-                        const tableHelpBtn = container.querySelector('[data-action="table-help"]');
-                        if (tableHelpBtn) tableHelpBtn.style.display = 'none';
-                    }
 
-                    if (post.refined_content) {
-                        try {
-                            // 1. 에디터를 안전하게 비웁니다.
-                            quill.setText(''); 
-                            
-                            // 2. HTML 콘텐츠를 0번 인덱스에 붙여넣습니다.
-                            if (quill.clipboard && quill.clipboard.dangerouslyPasteHTML) {
-                                // 최신 Quill 방식
-                                quill.clipboard.dangerouslyPasteHTML(0, post.refined_content);
-                            } else if (quill.pasteHTML) { 
-                                // 구형 Quill 폴백
-                                quill.pasteHTML(0, post.refined_content);
-                            } else {
-                                // 최후의 폴백 (서식이 깨질 수 있지만 텍스트보다는 나음)
-                                quill.root.innerHTML = post.refined_content;
+            // *** START: NEW SCRIPT LOADING LOGIC ***
+            // 스크립트 로드를 기다리는 함수
+            const attemptToInitQuill = (retries = 20) => { // 500ms * 20 = 10초 대기
+                if (retries <= 0) {
+                    console.error("Quill and/or QuillBetterTable scripts failed to load after 10 seconds.");
+                    loader.innerHTML = '<p class="text-red-500 font-bold p-4 text-center">에디터를 불러오지 못했습니다.<br>페이지를 새로고침 해주세요.</p>';
+                    return;
+                }
+
+                // Quill과 QuillBetterTable이 모두 로드되었는지 확인
+                if (typeof Quill !== 'undefined' && typeof QuillBetterTable !== 'undefined') {
+                    
+                    // --- 스크립트 로드 완료, 에디터 초기화 ---
+                    console.log('Quill and QuillBetterTable are loaded. Initializing editor...');
+                    const quill = initQuillEditor(); 
+                    
+                    if (quill) {
+                        // 모듈 로드 실패 시 버튼 숨김
+                        if (!quill.getModule('better-table')) {
+                            console.warn('quill-better-table module failed to load, hiding table buttons.');
+                            const insertTableBtn = $('#insert-table-btn');
+                            if (insertTableBtn) insertTableBtn.style.display = 'none';
+                            const tableHelpBtn = container.querySelector('[data-action="table-help"]');
+                            if (tableHelpBtn) tableHelpBtn.style.display = 'none';
+                        }
+
+                        // 기존 콘텐츠 로드
+                        if (post.refined_content) {
+                            try {
+                                quill.setText(''); // 에디터 비우기
+                                if (quill.clipboard && quill.clipboard.dangerouslyPasteHTML) {
+                                    quill.clipboard.dangerouslyPasteHTML(0, post.refined_content);
+                                } else if (quill.pasteHTML) { 
+                                    quill.pasteHTML(0, post.refined_content); // 구형 폴백
+                                } else {
+                                    quill.root.innerHTML = post.refined_content; // 최후의 폴백
+                                }
+                                quill.setSelection(quill.getLength(), 0, 'silent');
+                            } catch (e) { 
+                                console.error("Error pasting HTML content:", e); 
+                                quill.root.innerHTML = `<p style="color: red; font-weight: bold;">[오류] 본문을 불러오는 데 실패했습니다.</p><p>Error: ${e.message}</p><p>데이터는 보존되어 있으니, 새로고침 후 다시 시도해주세요.</p>`;
                             }
-                            
-                            // 3. 커서를 에디터 끝으로 이동 (선택사항)
-                            quill.setSelection(quill.getLength(), 0, 'silent');
-                            
-                        } catch (e) { 
-                            console.error("Error pasting HTML content:", e); 
-                            // *** FIX: setText 대신 HTML로 오류를 표시합니다 ***
-                            quill.root.innerHTML = `<p style="color: red; font-weight: bold;">[오류] 본문을 불러오는 데 실패했습니다.</p><p>Error: ${e.message}</p><p>데이터는 보존되어 있으니, 새로고침 후 다시 시도해주세요.</p>`;
                         }
                     }
+                    loader.style.display = 'none'; // 로더 숨기기
+                    // --- 초기화 로직 끝 ---
+
+                } else {
+                    // 스크립트가 아직 로드되지 않음, 500ms 후 재시도
+                    if (typeof Quill === 'undefined') console.log('Waiting for Quill.js...');
+                    if (typeof QuillBetterTable === 'undefined') console.log('Waiting for QuillBetterTable.js...');
+                    
+                    setTimeout(() => attemptToInitQuill(retries - 1), 500);
                 }
-                loader.style.display = 'none';
-            });
-            // *** END: 수정된 로직 ***
+            };
+
+            // 스크립트 로드 확인 시작
+            attemptToInitQuill();
+            // *** END: NEW SCRIPT LOADING LOGIC ***
             
             const form = $('#writer-form');
             form.addEventListener('submit', (e) => {
@@ -554,14 +589,18 @@
             
             const insertTableBtn = $('#insert-table-btn');
             if (insertTableBtn) insertTableBtn.addEventListener('click', () => {
-                const quill = initQuillEditor();
+                const quill = initQuillEditor(); // 이미 생성된 인스턴스를 가져옴
                 const bt = quill && quill.getModule('better-table');
                 if (bt && typeof bt.insertTable === 'function') {
                     bt.insertTable(3, 3);
                 } else {
                     showToast('표 모듈을 불러오지 못했습니다.', true);
+                    console.warn('Better-table module not available for insertion.');
                 }
             });
+
+            const tableHelpBtn = container.querySelector('[data-action="table-help"]');
+            if(tableHelpBtn) tableHelpBtn.addEventListener('click', showTableHelpModal);
             
             // OPTIMIZED: Debounced slug update
             const titleEl = $('#title');
@@ -585,6 +624,10 @@
         // --- Image Upload (MODIFIED) ---
         const quillImageHandler = () => {
             const quill = quillInstance;
+            if (!quill) {
+                showToast('에디터가 준비되지 않았습니다.', true);
+                return;
+            }
             const input = document.createElement('input');
             input.type = 'file'; input.accept = 'image/*'; input.click();
             input.onchange = async () => {
@@ -678,10 +721,16 @@
         
         // (This function remains the same, but is now called conditionally)
         const convertToWebP = (file, quality = 0.8) => new Promise((res, rej) => {
+            if (typeof FileReader === 'undefined' || typeof Image === 'undefined' || typeof EXIF === 'undefined') {
+                console.warn('Required APIs (FileReader, Image, EXIF) not available. Skipping WebP conversion.');
+                res(file); // Fallback to original file
+                return;
+            }
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = async (e) => {
-                const img = new Image(); img.src = e.target.result;
+                const img = new Image(); 
+                img.src = e.target.result;
                 img.onload = async () => {
                     const orient = await getOrientation(file);
                     const canvas = document.createElement('canvas');
@@ -709,13 +758,19 @@
                         }
                     }, 'image/webp', quality);
                 };
-                img.onerror = () => rej(new Error('Image load failed'));
+                img.onerror = () => {
+                    console.warn('Image load failed during WebP conversion. Skipping.');
+                    res(file); // Fallback to original file
+                };
             };
-            reader.onerror = rej;
+            reader.onerror = () => {
+                console.warn('FileReader failed. Skipping WebP conversion.');
+                res(file); // Fallback to original file
+            };
         });
         
         const handlePostSave = async (action, btn) => {
-            if (!quillInstance) { showToast('에디터 오류.', true); return; }
+            if (!quillInstance) { showToast('에디터가 준비되지 않았습니다.', true); return; }
             const origText = btn.textContent;
             btn.disabled = true;
             btn.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
@@ -760,6 +815,7 @@
             const confirm = await showDeleteConfirmationModal('정말 삭제하시겠습니까? 되돌릴 수 없습니다.');
             if (!confirm) return;
             showToast('삭제 중...');
+            // 참고: 이 로직은 버킷의 이미지를 삭제하지 않습니다.
             const { error } = await supabase.from(CONFIG.DB_TABLE_NAME).delete().eq('id', id);
             if (error) {
                 console.error("Delete error:", error);
@@ -917,15 +973,23 @@
                     case 'auth': return showAuthModal();
                     case 'logout': return handleLogout();
                     case 'filter-category': return navigateTo(buildUrl('/', { page: 1, category: action.dataset.category }));
-                    case 'table-help': return showTableHelpModal();
+                    // 'table-help'는 renderWriterView에서 개별적으로 바인딩됩니다.
                 }
             }
         });
         window.addEventListener('popstate', handleRouting);
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                const modals = ['#auth-modal', '#delete-confirm-modal'].find(m => $(m));
-                if (modals) {/* Close logic */ }
+                const modals = ['#auth-modal', '#delete-confirm-modal', '#table-help-modal'];
+                for (const modalSelector of modals) {
+                    const modal = $(modalSelector);
+                    if (modal) {
+                        const closeBtn = modal.querySelector('button[id^="close-"]');
+                        if (closeBtn) closeBtn.click();
+                        else modal.click(); // Fallback for modals without specific close btn logic
+                        return; // Close one modal at a time
+                    }
+                }
             }
         });
         
@@ -933,7 +997,7 @@
         const initializeApp = () => {
             if (typeof hljs === 'undefined') console.error("hljs missing.");
             supabase.auth.onAuthStateChange((_, session) => {
-                const changed = state.user?.id !== session?.user?.id;
+                const changed = state.user?.id !== session?.user.id;
                 state.user = session?.user || null;
                 if (!state.isAuthReady) {
                     state.isAuthReady = true;
@@ -946,8 +1010,17 @@
                 }
             });
         };
-        initializeApp();
+        
+        // --- App Start ---
+        // 스크립트가 DOM을 조작하기 전에 DOM이 준비되었는지 확인합니다.
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp(); // DOM이 이미 준비된 경우
+        }
+        
     </script>
 </body>
 </html>
+
 
