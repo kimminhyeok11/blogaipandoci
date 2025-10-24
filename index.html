@@ -511,6 +511,16 @@
                     // [FIX] 3. Quill과 QuillBetterTable 모두 로드되었습니다.
                     try {
                         console.log('Quill and QuillBetterTable are loaded.');
+
+                        // [SOLUTION START]
+                        // Quill.import('delta')가 준비되었는지 확인합니다.
+                        // 이 모듈이 준비되지 않으면 492, 507, 519번 라인에서 모두 오류가 발생합니다.
+                        if (typeof Quill.import !== 'function' || !Quill.import('delta')) {
+                            console.log('Quill.import("delta") is not ready yet. Retrying...');
+                            setTimeout(() => attempt(retries - 1), 500); // 재시도
+                            return; // 현재 시도 중단
+                        }
+                        // [SOLUTION END]
                     
                         // BetterTable 모듈을 등록합니다.
                         if (!Quill.imports || !Quill.imports['modules/better-table']) {
@@ -518,12 +528,12 @@
                             console.log('QuillBetterTable registered successfully.');
                         }
 
-                        // [CODE FIX] Delta는 import가 아닌 Quill.Delta 속성으로 가져옵니다.
-                        const Delta = Quill.Delta;
-                        if (!Delta) {
-                            // Quill은 로드됐지만 Delta 모듈 임포트 실패
-                            throw new Error("Quill.Delta 속성을 찾을 수 없습니다.");
-                        }
+                        // Delta 모듈을 임포트합니다.
+                        // const Delta = Quill.import('delta'); // -> 이 변수는 이제 사용되지 않습니다 (클립보드 매처가 직접 import 호출).
+                        // if (!Delta) { // -> 이 검사는 [SOLUTION] 블록에서 위로 이동하여 재시도 로직으로 변경되었습니다.
+                        //     // Quill은 로드됐지만 Delta 모듈 임포트 실패
+                        //     throw new Error("Quill Delta module could not be imported.");
+                        // }
                         
                         const modules = {
                             toolbar: [
@@ -546,8 +556,8 @@
                                         if (node.style.backgroundColor) attributes.background = node.style.backgroundColor;
                                         
                                         if (Object.keys(attributes).length > 0) {
-                                            // [CODE FIX] new Delta()를 사용합니다.
-                                            return delta.compose(new Delta().retain(delta.length(), attributes));
+                                            // [FIX] const Delta 변수 대신 Quill.import('delta')를 직접 사용 (이 코드는 이미 올바르게 수정되어 있습니다)
+                                            return delta.compose(new (Quill.import('delta'))().retain(delta.length(), attributes));
                                         }
                                         return delta;
                                     }],
@@ -555,8 +565,8 @@
                                         if (node.style.textAlign) {
                                             const align = node.style.textAlign.toLowerCase();
                                             if (['center', 'right', 'justify'].includes(align)) {
-                                                // [CODE FIX] new Delta()를 사용합니다.
-                                                return delta.compose(new Delta().retain(delta.length(), { align: align }));
+                                                // [FIX] const Delta 변수 대신 Quill.import('delta')를 직접 사용 (이 코드는 이미 올바르게 수정되어 있습니다)
+                                                return delta.compose(new (Quill.import('delta'))().retain(delta.length(), { align: align }));
                                             }
                                         }
                                         return delta;
@@ -1280,6 +1290,7 @@
                     DOM.showToast(status === 'published' ? '발행되었습니다!' : '저장되었습니다.');
                     Router.navigateTo(status === 'published' ? `/post/${savedPost.slug}` : '/dashboard');
 
+DEAL-2521
                 } catch (e) {
                     console.error("Save error:", e);
                     DOM.showToast(`저장 실패: ${e.message}`, true);
