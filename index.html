@@ -116,11 +116,11 @@
         .loader-spinner { width: 2.5rem; height: 2.5rem; border: 4px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         #quill-editor { min-height: 400px; font-size: 16px; }
-#quill-editor .ql-editor p, #quill-editor .ql-editor div { margin: 0 0 1em; }
-#quill-editor .ql-editor p br { display: block; margin-bottom: 0.6em; }
-.ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; border-color: #D1D5DB; }
-.ql-container.ql-snow { border-radius: 0 0 12px 12px; border-color: #D1D5DB; }
-#quill-editor-container { position: relative; }
+        #quill-editor .ql-editor p, #quill-editor .ql-editor div { margin: 0 0 1em; }
+        #quill-editor .ql-editor p br { display: block; margin-bottom: 0.6em; }
+        .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; border-color: #D1D5DB; }
+        .ql-container.ql-snow { border-radius: 0 0 12px 12px; border-color: #D1D5DB; }
+        #quill-editor-container { position: relative; }
         @media (max-width: 639px) {
             .writer-controls-sticky { position: sticky; bottom: 0; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 1rem; border-top: 1px solid #E5E7EB; margin-left: -0.75rem; margin-right: -0.75rem; padding-top: 1rem !important; z-index: 30; }
             .prose-custom img { width: calc(100% + 1.5rem); margin-left: -0.75rem; margin-right: -0.75rem; max-width: none; border-radius: 0; box-shadow: none; }
@@ -498,6 +498,8 @@
             
             const loader = $('#quill-loader');
             loader.style.display = 'flex';
+            
+            // *** START: 수정된 로직 ***
             requestAnimationFrame(() => {
                 const quill = initQuillEditor();
                 if (quill) {
@@ -511,25 +513,34 @@
 
                     if (post.refined_content) {
                         try {
-                            // Unmount 트릭: 긴 HTML 로딩 최적화
-                            const containerEl = quill.container;
-                            const parent = containerEl.parentNode;
-                            const index = Array.from(parent.children).indexOf(containerEl);
-                            parent.removeChild(containerEl);  // Unmount
+                            // 1. 에디터를 안전하게 비웁니다.
+                            quill.setText(''); 
                             
-                            quill.setContents([]);  // 초기화
+                            // 2. HTML 콘텐츠를 0번 인덱스에 붙여넣습니다.
                             if (quill.clipboard && quill.clipboard.dangerouslyPasteHTML) {
-                                quill.clipboard.dangerouslyPasteHTML(post.refined_content);
-                            } else if (quill.pasteHTML) {
-                                quill.pasteHTML(post.refined_content);
+                                // 최신 Quill 방식
+                                quill.clipboard.dangerouslyPasteHTML(0, post.refined_content);
+                            } else if (quill.pasteHTML) { 
+                                // 구형 Quill 폴백
+                                quill.pasteHTML(0, post.refined_content);
+                            } else {
+                                // 최후의 폴백 (서식이 깨질 수 있지만 텍스트보다는 나음)
+                                quill.root.innerHTML = post.refined_content;
                             }
                             
-                            parent.insertBefore(containerEl, parent.children[index]);  // Remount
-                        } catch (e) { console.error("Paste error:", e); quill.setText('본문을 불러오는 중 오류가 발생했습니다.'); }
+                            // 3. 커서를 에디터 끝으로 이동 (선택사항)
+                            quill.setSelection(quill.getLength(), 0, 'silent');
+                            
+                        } catch (e) { 
+                            console.error("Error pasting HTML content:", e); 
+                            // *** FIX: setText 대신 HTML로 오류를 표시합니다 ***
+                            quill.root.innerHTML = `<p style="color: red; font-weight: bold;">[오류] 본문을 불러오는 데 실패했습니다.</p><p>Error: ${e.message}</p><p>데이터는 보존되어 있으니, 새로고침 후 다시 시도해주세요.</p>`;
+                        }
                     }
                 }
                 loader.style.display = 'none';
             });
+            // *** END: 수정된 로직 ***
             
             const form = $('#writer-form');
             form.addEventListener('submit', (e) => {
@@ -604,7 +615,7 @@
                     const url = await uploadImageToSupabase(fileToUpload); // 변환된 파일 또는 원본 파일
                     quill.enable(true);
                     quill.insertEmbed(range.index, 'image', url);
-                    quill.setSelection(range.index + 1, Quill.sources.SILENT);
+                    quill.setSelection(range.index + 1, 'silent');
                     showToast('업로드 완료!', false);
                 } catch (e) {
                     console.error('Upload failed:', e);
@@ -939,5 +950,4 @@
     </script>
 </body>
 </html>
-
 
