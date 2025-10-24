@@ -518,11 +518,11 @@
                             console.log('QuillBetterTable registered successfully.');
                         }
 
-                        // Delta 모듈을 임포트합니다.
-                        const Delta = Quill.import('delta');
+                        // [CODE FIX] Delta는 import가 아닌 Quill.Delta 속성으로 가져옵니다.
+                        const Delta = Quill.Delta;
                         if (!Delta) {
                             // Quill은 로드됐지만 Delta 모듈 임포트 실패
-                            throw new Error("Quill Delta module could not be imported.");
+                            throw new Error("Quill.Delta 속성을 찾을 수 없습니다.");
                         }
                         
                         const modules = {
@@ -546,8 +546,8 @@
                                         if (node.style.backgroundColor) attributes.background = node.style.backgroundColor;
                                         
                                         if (Object.keys(attributes).length > 0) {
-                                            // [FIX] const Delta 변수 대신 Quill.import('delta')를 직접 사용
-                                            return delta.compose(new (Quill.import('delta'))().retain(delta.length(), attributes));
+                                            // [CODE FIX] new Delta()를 사용합니다.
+                                            return delta.compose(new Delta().retain(delta.length(), attributes));
                                         }
                                         return delta;
                                     }],
@@ -555,8 +555,8 @@
                                         if (node.style.textAlign) {
                                             const align = node.style.textAlign.toLowerCase();
                                             if (['center', 'right', 'justify'].includes(align)) {
-                                                // [FIX] const Delta 변수 대신 Quill.import('delta')를 직접 사용
-                                                return delta.compose(new (Quill.import('delta'))().retain(delta.length(), { align: align }));
+                                                // [CODE FIX] new Delta()를 사용합니다.
+                                                return delta.compose(new Delta().retain(delta.length(), { align: align }));
                                             }
                                         }
                                         return delta;
