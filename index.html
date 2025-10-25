@@ -1290,7 +1290,6 @@
                     DOM.showToast(status === 'published' ? '발행되었습니다!' : '저장되었습니다.');
                     Router.navigateTo(status === 'published' ? `/post/${savedPost.slug}` : '/dashboard');
 
-DEAL-2521
                 } catch (e) {
                     console.error("Save error:", e);
                     DOM.showToast(`저장 실패: ${e.message}`, true);
