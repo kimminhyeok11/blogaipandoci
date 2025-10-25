@@ -488,13 +488,13 @@
                 
                 loader.style.display = 'flex';
                 
-                // [FIX] 스크립트 로드 순서를 보장했으므로, 폴링 루프를 제거하고 단순화합니다.
-                // DOMContentLoaded가 Quill의 로드를 보장하므로, 이 함수가 호출될 때
-                // 모든 라이브러리는 준비되어 있어야 합니다.
                 try {
-                    // [FIX] 모든 의존성을 한 번에 확인
-                    if (typeof Quill === 'undefined' || typeof window.QuillBetterTable === 'undefined' || typeof Quill.import !== 'function' || !Quill.import('delta')) {
-                        console.error('Quill components are still not ready. This should not happen after DOMContentLoaded.');
+                    // [FIX] 'DOMContentLoaded'가 Quill 라이브러리의 로드를 보장합니다.
+                    // 문제가 되었던 `!Quill.import('delta')` 호출을 제거하여
+                    // Quill 내부 모듈이 완전히 준비되지 않은 상태에서 호출되어
+                    // 발생하는 오류를 방지합니다.
+                    if (typeof Quill === 'undefined' || typeof window.QuillBetterTable === 'undefined' || typeof Quill.import !== 'function') {
+                        console.error('Quill or QuillBetterTable components are not ready. This should not happen after DOMContentLoaded.');
                         throw new Error("Quill/QuillBetterTable 스크립트 초기화 실패");
                     }
 
@@ -527,6 +527,7 @@
                                     if (node.style.backgroundColor) attributes.background = node.style.backgroundColor;
                                     
                                     if (Object.keys(attributes).length > 0) {
+                                        // 이 시점(붙여넣기 시점)에는 Quill.import('delta')가 안전하게 호출됩니다.
                                         return delta.compose(new (Quill.import('delta'))().retain(delta.length(), attributes));
                                     }
                                     return delta;
@@ -1311,5 +1312,4 @@
     </script>
 </body>
 </html>
-
 
