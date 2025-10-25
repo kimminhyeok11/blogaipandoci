@@ -30,13 +30,26 @@
     <meta name="twitter:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
     <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     
-    <!-- Scripts & Stylesheets (OPTIMIZED: Deferred loading where possible) -->
+    <!-- Scripts & Stylesheets -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- [FIX] 스타일시트는 <head>에 유지 -->
+    <!-- 
+      [FIX]
+      모든 라이브러리 스크립트를 <head>로 다시 이동하고 'defer' 속성을 추가합니다.
+      'defer'는 스크립트가 DOM 파싱과 병렬로 다운로드되고,
+      DOM 생성이 완료된 후, 그리고 'DOMContentLoaded' 이벤트 직전에
+      <head>에 나타난 순서대로 실행되도록 보장합니다.
+    -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.8/dist/quill-better-table.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.8/dist/quill-better-table.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js" defer crossorigin="anonymous"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -216,21 +229,8 @@
       ==================================================================
     -->
 
-    <!-- 
-      [FIX]
-      모든 외부 라이브러리 스크립트를 <head>에서 <body> 끝으로 이동시켰습니다.
-      'defer' 속성을 제거하여 브라우저가 이 스크립트들을 순서대로, 그리고 
-      아래의 메인 앱 모듈 스크립트보다 먼저 로드하도록 강제합니다.
-      이는 Quill 같은 라이브러리가 초기화되기 전에 앱 코드가 실행되는
-      경쟁 조건(race condition)을 해결합니다.
-    -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.8/dist/quill-better-table.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js" crossorigin="anonymous"></script>
-
+    <!-- [FIX] 라이브러리 스크립트를 <head>로 다시 이동하고 'defer'를 사용했습니다. -->
+    
     <script type="module" nonce="r4nd0m">
         // [Supabase] ES 모듈 임포트
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -492,111 +492,98 @@
                 loader.style.display = 'flex';
                 
                 // [FIX] 스크립트 로드 순서를 보장했으므로, 폴링 루프를 제거하고 단순화합니다.
-                // 10초 타임아웃 대신, 라이브러리가 로드될 때까지 100ms 간격으로 짧게 확인합니다.
-                // (스크립트 이동으로 이 코드는 거의 즉시 성공해야 합니다)
-                const attempt = (retries = 30) => { // 3초 (100ms * 30)
-                    if (retries <= 0) {
-                        loader.innerHTML = '<p class="text-red-500 font-bold p-4 text-center">에디터 구성 요소를 불러오지 못했습니다.<br>페이지를 새로고침 해주세요.</p>';
-                        console.error("Quill, QuillBetterTable, or Quill.import('delta') was not ready in time.");
-                        return reject(new Error("Quill/QuillBetterTable 스크립트 초기화 실패"));
-                    }
-
+                // DOMContentLoaded가 Quill의 로드를 보장하므로, 이 함수가 호출될 때
+                // 모든 라이브러리는 준비되어 있어야 합니다.
+                try {
                     // [FIX] 모든 의존성을 한 번에 확인
                     if (typeof Quill === 'undefined' || typeof window.QuillBetterTable === 'undefined' || typeof Quill.import !== 'function' || !Quill.import('delta')) {
-                        console.log('Waiting for Quill modules...');
-                        setTimeout(() => attempt(retries - 1), 100); // 500ms -> 100ms
-                        return; 
+                        console.error('Quill components are still not ready. This should not happen after DOMContentLoaded.');
+                        throw new Error("Quill/QuillBetterTable 스크립트 초기화 실패");
                     }
 
-                    // [FIX] 3. Quill과 QuillBetterTable 모두 로드되었습니다.
-                    try {
-                        console.log('Quill and QuillBetterTable are loaded.');
+                    console.log('Quill and QuillBetterTable are loaded.');
+                
+                    // BetterTable 모듈을 등록합니다.
+                    if (!Quill.imports || !Quill.imports['modules/better-table']) {
+                        Quill.register({ 'modules/better-table': window.QuillBetterTable }, true);
+                        console.log('QuillBetterTable registered successfully.');
+                    }
                     
-                        // BetterTable 모듈을 등록합니다.
-                        if (!Quill.imports || !Quill.imports['modules/better-table']) {
-                            Quill.register({ 'modules/better-table': window.QuillBetterTable }, true);
-                            console.log('QuillBetterTable registered successfully.');
+                    const modules = {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }], 
+                            ['bold', 'italic', 'underline', 'strike'], 
+                            [{ 'color': [] }, { 'background': [] }], // 색상, 배경색 추가
+                            ['blockquote', 'code-block'], 
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
+                            [{ 'align': [] }], // 정렬 추가
+                            [{ 'indent': '-1'}, { 'indent': '+1' }], 
+                            ['link', 'image'], 
+                            ['clean']
+                        ],
+                        history: { delay: 5000, userOnly: true },
+                        clipboard: {
+                            matchers: [
+                                ['span', (node, delta) => {
+                                    const attributes = {};
+                                    if (node.style.color) attributes.color = node.style.color;
+                                    if (node.style.backgroundColor) attributes.background = node.style.backgroundColor;
+                                    
+                                    if (Object.keys(attributes).length > 0) {
+                                        return delta.compose(new (Quill.import('delta'))().retain(delta.length(), attributes));
+                                    }
+                                    return delta;
+                                }],
+                                ['p, h1, h2, h3, h4, li, div', (node, delta) => {
+                                    if (node.style.textAlign) {
+                                        const align = node.style.textAlign.toLowerCase();
+                                        if (['center', 'right', 'justify'].includes(align)) {
+                                            return delta.compose(new (Quill.import('delta'))().retain(delta.length(), { align: align }));
+                                        }
+                                    }
+                                    return delta;
+                                }]
+                            ]
                         }
-                        
-                        const modules = {
-                            toolbar: [
-                                [{ 'header': [1, 2, 3, false] }], 
-                                ['bold', 'italic', 'underline', 'strike'], 
-                                [{ 'color': [] }, { 'background': [] }], // 색상, 배경색 추가
-                                ['blockquote', 'code-block'], 
-                                [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
-                                [{ 'align': [] }], // 정렬 추가
-                                [{ 'indent': '-1'}, { 'indent': '+1' }], 
-                                ['link', 'image'], 
-                                ['clean']
-                            ],
-                            history: { delay: 5000, userOnly: true },
-                            clipboard: {
-                                matchers: [
-                                    ['span', (node, delta) => {
-                                        const attributes = {};
-                                        if (node.style.color) attributes.color = node.style.color;
-                                        if (node.style.backgroundColor) attributes.background = node.style.backgroundColor;
-                                        
-                                        if (Object.keys(attributes).length > 0) {
-                                            return delta.compose(new (Quill.import('delta'))().retain(delta.length(), attributes));
-                                        }
-                                        return delta;
-                                    }],
-                                    ['p, h1, h2, h3, h4, li, div', (node, delta) => {
-                                        if (node.style.textAlign) {
-                                            const align = node.style.textAlign.toLowerCase();
-                                            if (['center', 'right', 'justify'].includes(align)) {
-                                                return delta.compose(new (Quill.import('delta'))().retain(delta.length(), { align: align }));
-                                            }
-                                        }
-                                        return delta;
-                                    }]
-                                ]
+                    };
+
+                    // [FIX] 모듈 등록 여부를 다시 확인
+                    if (Quill.imports && Quill.imports['modules/better-table']) {
+                        modules['better-table'] = {
+                            operationMenu: {
+                                items: {
+                                    unmergeCells: { text: '셀 병합 해제' },
+                                    deleteRow: { text: '행 삭제' },
+                                    deleteColumn: { text: '열 삭제' },
+                                    insertRowAbove: { text: '위에 행 삽입' },
+                                    insertRowBelow: { text: '아래에 행 삽입' },
+                                    insertColumnLeft: { text: '왼쪽에 열 삽입' },
+                                    insertColumnRight: { text: '오른쪽에 열 삽입' },
+                                    deleteTable: { text: '표 삭제' }
+                                }
                             }
                         };
-
-                        // [FIX] 모듈 등록 여부를 다시 확인
-                        if (Quill.imports && Quill.imports['modules/better-table']) {
-                            modules['better-table'] = {
-                                operationMenu: {
-                                    items: {
-                                        unmergeCells: { text: '셀 병합 해제' },
-                                        deleteRow: { text: '행 삭제' },
-                                        deleteColumn: { text: '열 삭제' },
-                                        insertRowAbove: { text: '위에 행 삽입' },
-                                        insertRowBelow: { text: '아래에 행 삽입' },
-                                        insertColumnLeft: { text: '왼쪽에 열 삽입' },
-                                        insertColumnRight: { text: '오른쪽에 열 삽입' },
-                                        deleteTable: { text: '표 삭제' }
-                                    }
-                                }
-                            };
-                            modules.keyboard = { bindings: window.QuillBetterTable.keyboardBindings };
-                        } else {
-                            console.warn('quill-better-table module failed to load. Table button will be hidden.');
-                        }
-
-                        QuillEditor.instance = new Quill(containerSelector, {
-                            theme: 'snow',
-                            modules
-                        });
-                        
-                        QuillEditor.instance.getModule('toolbar').addHandler('image', QuillEditor.imageHandler);
-                        
-                        loader.style.display = 'none'; // 성공 시 로더 숨김
-                        resolve(QuillEditor.instance);
-
-                    } catch (e) {
-                        // Delta 임포트 실패 또는 모듈 구성 오류
-                        console.error("Quill init failed inside attempt:", e);
-                        loader.innerHTML = `<p class="text-red-500 font-bold p-4 text-center">에디터 모듈 구성 오류.<br>새로고침 해주세요.</p>`;
-                        return reject(e); // Promise 거부
+                        modules.keyboard = { bindings: window.QuillBetterTable.keyboardBindings };
+                    } else {
+                        console.warn('quill-better-table module failed to load. Table button will be hidden.');
                     }
 
-                };
-                
-                attempt();
+                    QuillEditor.instance = new Quill(containerSelector, {
+                        theme: 'snow',
+                        modules
+                    });
+                    
+                    QuillEditor.instance.getModule('toolbar').addHandler('image', QuillEditor.imageHandler);
+                    
+                    loader.style.display = 'none'; // 성공 시 로더 숨김
+                    resolve(QuillEditor.instance);
+
+                } catch (e) {
+                    // Delta 임포트 실패 또는 모듈 구성 오류
+                    console.error("Quill init failed:", e);
+                    loader.innerHTML = `<p class="text-red-500 font-bold p-4 text-center">에디터 모듈 구성 오류.<br>새로고침 해주세요.</p>`;
+                    return reject(e); // Promise 거부
+                }
             }),
 
 
@@ -1317,10 +1304,12 @@
         };
 
         // --- [APP START] ---
-        // [FIX] 스크립트 로드 순서를 보장했으므로, DOMContentLoaded 리스너가 필요 없습니다.
-        // 스크립트가 실행되는 이 시점에는 이미 DOM이 준비되었고
-        // 모든 라이브러리가 로드되었습니다.
-        App.init();
+        // [FIX] 'DOMContentLoaded' 이벤트 리스너를 사용하여 앱을 시작합니다.
+        // 이 이벤트는 <head>에 있는 모든 'defer' 스크립트(Quill 포함)가
+        // 로드되고 실행된 후에 발생합니다.
+        // 이렇게 하면 App.init()이 호출될 때 모든 라이브러리가
+        // 확실하게 준비된 상태가 됩니다.
+        document.addEventListener('DOMContentLoaded', App.init);
 
     </script>
 </body>
