@@ -617,6 +617,26 @@
                 const editBtn = (State.user && State.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200" aria-label="글 수정">수정</a>` : '';
                 
                 const adTestAttr = ['localhost','127.0.0.1'].includes(window.location.hostname) ? ' data-adtest="on"' : '';
+                
+                // [AD SENSE] GNB 바로 아래에 표시될 광고 유닛
+                const titleAdHtml = `
+                    <div class="my-8 sm:my-12 flex justify-center items-center min-h-[100px] text-xs text-gray-400" role="complementary" aria-label="Advertisement">
+                        <!-- 
+                          [AD SENSE] 제목 하단 광고 
+                          - min-h-[100px]는 광고 로드 전 공간을 미리 확보하여,
+                            콘텐츠가 밀려나는 현상(CLS)을 방지합니다. (SEO에 매우 중요)
+                          - data-ad-slot은 이 위치 전용으로 AdSense에서 새로 발급받는 것이 가장 좋습니다.
+                            (현재는 임시로 본문 광고와 동일한 슬롯 ID 사용)
+                        -->
+                        <ins class="adsbygoogle"
+                             style="display:block; width:100%;"
+                             data-ad-client="ca-pub-5239497835591112"
+                             data-ad-slot="2069100221" 
+                             data-ad-format="auto"
+                             data-full-width-responsive="true"${adTestAttr}></ins>
+                    </div>
+                `;
+
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
                         <article role="article">
@@ -628,9 +648,16 @@
                                     ${editBtn}
                                 </div>
                             </header>
+
+                            <!-- [AD SENSE] 제목 하단 광고 삽입 -->
+                            ${titleAdHtml}
+
                             <div id="post-content" class="prose-custom max-w-none"></div>
                         </article>
+
+                        <!-- [AD SENSE] 기존 본문 중간 광고 -->
                         <div class="my-16"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"${adTestAttr}></ins></div>
+                        
                         ${popularHtml}${navHtml}
                     </div>`;
                 
@@ -694,7 +721,11 @@
                     DOM.$('#post-content').textContent = post.refined_content || ''; 
                 }
                 
-                try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("Adsense error:", e); }
+                try { 
+                    // 이 push 한 번으로 페이지 내의 모든 <ins> 태그(제목 하단, 본문 중간)를
+                    // 애드센스 스크립트가 인식하고 처리합니다.
+                    (adsbygoogle = window.adsbygoogle || []).push({}); 
+                } catch (e) { console.warn("Adsense error:", e); }
                 
                 setTimeout(() => {
                     if (typeof hljs !== 'undefined') {
@@ -1344,4 +1375,5 @@
     </script>
 </body>
 </html>
+
 
