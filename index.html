@@ -639,14 +639,41 @@
 
                     if (!window.__dompurifyHooked) {
                         DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
+                            // [STYLE FIX] 붙여넣은 서식(배경색, 글자색 등)을 허용하도록 수정
                             if (data.attrName === 'style') {
                                 try {
                                     const style = (data.attrValue || '').toLowerCase();
                                     const allowedStyles = [];
+
+                                    // 기존 허용: text-align
                                     const mAlign = style.match(/text-align\s*:\s*(left|center|right|justify)/);
                                     if (mAlign) allowedStyles.push(`text-align:${mAlign[1]}`);
+                                    
+                                    // 기존 허용: width
                                     const mWidth = style.match(/(?:^|;|\s)width\s*:\s*([0-9]+(?:\.[0-9]+)?)(px|%)/);
                                     if (mWidth) allowedStyles.push(`width:${mWidth[1]}${mWidth[2]}`);
+                                    
+                                    // [FIX] background-color 및 color (글자색) 허용
+                                    const mBgColor = style.match(/(?:^|;|\s)background-color\s*:\s*([^;]+)/);
+                                    if (mBgColor) {
+                                        if (mBgColor[1].match(/^(#|rgb|rgba|[\w-]+)/)) {
+                                            allowedStyles.push(`background-color:${mBgColor[1]}`);
+                                        }
+                                    }
+                                    
+                                    const mColor = style.match(/(?:^|;|\s)color\s*:\s*([^;]+)/);
+                                    if (mColor) {
+                                        if (mColor[1].match(/^(#|rgb|rgba|[\w-]+)/)) {
+                                            allowedStyles.push(`color:${mColor[1]}`);
+                                        }
+                                    }
+                                    
+                                    // [FIX] 텍스트 꾸밈 (밑줄, 취소선) 허용
+                                    const mTextDeco = style.match(/(?:^|;|\s)text-decoration\s*:\s*([^;]+)/);
+                                    if (mTextDeco && (mTextDeco[1].includes('underline') || mTextDeco[1].includes('line-through'))) {
+                                         allowedStyles.push(`text-decoration:${mTextDeco[1]}`);
+                                    }
+
                                     data.attrValue = allowedStyles.join(';');
                                     if (!data.attrValue) data.keepAttr = false;
                                 } catch (_) { data.keepAttr = false; }
@@ -1071,7 +1098,13 @@
                     
                     let thumb = null;
                     if (typeof marked !== 'undefined') {
-                        const parsedForThumb = marked.parse(content);
+                        // [STYLE FIX] 붙여넣은 HTML 태그를 정규식으로 제거한 후 썸네일 추출
+                        const contentForThumb = content
+                            .replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1') // span 태그 제거
+                            .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n') // p 태그는 내용만 남김
+                            .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n'); // div 태그는 내용만 남김
+                            
+                        const parsedForThumb = marked.parse(contentForThumb);
                         const temp = document.createElement('div'); 
                         temp.innerHTML = parsedForThumb;
                         thumb = temp.querySelector('img')?.src || null;
@@ -1162,22 +1195,18 @@
                                 if (matchedCategory) DOM.$('#category').value = matchedCategory;
                             }
                             
-                            // [PASTE FIX] JSON 뒤에 HTML이 아닌 일반 텍스트가 오는 경우
                             contentToInsert = restOfText; 
                             DOM.showToast('JSON-LD 스키마를 감지하여 필드를 자동 완성했습니다.', false);
                         }
                     } catch (err) {
                         console.warn('Pasted content start failed to parse as JSON.', err);
-                        // JSON 파싱 실패 시, HTML 변환 로직으로 넘어갑니다.
                     }
                 } 
                 
                 // 2. [PASTE FIX] HTML 콘텐츠가 있고, JSON-LD가 아닌 경우
-                // (match가 없거나, JSON 파싱에 실패한 경우)
-                if (!match || (match && contentToInsert === pastedTextPlain)) { // JSON-LD가 아니거나 파싱 실패 시
+                if (!match || (match && contentToInsert === pastedTextPlain)) { 
                     if (pastedTextHtml && typeof TurndownService !== 'undefined') {
                         try {
-                            // Turndown 서비스 초기화 (싱글톤)
                             if (!window.turndownService) {
                                 window.turndownService = new TurndownService({
                                     headingStyle: 'atx', // 헤더: #
@@ -1185,22 +1214,26 @@
                                     bulletListMarker: '*', // UL 리스트: *
                                     emDelimiter: '_', // 기울임: _
                                 });
+                                
+                                // [STYLE FIX] 스타일 보존을 위해 
+                                // style 속성이 있거나 특정 태그는 HTML 원본으로 유지합니다.
+                                window.turndownService.keep(function (node) {
+                                    const nodeName = node.nodeName.toLowerCase();
+                                    // style 속성이 있거나, p, span, div, u, s (밑줄, 취소선) 태그는 원본 HTML 유지
+                                    return node.hasAttribute('style') || ['p', 'span', 'div', 'u', 's'].includes(nodeName);
+                                });
                             }
                             
-                            // 붙여넣은 HTML을 마크다운으로 변환
                             contentToInsert = window.turndownService.turndown(pastedTextHtml);
-                            
-                            // 앞뒤로 줄바꿈을 추가하여 기존 텍스트와 분리
                             contentToInsert = `\n${contentToInsert}\n`;
                             
-                            DOM.showToast('HTML을 마크다운으로 변환하여 붙여넣었습니다.', false);
+                            DOM.showToast('HTML을 마크다운(일부 서식 보존)으로 변환했습니다.', false);
                             
                         } catch (err) {
                             console.warn('HTML to Markdown conversion failed. Falling back to plain text.', err);
-                            contentToInsert = pastedTextPlain; // 변환 실패 시 일반 텍스트로 대체
+                            contentToInsert = pastedTextPlain; 
                         }
                     } else {
-                        // HTML도 없고, Turndown도 없으면 일반 텍스트 사용
                         contentToInsert = pastedTextPlain;
                     }
                 }
@@ -1210,7 +1243,6 @@
                 const end = textarea.selectionEnd;
                 textarea.value = textarea.value.substring(0, start) + contentToInsert + textarea.value.substring(end);
                 
-                // 삽입된 텍스트 끝으로 커서 이동
                 textarea.selectionStart = textarea.selectionEnd = start + contentToInsert.length;
                 textarea.focus();
             },
@@ -1312,5 +1344,4 @@
     </script>
 </body>
 </html>
-
 
