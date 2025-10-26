@@ -24,7 +24,7 @@
       - 'unsafe-eval'은 Supabase-js v2의 ES module에서 필요할 수 있습니다.
       - 'unsafe-inline'은 Tailwind CSS의 JIT 엔진에 필요합니다.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
     
     <!-- 
       [SEO UPDATE]
@@ -53,6 +53,10 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@12/lib/marked.umd.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+    
+    <!-- [PASTE FIX] HTML을 Markdown으로 변환하기 위한 Turndown 라이브러리 추가 -->
+    <script src="https://unpkg.com/turndown/dist/turndown.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -279,7 +283,6 @@
             POSTS_PER_PAGE: 10,
             
             // [SEO UPDATE]
-            // 요청하신 실제 블로그 주제로 카테고리를 전면 교체합니다.
             CATEGORIES: [
                 "보험 인사이트", 
                 "AI & Tech", 
@@ -450,7 +453,7 @@
             incrementViewCount: (slug) => {
                 try {
                     const viewed = JSON.parse(sessionStorage.getItem('viewed_posts') || '[]');
-                    if (!viewed.includes(slug)) { // slug 기반으로 변경
+                    if (!viewed.includes(slug)) { 
                         State.supabase.rpc('increment_post_view', { post_slug: slug }).then(({error}) => {
                            if(error) console.warn("View count RPC error:", error);
                            else {
@@ -464,12 +467,10 @@
             
             savePost: (data) => {
                 const id = data.id;
-                delete data.id; // insert/update 객체에서 id 제거
+                delete data.id; 
                 if (id) {
-                    // Update
                     return State.supabase.from(Config.DB_TABLE_NAME).update(data).eq('id', id).select().single();
                 } else {
-                    // Insert
                     return State.supabase.from(Config.DB_TABLE_NAME).insert(data).select().single();
                 }
             },
@@ -533,7 +534,6 @@
                             ${user ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="대시보드로 이동">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="로그아웃">로그아웃</button>` : `<button data-action="auth" aria-label="로그인 또는 회원가입" class="px-4 py-2 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">로그인 / 가입</button>`}
                         </div>
                     </nav>`,
-                // [SEO UPDATE] 새로운 Config.CATEGORIES를 사용하도록 자동 업데이트됩니다.
                 categoryBtns: (category) => ['전체', ...Config.CATEGORIES].map(cat => `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}" aria-pressed="${cat === category}">${cat}</button>`).join(''),
                 pagination: (page, total, basePath, params) => {
                     const totalPages = Math.ceil(total / Config.POSTS_PER_PAGE);
@@ -563,10 +563,8 @@
             },
 
             renderLibrary: async (container, page, category) => {
-                ViewRenderer.updateMetaTags(); // 홈페이지용 메타태그 설정
+                ViewRenderer.updateMetaTags(); 
                 
-                // [SEO UPDATE]
-                // 홈페이지 태그라인을 새로운 정체성에 맞게 수정합니다.
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
                         <div class="text-center mb-12">
@@ -826,12 +824,7 @@
                 modal.querySelector('[data-action="delete-no"]').onclick = () => { DOM.closeModal(modalId); res(false); };
             }),
 
-            /**
-             * [SEO UPDATE]
-             * 동적으로 생성되는 메타 태그의 기본값을 새로운 정체성에 맞게 수정합니다.
-             */
             updateMetaTags: (post = null) => {
-                // [SEO UPDATE] 기본 title, desc, keywords 수정
                 const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 보험, 금융, 법률, 부동산 전문 블로그';
                 const desc = post ? (post.summary || 'AI, 보험, 법률, 부동산, 금융, 생활 정보 등 전문가의 분석과 팁.') : 'InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.';
                 const url = post ? `${Config.SITE_URL}/post/${post.slug}` : Config.SITE_URL;
@@ -840,11 +833,9 @@
                 document.title = title;
                 DOM.$('link[rel="canonical"]')?.setAttribute('href', url);
 
-                // Standard meta tags
                 ViewRenderer._setMetaTag('name', 'description', desc);
                 ViewRenderer._setMetaTag('name', 'author', 'InsureLog');
 
-                // Open Graph (Facebook, etc.)
                 ViewRenderer._setMetaTag('property', 'og:type', post ? 'article' : 'website');
                 ViewRenderer._setMetaTag('property', 'og:title', title);
                 ViewRenderer._setMetaTag('property', 'og:description', desc);
@@ -852,25 +843,21 @@
                 ViewRenderer._setMetaTag('property', 'og:image', img);
                 ViewRenderer._setMetaTag('property', 'og:site_name', 'InsureLog');
 
-                // Twitter Card
                 ViewRenderer._setMetaTag('name', 'twitter:card', 'summary_large_image');
                 ViewRenderer._setMetaTag('name', 'twitter:title', title);
                 ViewRenderer._setMetaTag('name', 'twitter:description', desc);
                 ViewRenderer._setMetaTag('name', 'twitter:image', img);
 
-                // Article-specific tags
                 ViewRenderer._setMetaTag('property', 'article:published_time', post ? post.created_at : null);
                 ViewRenderer._setMetaTag('property', 'article:modified_time', post ? (post.updated_at || post.created_at) : null);
                 ViewRenderer._setMetaTag('property', 'article:section', post ? post.category : null); 
 
-                // [SEO UPDATE] Keywords meta tag (기본값 수정)
                 const keywords = post 
                     ? `InsureLog, ${post.category}, ${post.title.split(' ').slice(0, 3).join(', ')}`
                     : 'InsureLog, AI, 보험, 법률, 부동산, 금융, 카드, 대출, 생활 정보, 기술 블로그, 인공지능';
                 ViewRenderer._setMetaTag('name', 'keywords', keywords);
 
                 
-                // --- ENHANCED JSON-LD (Schema.org) ---
                 const ld = DOM.$('#ld-json') || document.createElement('script');
                 ld.type = 'application/ld+json';
                 ld.id = 'ld-json';
@@ -886,7 +873,6 @@
                 
                 let schemaData;
                 if (post) {
-                    // BlogPosting 스키마
                     schemaData = {
                         "@context": "https://schema.org",
                         "@type": "BlogPosting",
@@ -902,7 +888,6 @@
                         "keywords": `${post.category}, ${post.title}`
                     };
                 } else {
-                    // [SEO UPDATE] WebSite 스키마 (description이 새 기본값으로 자동 적용됨)
                     schemaData = {
                         "@context": "https://schema.org",
                         "@type": "WebSite",
@@ -1140,26 +1125,33 @@
                 }
             },
 
+            /**
+             * [PASTE FIX]
+             * 붙여넣기 핸들러를 수정하여 HTML을 Markdown으로 변환합니다.
+             */
             handlePaste: (e) => {
                 const textarea = DOM.$('#content-editor');
                 if (!textarea) return;
                 
-                e.preventDefault(); 
-                const pastedText = e.clipboardData.getData('text/plain');
-                if (!pastedText) return;
+                e.preventDefault(); // 기본 붙여넣기 동작 중지
 
-                let contentToInsert = pastedText; 
+                const clipboardData = e.clipboardData;
+                const pastedTextPlain = clipboardData.getData('text/plain');
+                const pastedTextHtml = clipboardData.getData('text/html');
 
+                let contentToInsert = pastedTextPlain; // 기본값: 일반 텍스트
+                let restOfText = '';
+
+                // 1. JSON-LD 스키마 확인 (기존 기능)
                 const jsonBlobRegex = /^({[\s\S]*?})([\s\S]*)/m;
-                const match = pastedText.match(jsonBlobRegex);
+                const match = pastedTextPlain.match(jsonBlobRegex);
 
                 if (match && match[1]) {
                     const jsonString = match[1].trim();
-                    const restOfText = match[2] ? match[2].trim() : '';
+                    restOfText = match[2] ? match[2].trim() : '';
 
                     try {
                         const schema = JSON.parse(jsonString);
-
                         if (schema['@context'] && schema['@context'].includes('schema.org')) {
                             if (schema.headline) DOM.$('#title').value = schema.headline;
                             if (schema.description) DOM.$('#summary').value = schema.description;
@@ -1169,21 +1161,60 @@
                                 const matchedCategory = Config.CATEGORIES.find(c => c.toLowerCase() === categorySource.toLowerCase().trim());
                                 if (matchedCategory) DOM.$('#category').value = matchedCategory;
                             }
-
-                            contentToInsert = restOfText;
+                            
+                            // [PASTE FIX] JSON 뒤에 HTML이 아닌 일반 텍스트가 오는 경우
+                            contentToInsert = restOfText; 
                             DOM.showToast('JSON-LD 스키마를 감지하여 필드를 자동 완성했습니다.', false);
                         }
                     } catch (err) {
                         console.warn('Pasted content start failed to parse as JSON.', err);
+                        // JSON 파싱 실패 시, HTML 변환 로직으로 넘어갑니다.
+                    }
+                } 
+                
+                // 2. [PASTE FIX] HTML 콘텐츠가 있고, JSON-LD가 아닌 경우
+                // (match가 없거나, JSON 파싱에 실패한 경우)
+                if (!match || (match && contentToInsert === pastedTextPlain)) { // JSON-LD가 아니거나 파싱 실패 시
+                    if (pastedTextHtml && typeof TurndownService !== 'undefined') {
+                        try {
+                            // Turndown 서비스 초기화 (싱글톤)
+                            if (!window.turndownService) {
+                                window.turndownService = new TurndownService({
+                                    headingStyle: 'atx', // 헤더: #
+                                    codeBlockStyle: 'fenced', // 코드블록: ```
+                                    bulletListMarker: '*', // UL 리스트: *
+                                    emDelimiter: '_', // 기울임: _
+                                });
+                            }
+                            
+                            // 붙여넣은 HTML을 마크다운으로 변환
+                            contentToInsert = window.turndownService.turndown(pastedTextHtml);
+                            
+                            // 앞뒤로 줄바꿈을 추가하여 기존 텍스트와 분리
+                            contentToInsert = `\n${contentToInsert}\n`;
+                            
+                            DOM.showToast('HTML을 마크다운으로 변환하여 붙여넣었습니다.', false);
+                            
+                        } catch (err) {
+                            console.warn('HTML to Markdown conversion failed. Falling back to plain text.', err);
+                            contentToInsert = pastedTextPlain; // 변환 실패 시 일반 텍스트로 대체
+                        }
+                    } else {
+                        // HTML도 없고, Turndown도 없으면 일반 텍스트 사용
+                        contentToInsert = pastedTextPlain;
                     }
                 }
 
+                // 3. 최종적으로 변환되거나 원본인 텍스트를 에디터에 삽입
                 const start = textarea.selectionStart;
                 const end = textarea.selectionEnd;
                 textarea.value = textarea.value.substring(0, start) + contentToInsert + textarea.value.substring(end);
                 
+                // 삽입된 텍스트 끝으로 커서 이동
                 textarea.selectionStart = textarea.selectionEnd = start + contentToInsert.length;
+                textarea.focus();
             },
+
 
             handleImageUpload: async (btn) => {
                 const input = document.createElement('input');
