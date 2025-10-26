@@ -6,13 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- 
-      [SEO 개선]
-      - 기본 타이틀과 설명을 설정합니다. 이 값들은 updateMetaTags 함수에 의해 동적으로 변경됩니다.
+      [SEO UPDATE]
+      - 블로그의 새로운 정체성(보험, 금융, 법률, 부동산, AI)을 반영하여 수정
     -->
-    <title>InsureLog - AI, 기술, 그리고 보험</title>
-    <meta name="description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <title>InsureLog - AI, 보험, 금융, 법률, 부동산 전문 블로그</title>
+    <meta name="description" content="InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.">
     <meta name="author" content="InsureLog">
-    <meta name="keywords" content="InsureLog, AI, 보험, 핀테크, 기술, 블로그, 인공지능, 데이터">
+    <meta name="keywords" content="InsureLog, AI, 보험, 법률, 부동산, 금융, 카드, 대출, 생활 정보, 기술 블로그, 인공지능">
     
     <link rel="canonical" href="https://blogaipandoci.vercel.app">
     <meta name="robots" content="index,follow">
@@ -27,31 +27,25 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
     
     <!-- 
-      [SEO 개선]
-      - Open Graph / Twitter 태그는 updateMetaTags 함수에서 동적으로 관리합니다.
-      - 정적 태그는 페이지 로드 시 크롤러가 자바스크립트 실행 전에 볼 수 있는 기본값을 제공합니다.
+      [SEO UPDATE]
+      - Open Graph / Twitter 태그의 기본값도 새로운 정체성에 맞게 수정합니다.
     -->
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://blogaipandoci.vercel.app">
-    <meta property="og:title" content="InsureLog - AI, 기술, 그리고 보험">
-    <meta property="og:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <meta property="og:title" content="InsureLog - AI, 보험, 금융, 법률, 부동산 전문 블로그">
+    <meta property="og:description" content="InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.">
     <meta property="og:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     <meta property="og:site_name" content="InsureLog">
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="InsureLog - AI, 기술, 그리고 보험">
-    <meta name="twitter:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <meta name="twitter:title" content="InsureLog - AI, 보험, 금융, 법률, 부동산 전문 블로그">
+    <meta name="twitter:description" content="InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.">
     <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     
     <!-- Scripts & Stylesheets -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 
-      [WORKFLOW CHANGE]
-      - Quill.js 관련 CSS/JS 완전 제거
-      - Markdown 파서(marked.js) 및 이미지 방향(exif.js) 스크립트 추가
-    -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     
@@ -74,12 +68,6 @@
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
 
-    <!-- 
-      [STYLE]
-      - Quill 에디터 관련 스타일 제거
-      - Markdown <textarea> 스타일 추가
-      - [FIX] 리스트(ul, ol) 스타일 수정
-    -->
     <style>
         :root {
             --bg-main: #FFFFFF;
@@ -126,9 +114,6 @@
         .prose-custom a:hover { background-color: var(--accent); color: white; border-bottom-color: transparent; }
         .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-style: italic; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; margin-bottom: 1.3em; }
         
-        /* * [FIX] 리스트 스타일 수정
-         * 요청하신 대로 중첩 리스트 서열을 명확하게 수정합니다.
-         */
         .prose-custom ul, .prose-custom ol { 
             margin-bottom: 1.3em; 
             padding-left: 1.75em; 
@@ -137,45 +122,26 @@
             margin-bottom: 0.5em; 
         }
         
-        /* --- List Styling --- */
-        
-        /* Top-level lists */
-        .prose-custom ol { list-style-type: decimal; /* 1, 2, 3 */ }
-        .prose-custom ul { list-style-type: disc;    /* ●, ●, ● */ }
+        .prose-custom ol { list-style-type: decimal; }
+        .prose-custom ul { list-style-type: disc; }
 
-        /* --- Nested lists (Level 2) --- */
-        
-        /* User's request: <ol> <ul> (numbers -> dots) */
-        .prose-custom ol ul { 
-            list-style-type: disc; /* ●, ●, ● */
-        }
-        
-        /* Other nested combinations */
-        .prose-custom ul ul { 
-            list-style-type: circle; /* ○, ○, ○ */
-        }
-        .prose-custom ol ol {
-            list-style-type: lower-alpha; /* a, b, c */
-        }
-        .prose-custom ul ol {
-            list-style-type: lower-alpha; /* a, b, c */
-        }
+        .prose-custom ol ul { list-style-type: disc; }
+        .prose-custom ul ul { list-style-type: circle; }
+        .prose-custom ol ol { list-style-type: lower-alpha; }
+        .prose-custom ul ol { list-style-type: lower-alpha; }
 
-        /* --- Nested lists (Level 3) --- */
         .prose-custom ol ol ol, .prose-custom ul ol ol, .prose-custom ol ul ol, .prose-custom ul ul ol {
-            list-style-type: lower-roman; /* i, ii, iii */
+            list-style-type: lower-roman; 
         }
         .prose-custom ul ul ul, .prose-custom ol ul ul, .prose-custom ul ol ul, .prose-custom ol ol ul {
-            list-style-type: square; /* ■, ■, ■ */
+            list-style-type: square; 
         }
         
-        /* --- Nested list margins --- */
         .prose-custom ul ul, .prose-custom ol ol, .prose-custom ul ol, .prose-custom ol ul { 
             margin-top: 0.5em; 
             margin-bottom: 0.5em; 
             margin-left: 1.25em; 
         }
-        /* [END FIX] */
 
         .prose-custom pre { background-color: #282c34; color: #abb2bf; padding: 1.5em; border-radius: 12px; margin-bottom: 1.5em; overflow-x: auto; }
         
@@ -204,7 +170,6 @@
         .loader-spinner { width: 2.5rem; height: 2.5rem; border: 4px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* [WORKFLOW CHANGE] Markdown 에디터 스타일 */
         #content-editor {
             width: 100%;
             min-height: 600px;
@@ -294,8 +259,6 @@
     <!-- 
       ==================================================================
       [APP SCRIPT] - 메인 애플리케이션 (모듈형 리팩터링)
-      - [WORKFLOW CHANGE] QuillEditor 모듈 완전 삭제
-      - [WORKFLOW CHANGE] App 모듈에 이미지 업로드 및 최적화 로직 추가
       ==================================================================
     -->
 
@@ -310,12 +273,23 @@
         const Config = {
             SITE_URL: 'https://blogaipandoci.vercel.app',
             SUPABASE_URL: 'https://ddehwkwzmmvcxltlplua.supabase.co',
-            // [FIX] 'JIUzI1Ni' -> 'HS256'로 오타 수정
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To',
             IMAGE_BUCKET_NAME: 'thought-images', 
             DB_TABLE_NAME: 'posts', 
             POSTS_PER_PAGE: 10,
-            CATEGORIES: ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"],
+            
+            // [SEO UPDATE]
+            // 요청하신 실제 블로그 주제로 카테고리를 전면 교체합니다.
+            CATEGORIES: [
+                "보험 인사이트", 
+                "AI & Tech", 
+                "유용한 생활정보", 
+                "법률 상식", 
+                "부동산 트렌드", 
+                "금융 팁 (카드/대출)", 
+                "기타"
+            ],
+            
             DEFAULT_OG_IMAGE: "https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp"
         };
 
@@ -522,7 +496,6 @@
                     }
                 }
                 
-                // 파일 타입에서 확장자 추론 (이름에 없는 경우)
                 if(ext === 'bin' || !file.name) {
                      if (file.type === 'image/jpeg') ext = 'jpg';
                      else if (file.type === 'image/png') ext = 'png';
@@ -548,11 +521,6 @@
         };
 
         /**
-         * [WORKFLOW CHANGE]
-         * QuillEditor 모듈이 완전히 삭제되었습니다.
-         */
-
-        /**
          * [Module: ViewRenderer]
          * 각 뷰(페이지)의 HTML 렌더링을 담당합니다.
          */
@@ -565,6 +533,7 @@
                             ${user ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="대시보드로 이동">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="로그아웃">로그아웃</button>` : `<button data-action="auth" aria-label="로그인 또는 회원가입" class="px-4 py-2 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">로그인 / 가입</button>`}
                         </div>
                     </nav>`,
+                // [SEO UPDATE] 새로운 Config.CATEGORIES를 사용하도록 자동 업데이트됩니다.
                 categoryBtns: (category) => ['전체', ...Config.CATEGORIES].map(cat => `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}" aria-pressed="${cat === category}">${cat}</button>`).join(''),
                 pagination: (page, total, basePath, params) => {
                     const totalPages = Math.ceil(total / Config.POSTS_PER_PAGE);
@@ -575,13 +544,6 @@
                 }
             },
 
-            /**
-             * [SEO 개선]
-             * meta 태그를 동적으로 생성, 업데이트 또는 제거하는 헬퍼 함수입니다.
-             * @param {string} attrName - 'name' 또는 'property'
-             * @param {string} attrValue - 'description', 'og:title' 등
-             * @param {string | null} content - 태그에 설정할 content 값. null일 경우 태그 제거
-             */
             _setMetaTag: (attrName, attrValue, content) => {
                 let tag = DOM.$(`meta[${attrName}="${attrValue}"]`);
                 if (content) {
@@ -592,7 +554,6 @@
                     }
                     tag.setAttribute('content', content);
                 } else if (tag) {
-                    // content가 null이거나 비어있으면 태그를 제거합니다.
                     tag.remove();
                 }
             },
@@ -603,9 +564,15 @@
 
             renderLibrary: async (container, page, category) => {
                 ViewRenderer.updateMetaTags(); // 홈페이지용 메타태그 설정
+                
+                // [SEO UPDATE]
+                // 홈페이지 태그라인을 새로운 정체성에 맞게 수정합니다.
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
-                        <div class="text-center mb-12"><h1 class="text-5xl sm:text-7xl font-black mb-4 text-black tracking-tighter">InsureLog</h1><p class="text-lg text-gray-500">AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.</p></div>
+                        <div class="text-center mb-12">
+                            <h1 class="text-5xl sm:text-7xl font-black mb-4 text-black tracking-tighter">InsureLog</h1>
+                            <p class="text-lg text-gray-500">AI, 보험부터 법률, 부동산, 금융까지. 유용한 생활 정보와 기록.</p>
+                        </div>
                         <div class="flex items-center justify-center gap-2 mb-8 flex-wrap" role="tablist">${ViewRenderer._templates.categoryBtns(category)}</div>
                         <div id="post-list-container" class="border border-gray-200/80 rounded-2xl overflow-hidden min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>
                     </div>`;
@@ -640,8 +607,8 @@
                     return;
                 }
                 
-                Services.incrementViewCount(slug); // 조회수 증가 (id 대신 slug)
-                ViewRenderer.updateMetaTags(post); // 개별 포스트용 메타태그 설정
+                Services.incrementViewCount(slug); 
+                ViewRenderer.updateMetaTags(post); 
 
                 const { data: popular } = await Services.getRelatedPosts(slug);
                 const [{ data: prev }, { data: next }] = await Services.getAdjacentPosts(post.created_at);
@@ -669,16 +636,9 @@
                         ${popularHtml}${navHtml}
                     </div>`;
                 
-                /**
-                 * [WORKFLOW CHANGE]
-                 * DB에서 가져온 Markdown (post.refined_content)을 marked.js로 파싱하고,
-                 * DOMPurify로 소독(sanitize)한 후 렌더링합니다.
-                 */
                 if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
-                    // 1. Markdown을 HTML로 변환
                     const rawHtml = marked.parse(post.refined_content || '');
 
-                    // 2. DOMPurify Hook (기존 로직 재사용, 스타일 허용)
                     if (!window.__dompurifyHooked) {
                         DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
                             if (data.attrName === 'style') {
@@ -689,7 +649,6 @@
                                     if (mAlign) allowedStyles.push(`text-align:${mAlign[1]}`);
                                     const mWidth = style.match(/(?:^|;|\s)width\s*:\s*([0-9]+(?:\.[0-9]+)?)(px|%)/);
                                     if (mWidth) allowedStyles.push(`width:${mWidth[1]}${mWidth[2]}`);
-                                    // ... (기타 스타일 규칙은 간결성을 위해 생략되었으나, 기존 로직이 여기에 포함됨)
                                     data.attrValue = allowedStyles.join(';');
                                     if (!data.attrValue) data.keepAttr = false;
                                 } catch (_) { data.keepAttr = false; }
@@ -698,24 +657,20 @@
                         window.__dompurifyHooked = true;
                     }
                     
-                    // 3. HTML 소독 (iframe, table 등 허용)
                     const safeContent = DOMPurify.sanitize(rawHtml, { 
                         ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead", "tfoot", "col", "colgroup", "span"], 
                         ADD_ATTR: ["rowspan","colspan","style","class","width","height","align", "frameborder", "allow", "allowfullscreen"] 
                     });
                     
-                    // 4. DOM에 삽입
                     DOM.$('#post-content').innerHTML = safeContent;
 
                 } else {
                     console.warn('marked.js or DOMPurify.js not loaded.');
-                    // 라이브러리 로드 실패 시 원본 텍스트(마크다운)를 그대로 표시
                     DOM.$('#post-content').textContent = post.refined_content || ''; 
                 }
                 
                 try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("Adsense error:", e); }
                 
-                // 구문 강조(highlight.js)는 marked.js가 생성한 <pre><code> 태그에 적용됩니다.
                 setTimeout(() => {
                     if (typeof hljs !== 'undefined') {
                         DOM.$('#post-content').querySelectorAll('pre code').forEach(hljs.highlightElement);
@@ -748,7 +703,6 @@
             },
 
             renderWriter: async (container, slug) => {
-                // QuillEditor.destroy(); // Quill이 없으므로 제거
                 ViewRenderer.updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
 
                 let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: Config.CATEGORIES[0] };
@@ -762,18 +716,19 @@
                     post = data;
                 }
                 
-                const categoryOpts = Config.CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
+                // [DATA LOSS FIX]
+                // 기존 글의 카테고리가 현재 목록에 없더라도 드롭다운에 포함시켜
+                // 데이터가 덮어씌워지는 것을 방지합니다.
+                let currentCategories = [...Config.CATEGORIES];
+                if (post.category && !currentCategories.includes(post.category)) {
+                    // '이전 카테고리'를 목록 맨 앞에 추가
+                    currentCategories.unshift(post.category); 
+                }
                 
-                /**
-                 * [WORKFLOW CHANGE]
-                 * Quill 에디터 영역을 단순 <textarea>로 교체합니다.
-                 * '표 삽입' 버튼을 '이미지 업로드' 버튼과 '마크다운 안내' 링크로 교체합니다.
-                 */
+                const categoryOpts = currentCategories.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
+                
                 container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate><input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}"><div><select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select><textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea></div><div><label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label><textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea></div><div><label for="content-editor" class="block text-lg font-bold text-black mb-3">본문 (Markdown)</label><textarea id="content-editor" aria-label="본문 에디터 (마크다운)" placeholder="여기에 마크다운 형식으로 본문을 작성하세요...">${post.refined_content || ''}</textarea></div><div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky"><div class="flex items-center gap-3"><button type="button" data-action="upload-image" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition" aria-label="이미지 업로드">이미지 업로드</button><a href="https://www.markdownguide.org/basic-syntax/" target="_blank" rel="noopener" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-100 text-black hover:bg-gray-200 transition" aria-label="마크다운 안내">마크다운 안내</a></div><div class="flex items-center space-x-3"><button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button><button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>${post.id ? `<button type="button" data-action="delete" class="ml-4 px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제</button>` : ''}</div></div></form></div>`;
                 
-                // Quill 초기화 코드가 모두 제거되었습니다.
-                
-                // 이벤트 리스너 바인딩
                 ViewRenderer._bindWriterEvents(post);
             },
             
@@ -790,14 +745,12 @@
                 const delBtn = form.querySelector('[data-action="delete"]');
                 if (delBtn) delBtn.onclick = (e) => { e.preventDefault(); App.handlePostDelete(post.id); };
                 
-                // [WORKFLOW CHANGE] 이미지 업로드 버튼 바인딩
                 const uploadBtn = form.querySelector('[data-action="upload-image"]');
                 if (uploadBtn) uploadBtn.onclick = (e) => { 
                     e.preventDefault(); 
                     App.handleImageUpload(e.target); 
                 };
 
-                // [NEW] 붙여넣기 이벤트 리스너 바인딩
                 const contentEditor = form.querySelector('#content-editor');
                 if (contentEditor) {
                     contentEditor.addEventListener('paste', App.handlePaste);
@@ -806,7 +759,7 @@
                 const titleEl = DOM.$('#title');
                 if (titleEl) titleEl.oninput = DOM.debounce(() => {
                     const slugEl = DOM.$('#post-slug');
-                    if (slugEl && !slugEl.value) { // slug가 이미 있는 글은 자동생성 안함
+                    if (slugEl && !slugEl.value) { 
                         // (옵션) 자동 생성된 slug를 사용자에게 표시할 수 있음
                     }
                 }, 300);
@@ -873,17 +826,14 @@
                 modal.querySelector('[data-action="delete-no"]').onclick = () => { DOM.closeModal(modalId); res(false); };
             }),
 
-            // [WORKFLOW CHANGE] 테이블 도움말 모달 삭제 (showTableHelpModal)
-
             /**
-             * [SEO 개선]
-             * 현재 뷰(post 또는 null)를 기반으로 메타 태그와 JSON-LD 스키마를 동적으로 업데이트합니다.
-             * 제공된 "고급 색인 생성" 문서의 권장 사항을 적용합니다.
-             * @param {object | null} post - 현재 보고 있는 포스트 객체, 또는 홈페이지의 경우 null
+             * [SEO UPDATE]
+             * 동적으로 생성되는 메타 태그의 기본값을 새로운 정체성에 맞게 수정합니다.
              */
             updateMetaTags: (post = null) => {
-                const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
-                const desc = post ? (post.summary || 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.') : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
+                // [SEO UPDATE] 기본 title, desc, keywords 수정
+                const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 보험, 금융, 법률, 부동산 전문 블로그';
+                const desc = post ? (post.summary || 'AI, 보험, 법률, 부동산, 금융, 생활 정보 등 전문가의 분석과 팁.') : 'InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.';
                 const url = post ? `${Config.SITE_URL}/post/${post.slug}` : Config.SITE_URL;
                 const img = post?.thumbnail_url || Config.DEFAULT_OG_IMAGE;
                 
@@ -908,25 +858,23 @@
                 ViewRenderer._setMetaTag('name', 'twitter:description', desc);
                 ViewRenderer._setMetaTag('name', 'twitter:image', img);
 
-                // [SEO 개선] Article-specific tags (문서에서 권장)
-                // 포스트 페이지에서는 추가하고, 홈페이지에서는 제거합니다.
+                // Article-specific tags
                 ViewRenderer._setMetaTag('property', 'article:published_time', post ? post.created_at : null);
                 ViewRenderer._setMetaTag('property', 'article:modified_time', post ? (post.updated_at || post.created_at) : null);
-                ViewRenderer._setMetaTag('property', 'article:section', post ? post.category : null); // 카테고리
+                ViewRenderer._setMetaTag('property', 'article:section', post ? post.category : null); 
 
-                // [SEO 개선] Keywords meta tag
+                // [SEO UPDATE] Keywords meta tag (기본값 수정)
                 const keywords = post 
                     ? `InsureLog, ${post.category}, ${post.title.split(' ').slice(0, 3).join(', ')}`
-                    : 'InsureLog, AI, 보험, 핀테크, 기술, 블로그, 인공지능, 데이터';
+                    : 'InsureLog, AI, 보험, 법률, 부동산, 금융, 카드, 대출, 생활 정보, 기술 블로그, 인공지능';
                 ViewRenderer._setMetaTag('name', 'keywords', keywords);
 
                 
-                // --- [SEO 개선] ENHANCED JSON-LD (Schema.org) ---
+                // --- ENHANCED JSON-LD (Schema.org) ---
                 const ld = DOM.$('#ld-json') || document.createElement('script');
                 ld.type = 'application/ld+json';
                 ld.id = 'ld-json';
                 
-                // 재사용 가능한 발행인(Publisher) 정보
                 const publisherData = { 
                     "@type": "Organization", 
                     "name": "InsureLog", 
@@ -938,7 +886,7 @@
                 
                 let schemaData;
                 if (post) {
-                    // [SEO 개선] BlogPosting 스키마 (문서 권장 사항 적용)
+                    // BlogPosting 스키마
                     schemaData = {
                         "@context": "https://schema.org",
                         "@type": "BlogPosting",
@@ -946,15 +894,15 @@
                         "headline": post.title,
                         "description": desc,
                         "image": img ? [img] : undefined,
-                        "author": publisherData, // 조직을 작성자로 명시
-                        "publisher": publisherData, // 발행인 명시 (권장)
-                        "datePublished": post.created_at, // 발행일 (문서 권장)
-                        "dateModified": post.updated_at || post.created_at, // 수정일 (문서 권장)
-                        "articleSection": post.category, // 카테고리 (필터링에 유용)
-                        "keywords": `${post.category}, ${post.title}` // 키워드
+                        "author": publisherData, 
+                        "publisher": publisherData, 
+                        "datePublished": post.created_at, 
+                        "dateModified": post.updated_at || post.created_at, 
+                        "articleSection": post.category, 
+                        "keywords": `${post.category}, ${post.title}`
                     };
                 } else {
-                    // [SEO 개선] WebSite 스키마 (홈페이지용)
+                    // [SEO UPDATE] WebSite 스키마 (description이 새 기본값으로 자동 적용됨)
                     schemaData = {
                         "@context": "https://schema.org",
                         "@type": "WebSite",
@@ -964,7 +912,7 @@
                         "publisher": publisherData
                     };
                 }
-                ld.textContent = JSON.stringify(schemaData, null, 2); // 가독성을 위해 2칸 들여쓰기
+                ld.textContent = JSON.stringify(schemaData, null, 2); 
 
                 if (!DOM.$('#ld-json')) {
                     document.head.appendChild(ld);
@@ -1046,7 +994,6 @@
         /**
          * [Module: App]
          * 애플리케이션의 메인 진입점. 초기화 및 전역 이벤트 핸들러를 관리합니다.
-         * [WORKFLOW CHANGE] 이미지 업로드 및 최적화 로직 추가
          */
         const App = {
             init: () => {
@@ -1089,7 +1036,6 @@
                                 return Router.navigateTo(DOM.buildUrl('/', { page: 1, category: action.dataset.category }));
                             case 'close-modal':
                                 return DOM.closeModal(action.closest('[role="dialog"]').id);
-                            // 'upload-image' 등 writer 뷰 내의 버튼들은 _bindWriterEvents에서 처리
                         }
                     }
                 });
@@ -1121,28 +1067,23 @@
                 try {
                     const title = DOM.$('#title').value.trim();
                     const status = action === 'publish' ? 'published' : 'draft';
-                    
-                    // [WORKFLOW CHANGE] <textarea>에서 마크다운 텍스트 가져오기
                     const content = DOM.$('#content-editor').value; 
                     
                     if (!content || content.trim().length < 10) {
                         throw new Error('본문이 너무 짧습니다.');
                     }
                     
-                    // [WORKFLOW CHANGE] 요약 생성 (마크다운 텍스트 기반)
                     let summary = DOM.$('#summary').value.trim();
                     if (!summary) {
-                        // 마크다운 제거하고 순수 텍스트 추출 (간단한 버전)
-                        const plainText = content.replace(/!\[.*?\]\(.*?\)/g, '') // 이미지 제거
-                                              .replace(/\[.*?\]\(.*?\)/g, '$1') // 링크 텍스트만 남김
-                                              .replace(/#{1,6}\s/g, '') // 헤더 제거
-                                              .replace(/[*_`~>|]/g, '') // 기타 마크다운 문자 제거
-                                              .replace(/\s+/g, ' ') // 공백 정규화
+                        const plainText = content.replace(/!\[.*?\]\(.*?\)/g, '') 
+                                              .replace(/\[.*?\]\(.*?\)/g, '$1') 
+                                              .replace(/#{1,6}\s/g, '') 
+                                              .replace(/[*_`~>|]/g, '') 
+                                              .replace(/\s+/g, ' ') 
                                               .trim();
                         summary = plainText.slice(0, 150) + (plainText.length > 150 ? '...' : '');
                     }
                     
-                    // [WORKFLOW CHANGE] 썸네일 생성 (마크다운 파싱 기반)
                     let thumb = null;
                     if (typeof marked !== 'undefined') {
                         const parsedForThumb = marked.parse(content);
@@ -1154,7 +1095,7 @@
                     const id = DOM.$('#post-id').value || null;
                     let slug = DOM.$('#post-slug').value.trim() || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
                     
-                    if (!id) { // 새 글일 때만 slug 중복 검사
+                    if (!id) { 
                         const { data } = await Services.checkSlugExists(slug);
                         if (data) slug += `-${Date.now().toString().slice(-6)}`;
                     }
@@ -1163,10 +1104,10 @@
                         id: id,
                         title, slug, status, summary, 
                         author_id: State.user.id, 
-                        refined_content: content, // 마크다운 원본 저장
+                        refined_content: content, 
                         category: DOM.$('#category').value, 
                         thumbnail_url: thumb,
-                        updated_at: new Date().toISOString() // [SEO 개선] 수정 시간 갱신
+                        updated_at: new Date().toISOString() 
                     };
                     
                     const { data: savedPost, error } = await Services.savePost(postData);
@@ -1199,21 +1140,16 @@
                 }
             },
 
-            /**
-             * [NEW] 붙여넣기 이벤트 핸들러
-             * 붙여넣기된 텍스트에서 JSON-LD 스키마를 파싱하여 필드를 자동 완성합니다.
-             */
             handlePaste: (e) => {
                 const textarea = DOM.$('#content-editor');
                 if (!textarea) return;
                 
-                e.preventDefault(); // 기본 붙여넣기 동작 중지
+                e.preventDefault(); 
                 const pastedText = e.clipboardData.getData('text/plain');
                 if (!pastedText) return;
 
-                let contentToInsert = pastedText; // 기본값: 원본 텍스트 전체
+                let contentToInsert = pastedText; 
 
-                // 붙여넣기된 텍스트가 { ... } JSON으로 시작하는지 확인 (사용자 예시 기준)
                 const jsonBlobRegex = /^({[\s\S]*?})([\s\S]*)/m;
                 const match = pastedText.match(jsonBlobRegex);
 
@@ -1224,45 +1160,31 @@
                     try {
                         const schema = JSON.parse(jsonString);
 
-                        // schema.org 데이터인지 확인
                         if (schema['@context'] && schema['@context'].includes('schema.org')) {
-                            // 제목 자동 완성
                             if (schema.headline) DOM.$('#title').value = schema.headline;
-                            
-                            // 요약 자동 완성
                             if (schema.description) DOM.$('#summary').value = schema.description;
                             
-                            // (보너스) 카테고리 자동 완성 시도
                             const categorySource = schema.articleSection || (Array.isArray(schema.keywords) ? schema.keywords[0] : schema.keywords);
                             if (categorySource) {
-                                // Config.CATEGORIES에 일치하는 카테고리가 있는지 확인
                                 const matchedCategory = Config.CATEGORIES.find(c => c.toLowerCase() === categorySource.toLowerCase().trim());
                                 if (matchedCategory) DOM.$('#category').value = matchedCategory;
                             }
 
-                            // 에디터에 삽입할 텍스트를 JSON 다음의 본문으로 변경
                             contentToInsert = restOfText;
                             DOM.showToast('JSON-LD 스키마를 감지하여 필드를 자동 완성했습니다.', false);
                         }
                     } catch (err) {
-                        // JSON 파싱에 실패하면, 원본 텍스트를 그대로 사용
                         console.warn('Pasted content start failed to parse as JSON.', err);
                     }
                 }
 
-                // 최종 텍스트(정리되었거나 원본)를 에디터에 삽입
                 const start = textarea.selectionStart;
                 const end = textarea.selectionEnd;
                 textarea.value = textarea.value.substring(0, start) + contentToInsert + textarea.value.substring(end);
                 
-                // 삽입된 텍스트 끝으로 커서 이동
                 textarea.selectionStart = textarea.selectionEnd = start + contentToInsert.length;
             },
 
-            /**
-             * [WORKFLOW CHANGE]
-             * 마크다운 에디터를 위한 새 이미지 업로드 핸들러
-             */
             handleImageUpload: async (btn) => {
                 const input = document.createElement('input');
                 input.type = 'file'; input.accept = 'image/*';
@@ -1277,21 +1199,17 @@
                     DOM.showToast('이미지 업로드 중...');
 
                     try {
-                        // 이미지 최적화 (WebP 변환)
                         const fileToUpload = await App.convertToWebP(file);
                         const url = await Services.uploadImage(fileToUpload);
                         
-                        // <textarea>에 마크다운 태그 삽입
                         const textarea = DOM.$('#content-editor');
                         if (textarea) {
                             const markdownImage = `\n![이미지 설명](${url})\n`;
                             
-                            // 현재 커서 위치에 텍스트 삽입
                             const start = textarea.selectionStart;
                             const end = textarea.selectionEnd;
                             textarea.value = textarea.value.substring(0, start) + markdownImage + textarea.value.substring(end);
                             
-                            // 삽입된 태그의 '이미지 설명' 부분으로 커서 이동
                             const newCursorPos = start + markdownImage.indexOf(']') - 4;
                             textarea.selectionStart = newCursorPos;
                             textarea.selectionEnd = newCursorPos + 6;
@@ -1308,10 +1226,6 @@
                 };
             },
 
-            /**
-             * [WORKFLOW CHANGE]
-             * 이미지 최적화 헬퍼 함수들을 QuillEditor 모듈에서 App 모듈로 이동
-             */
             getOrientation: (file) => new Promise((res) => {
                 if (typeof EXIF === 'undefined') { 
                     console.warn('EXIF.js not loaded. Assuming orientation 1.');
@@ -1335,7 +1249,7 @@
                     const img = new Image(); 
                     img.src = e.target.result;
                     img.onload = async () => {
-                        const orient = await App.getOrientation(file); // App.getOrientation으로 변경
+                        const orient = await App.getOrientation(file); 
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
                         let w = img.width, h = img.height;
@@ -1367,4 +1281,5 @@
     </script>
 </body>
 </html>
+
 
