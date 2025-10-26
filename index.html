@@ -4,8 +4,16 @@
     <!-- Meta tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InsureLog</title>
+    
+    <!-- 
+      [SEO 개선]
+      - 기본 타이틀과 설명을 설정합니다. 이 값들은 updateMetaTags 함수에 의해 동적으로 변경됩니다.
+    -->
+    <title>InsureLog - AI, 기술, 그리고 보험</title>
     <meta name="description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <meta name="author" content="InsureLog">
+    <meta name="keywords" content="InsureLog, AI, 보험, 핀테크, 기술, 블로그, 인공지능, 데이터">
+    
     <link rel="canonical" href="https://blogaipandoci.vercel.app">
     <meta name="robots" content="index,follow">
     <meta name="theme-color" content="#ffffff">
@@ -16,8 +24,13 @@
       - 'unsafe-eval'은 Supabase-js v2의 ES module에서 필요할 수 있습니다.
       - 'unsafe-inline'은 Tailwind CSS의 JIT 엔진에 필요합니다.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
     
+    <!-- 
+      [SEO 개선]
+      - Open Graph / Twitter 태그는 updateMetaTags 함수에서 동적으로 관리합니다.
+      - 정적 태그는 페이지 로드 시 크롤러가 자바스크립트 실행 전에 볼 수 있는 기본값을 제공합니다.
+    -->
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://blogaipandoci.vercel.app">
@@ -25,6 +38,7 @@
     <meta property="og:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
     <meta property="og:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     <meta property="og:site_name" content="InsureLog">
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="InsureLog - AI, 기술, 그리고 보험">
     <meta name="twitter:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
@@ -251,7 +265,8 @@
             IMAGE_BUCKET_NAME: 'thought-images', 
             DB_TABLE_NAME: 'posts', 
             POSTS_PER_PAGE: 10,
-            CATEGORIES: ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"]
+            CATEGORIES: ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"],
+            DEFAULT_OG_IMAGE: "https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp"
         };
 
         /**
@@ -510,12 +525,34 @@
                 }
             },
 
+            /**
+             * [SEO 개선]
+             * meta 태그를 동적으로 생성, 업데이트 또는 제거하는 헬퍼 함수입니다.
+             * @param {string} attrName - 'name' 또는 'property'
+             * @param {string} attrValue - 'description', 'og:title' 등
+             * @param {string | null} content - 태그에 설정할 content 값. null일 경우 태그 제거
+             */
+            _setMetaTag: (attrName, attrValue, content) => {
+                let tag = DOM.$(`meta[${attrName}="${attrValue}"]`);
+                if (content) {
+                    if (!tag) {
+                        tag = document.createElement('meta');
+                        tag.setAttribute(attrName, attrValue);
+                        document.head.appendChild(tag);
+                    }
+                    tag.setAttribute('content', content);
+                } else if (tag) {
+                    // content가 null이거나 비어있으면 태그를 제거합니다.
+                    tag.remove();
+                }
+            },
+
             renderNav: () => {
                 DOM.$('#main-nav-container').innerHTML = ViewRenderer._templates.nav(State.user);
             },
 
             renderLibrary: async (container, page, category) => {
-                ViewRenderer.updateMetaTags();
+                ViewRenderer.updateMetaTags(); // 홈페이지용 메타태그 설정
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
                         <div class="text-center mb-12"><h1 class="text-5xl sm:text-7xl font-black mb-4 text-black tracking-tighter">InsureLog</h1><p class="text-lg text-gray-500">AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.</p></div>
@@ -554,6 +591,7 @@
                 }
                 
                 Services.incrementViewCount(slug); // 조회수 증가 (id 대신 slug)
+                ViewRenderer.updateMetaTags(post); // 개별 포스트용 메타태그 설정
 
                 const { data: popular } = await Services.getRelatedPosts(slug);
                 const [{ data: prev }, { data: next }] = await Services.getAdjacentPosts(post.created_at);
@@ -561,7 +599,6 @@
                 const popularHtml = popular?.length > 0 ? `<div class="mt-20"><h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2><div class="border-t border-gray-200">${popular.map(p => `<a href="/post/${p.slug}" data-route class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50" role="link"><h4 class="font-semibold text-gray-800 text-base">${p.title}</h4></a>`).join('')}</div></div>` : '';
                 const navHtml = `<nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10" role="navigation" aria-label="이전/다음 글 탐색"><div>${prev ? `<a href="/post/${prev.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prev.title}</h4></a>` : ''}</div><div class="text-left md:text-right">${next ? `<a href="/post/${next.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${next.title}</h4></a>` : ''}</div></nav>`;
                 
-                ViewRenderer.updateMetaTags(post);
                 const editBtn = (State.user && State.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200" aria-label="글 수정">수정</a>` : '';
                 
                 const adTestAttr = ['localhost','127.0.0.1'].includes(window.location.hostname) ? ' data-adtest="on"' : '';
@@ -782,46 +819,100 @@
 
             // [WORKFLOW CHANGE] 테이블 도움말 모달 삭제 (showTableHelpModal)
 
+            /**
+             * [SEO 개선]
+             * 현재 뷰(post 또는 null)를 기반으로 메타 태그와 JSON-LD 스키마를 동적으로 업데이트합니다.
+             * 제공된 "고급 색인 생성" 문서의 권장 사항을 적용합니다.
+             * @param {object | null} post - 현재 보고 있는 포스트 객체, 또는 홈페이지의 경우 null
+             */
             updateMetaTags: (post = null) => {
                 const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
-                const desc = post ? post.summary : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
+                const desc = post ? (post.summary || 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.') : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
                 const url = post ? `${Config.SITE_URL}/post/${post.slug}` : Config.SITE_URL;
-                const img = post?.thumbnail_url || null;
+                const img = post?.thumbnail_url || Config.DEFAULT_OG_IMAGE;
                 
                 document.title = title;
-                DOM.$('meta[name="description"]')?.setAttribute('content', desc);
-                DOM.$('meta[property="og:title"]')?.setAttribute('content', title);
-                DOM.$('meta[property="og:description"]')?.setAttribute('content', desc);
-                DOM.$('meta[property="og:url"]')?.setAttribute('content', url);
                 DOM.$('link[rel="canonical"]')?.setAttribute('href', url);
 
-                let ogImg = DOM.$('meta[property="og:image"]');
-                if (img) {
-                    if (ogImg) ogImg.setAttribute('content', img);
-                    else {
-                        ogImg = document.createElement('meta');
-                        ogImg.setAttribute('property', 'og:image');
-                        ogImg.setAttribute('content', img);
-                        document.head.appendChild(ogImg);
-                    }
-                }
+                // Standard meta tags
+                ViewRenderer._setMetaTag('name', 'description', desc);
+                ViewRenderer._setMetaTag('name', 'author', 'InsureLog');
+
+                // Open Graph (Facebook, etc.)
+                ViewRenderer._setMetaTag('property', 'og:type', post ? 'article' : 'website');
+                ViewRenderer._setMetaTag('property', 'og:title', title);
+                ViewRenderer._setMetaTag('property', 'og:description', desc);
+                ViewRenderer._setMetaTag('property', 'og:url', url);
+                ViewRenderer._setMetaTag('property', 'og:image', img);
+                ViewRenderer._setMetaTag('property', 'og:site_name', 'InsureLog');
+
+                // Twitter Card
+                ViewRenderer._setMetaTag('name', 'twitter:card', 'summary_large_image');
+                ViewRenderer._setMetaTag('name', 'twitter:title', title);
+                ViewRenderer._setMetaTag('name', 'twitter:description', desc);
+                ViewRenderer._setMetaTag('name', 'twitter:image', img);
+
+                // [SEO 개선] Article-specific tags (문서에서 권장)
+                // 포스트 페이지에서는 추가하고, 홈페이지에서는 제거합니다.
+                ViewRenderer._setMetaTag('property', 'article:published_time', post ? post.created_at : null);
+                ViewRenderer._setMetaTag('property', 'article:modified_time', post ? (post.updated_at || post.created_at) : null);
+                ViewRenderer._setMetaTag('property', 'article:section', post ? post.category : null); // 카테고리
+
+                // [SEO 개선] Keywords meta tag
+                const keywords = post 
+                    ? `InsureLog, ${post.category}, ${post.title.split(' ').slice(0, 3).join(', ')}`
+                    : 'InsureLog, AI, 보험, 핀테크, 기술, 블로그, 인공지능, 데이터';
+                ViewRenderer._setMetaTag('name', 'keywords', keywords);
+
                 
+                // --- [SEO 개선] ENHANCED JSON-LD (Schema.org) ---
                 const ld = DOM.$('#ld-json') || document.createElement('script');
                 ld.type = 'application/ld+json';
                 ld.id = 'ld-json';
-                ld.textContent = JSON.stringify(post ? {
-                    "@context": "https://schema.org", "@type": "BlogPosting",
-                    "headline": post.title, "datePublished": post.created_at,
-                    "dateModified": post.updated_at || post.created_at,
-                    "author": { "@type": "Organization", "name": "InsureLog" },
-                    "image": img ? [img] : undefined,
-                    "mainEntityOfPage": { "@type": "WebPage", "@id": url },
-                    "description": desc
-                } : {
-                    "@context": "https://schema.org", "@type": "WebSite",
-                    "name": "InsureLog", "url": Config.SITE_URL, "description": desc
-                });
-                if (!DOM.$('#ld-json')) document.head.appendChild(ld);
+                
+                // 재사용 가능한 발행인(Publisher) 정보
+                const publisherData = { 
+                    "@type": "Organization", 
+                    "name": "InsureLog", 
+                    "logo": { 
+                        "@type": "ImageObject", 
+                        "url": Config.DEFAULT_OG_IMAGE 
+                    } 
+                };
+                
+                let schemaData;
+                if (post) {
+                    // [SEO 개선] BlogPosting 스키마 (문서 권장 사항 적용)
+                    schemaData = {
+                        "@context": "https://schema.org",
+                        "@type": "BlogPosting",
+                        "mainEntityOfPage": { "@type": "WebPage", "@id": url },
+                        "headline": post.title,
+                        "description": desc,
+                        "image": img ? [img] : undefined,
+                        "author": publisherData, // 조직을 작성자로 명시
+                        "publisher": publisherData, // 발행인 명시 (권장)
+                        "datePublished": post.created_at, // 발행일 (문서 권장)
+                        "dateModified": post.updated_at || post.created_at, // 수정일 (문서 권장)
+                        "articleSection": post.category, // 카테고리 (필터링에 유용)
+                        "keywords": `${post.category}, ${post.title}` // 키워드
+                    };
+                } else {
+                    // [SEO 개선] WebSite 스키마 (홈페이지용)
+                    schemaData = {
+                        "@context": "https://schema.org",
+                        "@type": "WebSite",
+                        "url": Config.SITE_URL,
+                        "name": "InsureLog",
+                        "description": desc,
+                        "publisher": publisherData
+                    };
+                }
+                ld.textContent = JSON.stringify(schemaData, null, 2); // 가독성을 위해 2칸 들여쓰기
+
+                if (!DOM.$('#ld-json')) {
+                    document.head.appendChild(ld);
+                }
             }
         };
 
@@ -983,7 +1074,17 @@
                     }
                     
                     // [WORKFLOW CHANGE] 요약 생성 (마크다운 텍스트 기반)
-                    let summary = DOM.$('#summary').value.trim() || content.trim().replace(/\s+/g, ' ').slice(0, 150) + '...';
+                    let summary = DOM.$('#summary').value.trim();
+                    if (!summary) {
+                        // 마크다운 제거하고 순수 텍스트 추출 (간단한 버전)
+                        const plainText = content.replace(/!\[.*?\]\(.*?\)/g, '') // 이미지 제거
+                                              .replace(/\[.*?\]\(.*?\)/g, '$1') // 링크 텍스트만 남김
+                                              .replace(/#{1,6}\s/g, '') // 헤더 제거
+                                              .replace(/[*_`~>|]/g, '') // 기타 마크다운 문자 제거
+                                              .replace(/\s+/g, ' ') // 공백 정규화
+                                              .trim();
+                        summary = plainText.slice(0, 150) + (plainText.length > 150 ? '...' : '');
+                    }
                     
                     // [WORKFLOW CHANGE] 썸네일 생성 (마크다운 파싱 기반)
                     let thumb = null;
@@ -1008,7 +1109,8 @@
                         author_id: State.user.id, 
                         refined_content: content, // 마크다운 원본 저장
                         category: DOM.$('#category').value, 
-                        thumbnail_url: thumb 
+                        thumbnail_url: thumb,
+                        updated_at: new Date().toISOString() // [SEO 개선] 수정 시간 갱신
                     };
                     
                     const { data: savedPost, error } = await Services.savePost(postData);
@@ -1149,5 +1251,4 @@
     </script>
 </body>
 </html>
-
 
