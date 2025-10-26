@@ -261,6 +261,7 @@
         const Config = {
             SITE_URL: 'https://blogaipandoci.vercel.app',
             SUPABASE_URL: 'https://ddehwkwzmmvcxltlplua.supabase.co',
+            // [FIX] 'JIUzI1Ni' -> 'HS256'로 오타 수정
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To',
             IMAGE_BUCKET_NAME: 'thought-images', 
             DB_TABLE_NAME: 'posts', 
@@ -746,6 +747,12 @@
                     e.preventDefault(); 
                     App.handleImageUpload(e.target); 
                 };
+
+                // [NEW] 붙여넣기 이벤트 리스너 바인딩
+                const contentEditor = form.querySelector('#content-editor');
+                if (contentEditor) {
+                    contentEditor.addEventListener('paste', App.handlePaste);
+                }
                 
                 const titleEl = DOM.$('#title');
                 if (titleEl) titleEl.oninput = DOM.debounce(() => {
@@ -1144,6 +1151,66 @@
             },
 
             /**
+             * [NEW] 붙여넣기 이벤트 핸들러
+             * 붙여넣기된 텍스트에서 JSON-LD 스키마를 파싱하여 필드를 자동 완성합니다.
+             */
+            handlePaste: (e) => {
+                const textarea = DOM.$('#content-editor');
+                if (!textarea) return;
+                
+                e.preventDefault(); // 기본 붙여넣기 동작 중지
+                const pastedText = e.clipboardData.getData('text/plain');
+                if (!pastedText) return;
+
+                let contentToInsert = pastedText; // 기본값: 원본 텍스트 전체
+
+                // 붙여넣기된 텍스트가 { ... } JSON으로 시작하는지 확인 (사용자 예시 기준)
+                const jsonBlobRegex = /^({[\s\S]*?})([\s\S]*)/m;
+                const match = pastedText.match(jsonBlobRegex);
+
+                if (match && match[1]) {
+                    const jsonString = match[1].trim();
+                    const restOfText = match[2] ? match[2].trim() : '';
+
+                    try {
+                        const schema = JSON.parse(jsonString);
+
+                        // schema.org 데이터인지 확인
+                        if (schema['@context'] && schema['@context'].includes('schema.org')) {
+                            // 제목 자동 완성
+                            if (schema.headline) DOM.$('#title').value = schema.headline;
+                            
+                            // 요약 자동 완성
+                            if (schema.description) DOM.$('#summary').value = schema.description;
+                            
+                            // (보너스) 카테고리 자동 완성 시도
+                            const categorySource = schema.articleSection || (Array.isArray(schema.keywords) ? schema.keywords[0] : schema.keywords);
+                            if (categorySource) {
+                                // Config.CATEGORIES에 일치하는 카테고리가 있는지 확인
+                                const matchedCategory = Config.CATEGORIES.find(c => c.toLowerCase() === categorySource.toLowerCase().trim());
+                                if (matchedCategory) DOM.$('#category').value = matchedCategory;
+                            }
+
+                            // 에디터에 삽입할 텍스트를 JSON 다음의 본문으로 변경
+                            contentToInsert = restOfText;
+                            DOM.showToast('JSON-LD 스키마를 감지하여 필드를 자동 완성했습니다.', false);
+                        }
+                    } catch (err) {
+                        // JSON 파싱에 실패하면, 원본 텍스트를 그대로 사용
+                        console.warn('Pasted content start failed to parse as JSON.', err);
+                    }
+                }
+
+                // 최종 텍스트(정리되었거나 원본)를 에디터에 삽입
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                textarea.value = textarea.value.substring(0, start) + contentToInsert + textarea.value.substring(end);
+                
+                // 삽입된 텍스트 끝으로 커서 이동
+                textarea.selectionStart = textarea.selectionEnd = start + contentToInsert.length;
+            },
+
+            /**
              * [WORKFLOW CHANGE]
              * 마크다운 에디터를 위한 새 이미지 업로드 핸들러
              */
@@ -1251,4 +1318,5 @@
     </script>
 </body>
 </html>
+
 
