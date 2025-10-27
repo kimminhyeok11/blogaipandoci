@@ -467,9 +467,19 @@
             getPosts: (page, category) => {
                 const { from, to } = { from: (page - 1) * Config.POSTS_PER_PAGE, to: page * Config.POSTS_PER_PAGE - 1 };
                 let query = State.supabase.from(Config.DB_TABLE_NAME)
-                    // [수정] view_count 추가
                     .select('id, title, slug, summary, category, thumbnail_url, view_count', { count: 'exact' });
-                if (category !== '전체') query = query.eq('category', category);
+
+                // [수정] '미분류' 카테고리 필터링 로직 수정
+                if (category !== '전체') {
+                    if (category === '미분류') {
+                        // '미분류'는 DB에서 category 컬럼이 null인 경우를 의미합니다.
+                        query = query.is('category', null);
+                    } else {
+                        // 그 외의 카테고리는 'eq'로 정확히 매칭합니다.
+                        query = query.eq('category', category);
+                    }
+                }
+                
                 return query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
             },
 
@@ -595,7 +605,16 @@
                             ${user ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="대시보드로 이동">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="로그아웃">로그아웃</button>` : `<button data-action="auth" aria-label="로그인 또는 회원가입" class="px-4 py-2 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">로그인 / 가입</button>`}
                         </div>
                     </nav>`,
-                categoryBtns: (category) => ['전체', ...Config.CATEGORIES].map(cat => `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}" aria-pressed="${cat === category}">${cat}</button>`).join(''),
+                
+                // [수정] '미분류' 버튼을 동적으로 추가
+                categoryBtns: (category) => {
+                    // '미분류'를 Config 목록에 없는 카테고리로 추가
+                    const allCategories = ['전체', ...Config.CATEGORIES, '미분류'];
+                    return allCategories.map(cat => 
+                        `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}" aria-pressed="${cat === category}">${cat}</button>`
+                    ).join('');
+                },
+                
                 pagination: (page, total, basePath, params) => {
                     const totalPages = Math.ceil(total / Config.POSTS_PER_PAGE);
                     if (totalPages <= 1) return '';
@@ -1624,7 +1643,7 @@
             },
 
             getOrientation: (file) => new Promise((res) => {
-                // [SPEED UPDATE] exif 라이B러리 의존성 확인
+                // [SPEED UPDATE] exif 라이브러리 의존성 확인
                 if (typeof EXIF === 'undefined') { 
                     console.warn('EXIF.js not loaded. Assuming orientation 1.');
                     res(1); 
@@ -1680,4 +1699,3 @@
     </script>
 </body>
 </html>
-
