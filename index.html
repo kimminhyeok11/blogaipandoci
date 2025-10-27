@@ -15,6 +15,11 @@
     <meta name="keywords" content="InsureLog, AI, 보험, 법률, 부동산, 금융, 카드, 대출, 생활 정보, 기술 블로그, 인공지능">
     
     <link rel="canonical" href="https://blogaipandoci.vercel.app">
+    <!-- 
+      [SEO/ADS UPDATE]
+      - 모든 검색 엔진의 크롤링을 허용하는 robots 메타 태그를 추가했습니다.
+      - (중요) Vercel 프로젝트의 루트에 'ads.txt' 파일을 추가해야 합니다. (애드센스 대시보드에서 내용 확인)
+    -->
     <meta name="robots" content="index,follow">
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
@@ -43,20 +48,28 @@
     <meta name="twitter:description" content="InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.">
     <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     
-    <!-- Scripts & Stylesheets -->
+    <!-- 
+      [SPEED UPDATE]
+      - (권장) 현재 Tailwind CSS를 CDN으로 사용 중입니다.
+      - 개발 완료 후, 'npm install tailwindcss' 및 'npx tailwindcss -i ./input.css -o ./output.css'
+      - 명령어로 CSS 파일을 빌드한 뒤, 아래 script 태그 대신 <link rel="stylesheet" href="/output.css">로 변경하세요.
+      - 초기 로딩 속도와 LCP(Largest Contentful Paint)가 크게 개선됩니다.
+    -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- [SPEED UPDATE] 글로벌 공통 스크립트 (애니메이션) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
+    
+    <!-- [SPEED UPDATE] 글로벌 공통 스타일 (코드 하이라이트) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@12/lib/marked.umd.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
-    
-    <!-- [PASTE FIX] HTML을 Markdown으로 변환하기 위한 Turndown 라이브러리 추가 -->
-    <script src="https://unpkg.com/turndown/dist/turndown.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
-
+    <!-- 
+      [SPEED UPDATE]
+      - 아래 스크립트들은 '라이브러리 조건부 로드'를 위해 <head>에서 제거되었습니다.
+      - highlight.js, marked.umd.min.js, purify.min.js, exif.min.js, turndown.js
+      - 이 스크립트들은 이제 각 뷰(renderPost, renderWriter)가 로드될 때 동적으로 주입됩니다.
+      - 이를 통해 일반 독자(글 목록 페이지만 보는)의 초기 로딩 속도가 향상됩니다.
+    -->
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -192,6 +205,23 @@
             border-color: var(--accent);
             box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.3);
         }
+        
+        /* [ADS UPDATE] 광고 슬롯의 최소 높이를 지정하여 CLS(Cumulative Layout Shift) 방지 */
+        .ad-slot-placeholder {
+            display: block;
+            width: 100%;
+            min-height: 100px; /* 광고의 평균 최소 높이 (조정 가능) */
+            background-color: #F9FAFB; /* 배경색 */
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #9CA3AF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
 
         /* [Responsive] 모바일 반응형 */
@@ -293,7 +323,16 @@
                 "기타"
             ],
             
-            DEFAULT_OG_IMAGE: "https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp"
+            DEFAULT_OG_IMAGE: "https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp",
+
+            // [SPEED UPDATE] 동적 로드할 스크립트 URL
+            SCRIPT_URLS: {
+                marked: 'https://cdn.jsdelivr.net/npm/marked@12/lib/marked.umd.min.js',
+                purify: 'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js',
+                highlight: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
+                exif: 'https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js',
+                turndown: 'https://unpkg.com/turndown/dist/turndown.js'
+            }
         };
 
         /**
@@ -376,6 +415,78 @@
                     clearTimeout(timeout);
                     timeout = setTimeout(() => func(...args), wait);
                 };
+            },
+
+            /**
+             * [SPEED UPDATE] 동적 스크립트 로더
+             * 필요할 때만 스크립트를 로드하고, 중복 로드를 방지합니다.
+             * @param {string} src - 스크립트 URL
+             * @param {string} id - 스크립트 태그의 고유 ID
+             * @returns {Promise<void>} 스크립트 로드가 완료되면 resolve
+             */
+            loadScript: (src, id) => {
+                return new Promise((resolve, reject) => {
+                    if (DOM.$(`#${id}`)) {
+                        // 이미 로드되었거나 로드 중인 경우
+                        
+                        // 이미 로드 완료된 경우
+                        if (DOM.$(`#${id}`).dataset.loaded === 'true') {
+                             resolve();
+                             return;
+                        }
+                        
+                        // 로드 중인 경우: 완료 이벤트 리스너 추가
+                        DOM.$(`#${id}`).addEventListener('load', () => resolve());
+                        DOM.$(`#${id}`).addEventListener('error', () => reject(new Error(`Script load error for ${src}`)));
+                        return;
+                    }
+                    
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.id = id;
+                    script.defer = true;
+                    script.setAttribute('nonce', 'r4nd0m'); // CSP nonce
+                    script.setAttribute('crossorigin', 'anonymous');
+                    
+                    script.onload = () => {
+                        script.dataset.loaded = 'true'; // 로드 완료 플래그
+                        resolve();
+                    };
+                    script.onerror = () => {
+                        reject(new Error(`Script load error for ${src}`));
+                    };
+                    
+                    document.head.appendChild(script);
+                });
+            },
+
+            /**
+             * [ADS UPDATE] AdSense 광고를 로드하고 표시하는 헬퍼 함수
+             * @param {HTMLElement} container - 광고를 표시할 <ins> 태그의 부모 요소
+             */
+            pushAd: (container) => {
+                if (!container) return;
+                
+                const adSlot = container.querySelector('.adsbygoogle');
+                if (!adSlot) return;
+
+                // 이미 광고가 채워졌는지 확인 (애드센스가 data-ad-status="filled" 등을 추가함)
+                if (adSlot.dataset.adStatus) {
+                    return;
+                }
+
+                // 플레이스홀더 텍스트 제거
+                adSlot.innerHTML = ''; 
+                adSlot.classList.remove('ad-slot-placeholder');
+
+                try {
+                    (window.adsbygoogle = window.adsbygoogle || []).push({});
+                } catch (e) {
+                    console.warn("Adsense push error:", e);
+                    // 오류 발생 시 플레이스홀더를 다시 표시하거나 숨김
+                    adSlot.innerHTML = '광고 로드 오류';
+                    adSlot.classList.add('ad-slot-placeholder');
+                }
             }
         };
 
@@ -541,6 +652,20 @@
                     const prevUrl = page > 1 ? DOM.buildUrl(basePath, { ...params, page: page - 1 }) : '#';
                     const nextUrl = page < totalPages ? DOM.buildUrl(basePath, { ...params, page: page + 1 }) : '#';
                     return `<div class="flex justify-center items-center gap-4 mt-12" role="navigation" aria-label="페이지 탐색"><a href="${prevUrl}" data-route aria-label="이전 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${page === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">이전</a><span class="text-sm font-medium text-gray-500">${page} / ${totalPages}</span><a href="${nextUrl}" data-route aria-label="다음 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${page >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">다음</a></div>`;
+                },
+                // [ADS UPDATE] 광고 슬롯 템플릿
+                adSlot: (slotId, format = 'auto', layout = '') => {
+                    const adTestAttr = ['localhost','127.0.0.1'].includes(window.location.hostname) ? ' data-adtest="on"' : '';
+                    return `
+                    <div class="my-8 sm:my-12" role="complementary" aria-label="Advertisement">
+                        <ins class="adsbygoogle ad-slot-placeholder"
+                             style="display:block; width:100%;"
+                             data-ad-client="ca-pub-5239497835591112"
+                             data-ad-slot="${slotId}" 
+                             data-ad-format="${format}"
+                             ${layout ? `data-ad-layout="${layout}"` : ''}
+                             data-full-width-responsive="true"${adTestAttr}>광고 로드 중...</ins>
+                    </div>`;
                 }
             },
 
@@ -585,18 +710,51 @@
                 
                 const total = count ?? 0;
                 const safePosts = Array.isArray(posts) ? posts : [];
+                
+                // [ADS UPDATE] 인피드 광고(목록 중간 광고)를 위한 로직
+                const INFEED_AD_INTERVAL = 4; // 4번째 글 다음에 광고 표시
+                const INFEED_AD_SLOT_ID = "2069100221"; // (임시) 인피드 전용 슬롯 ID 사용 권장
+                
+                let postHtmlItems = [];
+                safePosts.forEach((post, index) => {
+                    const thumb = post.thumbnail_url ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100 post-thumbnail"></div>` : '';
+                    postHtmlItems.push(`<a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80" role="article">${thumb}<div class="flex-grow"><p class="text-xs font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-sm font-bold">${post.title}</h3><p class="text-xs text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p></div></a>`);
+
+                    // [ADS UPDATE] N번째 글 다음에 인피드 광고 삽입
+                    if ((index + 1) % INFEED_AD_INTERVAL === 0 && (index + 1) < safePosts.length) {
+                        // data-ad-layout="in-article" 은 인피드 광고에 적합한 레이아웃입니다.
+                        postHtmlItems.push(ViewRenderer._templates.adSlot(INFEED_AD_SLOT_ID, 'fluid', 'in-article'));
+                    }
+                });
+
                 const postsHtml = safePosts.length > 0
-                    ? `<div class="divide-y divide-gray-200/80">${safePosts.map(post => {
-                        const thumb = post.thumbnail_url ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100 post-thumbnail"></div>` : '';
-                        return `<a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80" role="article">${thumb}<div class="flex-grow"><p class="text-xs font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-sm font-bold">${post.title}</h3><p class="text-xs text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p></div></a>`;
-                    }).join('')}</div>`
+                    ? `<div class="divide-y divide-gray-200/80">${postHtmlItems.join('')}</div>`
                     : `<div class="text-center py-20 text-gray-500"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${State.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
                 
                 listContainer.innerHTML = `${postsHtml}${ViewRenderer._templates.pagination(page, total, '/', { category })}`;
                 listContainer.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
+
+                // [ADS UPDATE] 페이지가 렌더링된 후 광고 로드
+                listContainer.querySelectorAll('.adsbygoogle').forEach(adEl => {
+                    DOM.pushAd(adEl.parentElement);
+                });
             },
 
             renderPost: async (container, slug) => {
+                
+                // [SPEED UPDATE] 뷰 렌더링에 필요한 스크립트들을 병렬로 미리 로드합니다.
+                try {
+                    await Promise.all([
+                        DOM.loadScript(Config.SCRIPT_URLS.marked, 'marked-lib'),
+                        DOM.loadScript(Config.SCRIPT_URLS.purify, 'purify-lib'),
+                        DOM.loadScript(Config.SCRIPT_URLS.highlight, 'highlight-lib')
+                    ]);
+                } catch (err) {
+                    console.error('필수 스크립트 로드 실패:', err);
+                    container.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다. (스크립트 로드 실패)</p>`;
+                    return;
+                }
+
                 const { data: post, error } = await Services.getPostBySlug(slug);
                 if (error || !post) {
                     console.error("Error fetching post:", slug, error);
@@ -616,26 +774,10 @@
                 
                 const editBtn = (State.user && State.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200" aria-label="글 수정">수정</a>` : '';
                 
-                const adTestAttr = ['localhost','127.0.0.1'].includes(window.location.hostname) ? ' data-adtest="on"' : '';
-                
-                // [AD SENSE] GNB 바로 아래에 표시될 광고 유닛
-                const titleAdHtml = `
-                    <div class="my-8 sm:my-12 flex justify-center items-center min-h-[100px] text-xs text-gray-400" role="complementary" aria-label="Advertisement">
-                        <!-- 
-                          [AD SENSE] 제목 하단 광고 
-                          - min-h-[100px]는 광고 로드 전 공간을 미리 확보하여,
-                            콘텐츠가 밀려나는 현상(CLS)을 방지합니다. (SEO에 매우 중요)
-                          - data-ad-slot은 이 위치 전용으로 AdSense에서 새로 발급받는 것이 가장 좋습니다.
-                            (현재는 임시로 본문 광고와 동일한 슬롯 ID 사용)
-                        -->
-                        <ins class="adsbygoogle"
-                             style="display:block; width:100%;"
-                             data-ad-client="ca-pub-5239497835591112"
-                             data-ad-slot="2069100221" 
-                             data-ad-format="auto"
-                             data-full-width-responsive="true"${adTestAttr}></ins>
-                    </div>
-                `;
+                // [ADS UPDATE] 광고 슬롯 ID 정의
+                const AD_SLOT_TITLE_BOTTOM = "2069100221"; // (임시) 제목 하단 슬롯
+                const AD_SLOT_CONTENT_MIDDLE = "2069100221"; // (임시) 본문 중간 슬롯
+                const AD_SLOT_CONTENT_BOTTOM = "2069100221"; // (임시) 본문 하단 슬롯
 
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
@@ -649,58 +791,48 @@
                                 </div>
                             </header>
 
-                            <!-- [AD SENSE] 제목 하단 광고 삽입 -->
-                            ${titleAdHtml}
+                            <!-- [AD SENSE] 제목 하단 광고 -->
+                            ${ViewRenderer._templates.adSlot(AD_SLOT_TITLE_BOTTOM)}
 
                             <div id="post-content" class="prose-custom max-w-none"></div>
+                            
+                            <!-- [ADS UPDATE] 본문 하단 광고 (글이 끝난 직후) -->
+                            ${ViewRenderer._templates.adSlot(AD_SLOT_CONTENT_BOTTOM)}
                         </article>
 
-                        <!-- [AD SENSE] 기존 본문 중간 광고 -->
-                        <div class="my-16"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"${adTestAttr}></ins></div>
+                        <!-- [AD SENSE] 기존 본문 중간 광고 (위치 변경) -->
+                        <!-- 이 광고는 '많이 본 글' 섹션 위에 배치하여 콘텐츠 흐름을 유지합니다. -->
+                        ${ViewRenderer._templates.adSlot(AD_SLOT_CONTENT_MIDDLE)}
                         
                         ${popularHtml}${navHtml}
                     </div>`;
                 
+                // 스크립트가 로드되었으므로, 라이브러리를 안전하게 사용
                 if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
                     const rawHtml = marked.parse(post.refined_content || '');
 
                     if (!window.__dompurifyHooked) {
                         DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
-                            // [STYLE FIX] 붙여넣은 서식(배경색, 글자색 등)을 허용하도록 수정
                             if (data.attrName === 'style') {
                                 try {
                                     const style = (data.attrValue || '').toLowerCase();
                                     const allowedStyles = [];
-
-                                    // 기존 허용: text-align
                                     const mAlign = style.match(/text-align\s*:\s*(left|center|right|justify)/);
                                     if (mAlign) allowedStyles.push(`text-align:${mAlign[1]}`);
-                                    
-                                    // 기존 허용: width
                                     const mWidth = style.match(/(?:^|;|\s)width\s*:\s*([0-9]+(?:\.[0-9]+)?)(px|%)/);
                                     if (mWidth) allowedStyles.push(`width:${mWidth[1]}${mWidth[2]}`);
-                                    
-                                    // [FIX] background-color 및 color (글자색) 허용
                                     const mBgColor = style.match(/(?:^|;|\s)background-color\s*:\s*([^;]+)/);
                                     if (mBgColor) {
-                                        if (mBgColor[1].match(/^(#|rgb|rgba|[\w-]+)/)) {
-                                            allowedStyles.push(`background-color:${mBgColor[1]}`);
-                                        }
+                                        if (mBgColor[1].match(/^(#|rgb|rgba|[\w-]+)/)) allowedStyles.push(`background-color:${mBgColor[1]}`);
                                     }
-                                    
                                     const mColor = style.match(/(?:^|;|\s)color\s*:\s*([^;]+)/);
                                     if (mColor) {
-                                        if (mColor[1].match(/^(#|rgb|rgba|[\w-]+)/)) {
-                                            allowedStyles.push(`color:${mColor[1]}`);
-                                        }
+                                        if (mColor[1].match(/^(#|rgb|rgba|[\w-]+)/)) allowedStyles.push(`color:${mColor[1]}`);
                                     }
-                                    
-                                    // [FIX] 텍스트 꾸밈 (밑줄, 취소선) 허용
                                     const mTextDeco = style.match(/(?:^|;|\s)text-decoration\s*:\s*([^;]+)/);
                                     if (mTextDeco && (mTextDeco[1].includes('underline') || mTextDeco[1].includes('line-through'))) {
                                          allowedStyles.push(`text-decoration:${mTextDeco[1]}`);
                                     }
-
                                     data.attrValue = allowedStyles.join(';');
                                     if (!data.attrValue) data.keepAttr = false;
                                 } catch (_) { data.keepAttr = false; }
@@ -717,21 +849,21 @@
                     DOM.$('#post-content').innerHTML = safeContent;
 
                 } else {
-                    console.warn('marked.js or DOMPurify.js not loaded.');
+                    console.error('marked.js or DOMPurify.js not loaded AFTER dynamic load.');
                     DOM.$('#post-content').textContent = post.refined_content || ''; 
                 }
                 
-                try { 
-                    // 이 push 한 번으로 페이지 내의 모든 <ins> 태그(제목 하단, 본문 중간)를
-                    // 애드센스 스크립트가 인식하고 처리합니다.
-                    (adsbygoogle = window.adsbygoogle || []).push({}); 
-                } catch (e) { console.warn("Adsense error:", e); }
+                // [ADS UPDATE] 페이지 렌더링 후 모든 광고 슬롯 로드
+                container.querySelectorAll('.adsbygoogle').forEach(adEl => {
+                    DOM.pushAd(adEl.parentElement);
+                });
                 
+                // 코드 하이라이트 및 기타 후처리
                 setTimeout(() => {
                     if (typeof hljs !== 'undefined') {
                         DOM.$('#post-content').querySelectorAll('pre code').forEach(hljs.highlightElement);
                     } else {
-                        console.warn('highlight.js not loaded.');
+                        console.warn('highlight.js not loaded AFTER dynamic load.');
                     }
                     DOM.$('#post-content').querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async'; });
                     DOM.$('#post-content').querySelectorAll('a[target="_blank"]').forEach(a => { a.rel = 'noopener noreferrer'; });
@@ -759,6 +891,20 @@
             },
 
             renderWriter: async (container, slug) => {
+                
+                // [SPEED UPDATE] 글 작성기 전용 스크립트 로드
+                try {
+                     await Promise.all([
+                        DOM.loadScript(Config.SCRIPT_URLS.exif, 'exif-lib'),
+                        DOM.loadScript(Config.SCRIPT_URLS.turndown, 'turndown-lib'),
+                        DOM.loadScript(Config.SCRIPT_URLS.marked, 'marked-lib') // 썸네일 생성을 위해 marked도 로드
+                    ]);
+                } catch (err) {
+                    console.error('글 작성기 스크립트 로드 실패:', err);
+                    container.innerHTML = `<p class="text-center text-red-400 py-20">에디터를 로드하는 중 오류가 발생했습니다. (스크립트 로드 실패)</p>`;
+                    return;
+                }
+
                 ViewRenderer.updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
 
                 let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: Config.CATEGORIES[0] };
@@ -772,12 +918,8 @@
                     post = data;
                 }
                 
-                // [DATA LOSS FIX]
-                // 기존 글의 카테고리가 현재 목록에 없더라도 드롭다운에 포함시켜
-                // 데이터가 덮어씌워지는 것을 방지합니다.
                 let currentCategories = [...Config.CATEGORIES];
                 if (post.category && !currentCategories.includes(post.category)) {
-                    // '이전 카테고리'를 목록 맨 앞에 추가
                     currentCategories.unshift(post.category); 
                 }
                 
@@ -785,6 +927,7 @@
                 
                 container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate><input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}"><div><select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select><textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea></div><div><label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label><textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea></div><div><label for="content-editor" class="block text-lg font-bold text-black mb-3">본문 (Markdown)</label><textarea id="content-editor" aria-label="본문 에디터 (마크다운)" placeholder="여기에 마크다운 형식으로 본문을 작성하세요...">${post.refined_content || ''}</textarea></div><div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky"><div class="flex items-center gap-3"><button type="button" data-action="upload-image" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition" aria-label="이미지 업로드">이미지 업로드</button><a href="https://www.markdownguide.org/basic-syntax/" target="_blank" rel="noopener" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-100 text-black hover:bg-gray-200 transition" aria-label="마크다운 안내">마크다운 안내</a></div><div class="flex items-center space-x-3"><button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button><button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>${post.id ? `<button type="button" data-action="delete" class="ml-4 px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제</button>` : ''}</div></div></form></div>`;
                 
+                // 스크립트가 로드되었으므로, 이벤트를 안전하게 바인딩
                 ViewRenderer._bindWriterEvents(post);
             },
             
@@ -804,11 +947,15 @@
                 const uploadBtn = form.querySelector('[data-action="upload-image"]');
                 if (uploadBtn) uploadBtn.onclick = (e) => { 
                     e.preventDefault(); 
+                    // [SPEED UPDATE] App.handleImageUpload는 'exif-lib'에 의존하며,
+                    // renderWriter에서 이미 로드되었음을 보장합니다.
                     App.handleImageUpload(e.target); 
                 };
 
                 const contentEditor = form.querySelector('#content-editor');
                 if (contentEditor) {
+                    // [SPEED UPDATE] App.handlePaste는 'turndown-lib'에 의존하며,
+                    // renderWriter에서 이미 로드되었음을 보장합니다.
                     contentEditor.addEventListener('paste', App.handlePaste);
                 }
                 
@@ -1103,6 +1250,12 @@
             },
 
             handlePostSave: async (action, btn) => {
+                // [SPEED UPDATE] 썸네일 생성을 위한 marked 라이브러리 의존성 확인
+                if (typeof marked === 'undefined') {
+                    DOM.showToast('라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.', true);
+                    return;
+                }
+
                 const origText = btn.textContent;
                 btn.disabled = true;
                 btn.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
@@ -1128,18 +1281,17 @@
                     }
                     
                     let thumb = null;
-                    if (typeof marked !== 'undefined') {
-                        // [STYLE FIX] 붙여넣은 HTML 태그를 정규식으로 제거한 후 썸네일 추출
-                        const contentForThumb = content
-                            .replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1') // span 태그 제거
-                            .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n') // p 태그는 내용만 남김
-                            .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n'); // div 태그는 내용만 남김
-                            
-                        const parsedForThumb = marked.parse(contentForThumb);
-                        const temp = document.createElement('div'); 
-                        temp.innerHTML = parsedForThumb;
-                        thumb = temp.querySelector('img')?.src || null;
-                    }
+                    
+                    // [STYLE FIX] 붙여넣은 HTML 태그를 정규식으로 제거한 후 썸네일 추출
+                    const contentForThumb = content
+                        .replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1') // span 태그 제거
+                        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n') // p 태그는 내용만 남김
+                        .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n'); // div 태그는 내용만 남김
+                        
+                    const parsedForThumb = marked.parse(contentForThumb);
+                    const temp = document.createElement('div'); 
+                    temp.innerHTML = parsedForThumb;
+                    thumb = temp.querySelector('img')?.src || null;
                     
                     const id = DOM.$('#post-id').value || null;
                     let slug = DOM.$('#post-slug').value.trim() || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
@@ -1194,6 +1346,12 @@
              * 붙여넣기 핸들러를 수정하여 HTML을 Markdown으로 변환합니다.
              */
             handlePaste: (e) => {
+                // [SPEED UPDATE] turndown 라이브러리 의존성 확인
+                if (typeof TurndownService === 'undefined') {
+                    DOM.showToast('붙여넣기 기능 로딩 중... 일반 텍스트로 붙여넣습니다.', true);
+                    return; // 기본 동작(e.preventDefault() 없음)을 허용하여 일반 텍스트로 붙여넣기
+                }
+
                 const textarea = DOM.$('#content-editor');
                 if (!textarea) return;
                 
@@ -1246,11 +1404,9 @@
                                     emDelimiter: '_', // 기울임: _
                                 });
                                 
-                                // [STYLE FIX] 스타일 보존을 위해 
-                                // style 속성이 있거나 특정 태그는 HTML 원본으로 유지합니다.
+                                // [STYLE FIX] 스타일 보존
                                 window.turndownService.keep(function (node) {
                                     const nodeName = node.nodeName.toLowerCase();
-                                    // style 속성이 있거나, p, span, div, u, s (밑줄, 취소선) 태그는 원본 HTML 유지
                                     return node.hasAttribute('style') || ['p', 'span', 'div', 'u', 's'].includes(nodeName);
                                 });
                             }
@@ -1280,6 +1436,12 @@
 
 
             handleImageUpload: async (btn) => {
+                // [SPEED UPDATE] exif 라이브러리 의존성 확인
+                if (typeof EXIF === 'undefined') {
+                    DOM.showToast('이미지 처리 라이브러리 로딩 중... 잠시 후 다시 시도하세요.', true);
+                    return;
+                }
+
                 const input = document.createElement('input');
                 input.type = 'file'; input.accept = 'image/*';
                 input.click();
@@ -1321,6 +1483,7 @@
             },
 
             getOrientation: (file) => new Promise((res) => {
+                // [SPEED UPDATE] exif 라이브러리 의존성 확인
                 if (typeof EXIF === 'undefined') { 
                     console.warn('EXIF.js not loaded. Assuming orientation 1.');
                     res(1); 
@@ -1332,6 +1495,7 @@
             }),
 
             convertToWebP: (file, quality = 0.8) => new Promise((res) => {
+                // [SPEED UPDATE] exif 라이브러리 의존성 확인
                 if (typeof FileReader === 'undefined' || typeof Image === 'undefined' || typeof EXIF === 'undefined') {
                     console.warn('WebP 변환 API 미지원. 원본 파일 사용.');
                     res(file);
@@ -1375,5 +1539,4 @@
     </script>
 </body>
 </html>
-
 
