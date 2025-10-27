@@ -1,3 +1,19 @@
+요청하신 tags 컬럼 활용, slug 영문 수정 기능, view_count 표시 기능을 모두 반영한 전체 코드입니다.
+주요 수정 사항은 다음과 같습니다.
+ * 조회수 (view_count) 표시:
+   * 글 목록 (홈): 각 글 항목의 카테고리 옆에 '조회수'가 표시됩니다. ( Services 모듈의 getPosts 함수 및 ViewRenderer 모듈의 renderLibrary 함수 수정)
+   * 글 본문 (Post): 글 제목 아래, 날짜 옆에 '조회수'가 표시됩니다. (ViewRenderer 모듈의 renderPost 함수 수정)
+ * 태그 (tags) 기능:
+   * 글 작성/수정: '요약' 항목 아래에 '태그' 입력란을 추가했습니다. 쉼표(,)로 구분하여 태그를 입력하고 저장할 수 있습니다. (ViewRenderer 모듈의 renderWriter 함수 수정)
+   * 글 저장: 태그 정보를 posts 테이블의 tags 컬럼에 저장합니다. (App 모듈의 handlePostSave 함수 수정)
+   * 글 본문 (Post): 글 본문이 끝난 후, 하단에 저장된 태그가 예쁘게 표시됩니다. (ViewRenderer 모듈의 renderPost 함수 수정)
+ * URL 주소 (slug) 수정 기능:
+   * 글 작성/수정: 기존에 숨겨져 있던 slug 입력란을 '제목' 바로 아래에 'URL 주소 (Slug)' 라는 이름의 보이는 입력란으로 변경했습니다.
+   * 자동 생성 (한글/영문): 새 글 작성 시, 제목을 입력하면 slug가 자동으로 생성됩니다.
+   * 수동 수정 (영문): 자동 생성된 slug가 마음에 들지 않으면, 사용자가 직접 원하는 영문 slug로 수정할 수 있습니다.
+   * 수동 입력 우선: 사용자가 slug를 한 글자라도 직접 수정하면, 그 이후로는 제목이 바뀌어도 slug가 자동으로 덮어씌워지지 않습니다. (ViewRenderer 모듈의 renderWriter 및 _bindWriterEvents 함수 수정)
+전체 수정 코드
+아래의 전체 코드를 복사하여 index.html 파일에 덮어쓰시면 됩니다.
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -467,12 +483,14 @@
             getPosts: (page, category) => {
                 const { from, to } = { from: (page - 1) * Config.POSTS_PER_PAGE, to: page * Config.POSTS_PER_PAGE - 1 };
                 let query = State.supabase.from(Config.DB_TABLE_NAME)
-                    .select('id, title, slug, summary, category, thumbnail_url', { count: 'exact' });
+                    // [수정] view_count 추가
+                    .select('id, title, slug, summary, category, thumbnail_url, view_count', { count: 'exact' });
                 if (category !== '전체') query = query.eq('category', category);
                 return query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
             },
 
             getPostBySlug: (slug) => {
+                // [수정] * (전체)를 선택하므로 view_count, tags가 이미 포함됩니다.
                 return State.supabase.from(Config.DB_TABLE_NAME).select('*').eq('slug', slug).single();
             },
 
@@ -666,7 +684,19 @@
                 let postHtmlItems = [];
                 safePosts.forEach((post, index) => {
                     const thumb = post.thumbnail_url ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100 post-thumbnail"></div>` : '';
-                    postHtmlItems.push(`<a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80" role="article">${thumb}<div class="flex-grow"><p class="text-xs font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-sm font-bold">${post.title}</h3><p class="text-xs text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p></div></a>`);
+                    
+                    // [수정] 조회수 표시 추가
+                    postHtmlItems.push(`<a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80" role="article">
+                        ${thumb}
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="text-xs font-semibold text-fuchsia-500">${post.category || '미분류'}</p>
+                                <p class="text-xs text-gray-400">조회수 ${post.view_count || 0}</p>
+                            </div>
+                            <h3 class="text-gray-800 text-sm font-bold">${post.title}</h3>
+                            <p class="text-xs text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p>
+                        </div>
+                    </a>`);
 
                     // [ADS UPDATE] N번째 글 다음에 인피드 광고 삽입
                     if ((index + 1) % INFEED_AD_INTERVAL === 0 && (index + 1) < safePosts.length) {
@@ -730,6 +760,15 @@
                 const AD_SLOT_CONTENT_MIDDLE = "2069100221"; // (임시) 본문 중간 슬롯
                 // const AD_SLOT_CONTENT_BOTTOM = "2069100221"; // [수정] 이 슬롯은 제거됨
 
+                // [신규] 태그 표시 HTML
+                const tagsHtml = (post.tags && post.tags.trim() !== '') ? `
+                    <div class="mt-12 pt-6 border-t border-gray-200" role="list" aria-label="태그">
+                        ${post.tags.split(',').map(tag => 
+                            `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2" role="listitem">${tag.trim()}</span>`
+                        ).join('')}
+                    </div>
+                ` : '';
+
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
                         <article role="article">
@@ -737,7 +776,11 @@
                                 <p class="text-sm font-semibold text-fuchsia-500 mb-3">${post.category || '미분류'}</p>
                                 <h1 class="text-3xl sm:text-4xl font-black text-black tracking-tighter !mt-0 !mb-4">${post.title}</h1>
                                 <div class="flex items-center justify-between text-sm text-gray-500">
-                                    <span>${new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                    <div>
+                                        <span>${new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                        <span class="mx-2" aria-hidden="true">·</span>
+                                        <span>조회수 ${post.view_count || 0}</span>
+                                    </div>
                                     ${editBtn}
                                 </div>
                             </header>
@@ -746,7 +789,8 @@
 
                             <div id="post-content" class="prose-custom max-w-none"></div>
                             
-                            </article>
+                            ${tagsHtml}
+                        </article>
 
                         ${ViewRenderer._templates.adSlot(AD_SLOT_CONTENT_MIDDLE)}
                         
@@ -856,7 +900,8 @@
 
                 ViewRenderer.updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
 
-                let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: Config.CATEGORIES[0] };
+                // [수정] post 객체에 tags 기본값 추가
+                let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: Config.CATEGORIES[0], tags: '' };
                 if (slug) {
                     const { data, error } = await Services.getPostBySlug(slug);
                     if (error || !data || data.author_id !== State.user.id) {
@@ -874,7 +919,50 @@
                 
                 const categoryOpts = currentCategories.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
                 
-                container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate><input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}"><div><select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select><textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea></div><div><label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label><textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea></div><div><label for="content-editor" class="block text-lg font-bold text-black mb-3">본문 (Markdown)</label><textarea id="content-editor" aria-label="본문 에디터 (마크다운)" placeholder="여기에 마크다운 형식으로 본문을 작성하세요...">${post.refined_content || ''}</textarea></div><div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky"><div class="flex items-center gap-3"><button type="button" data-action="upload-image" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition" aria-label="이미지 업로드">이미지 업로드</button><a href="https://www.markdownguide.org/basic-syntax/" target="_blank" rel="noopener" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-100 text-black hover:bg-gray-200 transition" aria-label="마크다운 안내">마크다운 안내</a></div><div class="flex items-center space-x-3"><button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button><button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>${post.id ? `<button type="button" data-action="delete" class="ml-4 px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제</button>` : ''}</div></div></form></div>`;
+                // [수정] HTML 폼 구조 변경 (slug, tags 필드 추가)
+                container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12">
+                    <form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate>
+                        <input type="hidden" id="post-id" value="${post.id || ''}"> 
+                        
+                        <div>
+                            <select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select>
+                            <textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea>
+                        </div>
+
+                        <div>
+                            <label for="post-slug" class="block text-lg font-bold text-black mb-3">URL 주소 (Slug)</label>
+                            <input type="text" id="post-slug" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500 font-mono text-sm" placeholder="자동 생성 (영문으로 직접 수정 가능)" aria-label="URL 주소 입력" value="${post.slug || ''}">
+                            <p class="text-xs text-gray-500 mt-2">이 주소는 글의 URL이 됩니다. (예: /post/my-new-post) 비워두면 제목을 기반으로 자동 생성됩니다.</p>
+                        </div>
+                        
+                        <div>
+                            <label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label>
+                            <textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="tags" class="block text-lg font-bold text-black mb-3">태그 (Tags)</label>
+                            <input type="text" id="tags" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" placeholder="쉼표(,)로 구분하여 태그를 입력하세요 (예: AI, 보험, 부동산)" aria-label="태그 입력" value="${post.tags || ''}">
+                        </div>
+
+                        <div>
+                            <label for="content-editor" class="block text-lg font-bold text-black mb-3">본문 (Markdown)</label>
+                            <textarea id="content-editor" aria-label="본문 에디터 (마크다운)" placeholder="여기에 마크다운 형식으로 본문을 작성하세요...">${post.refined_content || ''}</textarea>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky">
+                            <div class="flex items-center gap-3">
+                                <button type="button" data-action="upload-image" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition" aria-label="이미지 업로드">이미지 업로드</button>
+                                <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" rel="noopener" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-100 text-black hover:bg-gray-200 transition" aria-label="마크다운 안내">마크다운 안내</a>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button>
+                                <button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>
+                                ${post.id ? `<button type="button" data-action="delete" class="ml-4 px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제</button>` : ''}
+                            </div>
+                        </div>
+                    </form>
+                </div>`;
                 
                 // 스크립트가 로드되었으므로, 이벤트를 안전하게 바인딩
                 ViewRenderer._bindWriterEvents(post);
@@ -896,25 +984,56 @@
                 const uploadBtn = form.querySelector('[data-action="upload-image"]');
                 if (uploadBtn) uploadBtn.onclick = (e) => { 
                     e.preventDefault(); 
-                    // [SPEED UPDATE] App.handleImageUpload는 'exif-lib'에 의존하며,
-                    // renderWriter에서 이미 로드되었음을 보장합니다.
                     App.handleImageUpload(e.target); 
                 };
 
                 const contentEditor = form.querySelector('#content-editor');
                 if (contentEditor) {
-                    // [SPEED UPDATE] App.handlePaste는 'turndown-lib'에 의존하며,
-                    // renderWriter에서 이미 로드되었음을 보장합니다.
                     contentEditor.addEventListener('paste', App.handlePaste);
                 }
                 
+                // [수정] Slug 자동 생성 및 수동 입력 처리 로직
                 const titleEl = DOM.$('#title');
-                if (titleEl) titleEl.oninput = DOM.debounce(() => {
-                    const slugEl = DOM.$('#post-slug');
-                    if (slugEl && !slugEl.value) { 
-                        // (옵션) 자동 생성된 slug를 사용자에게 표시할 수 있음
+                const slugEl = DOM.$('#post-slug');
+                
+                if (titleEl && slugEl) {
+                    const originalSlug = slugEl.value; // 로드 시점의 slug (수정 시)
+
+                    const generateSlugFromTitle = () => {
+                        return titleEl.value.toLowerCase().trim()
+                            .replace(/[^\w\s-]/g, '') // \w는 한글/영문/숫자/밑줄 포함
+                            .replace(/[\s_-]+/g, '-') // 공백, 밑줄, 하이픈을 단일 하이픈으로
+                            .replace(/^-+|-+$/g, ''); // 앞뒤 하이픈 제거
+                    };
+                    
+                    titleEl.oninput = DOM.debounce(() => {
+                        // 'data-manual' 속성이 'true'가 아닐 때만 (즉, 사용자가 수동 입력 안했을 때)
+                        if (slugEl.dataset.manual !== 'true') { 
+                            slugEl.value = generateSlugFromTitle();
+                        }
+                    }, 300);
+
+                    slugEl.oninput = () => {
+                        // 사용자가 한 글자라도 입력하면 수동 플래그 설정
+                        slugEl.dataset.manual = 'true';
+                        
+                        // [수정] 사용자가 slug를 직접 수정할 때 유효한 URL 문자로 강제 변환
+                        slugEl.value = slugEl.value.toLowerCase().trim()
+                            .replace(/[^\w\s-]/g, '')
+                            .replace(/[\s_-]+/g, '-')
+                            .replace(/^-+|-+$/g, '');
+                        
+                        if (slugEl.value.trim() === '') {
+                            // 사용자가 slug를 다 지우면 플래그 해제
+                            delete slugEl.dataset.manual; 
+                        }
+                    };
+
+                    // [수정] 만약 로드 시점에 slug가 있었다면 (글 수정), 수동 플래그를 미리 설정
+                    if (originalSlug) {
+                        slugEl.dataset.manual = 'true';
                     }
-                }, 300);
+                }
             },
 
             _validateForm: () => {
@@ -1006,8 +1125,10 @@
                 ViewRenderer._setMetaTag('property', 'article:modified_time', post ? (post.updated_at || post.created_at) : null);
                 ViewRenderer._setMetaTag('property', 'article:section', post ? post.category : null); 
 
+                // [수정] keywords에 post.tags 추가
+                const postTags = (post?.tags || '').split(',').map(t => t.trim()).filter(Boolean).join(', ');
                 const keywords = post 
-                    ? `InsureLog, ${post.category}, ${post.title.split(' ').slice(0, 3).join(', ')}`
+                    ? `InsureLog, ${post.category}, ${post.title.split(' ').slice(0, 3).join(', ')}${postTags ? `, ${postTags}` : ''}`
                     : 'InsureLog, AI, 보험, 법률, 부동산, 금융, 카드, 대출, 생활 정보, 기술 블로그, 인공지능';
                 ViewRenderer._setMetaTag('name', 'keywords', keywords);
 
@@ -1039,7 +1160,7 @@
                         "datePublished": post.created_at, 
                         "dateModified": post.updated_at || post.created_at, 
                         "articleSection": post.category, 
-                        "keywords": `${post.category}, ${post.title}`
+                        "keywords": `${post.category}, ${post.title}${postTags ? `, ${postTags}` : ''}` // [수정] LD+JSON에 tags 추가
                     };
                 } else {
                     schemaData = {
@@ -1243,13 +1364,22 @@
                     thumb = temp.querySelector('img')?.src || null;
                     
                     const id = DOM.$('#post-id').value || null;
-                    let slug = DOM.$('#post-slug').value.trim() || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
                     
-                    if (!id) { 
+                    // [수정] Slug 로직: 수동 입력값을 우선하고, 없으면 제목 기반으로 생성
+                    let slug = DOM.$('#post-slug').value.trim();
+                    if (!slug) {
+                        slug = title.toLowerCase().trim()
+                            .replace(/[^\w\s-]/g, '')
+                            .replace(/[\s_-]+/g, '-')
+                            .replace(/^-+|-+$/g, '');
+                    }
+                    
+                    if (!id) { // 새 글일 때만 중복 검사
                         const { data } = await Services.checkSlugExists(slug);
                         if (data) slug += `-${Date.now().toString().slice(-6)}`;
                     }
                     
+                    // [수정] postData에 tags 추가
                     const postData = { 
                         id: id,
                         title, slug, status, summary, 
@@ -1257,6 +1387,7 @@
                         refined_content: content, 
                         category: DOM.$('#category').value, 
                         thumbnail_url: thumb,
+                        tags: DOM.$('#tags').value.trim() || null, // [신규] tags 값 추가
                         updated_at: new Date().toISOString() 
                     };
                     
@@ -1328,7 +1459,17 @@
                             if (schema.headline) DOM.$('#title').value = schema.headline;
                             if (schema.description) DOM.$('#summary').value = schema.description;
                             
-                            const categorySource = schema.articleSection || (Array.isArray(schema.keywords) ? schema.keywords[0] : schema.keywords);
+                            // [수정] tags 필드도 채우기
+                            const keywords = schema.keywords; // "tag1, tag2" 또는 ["tag1", "tag2"]
+                            if (keywords) {
+                                if (Array.isArray(keywords)) {
+                                    DOM.$('#tags').value = keywords.join(', ');
+                                } else if (typeof keywords === 'string') {
+                                    DOM.$('#tags').value = keywords;
+                                }
+                            }
+
+                            const categorySource = schema.articleSection || (Array.isArray(schema.keywords) ? schema.keywords[0] : null);
                             if (categorySource) {
                                 const matchedCategory = Config.CATEGORIES.find(c => c.toLowerCase() === categorySource.toLowerCase().trim());
                                 if (matchedCategory) DOM.$('#category').value = matchedCategory;
@@ -1499,7 +1640,7 @@
             },
 
             getOrientation: (file) => new Promise((res) => {
-                // [SPEED UPDATE] exif 라이브러리 의존성 확인
+                // [SPEED UPDATE] exif 라이B러리 의존성 확인
                 if (typeof EXIF === 'undefined') { 
                     console.warn('EXIF.js not loaded. Assuming orientation 1.');
                     res(1); 
@@ -1555,3 +1696,4 @@
     </script>
 </body>
 </html>
+
