@@ -1344,6 +1344,7 @@
             /**
              * [PASTE FIX]
              * 붙여넣기 핸들러를 수정하여 HTML을 Markdown으로 변환합니다.
+             * (리스트 깨짐 문제 해결)
              */
             handlePaste: (e) => {
                 // [SPEED UPDATE] turndown 라이브러리 의존성 확인
@@ -1404,17 +1405,83 @@
                                     emDelimiter: '_', // 기울임: _
                                 });
                                 
-                                // [STYLE FIX] 스타일 보존
+                                // [PASTE FIX - 1] 'keep' 규칙 수정
+                                // 'style' 속성이 있거나, 'u', 's' 태그만 HTML로 유지합니다.
+                                // 'p', 'div', 'span'을 제거하여, 이 태그들이 래퍼(wrapper)로
+                                // 사용될 때 그 안의 리스트가 마크다운으로 올바르게 변환되도록 합니다.
                                 window.turndownService.keep(function (node) {
                                     const nodeName = node.nodeName.toLowerCase();
-                                    return node.hasAttribute('style') || ['p', 'span', 'div', 'u', 's'].includes(nodeName);
+                                    if (node.hasAttribute('style')) {
+                                        return true; // style 속성이 있으면 무조건 HTML로 유지
+                                    }
+                                    // style이 없어도 유지할 태그들 (밑줄, 취소선)
+                                    return ['u', 's'].includes(nodeName); 
+                                });
+
+                                // [PASTE FIX - 2] 리스트 항목(li) 변환 규칙 추가
+                                // <li><p>항목</p></li> 처럼 불필요한 <p> 태그를 제거하여
+                                // 리스트 항목의 불필요한 줄바꿈을 방지합니다.
+                                window.turndownService.addRule('listItemFix', {
+                                    filter: 'li',
+                                    replacement: function (content, node, options) {
+                                        let originalContent = content; // 원본 content 백업
+
+                                        // 1. content 정리 (Turndown 기본 동작 모방)
+                                        content = content
+                                            .replace(/^\n+/, '') // 앞쪽 줄바꿈 제거
+                                            .replace(/\n+$/, '\n') // 뒤쪽 줄바꿈 하나만 남김
+                                            .replace(/\n/gm, '\n    '); // 4칸 들여쓰기
+
+                                        // 2. <li><p>content</p></li> 케이스 감지
+                                        // Google Docs, MS Word 등에서 복사 시 자주 발생
+                                        const childNodes = node.childNodes;
+                                        if (childNodes.length === 1 && childNodes[0].nodeName.toLowerCase() === 'p') {
+                                            // <li> 안에 <p> 하나만 있는 경우, <p> 태그를 무시하고 내용만 사용
+                                            content = childNodes[0].innerHTML.trim();
+                                        } else {
+                                            // 복잡한 중첩 리스트나 여러 문단이 있는 경우
+                                            // Turndown이 이미 <p>를 포함하여 content를 생성했을 수 있음
+                                            // 이 경우, 생성된 <p> 태그를 제거
+                                            content = content.trim().replace(/^<p>/i, '').replace(/<\/p>$/i, '').trim();
+                                            
+                                            // 만약 content가 비어있고, originalContent에 <p> 태그가 있었다면,
+                                            // 이는 Turndown이 <p>를 처리한 것이므로 originalContent를 사용
+                                            if(content === '' && /<p>/.test(originalContent)) {
+                                                content = originalContent
+                                                    .replace(/^\n+/, '') 
+                                                    .replace(/\n+$/, '\n')
+                                                    .replace(/\n/gm, '\n    ');
+                                            }
+                                            
+                                            // <p> 태그 간의 줄바꿈 처리
+                                            content = content.replace(/<\/p>\s*<p>/gi, '\n\n    '); 
+                                            // 남은 <p> 태그 제거
+                                            content = content.replace(/<p>|<\/p>/gi, '');
+                                        }
+                                        
+                                        // 3. 접두사(Prefix) 생성
+                                        let prefix = options.bulletListMarker + '   '; // 4 space indent
+                                        let parent = node.parentNode;
+                                        
+                                        while(parent && parent.nodeName.toLowerCase() !== 'ul' && parent.nodeName.toLowerCase() !== 'ol') {
+                                            parent = parent.parentNode;
+                                        }
+
+                                        if (parent && parent.nodeName.toLowerCase() === 'ol') {
+                                            let start = parent.getAttribute('start');
+                                            let index = Array.prototype.indexOf.call(parent.children, node);
+                                            prefix = (start ? Number(start) + index : index + 1) + '.  '; // 3 space indent
+                                        }
+                                        
+                                        return prefix + content + (node.nextSibling && !/\n$/.test(content) ? '\n' : '');
+                                    }
                                 });
                             }
                             
                             contentToInsert = window.turndownService.turndown(pastedTextHtml);
                             contentToInsert = `\n${contentToInsert}\n`;
                             
-                            DOM.showToast('HTML을 마크다운(일부 서식 보존)으로 변환했습니다.', false);
+                            DOM.showToast('HTML을 마크다운(리스트 수정)으로 변환했습니다.', false);
                             
                         } catch (err) {
                             console.warn('HTML to Markdown conversion failed. Falling back to plain text.', err);
@@ -1539,4 +1606,5 @@
     </script>
 </body>
 </html>
+
 
