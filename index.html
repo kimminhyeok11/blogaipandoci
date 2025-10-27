@@ -1,77 +1,37 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Meta tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- 
-      [SEO UPDATE]
-      - 블로그의 새로운 정체성(보험, 금융, 법률, 부동산, AI)을 반영하여 수정
-    -->
     <title>InsureLog - AI, 보험, 금융, 법률, 부동산 전문 블로그</title>
     <meta name="description" content="InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.">
     <meta name="author" content="InsureLog">
     <meta name="keywords" content="InsureLog, AI, 보험, 법률, 부동산, 금융, 카드, 대출, 생활 정보, 기술 블로그, 인공지능">
     
     <link rel="canonical" href="https://blogaipandoci.vercel.app">
-    <!-- 
-      [SEO/ADS UPDATE]
-      - 모든 검색 엔진의 크롤링을 허용하는 robots 메타 태그를 추가했습니다.
-      - (중요) Vercel 프로젝트의 루트에 'ads.txt' 파일을 추가해야 합니다. (애드센스 대시보드에서 내용 확인)
-    -->
     <meta name="robots" content="index,follow">
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
-    <!-- 
-      [CSP] 
-      - nonce="r4nd0m"을 메인 스크립트에 적용했습니다.
-      - 'unsafe-eval'은 Supabase-js v2의 ES module에서 필요할 수 있습니다.
-      - 'unsafe-inline'은 Tailwind CSS의 JIT 엔진에 필요합니다.
-    -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
     
-    <!-- 
-      [SEO UPDATE]
-      - Open Graph / Twitter 태그의 기본값도 새로운 정체성에 맞게 수정합니다.
-    -->
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://blogaipandoci.vercel.app">
     <meta property="og:title" content="InsureLog - AI, 보험, 금융, 법률, 부동산 전문 블로그">
     <meta property="og:description" content="InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.">
     <meta property="og:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     <meta property="og:site_name" content="InsureLog">
-    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="InsureLog - AI, 보험, 금융, 법률, 부동산 전문 블로그">
     <meta name="twitter:description" content="InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.">
     <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     
-    <!-- 
-      [SPEED UPDATE]
-      - (권장) 현재 Tailwind CSS를 CDN으로 사용 중입니다.
-      - 개발 완료 후, 'npm install tailwindcss' 및 'npx tailwindcss -i ./input.css -o ./output.css'
-      - 명령어로 CSS 파일을 빌드한 뒤, 아래 script 태그 대신 <link rel="stylesheet" href="/output.css">로 변경하세요.
-      - 초기 로딩 속도와 LCP(Largest Contentful Paint)가 크게 개선됩니다.
-    -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- [SPEED UPDATE] 글로벌 공통 스크립트 (애니메이션) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
     
-    <!-- [SPEED UPDATE] 글로벌 공통 스타일 (코드 하이라이트) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     
-    <!-- 
-      [SPEED UPDATE]
-      - 아래 스크립트들은 '라이브러리 조건부 로드'를 위해 <head>에서 제거되었습니다.
-      - highlight.js, marked.umd.min.js, purify.min.js, exif.min.js, turndown.js
-      - 이 스크립트들은 이제 각 뷰(renderPost, renderWriter)가 로드될 때 동적으로 주입됩니다.
-      - 이를 통해 일반 독자(글 목록 페이지만 보는)의 초기 로딩 속도가 향상됩니다.
-    -->
-
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
@@ -82,7 +42,6 @@
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-    <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
 
     <style>
@@ -264,13 +223,10 @@
     </style>
 </head>
 <body class="antialiased">
-    <!-- 앱 로더 -->
     <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center"><div class="loader-spinner"></div></div>
     
-    <!-- 헤더 (네비게이션) -->
     <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-4"></header>
     
-    <!-- 메인 콘텐츠 (뷰가 렌더링되는 곳) -->
     <main id="app-container" class="w-full">
         <div id="view-library" class="app-view"></div>
         <div id="view-post" class="app-view"></div>
@@ -278,7 +234,6 @@
         <div id="view-writer" class="app-view"></div>
     </main>
 
-    <!-- 푸터 -->
     <footer class="text-center py-8 px-4 border-t border-gray-200">
         <p class="text-sm text-gray-600">
             © 2025 InsureLog. 
@@ -286,16 +241,9 @@
         </p>
     </footer>
 
-    <!-- 모달 및 토스트 컨테이너 -->
     <div id="modal-container"></div>
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3"></div>
     
-    <!-- 
-      ==================================================================
-      [APP SCRIPT] - 메인 애플리케이션 (모듈형 리팩터링)
-      ==================================================================
-    -->
-
     <script type="module" nonce="r4nd0m">
         // [Supabase] ES 모듈 임포트
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -734,10 +682,13 @@
                 listContainer.innerHTML = `${postsHtml}${ViewRenderer._templates.pagination(page, total, '/', { category })}`;
                 listContainer.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
 
-                // [ADS UPDATE] 페이지가 렌더링된 후 광고 로드
-                listContainer.querySelectorAll('.adsbygoogle').forEach(adEl => {
-                    DOM.pushAd(adEl.parentElement);
-                });
+                // [ADS UPDATE] 페이지가 렌더링된 후 광고 로드 (지연)
+                // 뷰 전환 애니메이션이 끝난 후 광고를 로드하여 버벅임(jank)을 방지합니다.
+                setTimeout(() => {
+                    listContainer.querySelectorAll('.adsbygoogle').forEach(adEl => {
+                        DOM.pushAd(adEl.parentElement);
+                    });
+                }, 300); // 300ms 지연
             },
 
             renderPost: async (container, slug) => {
@@ -777,7 +728,7 @@
                 // [ADS UPDATE] 광고 슬롯 ID 정의
                 const AD_SLOT_TITLE_BOTTOM = "2069100221"; // (임시) 제목 하단 슬롯
                 const AD_SLOT_CONTENT_MIDDLE = "2069100221"; // (임시) 본문 중간 슬롯
-                const AD_SLOT_CONTENT_BOTTOM = "2069100221"; // (임시) 본문 하단 슬롯
+                // const AD_SLOT_CONTENT_BOTTOM = "2069100221"; // [수정] 이 슬롯은 제거됨
 
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
@@ -791,17 +742,12 @@
                                 </div>
                             </header>
 
-                            <!-- [AD SENSE] 제목 하단 광고 -->
                             ${ViewRenderer._templates.adSlot(AD_SLOT_TITLE_BOTTOM)}
 
                             <div id="post-content" class="prose-custom max-w-none"></div>
                             
-                            <!-- [ADS UPDATE] 본문 하단 광고 (글이 끝난 직후) -->
-                            ${ViewRenderer._templates.adSlot(AD_SLOT_CONTENT_BOTTOM)}
-                        </article>
+                            </article>
 
-                        <!-- [AD SENSE] 기존 본문 중간 광고 (위치 변경) -->
-                        <!-- 이 광고는 '많이 본 글' 섹션 위에 배치하여 콘텐츠 흐름을 유지합니다. -->
                         ${ViewRenderer._templates.adSlot(AD_SLOT_CONTENT_MIDDLE)}
                         
                         ${popularHtml}${navHtml}
@@ -853,10 +799,13 @@
                     DOM.$('#post-content').textContent = post.refined_content || ''; 
                 }
                 
-                // [ADS UPDATE] 페이지 렌더링 후 모든 광고 슬롯 로드
-                container.querySelectorAll('.adsbygoogle').forEach(adEl => {
-                    DOM.pushAd(adEl.parentElement);
-                });
+                // [ADS UPDATE] 페이지 렌더링 후 모든 광고 슬롯 로드 (지연)
+                // 뷰 전환 애니메이션이 끝난 후 광고를 로드하여 버벅임(jank)을 방지합니다.
+                setTimeout(() => {
+                    container.querySelectorAll('.adsbygoogle').forEach(adEl => {
+                        DOM.pushAd(adEl.parentElement);
+                    });
+                }, 300); // 300ms 지연
                 
                 // 코드 하이라이트 및 기타 후처리
                 setTimeout(() => {
@@ -1606,5 +1555,3 @@
     </script>
 </body>
 </html>
-
-
