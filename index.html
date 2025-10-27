@@ -201,7 +201,9 @@
                 box-shadow: none; 
             }
         }
-        .post-thumbnail img { loading: lazy; }
+        .post-thumbnail img { 
+            /* 이미지 lazy loading은 HTML에서 처리 */ 
+        }
 
         /* [Accessibility] 포커스 링 */
         button:focus, a:focus, input:focus, select:focus, textarea:focus { 
@@ -444,7 +446,17 @@
          */
         const Services = {
             init: () => {
-                State.supabase = createClient(Config.SUPABASE_URL, Config.SUPABASE_ANON_KEY);
+                // [수정] Supabase 초기화 로그 추가
+                console.log('[Services] Supabase 초기화 시작');
+                console.log('[Services] SUPABASE_URL:', Config.SUPABASE_URL);
+                console.log('[Services] DB_TABLE_NAME:', Config.DB_TABLE_NAME);
+                
+                try {
+                    State.supabase = createClient(Config.SUPABASE_URL, Config.SUPABASE_ANON_KEY);
+                    console.log('[Services] Supabase 클라이언트 생성 완료');
+                } catch (error) {
+                    console.error('[Services] Supabase 초기화 실패:', error);
+                }
             },
 
             onAuthChange: (callback) => {
@@ -466,21 +478,25 @@
 
             getPosts: (page, category) => {
                 const { from, to } = { from: (page - 1) * Config.POSTS_PER_PAGE, to: page * Config.POSTS_PER_PAGE - 1 };
-                let query = State.supabase.from(Config.DB_TABLE_NAME)
-                    .select('id, title, slug, summary, category, thumbnail_url, view_count', { count: 'exact' });
-
-                // [수정] '미분류' 카테고리 필터링 로직 수정
-                if (category !== '전체') {
-                    if (category === '미분류') {
-                        // '미분류'는 DB에서 category 컬럼이 null인 경우를 의미합니다.
-                        query = query.is('category', null);
-                    } else {
-                        // 그 외의 카테고리는 'eq'로 정확히 매칭합니다.
-                        query = query.eq('category', category);
-                    }
-                }
                 
-                return query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
+                // [수정] 더 자세한 로그 추가
+                console.log(`[getPosts] 요청 - page: ${page}, category: ${category}, from: ${from}, to: ${to}`);
+                
+                let query = State.supabase.from(Config.DB_TABLE_NAME)
+                    // [수정] view_count를 COALESCE로 안전하게 처리하고, 필수 필드만 선택
+                    .select('id, title, slug, summary, category, thumbnail_url, view_count, created_at', { count: 'exact' });
+                if (category !== '전체') query = query.eq('category', category);
+                // [수정] status 조건을 더 유연하게 처리 (published 또는 status가 null인 경우도 포함)
+                const finalQuery = query.or('status.eq.published,status.is.null').order('created_at', { ascending: false, nullsLast: true }).range(from, to);
+                
+                return finalQuery.then(result => {
+                    console.log(`[getPosts] 응답 - 데이터 개수: ${result.data?.length || 0}, 전체 개수: ${result.count}, 에러: ${result.error?.message || 'none'}`);
+                    if (result.data && result.data.length > 0) {
+                        console.log(`[getPosts] 첫 번째 포스트:`, result.data[0]);
+                        console.log(`[getPosts] 마지막 포스트:`, result.data[result.data.length - 1]);
+                    }
+                    return result;
+                });
             },
 
             getPostBySlug: (slug) => {
@@ -605,16 +621,7 @@
                             ${user ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="대시보드로 이동">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="로그아웃">로그아웃</button>` : `<button data-action="auth" aria-label="로그인 또는 회원가입" class="px-4 py-2 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">로그인 / 가입</button>`}
                         </div>
                     </nav>`,
-                
-                // [수정] '미분류' 버튼을 동적으로 추가
-                categoryBtns: (category) => {
-                    // '미분류'를 Config 목록에 없는 카테고리로 추가
-                    const allCategories = ['전체', ...Config.CATEGORIES, '미분류'];
-                    return allCategories.map(cat => 
-                        `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}" aria-pressed="${cat === category}">${cat}</button>`
-                    ).join('');
-                },
-                
+                categoryBtns: (category) => ['전체', ...Config.CATEGORIES].map(cat => `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}" aria-pressed="${cat === category}">${cat}</button>`).join(''),
                 pagination: (page, total, basePath, params) => {
                     const totalPages = Math.ceil(total / Config.POSTS_PER_PAGE);
                     if (totalPages <= 1) return '';
@@ -625,6 +632,12 @@
                 // [ADS UPDATE] 광고 슬롯 템플릿
                 adSlot: (slotId, format = 'auto', layout = '') => {
                     const adTestAttr = ['localhost','127.0.0.1'].includes(window.location.hostname) ? ' data-adtest="on"' : '';
+                    const isLocalhost = ['localhost','127.0.0.1'].includes(window.location.hostname);
+                    
+                    if (isLocalhost) {
+                        return `<div class="my-8 sm:my-12 p-8 bg-gray-100 border-2 border-dashed border-gray-300 text-center text-gray-500 rounded-lg" role="complementary" aria-label="Advertisement placeholder">광고 영역 (개발 환경에서는 표시되지 않습니다)</div>`;
+                    }
+                    
                     return `
                     <div class="my-8 sm:my-12" role="complementary" aria-label="Advertisement">
                         <ins class="adsbygoogle ad-slot-placeholder"
@@ -673,7 +686,8 @@
                 const listContainer = DOM.$('#post-list-container');
                 if (error) {
                     console.error("Error fetching posts:", error);
-                    listContainer.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러오는 중 오류가 발생했습니다.</p>`;
+                    // [수정] 더 자세한 에러 정보 표시
+                    listContainer.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러오는 중 오류가 발생했습니다.<br><small class="text-gray-300">${error.message || '알 수 없는 오류'}</small></p>`;
                     return;
                 }
                 
@@ -688,13 +702,17 @@
                 safePosts.forEach((post, index) => {
                     const thumb = post.thumbnail_url ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100 post-thumbnail"></div>` : '';
                     
-                    // [수정] 조회수 표시 추가
+                    // [수정] 조회수 표시 추가 및 날짜 표시 추가
+                    const createdDate = post.created_at ? new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
                     postHtmlItems.push(`<a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80" role="article">
                         ${thumb}
                         <div class="flex-grow">
                             <div class="flex justify-between items-center mb-1">
                                 <p class="text-xs font-semibold text-fuchsia-500">${post.category || '미분류'}</p>
-                                <p class="text-xs text-gray-400">조회수 ${post.view_count || 0}</p>
+                                <div class="text-xs text-gray-400">
+                                    <span>조회수 ${post.view_count || 0}</span>
+                                    ${createdDate ? `<span class="ml-2">${createdDate}</span>` : ''}
+                                </div>
                             </div>
                             <h3 class="text-gray-800 text-sm font-bold">${post.title}</h3>
                             <p class="text-xs text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p>
@@ -764,10 +782,16 @@
                 // const AD_SLOT_CONTENT_BOTTOM = "2069100221"; // [수정] 이 슬롯은 제거됨
 
                 // [신규] 태그 표시 HTML
-                const tagsHtml = (post.tags && post.tags.trim() !== '') ? `
+                const tagsHtml = (post.tags && typeof post.tags === 'string' && post.tags.trim() !== '') ? `
                     <div class="mt-12 pt-6 border-t border-gray-200" role="list" aria-label="태그">
                         ${post.tags.split(',').map(tag => 
                             `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2" role="listitem">${tag.trim()}</span>`
+                        ).join('')}
+                    </div>
+                ` : (post.tags && Array.isArray(post.tags) && post.tags.length > 0) ? `
+                    <div class="mt-12 pt-6 border-t border-gray-200" role="list" aria-label="태그">
+                        ${post.tags.map(tag => 
+                            `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2" role="listitem">${typeof tag === 'string' ? tag.trim() : tag}</span>`
                         ).join('')}
                     </div>
                 ` : '';
@@ -1128,10 +1152,12 @@
                 ViewRenderer._setMetaTag('property', 'article:modified_time', post ? (post.updated_at || post.created_at) : null);
                 ViewRenderer._setMetaTag('property', 'article:section', post ? post.category : null); 
 
-                // [수정] keywords에 post.tags 추가
-                const postTags = (post?.tags || '').split(',').map(t => t.trim()).filter(Boolean).join(', ');
+                // [수정] keywords에 post.tags 추가 - null/undefined 안전 처리
+                const postTags = (post?.tags && typeof post.tags === 'string') 
+                    ? post.tags.split(',').map(t => t.trim()).filter(Boolean).join(', ')
+                    : '';
                 const keywords = post 
-                    ? `InsureLog, ${post.category}, ${post.title.split(' ').slice(0, 3).join(', ')}${postTags ? `, ${postTags}` : ''}`
+                    ? `InsureLog, ${post.category || ''}, ${(post.title || '').split(' ').slice(0, 3).join(', ')}${postTags ? `, ${postTags}` : ''}`
                     : 'InsureLog, AI, 보험, 법률, 부동산, 금융, 카드, 대출, 생활 정보, 기술 블로그, 인공지능';
                 ViewRenderer._setMetaTag('name', 'keywords', keywords);
 
@@ -1215,10 +1241,14 @@
                     next.classList.add('active');
                     await DOM.animateSwitch(next);
                     try {
+                        // [수정] 뷰 렌더링 전 로그 추가
+                        console.log(`[Router] ${viewId} 뷰 렌더링 시작`);
                         await callback(next); // 뷰 렌더링 함수 실행
+                        console.log(`[Router] ${viewId} 뷰 렌더링 완료`);
                     } catch (error) {
                         console.error(`Error rendering ${viewId}:`, error);
-                        next.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.</p>`;
+                        // [수정] 더 자세한 에러 정보 표시
+                        next.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.<br><small class="text-gray-300">${error.message || '알 수 없는 오류'}</small></p>`;
                     }
                     window.scrollTo(0, 0);
                 }
@@ -1643,7 +1673,7 @@
             },
 
             getOrientation: (file) => new Promise((res) => {
-                // [SPEED UPDATE] exif 라이브러리 의존성 확인
+                // [SPEED UPDATE] exif 라이B러리 의존성 확인
                 if (typeof EXIF === 'undefined') { 
                     console.warn('EXIF.js not loaded. Assuming orientation 1.');
                     res(1); 
