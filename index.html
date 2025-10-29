@@ -26,21 +26,27 @@
     <meta name="twitter:description" content="InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.">
     <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     
+    <!-- [PERF] Tailwind는 렌더링 차단이 필요하므로, 미리 연결(preconnect)만 수행 -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    
+    <!-- [PERF] 주요 리소스에 미리 연결(preconnect) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    
+    <!-- [PERF] 렌더링 차단 CSS (highlight.js) 비동기 로드 -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"></noscript>
+    
     <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
     <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>
-    <link rel="dns-prefetch" href="//fonts.googleapis.com">
-    <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- [PERF] 렌더링 차단 CSS (Google Fonts) 비동기 로드 -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
 
@@ -165,11 +171,11 @@
             box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.3);
         }
         
-        /* [ADS UPDATE] 광고 슬롯의 최소 높이를 지정하여 CLS(Cumulative Layout Shift) 방지 */
+        /* [CLS FIX] 광고 슬롯의 최소 높이를 250px로 늘려 레이아웃 변경 방지 */
         .ad-slot-placeholder {
             display: block;
             width: 100%;
-            min-height: 100px; /* 광고의 평균 최소 높이 (조정 가능) */
+            min-height: 250px; /* [PERF] 100px -> 250px로 변경하여 CLS 방지 */
             background-color: #F9FAFB; /* 배경색 */
             border: 1px dashed var(--border-color);
             border-radius: 12px;
@@ -246,6 +252,10 @@
     <div id="modal-container"></div>
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3"></div>
     
+    <!-- 
+      [PERF] 스크립트 모듈은 변경사항 없습니다.
+      (admin.js를 동적으로 로드하는 로직은 이미 최적화되어 있습니다.)
+    -->
     <script type="module" nonce="r4nd0m">
         // [Supabase] ES 모듈 임포트
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -711,19 +721,14 @@
                 const AD_SLOT_TITLE_BOTTOM = "2069100221";
                 const AD_SLOT_CONTENT_MIDDLE = "2069100221";
 
-                const tagsHtml = (post.tags && typeof post.tags === 'string' && post.tags.trim() !== '') ? `
-                    <div class="mt-12 pt-6 border-t border-gray-200" role="list" aria-label="태그">
-                        ${post.tags.split(',').map(tag => 
-                            `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2" role="listitem">${tag.trim()}</span>`
-                        ).join('')}
-                    </div>
-                ` : (post.tags && Array.isArray(post.tags) && post.tags.length > 0) ? `
+                const tagsHtml = (post.tags && Array.isArray(post.tags) && post.tags.length > 0) ? `
                     <div class="mt-12 pt-6 border-t border-gray-200" role="list" aria-label="태그">
                         ${post.tags.map(tag => 
                             `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2" role="listitem">${typeof tag === 'string' ? tag.trim() : tag}</span>`
                         ).join('')}
                     </div>
                 ` : '';
+
 
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
@@ -904,9 +909,8 @@
                 ViewRenderer._setMetaTag('property', 'article:modified_time', post ? (post.updated_at || post.created_at) : null);
                 ViewRenderer._setMetaTag('property', 'article:section', post ? post.category : null); 
 
-                const postTags = (post?.tags && typeof post.tags === 'string') 
-                    ? post.tags.split(',').map(t => t.trim()).filter(Boolean).join(', ')
-                    : '';
+                const postTags = (post?.tags && Array.isArray(post.tags)) ? post.tags.join(', ') : '';
+                
                 const keywords = post 
                     ? `InsureLog, ${post.category || ''}, ${(post.title || '').split(' ').slice(0, 3).join(', ')}${postTags ? `, ${postTags}` : ''}`
                     : 'InsureLog, AI, 보험, 법률, 부동산, 금융, 카드, 대출, 생활 정보, 기술 블로그, 인공지능';
@@ -1140,3 +1144,5 @@
     </script>
 </body>
 </html>
+
+
