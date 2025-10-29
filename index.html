@@ -11,7 +11,23 @@
     
     <link rel="canonical" href="https://blogaipandoci.vercel.app">
     <meta name="robots" content="index,follow">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#3b82f6">
+    
+    <!-- PWA 매니페스트 -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- PWA 아이콘들 -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMzYjgyZjYiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMiAxNWwtNS01IDEuNDEtMS40MUwxMCAxNC4xN2w3LjU5LTcuNTlMMTkgOGwtOSA5eiIvPgo8L3N2Zz4KPC9zdmc+">
+    
+    <!-- iOS PWA 설정 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="YY Blog">
+    
+    <!-- Windows PWA 설정 -->
+    <meta name="msapplication-TileColor" content="#3b82f6">
+    <meta name="msapplication-config" content="none">
+    
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
     
@@ -26,27 +42,26 @@
     <meta name="twitter:description" content="InsureLog에서 AI 기술을 기반으로 보험, 금융(카드/대출), 법률, 부동산, 그리고 유용한 생활 정보까지, 전문가의 깊이 있는 분석과 팁을 만나보세요.">
     <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     
-    <!-- [PERF] Tailwind는 렌더링 차단이 필요하므로, 미리 연결(preconnect)만 수행 -->
-    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
+    <script src="./dark-mode.js" defer></script>
+    <script src="./reading-time.js" defer></script>
+    <script src="./social-share.js" defer></script>
+    <script src="./analytics.js" defer></script>
+    <script src="./comments.js" defer></script>
     
-    <!-- [PERF] 주요 리소스에 미리 연결(preconnect) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    
-    <!-- [PERF] 렌더링 차단 CSS (highlight.js) 비동기 로드 -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"></noscript>
-    
     <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
     <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>
-    
-    <!-- [PERF] 렌더링 차단 CSS (Google Fonts) 비동기 로드 -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap"></noscript>
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
 
@@ -136,7 +151,11 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.05);
             display: block; 
             margin-left: auto; 
-            margin-right: auto; 
+            margin-right: auto;
+            /* 성능 최적화 */
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         
         .prose-custom table { width: 100%; border-collapse: collapse; margin-top: 2em; margin-bottom: 2em; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-radius: 8px; overflow: hidden; }
@@ -171,21 +190,24 @@
             box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.3);
         }
         
-        /* [CLS FIX] 광고 슬롯의 최소 높이를 250px로 늘려 레이아웃 변경 방지 */
+        /* [ADS UPDATE] 광고 슬롯의 최소 높이를 지정하여 CLS(Cumulative Layout Shift) 방지 */
         .ad-slot-placeholder {
             display: block;
             width: 100%;
-            min-height: 250px; /* [PERF] 100px -> 250px로 변경하여 CLS 방지 */
-            background-color: #F9FAFB; /* 배경색 */
-            border: 1px dashed var(--border-color);
+            min-height: 250px; /* 광고의 평균 최소 높이 증가 */
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* 그라데이션 배경 */
+            border: 1px solid #e5e7eb;
             border-radius: 12px;
             box-sizing: border-box;
             text-align: center;
-            font-size: 0.75rem;
-            color: #9CA3AF;
+            font-size: 0.875rem;
+            color: #6b7280;
             display: flex;
             align-items: center;
             justify-content: center;
+            /* CLS 방지 및 성능 최적화 */
+            contain: layout style;
+            will-change: contents;
         }
 
 
@@ -207,9 +229,7 @@
                 box-shadow: none; 
             }
         }
-        .post-thumbnail img { 
-            /* 이미지 lazy loading은 HTML에서 처리 */ 
-        }
+        /* 이미지 lazy loading은 HTML에서 처리 */
 
         /* [Accessibility] 포커스 링 */
         button:focus, a:focus, input:focus, select:focus, textarea:focus { 
@@ -252,10 +272,6 @@
     <div id="modal-container"></div>
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3"></div>
     
-    <!-- 
-      [PERF] 스크립트 모듈은 변경사항 없습니다.
-      (admin.js를 동적으로 로드하는 로직은 이미 최적화되어 있습니다.)
-    -->
     <script type="module" nonce="r4nd0m">
         // [Supabase] ES 모듈 임포트
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -272,6 +288,7 @@
             DB_TABLE_NAME: 'posts', 
             POSTS_PER_PAGE: 10,
             
+            // [SEO UPDATE]
             CATEGORIES: [
                 "보험 인사이트", 
                 "AI & Tech", 
@@ -284,6 +301,7 @@
             
             DEFAULT_OG_IMAGE: "https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp",
 
+            // [SPEED UPDATE] 동적 로드할 스크립트 URL
             SCRIPT_URLS: {
                 marked: 'https://cdn.jsdelivr.net/npm/marked@12/lib/marked.umd.min.js',
                 purify: 'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js',
@@ -295,7 +313,7 @@
 
         /**
          * [Module: State]
-         * 전역 상태를 관리합니다.
+         * 전역 상태를 관리합니다. (사용자, 인증 상태, 현재 카테고리 등)
          */
         const State = {
             user: null,
@@ -320,6 +338,148 @@
                     console.warn('anime.js is not loaded.');
                     el.style.opacity = show ? 1 : 0;
                     return Promise.resolve();
+                }
+            },
+
+            // 사용자 프로필 정보 로드
+            loadUserProfile: async () => {
+                const profileInfo = DOM.$('#profile-info');
+                if (!profileInfo || !State.user) return;
+
+                try {
+                    const { data: profile, error } = await Services.supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', State.user.id)
+                        .single();
+
+                    if (error && error.code !== 'PGRST116') {
+                        throw error;
+                    }
+
+                    const userProfile = profile || {
+                        display_name: State.user.user_metadata?.name || State.user.email,
+                        bio: '',
+                        website: '',
+                        location: ''
+                    };
+
+                    profileInfo.innerHTML = `
+                        <div class="space-y-2">
+                            <div class="text-sm text-gray-600">표시 이름</div>
+                            <div class="font-medium">${ViewRenderer.escapeHtml(userProfile.display_name || '설정되지 않음')}</div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="text-sm text-gray-600">이메일</div>
+                            <div class="font-medium">${ViewRenderer.escapeHtml(State.user.email)}</div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="text-sm text-gray-600">소개</div>
+                            <div class="font-medium">${ViewRenderer.escapeHtml(userProfile.bio || '설정되지 않음')}</div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="text-sm text-gray-600">웹사이트</div>
+                            <div class="font-medium">${userProfile.website ? `<a href="${ViewRenderer.escapeHtml(userProfile.website)}" target="_blank" class="text-blue-500 hover:underline">${ViewRenderer.escapeHtml(userProfile.website)}</a>` : '설정되지 않음'}</div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('프로필 로드 실패:', error);
+                    profileInfo.innerHTML = '<p class="text-red-500 text-sm">프로필 정보를 불러오는 데 실패했습니다.</p>';
+                }
+            },
+
+            // 프로필 수정 모달 표시
+            showProfileEditModal: async () => {
+                if (!State.user) return;
+
+                try {
+                    const { data: profile, error } = await Services.supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', State.user.id)
+                        .single();
+
+                    const userProfile = profile || {
+                        display_name: State.user.user_metadata?.name || State.user.email,
+                        bio: '',
+                        website: '',
+                        location: ''
+                    };
+
+                    const modal = DOM.createElement('div', {
+                        className: 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4',
+                        innerHTML: `
+                            <div class="bg-white rounded-xl p-6 w-full max-w-md">
+                                <h3 class="text-lg font-bold mb-4">프로필 수정</h3>
+                                <form id="profile-form" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">표시 이름</label>
+                                        <input type="text" id="display-name" value="${ViewRenderer.escapeHtml(userProfile.display_name || '')}" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">소개</label>
+                                        <textarea id="bio" rows="3" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">${ViewRenderer.escapeHtml(userProfile.bio || '')}</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">웹사이트</label>
+                                        <input type="url" id="website" value="${ViewRenderer.escapeHtml(userProfile.website || '')}" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div class="flex gap-2 pt-4">
+                                        <button type="submit" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">저장</button>
+                                        <button type="button" id="cancel-profile" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition">취소</button>
+                                    </div>
+                                </form>
+                            </div>
+                        `
+                    });
+
+                    document.body.appendChild(modal);
+
+                    // 취소 버튼 이벤트
+                    modal.querySelector('#cancel-profile').addEventListener('click', () => {
+                        document.body.removeChild(modal);
+                    });
+
+                    // 폼 제출 이벤트
+                    modal.querySelector('#profile-form').addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
+                        const displayName = modal.querySelector('#display-name').value.trim();
+                        const bio = modal.querySelector('#bio').value.trim();
+                        const website = modal.querySelector('#website').value.trim();
+
+                        try {
+                            const { error } = await Services.supabase
+                                .from('profiles')
+                                .upsert({
+                                    id: State.user.id,
+                                    display_name: displayName,
+                                    bio: bio,
+                                    website: website,
+                                    updated_at: new Date().toISOString()
+                                });
+
+                            if (error) throw error;
+
+                            DOM.showToast('프로필이 성공적으로 업데이트되었습니다.');
+                            document.body.removeChild(modal);
+                            ViewRenderer.loadUserProfile();
+                        } catch (error) {
+                            console.error('프로필 업데이트 실패:', error);
+                            DOM.showToast('프로필 업데이트에 실패했습니다.', true);
+                        }
+                    });
+
+                    // 모달 외부 클릭 시 닫기
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            document.body.removeChild(modal);
+                        }
+                    });
+
+                } catch (error) {
+                    console.error('프로필 모달 표시 실패:', error);
+                    DOM.showToast('프로필 수정 창을 열 수 없습니다.', true);
                 }
             },
 
@@ -375,13 +535,25 @@
                 };
             },
 
+            /**
+             * [SPEED UPDATE] 동적 스크립트 로더
+             * 필요할 때만 스크립트를 로드하고, 중복 로드를 방지합니다.
+             * @param {string} src - 스크립트 URL
+             * @param {string} id - 스크립트 태그의 고유 ID
+             * @returns {Promise<void>} 스크립트 로드가 완료되면 resolve
+             */
             loadScript: (src, id) => {
                 return new Promise((resolve, reject) => {
                     if (DOM.$(`#${id}`)) {
+                        // 이미 로드되었거나 로드 중인 경우
+                        
+                        // 이미 로드 완료된 경우
                         if (DOM.$(`#${id}`).dataset.loaded === 'true') {
                              resolve();
                              return;
                         }
+                        
+                        // 로드 중인 경우: 완료 이벤트 리스너 추가
                         DOM.$(`#${id}`).addEventListener('load', () => resolve());
                         DOM.$(`#${id}`).addEventListener('error', () => reject(new Error(`Script load error for ${src}`)));
                         return;
@@ -391,11 +563,11 @@
                     script.src = src;
                     script.id = id;
                     script.defer = true;
-                    script.setAttribute('nonce', 'r4nd0m');
+                    script.setAttribute('nonce', 'r4nd0m'); // CSP nonce
                     script.setAttribute('crossorigin', 'anonymous');
                     
                     script.onload = () => {
-                        script.dataset.loaded = 'true';
+                        script.dataset.loaded = 'true'; // 로드 완료 플래그
                         resolve();
                     };
                     script.onerror = () => {
@@ -406,11 +578,22 @@
                 });
             },
 
+            /**
+             * [ADS UPDATE] AdSense 광고를 로드하고 표시하는 헬퍼 함수
+             * @param {HTMLElement} container - 광고를 표시할 <ins> 태그의 부모 요소
+             */
             pushAd: (container) => {
                 if (!container) return;
-                const adSlot = container.querySelector('.adsbygoogle');
-                if (!adSlot || adSlot.dataset.adStatus) return;
                 
+                const adSlot = container.querySelector('.adsbygoogle');
+                if (!adSlot) return;
+
+                // 이미 광고가 채워졌는지 확인 (애드센스가 data-ad-status="filled" 등을 추가함)
+                if (adSlot.dataset.adStatus) {
+                    return;
+                }
+
+                // 플레이스홀더 텍스트 제거
                 adSlot.innerHTML = ''; 
                 adSlot.classList.remove('ad-slot-placeholder');
 
@@ -418,6 +601,7 @@
                     (window.adsbygoogle = window.adsbygoogle || []).push({});
                 } catch (e) {
                     console.warn("Adsense push error:", e);
+                    // 오류 발생 시 플레이스홀더를 다시 표시하거나 숨김
                     adSlot.innerHTML = '광고 로드 오류';
                     adSlot.classList.add('ad-slot-placeholder');
                 }
@@ -425,11 +609,532 @@
         };
 
         /**
+         * [Module: Performance]
+         * 성능 최적화 관련 기능들을 관리합니다.
+         */
+        const Performance = {
+            // 리소스 힌트 추가
+            addResourceHints: () => {
+                const hints = [
+                    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+                    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true },
+                    { rel: 'preconnect', href: 'https://pagead2.googlesyndication.com' },
+                    { rel: 'dns-prefetch', href: 'https://www.googletagmanager.com' },
+                    { rel: 'dns-prefetch', href: 'https://www.google-analytics.com' }
+                ];
+
+                hints.forEach(hint => {
+                    if (!document.querySelector(`link[href="${hint.href}"]`)) {
+                        const link = document.createElement('link');
+                        Object.assign(link, hint);
+                        document.head.appendChild(link);
+                    }
+                });
+            },
+
+            // 중요하지 않은 CSS 지연 로드
+            loadNonCriticalCSS: () => {
+                const nonCriticalCSS = [
+                    'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css'
+                ];
+
+                nonCriticalCSS.forEach(href => {
+                    if (!document.querySelector(`link[href="${href}"]`)) {
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.href = href;
+                        link.media = 'print';
+                        link.onload = function() { this.media = 'all'; };
+                        document.head.appendChild(link);
+                    }
+                });
+            },
+
+            // 이미지 지연 로딩 최적화
+            optimizeImages: () => {
+                const images = document.querySelectorAll('img:not([loading])');
+                images.forEach(img => {
+                    img.loading = 'lazy';
+                    img.decoding = 'async';
+                    
+                    // WebP 지원 확인 및 변환
+                    if (img.src && !img.src.includes('.webp')) {
+                        const canvas = document.createElement('canvas');
+                        const supportsWebP = canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+                        
+                        if (supportsWebP && img.src.match(/\.(jpg|jpeg|png)$/i)) {
+                            const webpSrc = img.src.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+                            const testImg = new Image();
+                            testImg.onload = () => { img.src = webpSrc; };
+                            testImg.src = webpSrc;
+                        }
+                    }
+                });
+            },
+
+            // 폰트 최적화
+            optimizeFonts: () => {
+                // 폰트 디스플레이 최적화
+                const fontLinks = document.querySelectorAll('link[href*="fonts.googleapis.com"]');
+                fontLinks.forEach(link => {
+                    if (!link.href.includes('display=swap')) {
+                        link.href += link.href.includes('?') ? '&display=swap' : '?display=swap';
+                    }
+                });
+            },
+
+            // 스크롤 성능 최적화
+            optimizeScrolling: () => {
+                let ticking = false;
+                
+                const updateScrollPosition = () => {
+                    // 스크롤 위치에 따른 헤더 스타일 변경 등
+                    const scrollY = window.scrollY;
+                    const header = document.querySelector('header');
+                    
+                    if (header) {
+                        if (scrollY > 100) {
+                            header.classList.add('scrolled');
+                        } else {
+                            header.classList.remove('scrolled');
+                        }
+                    }
+                    
+                    ticking = false;
+                };
+
+                const requestTick = () => {
+                    if (!ticking) {
+                        requestAnimationFrame(updateScrollPosition);
+                        ticking = true;
+                    }
+                };
+
+                window.addEventListener('scroll', requestTick, { passive: true });
+            },
+
+            // 메모리 사용량 모니터링
+            monitorMemory: () => {
+                if ('memory' in performance) {
+                    const memInfo = performance.memory;
+                    console.log('Memory Usage:', {
+                        used: Math.round(memInfo.usedJSHeapSize / 1048576) + ' MB',
+                        total: Math.round(memInfo.totalJSHeapSize / 1048576) + ' MB',
+                        limit: Math.round(memInfo.jsHeapSizeLimit / 1048576) + ' MB'
+                    });
+                }
+            },
+
+            // 초기화
+            init: () => {
+                Performance.addResourceHints();
+                Performance.loadNonCriticalCSS();
+                Performance.optimizeFonts();
+                Performance.optimizeScrolling();
+                
+                // 페이지 로드 후 이미지 최적화
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', Performance.optimizeImages);
+                } else {
+                    Performance.optimizeImages();
+                }
+
+                // 개발 환경에서만 메모리 모니터링
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    setInterval(Performance.monitorMemory, 30000);
+                }
+            }
+        };
+        /**
+         * [Module: AdSense]
+         * 애드센스 광고 최적화 관련 기능들을 관리합니다.
+         */
+        const AdSense = {
+            // 광고 성능 추적
+            trackAdPerformance: () => {
+                const ads = document.querySelectorAll('.adsbygoogle');
+                ads.forEach((ad, index) => {
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                // 광고가 뷰포트에 들어왔을 때
+                                console.log(`Ad ${index + 1} viewed`);
+                                if (typeof gtag !== 'undefined') {
+                                    gtag('event', 'ad_impression', {
+                                        'ad_unit_id': ad.dataset.adSlot,
+                                        'ad_position': index + 1
+                                    });
+                                }
+                                observer.unobserve(entry.target);
+                            }
+                        });
+                    }, { threshold: 0.5 });
+                    
+                    observer.observe(ad);
+                });
+            },
+
+            // 광고 로드 최적화
+            optimizeAdLoading: () => {
+                // 스크롤 위치에 따른 지연 로딩
+                const ads = document.querySelectorAll('.adsbygoogle:not([data-loaded])');
+                
+                const loadAd = (ad) => {
+                    if (ad.dataset.loaded) return;
+                    
+                    ad.dataset.loaded = 'true';
+                    try {
+                        (window.adsbygoogle = window.adsbygoogle || []).push({});
+                    } catch (e) {
+                        console.warn("AdSense load error:", e);
+                    }
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            loadAd(entry.target);
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { 
+                    rootMargin: '200px 0px', // 200px 전에 미리 로드
+                    threshold: 0.1 
+                });
+
+                ads.forEach(ad => observer.observe(ad));
+            },
+
+            // 광고 배치 최적화
+            optimizeAdPlacement: () => {
+                const content = document.querySelector('#post-content');
+                if (!content) return;
+
+                const paragraphs = content.querySelectorAll('p');
+                const totalParagraphs = paragraphs.length;
+
+                // 콘텐츠 길이에 따른 광고 배치
+                if (totalParagraphs >= 8) {
+                    // 긴 글: 중간과 끝에 광고 배치
+                    const midPoint = Math.floor(totalParagraphs / 2);
+                    const endPoint = totalParagraphs - 2;
+
+                    if (paragraphs[midPoint] && !paragraphs[midPoint].nextElementSibling?.classList.contains('adsbygoogle')) {
+                        const midAd = document.createElement('div');
+                        midAd.innerHTML = Templates.adSlot('1234567890', 'rectangle');
+                        paragraphs[midPoint].after(midAd);
+                    }
+
+                    if (paragraphs[endPoint] && !paragraphs[endPoint].nextElementSibling?.classList.contains('adsbygoogle')) {
+                        const endAd = document.createElement('div');
+                        endAd.innerHTML = Templates.adSlot('0987654321', 'rectangle');
+                        paragraphs[endPoint].after(endAd);
+                    }
+                }
+            },
+
+            // 광고 수익 최적화
+            optimizeRevenue: () => {
+                // 모바일에서 더 큰 광고 단위 사용
+                const isMobile = window.innerWidth <= 768;
+                const ads = document.querySelectorAll('.adsbygoogle');
+                
+                ads.forEach(ad => {
+                    if (isMobile) {
+                        ad.dataset.adFormat = 'fluid';
+                        ad.dataset.adLayout = 'in-article';
+                    } else {
+                        ad.dataset.adFormat = 'auto';
+                    }
+                });
+            },
+
+            // 광고 차단 감지
+            detectAdBlocker: () => {
+                const testAd = document.createElement('div');
+                testAd.innerHTML = '&nbsp;';
+                testAd.className = 'adsbox';
+                testAd.style.position = 'absolute';
+                testAd.style.left = '-10000px';
+                document.body.appendChild(testAd);
+
+                setTimeout(() => {
+                    const isBlocked = testAd.offsetHeight === 0;
+                    if (isBlocked) {
+                        console.log('Ad blocker detected');
+                        // 광고 차단기 감지 시 대체 수익 모델 제안
+                        DOM.showToast('광고 차단기가 감지되었습니다. 사이트 운영을 위해 광고 허용을 부탁드립니다.', false);
+                    }
+                    document.body.removeChild(testAd);
+                }, 100);
+            },
+
+            // 초기화
+            init: () => {
+                // 페이지 로드 후 광고 최적화 실행
+                setTimeout(() => {
+                    AdSense.optimizeAdLoading();
+                    AdSense.trackAdPerformance();
+                    AdSense.optimizeAdPlacement();
+                    AdSense.optimizeRevenue();
+                    AdSense.detectAdBlocker();
+                }, 1000);
+            }
+        };
+
+        /**
          * [Module: Services]
-         * Supabase API 호출 등 백엔드 통신을 관리합니다. (변경 없음)
+         * Supabase API 호출 등 백엔드 통신을 관리합니다.
+         */
+        /**
+         * [Module: ContentManager]
+         * 콘텐츠 관리 기능들을 관리합니다.
+         */
+        const ContentManager = {
+            // 검색 기능
+            searchPosts: async (query, category = '전체') => {
+                if (!query.trim()) return [];
+                
+                let searchQuery = State.supabase.from(Config.DB_TABLE_NAME)
+                    .select('id, title, slug, summary, category, thumbnail_url, view_count, created_at, tags')
+                    .or(`title.ilike.%${query}%,summary.ilike.%${query}%,tags.ilike.%${query}%`)
+                    .or('status.eq.published,status.is.null')
+                    .order('created_at', { ascending: false });
+                
+                if (category !== '전체') {
+                    searchQuery = searchQuery.eq('category', category);
+                }
+                
+                const result = await searchQuery.limit(20);
+                return result.data || [];
+            },
+
+            // 관련 글 추천
+            getRelatedPosts: async (currentPost, limit = 4) => {
+                if (!currentPost) return [];
+                
+                // 같은 카테고리의 글들을 우선 추천
+                let query = State.supabase.from(Config.DB_TABLE_NAME)
+                    .select('id, title, slug, summary, category, thumbnail_url, view_count, created_at')
+                    .eq('category', currentPost.category)
+                    .neq('id', currentPost.id)
+                    .or('status.eq.published,status.is.null')
+                    .order('view_count', { ascending: false, nullsLast: true })
+                    .limit(limit);
+                
+                const result = await query;
+                let relatedPosts = result.data || [];
+                
+                // 같은 카테고리 글이 부족하면 다른 카테고리에서 인기글로 채움
+                if (relatedPosts.length < limit) {
+                    const additionalQuery = State.supabase.from(Config.DB_TABLE_NAME)
+                        .select('id, title, slug, summary, category, thumbnail_url, view_count, created_at')
+                        .neq('id', currentPost.id)
+                        .neq('category', currentPost.category)
+                        .or('status.eq.published,status.is.null')
+                        .order('view_count', { ascending: false, nullsLast: true })
+                        .limit(limit - relatedPosts.length);
+                    
+                    const additionalResult = await additionalQuery;
+                    relatedPosts = [...relatedPosts, ...(additionalResult.data || [])];
+                }
+                
+                return relatedPosts;
+            },
+
+            // 태그별 글 가져오기
+            getPostsByTag: async (tag, limit = 10) => {
+                const result = await State.supabase.from(Config.DB_TABLE_NAME)
+                    .select('id, title, slug, summary, category, thumbnail_url, view_count, created_at, tags')
+                    .ilike('tags', `%${tag}%`)
+                    .or('status.eq.published,status.is.null')
+                    .order('created_at', { ascending: false })
+                    .limit(limit);
+                
+                return result.data || [];
+            },
+
+            // 인기 태그 가져오기
+            getPopularTags: async (limit = 20) => {
+                const result = await State.supabase.from(Config.DB_TABLE_NAME)
+                    .select('tags')
+                    .not('tags', 'is', null)
+                    .neq('tags', '')
+                    .or('status.eq.published,status.is.null');
+                
+                const tagCounts = {};
+                (result.data || []).forEach(post => {
+                    if (post.tags) {
+                        const tags = post.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+                        tags.forEach(tag => {
+                            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                        });
+                    }
+                });
+                
+                return Object.entries(tagCounts)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, limit)
+                    .map(([tag, count]) => ({ tag, count }));
+            },
+
+            // 검색 UI 렌더링
+            renderSearchResults: (results, query) => {
+                if (results.length === 0) {
+                    return `
+                        <div class="text-center py-12">
+                            <div class="text-gray-500 text-lg mb-4">
+                                "${query}"에 대한 검색 결과가 없습니다.
+                            </div>
+                            <p class="text-gray-400">다른 키워드로 검색해보세요.</p>
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">
+                            "${query}" 검색 결과 (${results.length}개)
+                        </h2>
+                    </div>
+                    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        ${results.map(post => Templates.postCard(post)).join('')}
+                    </div>
+                `;
+            },
+
+            // 관련 글 UI 렌더링
+            renderRelatedPosts: (posts) => {
+                if (posts.length === 0) return '';
+                
+                return `
+                    <div class="mt-12 pt-8 border-t border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">관련 글</h3>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            ${posts.map(post => `
+                                <a href="/post/${post.slug}" data-route class="group block p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200">
+                                    <div class="flex items-start space-x-4">
+                                        ${post.thumbnail_url ? `
+                                            <img src="${post.thumbnail_url}" alt="${post.title}" 
+                                                 class="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                                                 loading="lazy" decoding="async">
+                                        ` : `
+                                            <div class="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center">
+                                                <span class="text-gray-400 text-xs">No Image</span>
+                                            </div>
+                                        `}
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="font-medium text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                                ${post.title}
+                                            </h4>
+                                            <p class="text-sm text-gray-500 mt-1 line-clamp-2">
+                                                ${post.summary || ''}
+                                            </p>
+                                            <div class="flex items-center mt-2 text-xs text-gray-400">
+                                                <span class="bg-gray-100 px-2 py-1 rounded">${post.category}</span>
+                                                <span class="ml-2">${new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+
+            // 태그 클라우드 렌더링
+            renderTagCloud: (tags) => {
+                if (tags.length === 0) return '';
+                
+                const maxCount = Math.max(...tags.map(t => t.count));
+                
+                return `
+                    <div class="mb-8">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">인기 태그</h3>
+                        <div class="flex flex-wrap gap-2">
+                            ${tags.map(({ tag, count }) => {
+                                const size = Math.max(0.75, (count / maxCount) * 1.5);
+                                return `
+                                    <button onclick="ContentManager.searchByTag('${tag}')" 
+                                            class="inline-block bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
+                                            style="font-size: ${size}rem;">
+                                        ${tag} (${count})
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+
+            // 태그로 검색
+            searchByTag: (tag) => {
+                // Analytics 태그 클릭 추적
+                if (typeof Analytics !== 'undefined') {
+                    Analytics.trackTagClick(tag);
+                }
+                Router.navigateTo(`/?search=${encodeURIComponent(tag)}`);
+            },
+
+            // 검색 기능 초기화
+            initSearch: () => {
+                // 검색 입력 필드 추가
+                const searchHTML = `
+                    <div class="relative mb-6">
+                        <input type="text" id="search-input" 
+                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="제목, 내용, 태그로 검색하세요...">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                `;
+                
+                // 메인 페이지에 검색 박스 추가
+                const mainContent = DOM.$('#main-content');
+                if (mainContent && !DOM.$('#search-input')) {
+                    mainContent.insertAdjacentHTML('afterbegin', searchHTML);
+                    
+                    // 검색 이벤트 리스너
+                    const searchInput = DOM.$('#search-input');
+                    if (searchInput) {
+                        const debouncedSearch = DOM.debounce(async (query) => {
+                            if (query.trim()) {
+                                const results = await ContentManager.searchPosts(query);
+                                const resultsHTML = ContentManager.renderSearchResults(results, query);
+                                DOM.$('#posts-container').innerHTML = resultsHTML;
+                                
+                                // Analytics 검색 추적
+                                if (typeof Analytics !== 'undefined') {
+                                    Analytics.trackSearch(query.trim(), results.length);
+                                }
+                            } else {
+                                // 검색어가 없으면 원래 포스트 목록 복원
+                                ViewRenderer.renderPosts();
+                            }
+                        }, 300);
+                        
+                        searchInput.addEventListener('input', (e) => {
+                            debouncedSearch(e.target.value);
+                        });
+                    }
+                }
+            }
+        };
+
+        /**
+         * [Module: Services]
+         * Supabase API 호출 등 백엔드 통신을 관리합니다.
          */
         const Services = {
             init: () => {
+                console.log('[Services] Supabase 초기화 시작');
+                console.log('[Services] SUPABASE_URL:', Config.SUPABASE_URL);
+                console.log('[Services] DB_TABLE_NAME:', Config.DB_TABLE_NAME);
+                
                 try {
                     State.supabase = createClient(Config.SUPABASE_URL, Config.SUPABASE_ANON_KEY);
                     console.log('[Services] Supabase 클라이언트 생성 완료');
@@ -437,46 +1142,69 @@
                     console.error('[Services] Supabase 초기화 실패:', error);
                 }
             },
+
             onAuthChange: (callback) => {
                 return State.supabase.auth.onAuthStateChange((_, session) => {
                     callback(session?.user || null);
                 });
             },
+
             signIn: (email) => {
                 return State.supabase.auth.signInWithOtp({ 
                     email, 
                     options: { emailRedirectTo: Config.SITE_URL } 
                 });
             },
+
             signOut: () => {
                 return State.supabase.auth.signOut();
             },
+
             getPosts: (page, category) => {
                 const { from, to } = { from: (page - 1) * Config.POSTS_PER_PAGE, to: page * Config.POSTS_PER_PAGE - 1 };
+                
+                // [수정] 더 자세한 로그 추가
+                console.log(`[getPosts] 요청 - page: ${page}, category: ${category}, from: ${from}, to: ${to}`);
+                
                 let query = State.supabase.from(Config.DB_TABLE_NAME)
+                    // [수정] view_count를 COALESCE로 안전하게 처리하고, 필수 필드만 선택
                     .select('id, title, slug, summary, category, thumbnail_url, view_count, created_at', { count: 'exact' });
                 if (category !== '전체') query = query.eq('category', category);
-                return query.or('status.eq.published,status.is.null')
-                            .order('created_at', { ascending: false, nullsLast: true })
-                            .range(from, to);
+                // [수정] status 조건을 더 유연하게 처리 (published 또는 status가 null인 경우도 포함)
+                const finalQuery = query.or('status.eq.published,status.is.null').order('created_at', { ascending: false, nullsLast: true }).range(from, to);
+                
+                return finalQuery.then(result => {
+                    console.log(`[getPosts] 응답 - 데이터 개수: ${result.data?.length || 0}, 전체 개수: ${result.count}, 에러: ${result.error?.message || 'none'}`);
+                    if (result.data && result.data.length > 0) {
+                        console.log(`[getPosts] 첫 번째 포스트:`, result.data[0]);
+                        console.log(`[getPosts] 마지막 포스트:`, result.data[result.data.length - 1]);
+                    }
+                    return result;
+                });
             },
+
             getPostBySlug: (slug) => {
+                // [수정] * (전체)를 선택하므로 view_count, tags가 이미 포함됩니다.
                 return State.supabase.from(Config.DB_TABLE_NAME).select('*').eq('slug', slug).single();
             },
+
             getDashboardPosts: (userId) => {
                 return State.supabase.from(Config.DB_TABLE_NAME)
                     .select('id, title, slug, status, created_at')
                     .eq('author_id', userId)
                     .order('created_at', { ascending: false });
             },
+
             getRelatedPosts: (slug) => {
-                return State.supabase.from(Config.DB_TABLE_NAME)
+                const popular = State.supabase.from(Config.DB_TABLE_NAME)
                     .select('title, slug')
                     .eq('status', 'published')
                     .neq('slug', slug)
                     .order('view_count', { ascending: false, nullsFirst: false })
                     .limit(5);
+                return popular;
             },
+
             getAdjacentPosts: (createdAt) => {
                  const prev = State.supabase.from(Config.DB_TABLE_NAME)
                     .select('title, slug')
@@ -492,6 +1220,7 @@
                     .limit(1).single();
                 return Promise.all([prev, next]);
             },
+
             incrementViewCount: (slug) => {
                 try {
                     const viewed = JSON.parse(sessionStorage.getItem('viewed_posts') || '[]');
@@ -506,6 +1235,7 @@
                     }
                 } catch (e) { console.warn('View count error:', e); }
             },
+            
             savePost: (data) => {
                 const id = data.id;
                 delete data.id; 
@@ -515,12 +1245,15 @@
                     return State.supabase.from(Config.DB_TABLE_NAME).insert(data).select().single();
                 }
             },
+
             checkSlugExists: (slug) => {
                 return State.supabase.from(Config.DB_TABLE_NAME).select('id').eq('slug', slug).maybeSingle();
             },
+
             deletePost: (id) => {
                 return State.supabase.from(Config.DB_TABLE_NAME).delete().eq('id', id);
             },
+
             uploadImage: async (file) => {
                 let baseName = 'upload';
                 let ext = 'bin';
@@ -561,7 +1294,7 @@
 
         /**
          * [Module: ViewRenderer]
-         * 방문자용 뷰 렌더링만 담당합니다.
+         * 각 뷰(페이지)의 HTML 렌더링을 담당합니다.
          */
         const ViewRenderer = {
             _templates: {
@@ -580,6 +1313,7 @@
                     const nextUrl = page < totalPages ? DOM.buildUrl(basePath, { ...params, page: page + 1 }) : '#';
                     return `<div class="flex justify-center items-center gap-4 mt-12" role="navigation" aria-label="페이지 탐색"><a href="${prevUrl}" data-route aria-label="이전 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${page === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">이전</a><span class="text-sm font-medium text-gray-500">${page} / ${totalPages}</span><a href="${nextUrl}" data-route aria-label="다음 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${page >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">다음</a></div>`;
                 },
+                // [ADS UPDATE] 광고 슬롯 템플릿
                 adSlot: (slotId, format = 'auto', layout = '') => {
                     const adTestAttr = ['localhost','127.0.0.1'].includes(window.location.hostname) ? ' data-adtest="on"' : '';
                     const isLocalhost = ['localhost','127.0.0.1'].includes(window.location.hostname);
@@ -636,6 +1370,7 @@
                 const listContainer = DOM.$('#post-list-container');
                 if (error) {
                     console.error("Error fetching posts:", error);
+                    // [수정] 더 자세한 에러 정보 표시
                     listContainer.innerHTML = `<p class="text-center text-gray-400 py-20">글을 불러오는 중 오류가 발생했습니다.<br><small class="text-gray-300">${error.message || '알 수 없는 오류'}</small></p>`;
                     return;
                 }
@@ -643,14 +1378,16 @@
                 const total = count ?? 0;
                 const safePosts = Array.isArray(posts) ? posts : [];
                 
-                const INFEED_AD_INTERVAL = 4;
-                const INFEED_AD_SLOT_ID = "2069100221";
+                // [ADS UPDATE] 인피드 광고(목록 중간 광고)를 위한 로직
+                const INFEED_AD_INTERVAL = 4; // 4번째 글 다음에 광고 표시
+                const INFEED_AD_SLOT_ID = "2069100221"; // (임시) 인피드 전용 슬롯 ID 사용 권장
                 
                 let postHtmlItems = [];
                 safePosts.forEach((post, index) => {
-                    const thumb = post.thumbnail_url ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100 post-thumbnail"></div>` : '';
-                    const createdDate = post.created_at ? new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+                    const thumb = post.thumbnail_url ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100 post-thumbnail" loading="lazy" decoding="async"></div>` : '';
                     
+                    // [수정] 조회수 표시 추가 및 날짜 표시 추가
+                    const createdDate = post.created_at ? new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
                     postHtmlItems.push(`<a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80" role="article">
                         ${thumb}
                         <div class="flex-grow">
@@ -666,7 +1403,9 @@
                         </div>
                     </a>`);
 
+                    // [ADS UPDATE] N번째 글 다음에 인피드 광고 삽입
                     if ((index + 1) % INFEED_AD_INTERVAL === 0 && (index + 1) < safePosts.length) {
+                        // data-ad-layout="in-article" 은 인피드 광고에 적합한 레이아웃입니다.
                         postHtmlItems.push(ViewRenderer._templates.adSlot(INFEED_AD_SLOT_ID, 'fluid', 'in-article'));
                     }
                 });
@@ -678,15 +1417,18 @@
                 listContainer.innerHTML = `${postsHtml}${ViewRenderer._templates.pagination(page, total, '/', { category })}`;
                 listContainer.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
 
+                // [ADS UPDATE] 페이지가 렌더링된 후 광고 로드 (지연)
+                // 뷰 전환 애니메이션이 끝난 후 광고를 로드하여 버벅임(jank)을 방지합니다.
                 setTimeout(() => {
                     listContainer.querySelectorAll('.adsbygoogle').forEach(adEl => {
                         DOM.pushAd(adEl.parentElement);
                     });
-                }, 300);
+                }, 300); // 300ms 지연
             },
 
             renderPost: async (container, slug) => {
                 
+                // [SPEED UPDATE] 뷰 렌더링에 필요한 스크립트들을 병렬로 미리 로드합니다.
                 try {
                     await Promise.all([
                         DOM.loadScript(Config.SCRIPT_URLS.marked, 'marked-lib'),
@@ -709,26 +1451,45 @@
                 
                 Services.incrementViewCount(slug); 
                 ViewRenderer.updateMetaTags(post); 
+                
+                // Analytics 포스트 뷰 추적
+                if (typeof Analytics !== 'undefined') {
+                    Analytics.trackPostView(post.id, post.title, post.category);
+                } 
 
                 const { data: popular } = await Services.getRelatedPosts(slug);
+                const relatedPosts = await ContentManager.getRelatedPosts(post, 4);
                 const [{ data: prev }, { data: next }] = await Services.getAdjacentPosts(post.created_at);
 
                 const popularHtml = popular?.length > 0 ? `<div class="mt-20"><h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2><div class="border-t border-gray-200">${popular.map(p => `<a href="/post/${p.slug}" data-route class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50" role="link"><h4 class="font-semibold text-gray-800 text-base">${p.title}</h4></a>`).join('')}</div></div>` : '';
+                const relatedHtml = ContentManager.renderRelatedPosts(relatedPosts);
                 const navHtml = `<nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10" role="navigation" aria-label="이전/다음 글 탐색"><div>${prev ? `<a href="/post/${prev.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prev.title}</h4></a>` : ''}</div><div class="text-left md:text-right">${next ? `<a href="/post/${next.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${next.title}</h4></a>` : ''}</div></nav>`;
                 
                 const editBtn = (State.user && State.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200" aria-label="글 수정">수정</a>` : '';
                 
-                const AD_SLOT_TITLE_BOTTOM = "2069100221";
-                const AD_SLOT_CONTENT_MIDDLE = "2069100221";
+                // [ADS UPDATE] 광고 슬롯 ID 정의
+                const AD_SLOT_TITLE_BOTTOM = "2069100221"; // (임시) 제목 하단 슬롯
+                const AD_SLOT_CONTENT_MIDDLE = "2069100221"; // (임시) 본문 중간 슬롯
+                // const AD_SLOT_CONTENT_BOTTOM = "2069100221"; // [수정] 이 슬롯은 제거됨
 
-                const tagsHtml = (post.tags && Array.isArray(post.tags) && post.tags.length > 0) ? `
+                // [신규] 태그 표시 HTML
+                const tagsHtml = (post.tags && typeof post.tags === 'string' && post.tags.trim() !== '') ? `
+                    <div class="mt-12 pt-6 border-t border-gray-200" role="list" aria-label="태그">
+                        ${post.tags.split(',').map(tag => 
+                            `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2 cursor-pointer hover:bg-gray-200 transition-colors" 
+                                   role="listitem" 
+                                   onclick="ContentManager.searchByTag('${tag.trim()}')">${tag.trim()}</span>`
+                        ).join('')}
+                    </div>
+                ` : (post.tags && Array.isArray(post.tags) && post.tags.length > 0) ? `
                     <div class="mt-12 pt-6 border-t border-gray-200" role="list" aria-label="태그">
                         ${post.tags.map(tag => 
-                            `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2" role="listitem">${typeof tag === 'string' ? tag.trim() : tag}</span>`
+                            `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2 cursor-pointer hover:bg-gray-200 transition-colors" 
+                                   role="listitem" 
+                                   onclick="ContentManager.searchByTag('${typeof tag === 'string' ? tag.trim() : tag}')">${typeof tag === 'string' ? tag.trim() : tag}</span>`
                         ).join('')}
                     </div>
                 ` : '';
-
 
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
@@ -737,10 +1498,11 @@
                                 <p class="text-sm font-semibold text-fuchsia-500 mb-3">${post.category || '미분류'}</p>
                                 <h1 class="text-3xl sm:text-4xl font-black text-black tracking-tighter !mt-0 !mb-4">${post.title}</h1>
                                 <div class="flex items-center justify-between text-sm text-gray-500">
-                                    <div>
+                                    <div class="flex items-center space-x-4">
                                         <span>${new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                         <span class="mx-2" aria-hidden="true">·</span>
                                         <span>조회수 ${post.view_count || 0}</span>
+                                        ${typeof ReadingTime !== 'undefined' ? `<span class="mx-2" aria-hidden="true">·</span>${ReadingTime.createReadingTimeHTML(ReadingTime.calculateReadingTime(post.refined_content || ''))}` : ''}
                                     </div>
                                     ${editBtn}
                                 </div>
@@ -751,13 +1513,19 @@
                             <div id="post-content" class="prose-custom max-w-none"></div>
                             
                             ${tagsHtml}
+                            
+                            ${typeof SocialShare !== 'undefined' ? SocialShare.createShareButtons() : ''}
                         </article>
 
                         ${ViewRenderer._templates.adSlot(AD_SLOT_CONTENT_MIDDLE)}
                         
+                        ${relatedHtml}
                         ${popularHtml}${navHtml}
+                        
+                        ${typeof Comments !== 'undefined' ? Comments.createCommentsSection() : ''}
                     </div>`;
                 
+                // 스크립트가 로드되었으므로, 라이브러리를 안전하게 사용
                 if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
                     const rawHtml = marked.parse(post.refined_content || '');
 
@@ -803,33 +1571,294 @@
                     DOM.$('#post-content').textContent = post.refined_content || ''; 
                 }
                 
+                // [ADS UPDATE] 페이지 렌더링 후 모든 광고 슬롯 로드 (지연)
+                // 뷰 전환 애니메이션이 끝난 후 광고를 로드하여 버벅임(jank)을 방지합니다.
                 setTimeout(() => {
                     container.querySelectorAll('.adsbygoogle').forEach(adEl => {
                         DOM.pushAd(adEl.parentElement);
                     });
-                }, 300);
+                }, 300); // 300ms 지연
                 
+                // 코드 하이라이트 및 기타 후처리
                 setTimeout(() => {
                     if (typeof hljs !== 'undefined') {
                         DOM.$('#post-content').querySelectorAll('pre code').forEach(hljs.highlightElement);
                     } else {
                         console.warn('highlight.js not loaded AFTER dynamic load.');
                     }
-                    DOM.$('#post-content').querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async'; });
+                    
+                    // 이미지 최적화 강화
+                    DOM.$('#post-content').querySelectorAll('img').forEach(img => { 
+                        img.loading = 'lazy'; 
+                        img.decoding = 'async';
+                        
+                        // 이미지 크기 최적화
+                        if (!img.hasAttribute('width') && !img.hasAttribute('height')) {
+                            img.style.maxWidth = '100%';
+                            img.style.height = 'auto';
+                        }
+                        
+                        // WebP 지원 확인 및 대체
+                        if (img.src && !img.src.includes('.webp')) {
+                            const webpSrc = img.src.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+                            const testImg = new Image();
+                            testImg.onload = () => { img.src = webpSrc; };
+                            testImg.onerror = () => {}; // 원본 유지
+                            testImg.src = webpSrc;
+                        }
+                        
+                        // 이미지 로드 에러 처리
+                        img.onerror = () => {
+                            img.style.display = 'none';
+                            console.warn('이미지 로드 실패:', img.src);
+                        };
+                    });
+                    
                     DOM.$('#post-content').querySelectorAll('a[target="_blank"]').forEach(a => { a.rel = 'noopener noreferrer'; });
+                    
+                    // 댓글 시스템 초기화
+                    if (typeof Comments !== 'undefined') {
+                        Comments.init(post.id);
+                    }
                 }, 100);
             },
-            
-            // [OPTIMIZE] 관리자용 렌더링 함수는 여기서는 Stub(껍데기)만 둡니다.
-            // 실제 코드는 admin.js에서 덮어쓸 것입니다.
-            renderDashboard: (container) => {
-                container.innerHTML = `<div class="min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
+
+            renderDashboard: async (container) => {
+                ViewRenderer.updateMetaTags({ title: '대시보드' });
+                container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12">
+                    <div class="flex justify-between items-center mb-8 sm:mb-10">
+                        <h1 class="text-4xl font-black text-black tracking-tighter">대시보드</h1>
+                        <a href="/writer" data-route class="px-5 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]" aria-label="새 글 작성">새 글 작성</a>
+                    </div>
+                    
+                    <!-- 프로필 관리 섹션 -->
+                    <div class="mb-8 p-6 bg-blue-50 rounded-xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-black">프로필 관리</h2>
+                            <button id="edit-profile" class="px-3 py-1.5 text-xs rounded-full bg-blue-500 text-white hover:bg-blue-600 transition">프로필 수정</button>
+                        </div>
+                        <div id="profile-info" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="loader-spinner"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 댓글 관리 섹션 -->
+                    <div class="mb-8 p-6 bg-gray-50 rounded-xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-black">댓글 관리</h2>
+                            <button id="refresh-comments" class="px-3 py-1.5 text-xs rounded-full bg-gray-200 hover:bg-gray-300 text-black transition">새로고침</button>
+                        </div>
+                        <div id="pending-comments" class="min-h-[100px] flex items-center justify-center">
+                            <div class="loader-spinner"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 글 목록 섹션 -->
+                    <div class="mb-4">
+                        <h2 class="text-xl font-bold text-black mb-4">내 글 목록</h2>
+                        <div id="dashboard-post-list" class="bg-transparent space-y-2 min-h-[200px] flex items-center justify-center">
+                            <div class="loader-spinner"></div>
+                        </div>
+                    </div>
+                </div>`;
+                
+                if (!State.user) return;
+                
+                // 댓글 관리 초기화
+                await ViewRenderer.loadPendingComments();
+                
+                // 글 목록 로드
+                const { data: posts, error } = await Services.getDashboardPosts(State.user.id);
+                const list = DOM.$('#dashboard-post-list');
+                
+                if (error) {
+                    list.innerHTML = '<p class="text-center text-gray-400">글 목록을 불러오는 데 실패했습니다.</p>';
+                    return;
+                }
+                if (!posts?.length) {
+                    list.innerHTML = '<p class="text-center text-gray-400 py-10">작성한 글이 없습니다.</p>';
+                    return;
+                }
+                list.innerHTML = `<ul class="w-full" role="list">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors" role="listitem"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-black hover:text-[#D946EF]" aria-label="글 보기: ${post.title}">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><div class="flex items-center space-x-2"><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black" aria-label="글 수정: ${post.title}">수정</a>${window.isAdmin && window.isAdmin() ? `<button onclick="AdminSystem.deletePost('${post.id}', '${post.title}')" class="px-3 py-1 text-xs rounded-full bg-red-500 hover:bg-red-600 text-white" title="글 삭제">🗑️</button>` : ''}</div></li>`).join('')}</ul>`;
+                list.classList.remove('min-h-[200px]', 'flex', 'items-center', 'justify-center');
+                
+                // 새로고침 버튼 이벤트
+                DOM.$('#refresh-comments')?.addEventListener('click', () => {
+                    ViewRenderer.loadPendingComments();
+                });
+                
+                // 프로필 수정 버튼 이벤트
+                DOM.$('#edit-profile')?.addEventListener('click', () => {
+                    ViewRenderer.showProfileEditModal();
+                });
+                
+                // 프로필 정보 로드
+                ViewRenderer.loadUserProfile();
+            },
+
+            renderWriter: async (container, slug) => {
+                
+                // [SPEED UPDATE] 글 작성기 전용 스크립트 로드
+                try {
+                     await Promise.all([
+                        DOM.loadScript(Config.SCRIPT_URLS.exif, 'exif-lib'),
+                        DOM.loadScript(Config.SCRIPT_URLS.turndown, 'turndown-lib'),
+                        DOM.loadScript(Config.SCRIPT_URLS.marked, 'marked-lib') // 썸네일 생성을 위해 marked도 로드
+                    ]);
+                } catch (err) {
+                    console.error('글 작성기 스크립트 로드 실패:', err);
+                    container.innerHTML = `<p class="text-center text-red-400 py-20">에디터를 로드하는 중 오류가 발생했습니다. (스크립트 로드 실패)</p>`;
+                    return;
+                }
+
+                ViewRenderer.updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
+
+                // [수정] post 객체에 tags 기본값 추가
+                let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: Config.CATEGORIES[0], tags: '' };
+                if (slug) {
+                    const { data, error } = await Services.getPostBySlug(slug);
+                    if (error || !data || data.author_id !== State.user.id) {
+                        DOM.showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true);
+                        Router.navigateTo('/dashboard');
+                        return;
+                    }
+                    post = data;
+                }
+                
+                let currentCategories = [...Config.CATEGORIES];
+                if (post.category && !currentCategories.includes(post.category)) {
+                    currentCategories.unshift(post.category); 
+                }
+                
+                const categoryOpts = currentCategories.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
+                
+                // [수정] HTML 폼 구조 변경 (slug, tags 필드 추가)
+                container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12">
+                    <form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate>
+                        <input type="hidden" id="post-id" value="${post.id || ''}"> 
+                        
+                        <div>
+                            <select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select>
+                            <textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea>
+                        </div>
+
+                        <div>
+                            <label for="post-slug" class="block text-lg font-bold text-black mb-3">URL 주소 (Slug)</label>
+                            <input type="text" id="post-slug" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500 font-mono text-sm" placeholder="자동 생성 (영문으로 직접 수정 가능)" aria-label="URL 주소 입력" value="${post.slug || ''}">
+                            <p class="text-xs text-gray-500 mt-2">이 주소는 글의 URL이 됩니다. (예: /post/my-new-post) 비워두면 제목을 기반으로 자동 생성됩니다.</p>
+                        </div>
+                        
+                        <div>
+                            <label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label>
+                            <textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="tags" class="block text-lg font-bold text-black mb-3">태그 (Tags)</label>
+                            <input type="text" id="tags" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" placeholder="쉼표(,)로 구분하여 태그를 입력하세요 (예: AI, 보험, 부동산)" aria-label="태그 입력" value="${post.tags || ''}">
+                        </div>
+
+                        <div>
+                            <label for="content-editor" class="block text-lg font-bold text-black mb-3">본문 (Markdown)</label>
+                            <textarea id="content-editor" aria-label="본문 에디터 (마크다운)" placeholder="여기에 마크다운 형식으로 본문을 작성하세요...">${post.refined_content || ''}</textarea>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky">
+                            <div class="flex items-center gap-3">
+                                <button type="button" data-action="upload-image" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition" aria-label="이미지 업로드">이미지 업로드</button>
+                                <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" rel="noopener" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-100 text-black hover:bg-gray-200 transition" aria-label="마크다운 안내">마크다운 안내</a>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button>
+                                <button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>
+                                ${post.id ? `<button type="button" data-action="delete" class="ml-4 px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제</button>` : ''}
+                            </div>
+                        </div>
+                    </form>
+                </div>`;
+                
+                // 스크립트가 로드되었으므로, 이벤트를 안전하게 바인딩
+                ViewRenderer._bindWriterEvents(post);
             },
             
-            renderWriter: (container) => {
-                container.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
+            _bindWriterEvents: (post) => {
+                const form = DOM.$('#writer-form');
+                if (!form) return;
+
+                form.onsubmit = (e) => {
+                    e.preventDefault();
+                    if (!ViewRenderer._validateForm()) return;
+                    if (e.submitter?.dataset.action) App.handlePostSave(e.submitter.dataset.action, e.submitter);
+                };
+
+                const delBtn = form.querySelector('[data-action="delete"]');
+                if (delBtn) delBtn.onclick = (e) => { e.preventDefault(); App.handlePostDelete(post.id); };
+                
+                const uploadBtn = form.querySelector('[data-action="upload-image"]');
+                if (uploadBtn) uploadBtn.onclick = (e) => { 
+                    e.preventDefault(); 
+                    App.handleImageUpload(e.target); 
+                };
+
+                const contentEditor = form.querySelector('#content-editor');
+                if (contentEditor) {
+                    contentEditor.addEventListener('paste', App.handlePaste);
+                }
+                
+                // [수정] Slug 자동 생성 및 수동 입력 처리 로직
+                const titleEl = DOM.$('#title');
+                const slugEl = DOM.$('#post-slug');
+                
+                if (titleEl && slugEl) {
+                    const originalSlug = slugEl.value; // 로드 시점의 slug (수정 시)
+
+                    const generateSlugFromTitle = () => {
+                        return titleEl.value.toLowerCase().trim()
+                            .replace(/[^\w\s-]/g, '') // \w는 한글/영문/숫자/밑줄 포함
+                            .replace(/[\s_-]+/g, '-') // 공백, 밑줄, 하이픈을 단일 하이픈으로
+                            .replace(/^-+|-+$/g, ''); // 앞뒤 하이픈 제거
+                    };
+                    
+                    titleEl.oninput = DOM.debounce(() => {
+                        // 'data-manual' 속성이 'true'가 아닐 때만 (즉, 사용자가 수동 입력 안했을 때)
+                        if (slugEl.dataset.manual !== 'true') { 
+                            slugEl.value = generateSlugFromTitle();
+                        }
+                    }, 300);
+
+                    slugEl.oninput = () => {
+                        // 사용자가 한 글자라도 입력하면 수동 플래그 설정
+                        slugEl.dataset.manual = 'true';
+                        
+                        // [수정] 사용자가 slug를 직접 수정할 때 유효한 URL 문자로 강제 변환
+                        slugEl.value = slugEl.value.toLowerCase().trim()
+                            .replace(/[^\w\s-]/g, '')
+                            .replace(/[\s_-]+/g, '-')
+                            .replace(/^-+|-+$/g, '');
+                        
+                        if (slugEl.value.trim() === '') {
+                            // 사용자가 slug를 다 지우면 플래그 해제
+                            delete slugEl.dataset.manual; 
+                        }
+                    };
+
+                    // [수정] 만약 로드 시점에 slug가 있었다면 (글 수정), 수동 플래그를 미리 설정
+                    if (originalSlug) {
+                        slugEl.dataset.manual = 'true';
+                    }
+                }
             },
-            
+
+            _validateForm: () => {
+                const title = DOM.$('#title')?.value.trim();
+                const content = DOM.$('#content-editor')?.value.trim();
+                const cat = DOM.$('#category')?.value;
+                if (!title) { DOM.showToast('제목은 필수 항목입니다.', true); DOM.$('#title')?.focus(); return false; }
+                if (!cat) { DOM.showToast('카테고리를 선택해주세요.', true); DOM.$('#category')?.focus(); return false; }
+                if (!content) { DOM.showToast('본문은 필수 항목입니다.', true); DOM.$('#content-editor')?.focus(); return false; }
+                return true;
+            },
+
             showAuthModal: () => {
                 const modalId = 'auth-modal';
                 const html = `<div id="auth-modal-content" class="modal-content bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8 relative" role="document">
@@ -892,25 +1921,56 @@
 
                 ViewRenderer._setMetaTag('name', 'description', desc);
                 ViewRenderer._setMetaTag('name', 'author', 'InsureLog');
+                
+                // 추가 SEO 메타태그
+                ViewRenderer._setMetaTag('name', 'language', 'ko');
+                ViewRenderer._setMetaTag('name', 'revisit-after', '7 days');
+                ViewRenderer._setMetaTag('name', 'rating', 'general');
+                ViewRenderer._setMetaTag('name', 'distribution', 'global');
+                ViewRenderer._setMetaTag('name', 'copyright', 'InsureLog');
+                ViewRenderer._setMetaTag('name', 'generator', 'InsureLog SPA');
+                
+                // 모바일 최적화
+                ViewRenderer._setMetaTag('name', 'format-detection', 'telephone=no');
+                ViewRenderer._setMetaTag('name', 'apple-mobile-web-app-capable', 'yes');
+                ViewRenderer._setMetaTag('name', 'apple-mobile-web-app-status-bar-style', 'default');
+                ViewRenderer._setMetaTag('name', 'apple-mobile-web-app-title', 'InsureLog');
 
                 ViewRenderer._setMetaTag('property', 'og:type', post ? 'article' : 'website');
                 ViewRenderer._setMetaTag('property', 'og:title', title);
                 ViewRenderer._setMetaTag('property', 'og:description', desc);
                 ViewRenderer._setMetaTag('property', 'og:url', url);
                 ViewRenderer._setMetaTag('property', 'og:image', img);
+                ViewRenderer._setMetaTag('property', 'og:image:width', '1200');
+                ViewRenderer._setMetaTag('property', 'og:image:height', '630');
+                ViewRenderer._setMetaTag('property', 'og:image:alt', post ? post.title : 'InsureLog 로고');
                 ViewRenderer._setMetaTag('property', 'og:site_name', 'InsureLog');
+                ViewRenderer._setMetaTag('property', 'og:locale', 'ko_KR');
 
                 ViewRenderer._setMetaTag('name', 'twitter:card', 'summary_large_image');
                 ViewRenderer._setMetaTag('name', 'twitter:title', title);
                 ViewRenderer._setMetaTag('name', 'twitter:description', desc);
                 ViewRenderer._setMetaTag('name', 'twitter:image', img);
+                ViewRenderer._setMetaTag('name', 'twitter:image:alt', post ? post.title : 'InsureLog 로고');
+                ViewRenderer._setMetaTag('name', 'twitter:creator', '@InsureLog');
+                ViewRenderer._setMetaTag('name', 'twitter:site', '@InsureLog');
 
                 ViewRenderer._setMetaTag('property', 'article:published_time', post ? post.created_at : null);
                 ViewRenderer._setMetaTag('property', 'article:modified_time', post ? (post.updated_at || post.created_at) : null);
-                ViewRenderer._setMetaTag('property', 'article:section', post ? post.category : null); 
-
-                const postTags = (post?.tags && Array.isArray(post.tags)) ? post.tags.join(', ') : '';
+                ViewRenderer._setMetaTag('property', 'article:section', post ? post.category : null);
+                ViewRenderer._setMetaTag('property', 'article:author', 'InsureLog');
                 
+                // 읽기 시간 추가
+                if (post && post.refined_content) {
+                    const wordCount = post.refined_content.split(/\s+/).length;
+                    const readingTime = Math.ceil(wordCount / 200); // 분당 200단어 기준
+                    ViewRenderer._setMetaTag('name', 'reading-time', `${readingTime}분`);
+                }
+
+                // [수정] keywords에 post.tags 추가 - null/undefined 안전 처리
+                const postTags = (post?.tags && typeof post.tags === 'string') 
+                    ? post.tags.split(',').map(t => t.trim()).filter(Boolean).join(', ')
+                    : '';
                 const keywords = post 
                     ? `InsureLog, ${post.category || ''}, ${(post.title || '').split(' ').slice(0, 3).join(', ')}${postTags ? `, ${postTags}` : ''}`
                     : 'InsureLog, AI, 보험, 법률, 부동산, 금융, 카드, 대출, 생활 정보, 기술 블로그, 인공지능';
@@ -924,27 +1984,55 @@
                 const publisherData = { 
                     "@type": "Organization", 
                     "name": "InsureLog", 
+                    "url": Config.SITE_URL,
                     "logo": { 
                         "@type": "ImageObject", 
-                        "url": Config.DEFAULT_OG_IMAGE 
-                    } 
+                        "url": Config.DEFAULT_OG_IMAGE,
+                        "width": 512,
+                        "height": 512
+                    },
+                    "sameAs": [
+                        "https://twitter.com/InsureLog",
+                        "https://facebook.com/InsureLog"
+                    ]
                 };
                 
                 let schemaData;
                 if (post) {
+                    const wordCount = post.refined_content ? post.refined_content.split(/\s+/).length : 0;
+                    const readingTime = Math.ceil(wordCount / 200);
+                    
                     schemaData = {
                         "@context": "https://schema.org",
                         "@type": "BlogPosting",
                         "mainEntityOfPage": { "@type": "WebPage", "@id": url },
                         "headline": post.title,
                         "description": desc,
-                        "image": img ? [img] : undefined,
-                        "author": publisherData, 
+                        "image": img ? {
+                            "@type": "ImageObject",
+                            "url": img,
+                            "width": 1200,
+                            "height": 630
+                        } : undefined,
+                        "author": {
+                            "@type": "Person",
+                            "name": "InsureLog",
+                            "url": Config.SITE_URL
+                        },
                         "publisher": publisherData, 
                         "datePublished": post.created_at, 
                         "dateModified": post.updated_at || post.created_at, 
-                        "articleSection": post.category, 
-                        "keywords": `${post.category}, ${post.title}${postTags ? `, ${postTags}` : ''}`
+                        "articleSection": post.category,
+                        "wordCount": wordCount,
+                        "timeRequired": `PT${readingTime}M`,
+                        "inLanguage": "ko-KR",
+                        "keywords": `${post.category}, ${post.title}${postTags ? `, ${postTags}` : ''}`,
+                        "isPartOf": {
+                            "@type": "Blog",
+                            "@id": Config.SITE_URL,
+                            "name": "InsureLog",
+                            "description": "AI, 보험, 금융, 법률, 부동산 전문 블로그"
+                        }
                     };
                 } else {
                     schemaData = {
@@ -953,7 +2041,16 @@
                         "url": Config.SITE_URL,
                         "name": "InsureLog",
                         "description": desc,
-                        "publisher": publisherData
+                        "publisher": publisherData,
+                        "inLanguage": "ko-KR",
+                        "potentialAction": {
+                            "@type": "SearchAction",
+                            "target": {
+                                "@type": "EntryPoint",
+                                "urlTemplate": `${Config.SITE_URL}/search?q={search_term_string}`
+                            },
+                            "query-input": "required name=search_term_string"
+                        }
                     };
                 }
                 ld.textContent = JSON.stringify(schemaData, null, 2); 
@@ -961,19 +2058,224 @@
                 if (!DOM.$('#ld-json')) {
                     document.head.appendChild(ld);
                 }
+            },
+
+            // 사이트맵 생성 기능 추가
+            generateSitemap: async () => {
+                try {
+                    const { data: posts, error } = await Services.supabase
+                        .from(Config.DB_TABLE_NAME)
+                        .select('slug, created_at, updated_at, category')
+                        .eq('status', 'published')
+                        .order('created_at', { ascending: false });
+
+                    if (error) throw error;
+
+                    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>${Config.SITE_URL}</loc>
+        <lastmod>${new Date().toISOString()}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+    ${posts.map(post => `
+    <url>
+        <loc>${Config.SITE_URL}/post/${post.slug}</loc>
+        <lastmod>${new Date(post.updated_at || post.created_at).toISOString()}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>`).join('')}
+    <url>
+        <loc>${Config.SITE_URL}/category/AI</loc>
+        <lastmod>${new Date().toISOString()}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>${Config.SITE_URL}/category/보험</loc>
+        <lastmod>${new Date().toISOString()}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>${Config.SITE_URL}/category/금융</loc>
+        <lastmod>${new Date().toISOString()}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>${Config.SITE_URL}/category/법률</loc>
+        <lastmod>${new Date().toISOString()}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>${Config.SITE_URL}/category/부동산</loc>
+        <lastmod>${new Date().toISOString()}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+</urlset>`;
+
+                    // 사이트맵을 다운로드 가능하게 제공
+                    const blob = new Blob([sitemap], { type: 'application/xml' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'sitemap.xml';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    console.log('사이트맵이 생성되었습니다.');
+                    return sitemap;
+                } catch (error) {
+                    console.error('사이트맵 생성 실패:', error);
+                    return null;
+                }
+            },
+
+            // 댓글 관리 기능
+            loadPendingComments: async () => {
+                const container = DOM.$('#pending-comments');
+                if (!container) return;
+
+                try {
+                    container.innerHTML = '<div class="loader-spinner"></div>';
+                    
+                    // 승인 대기 중인 댓글 조회
+                    const { data: comments, error } = await window.supabase
+                        .from('comments')
+                        .select(`
+                            id, content, author_name, author_email, created_at, post_id,
+                            posts:post_id (title, slug)
+                        `)
+                        .eq('is_approved', false)
+                        .order('created_at', { ascending: false });
+
+                    if (error) {
+                        console.error('[Dashboard] 댓글 로드 오류:', error);
+                        container.innerHTML = '<p class="text-center text-red-500 py-4">댓글을 불러오는 데 실패했습니다.</p>';
+                        return;
+                    }
+
+                    if (!comments?.length) {
+                        container.innerHTML = '<p class="text-center text-gray-500 py-4">승인 대기 중인 댓글이 없습니다.</p>';
+                        return;
+                    }
+
+                    // 댓글 목록 렌더링
+                    const commentsHtml = comments.map(comment => `
+                        <div class="border border-gray-200 rounded-lg p-4 mb-3 bg-white" data-comment-id="${comment.id}">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="font-semibold text-sm text-gray-900">${ViewRenderer.escapeHtml(comment.author_name)}</span>
+                                        <span class="text-xs text-gray-500">${ViewRenderer.escapeHtml(comment.author_email)}</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400 mb-2">
+                                        ${comment.posts ? `글: "${ViewRenderer.escapeHtml(comment.posts.title)}"` : '글 정보 없음'} • 
+                                        ${new Date(comment.created_at).toLocaleString('ko-KR')}
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="ViewRenderer.approveComment('${comment.id}')" 
+                                            class="px-3 py-1 text-xs rounded-full bg-green-500 text-white hover:bg-green-600 transition">
+                                        승인
+                                    </button>
+                                    <button onclick="ViewRenderer.deleteComment('${comment.id}')" 
+                                            class="px-3 py-1 text-xs rounded-full bg-red-500 text-white hover:bg-red-600 transition">
+                                        삭제
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded">
+                                ${ViewRenderer.escapeHtml(comment.content)}
+                            </div>
+                        </div>
+                    `).join('');
+
+                    container.innerHTML = `
+                        <div class="mb-4 text-sm text-gray-600">
+                            총 ${comments.length}개의 댓글이 승인을 기다리고 있습니다.
+                        </div>
+                        ${commentsHtml}
+                    `;
+
+                } catch (error) {
+                    console.error('[Dashboard] 댓글 로드 중 오류:', error);
+                    container.innerHTML = '<p class="text-center text-red-500 py-4">댓글을 불러오는 중 오류가 발생했습니다.</p>';
+                }
+            },
+
+            // 댓글 승인
+            approveComment: async (commentId) => {
+                try {
+                    const { error } = await window.supabase
+                        .from('comments')
+                        .update({ is_approved: true })
+                        .eq('id', commentId);
+
+                    if (error) {
+                        console.error('[Dashboard] 댓글 승인 오류:', error);
+                        DOM.showToast('댓글 승인에 실패했습니다.', true);
+                        return;
+                    }
+
+                    DOM.showToast('댓글이 승인되었습니다.');
+                    
+                    // 댓글 목록 새로고침
+                    ViewRenderer.loadPendingComments();
+
+                } catch (error) {
+                    console.error('[Dashboard] 댓글 승인 중 오류:', error);
+                    DOM.showToast('댓글 승인 중 오류가 발생했습니다.', true);
+                }
+            },
+
+            // 댓글 삭제
+            deleteComment: async (commentId) => {
+                if (!confirm('이 댓글을 삭제하시겠습니까?')) return;
+
+                try {
+                    const { error } = await window.supabase
+                        .from('comments')
+                        .delete()
+                        .eq('id', commentId);
+
+                    if (error) {
+                        console.error('[Dashboard] 댓글 삭제 오류:', error);
+                        DOM.showToast('댓글 삭제에 실패했습니다.', true);
+                        return;
+                    }
+
+                    DOM.showToast('댓글이 삭제되었습니다.');
+                    
+                    // 댓글 목록 새로고침
+                    ViewRenderer.loadPendingComments();
+
+                } catch (error) {
+                    console.error('[Dashboard] 댓글 삭제 중 오류:', error);
+                    DOM.showToast('댓글 삭제 중 오류가 발생했습니다.', true);
+                }
+            },
+
+            // HTML 이스케이프 (보안)
+            escapeHtml: (text) => {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
         };
 
         /**
          * [Module: Router]
-         * 브라우저 히스토리 및 뷰 전환을 관리합니다.
+         * 브라우저 히스토리 및 뷰 전환을 관리합니다. (변경 없음)
          */
         const Router = {
-            adminModuleLoaded: false, // [OPTIMIZE] 관리자 모듈 로드 여부 플래그
-
             init: () => {
                 window.addEventListener('popstate', Router.handleRouting);
-                Router.handleRouting();
+                Router.handleRouting(); // 초기 라우팅
             },
 
             navigateTo: (path, replace = false) => {
@@ -994,14 +2296,17 @@
                 }
                 const next = DOM.$(`#${viewId}`);
                 if (next) {
-                    // [OPTIMIZE] 뷰 렌더링 전에 로더를 즉시 표시
                     next.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
                     next.classList.add('active');
                     await DOM.animateSwitch(next);
                     try {
-                        await callback(next); // 뷰 렌더링 (admin.js 로딩 포함)
+                        // [수정] 뷰 렌더링 전 로그 추가
+                        console.log(`[Router] ${viewId} 뷰 렌더링 시작`);
+                        await callback(next); // 뷰 렌더링 함수 실행
+                        console.log(`[Router] ${viewId} 뷰 렌더링 완료`);
                     } catch (error) {
                         console.error(`Error rendering ${viewId}:`, error);
+                        // [수정] 더 자세한 에러 정보 표시
                         next.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.<br><small class="text-gray-300">${error.message || '알 수 없는 오류'}</small></p>`;
                     }
                     window.scrollTo(0, 0);
@@ -1009,7 +2314,7 @@
             },
 
             handleRouting: () => {
-                if (!State.isAuthReady) return; 
+                if (!State.isAuthReady) return; // 인증 상태 확인 전에는 라우팅 금지
                 
                 const path = window.location.pathname;
                 const params = new URLSearchParams(window.location.search);
@@ -1017,48 +2322,20 @@
                 const route = parts[0] || 'library';
                 const param = parts[1] || null;
                 
-                // [OPTIMIZE] 라우팅 로직 변경
+                if (!State.user && ['dashboard', 'writer'].includes(route)) {
+                    DOM.showToast('이 기능을 사용하려면 로그인이 필요합니다.', true);
+                    Router.navigateTo('/');
+                    return;
+                }
+                
                 switch (route) {
                     case 'post': 
                         return Router.switchView('view-post', el => ViewRenderer.renderPost(el, param));
-                    
-                    case 'dashboard':
-                    case 'writer':
-                        if (!State.user) {
-                            DOM.showToast('이 기능을 사용하려면 로그인이 필요합니다.', true);
-                            Router.navigateTo('/');
-                            return;
-                        }
-
-                        const viewId = route === 'dashboard' ? 'view-dashboard' : 'view-writer';
-                        
-                        Router.switchView(viewId, async (el) => {
-                            // admin.js 모듈이 로드되지 않았으면 로드
-                            if (!Router.adminModuleLoaded) {
-                                try {
-                                    console.log('Admin module 로딩 시작...');
-                                    // './admin.js' 에서 default export를 가져와 즉시 실행
-                                    const module = await import('./admin.js');
-                                    module.default(App, ViewRenderer, DOM, Services, State, Config, Router);
-                                    Router.adminModuleLoaded = true;
-                                    console.log('Admin module 로딩 완료 및 적용됨.');
-                                } catch (err) {
-                                    console.error('Admin module 로드 실패', err);
-                                    el.innerHTML = '<p class="text-center text-red-500 py-20">관리자 기능을 불러오는 데 실패했습니다.</p>';
-                                    return;
-                                }
-                            }
-                            
-                            // 모듈이 로드된 후, ViewRenderer의 실제 함수 호출
-                            if (route === 'dashboard') {
-                                ViewRenderer.renderDashboard(el); 
-                            } else {
-                                ViewRenderer.renderWriter(el, param);
-                            }
-                        });
-                        return;
-
-                    default: // 'library' (홈)
+                    case 'dashboard': 
+                        return Router.switchView('view-dashboard', el => ViewRenderer.renderDashboard(el));
+                    case 'writer': 
+                        return Router.switchView('view-writer', el => ViewRenderer.renderWriter(el, param));
+                    default: 
                         const page = parseInt(params.get('page'), 10) || 1;
                         State.currentCategory = params.get('category') || '전체';
                         return Router.switchView('view-library', el => ViewRenderer.renderLibrary(el, page, State.currentCategory));
@@ -1068,10 +2345,40 @@
 
         /**
          * [Module: App]
-         * 애플리케이션의 메인 진입점. 방문자용 핸들러만 포함합니다.
+         * 애플리케이션의 메인 진입점. 초기화 및 전역 이벤트 핸들러를 관리합니다.
          */
         const App = {
             init: () => {
+                // 성능 최적화 모듈 초기화
+                Performance.init();
+                
+                // 애드센스 최적화 모듈 초기화
+                AdSense.init();
+                
+                // 콘텐츠 관리 모듈 초기화
+                ContentManager.initSearch();
+                
+                // 다크모드 초기화
+                if (typeof DarkMode !== 'undefined') {
+                    DarkMode.init();
+                }
+                
+                // 읽기 시간 기능 초기화
+                if (typeof ReadingTime !== 'undefined') {
+                    ReadingTime.init();
+                }
+                
+                // 소셜 공유 기능 초기화
+                if (typeof SocialShare !== 'undefined') {
+                    SocialShare.init();
+                }
+                
+                // Analytics 초기화
+                if (typeof Analytics !== 'undefined') {
+                    Analytics.init();
+                    Analytics.trackPerformance();
+                }
+                
                 Services.init();
                 App.bindGlobalListeners();
 
@@ -1134,15 +2441,541 @@
                 Router.navigateTo('/', true);
             },
 
-            // [OPTIMIZE] 관리자용 함수들은 admin.js로 이동했습니다.
-            // admin.js가 로드되면 App 객체에 동적으로 주입(attach)될 것입니다.
+            handlePostSave: async (action, btn) => {
+                // [SPEED UPDATE] 썸네일 생성을 위한 marked 라이브러리 의존성 확인
+                if (typeof marked === 'undefined') {
+                    DOM.showToast('라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.', true);
+                    return;
+                }
+
+                const origText = btn.textContent;
+                btn.disabled = true;
+                btn.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
+                
+                try {
+                    const title = DOM.$('#title').value.trim();
+                    const status = action === 'publish' ? 'published' : 'draft';
+                    const content = DOM.$('#content-editor').value; 
+                    
+                    if (!content || content.trim().length < 10) {
+                        throw new Error('본문이 너무 짧습니다.');
+                    }
+                    
+                    let summary = DOM.$('#summary').value.trim();
+                    if (!summary) {
+                        const plainText = content.replace(/!\[.*?\]\(.*?\)/g, '') 
+                                              .replace(/\[.*?\]\(.*?\)/g, '$1') 
+                                              .replace(/#{1,6}\s/g, '') 
+                                              .replace(/[*_`~>|]/g, '') 
+                                              .replace(/\s+/g, ' ') 
+                                              .trim();
+                        summary = plainText.slice(0, 150) + (plainText.length > 150 ? '...' : '');
+                    }
+                    
+                    let thumb = null;
+                    
+                    // [STYLE FIX] 붙여넣은 HTML 태그를 정규식으로 제거한 후 썸네일 추출
+                    const contentForThumb = content
+                        .replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1') // span 태그 제거
+                        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n') // p 태그는 내용만 남김
+                        .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n'); // div 태그는 내용만 남김
+                        
+                    const parsedForThumb = marked.parse(contentForThumb);
+                    const temp = document.createElement('div'); 
+                    temp.innerHTML = parsedForThumb;
+                    thumb = temp.querySelector('img')?.src || null;
+                    
+                    const id = DOM.$('#post-id').value || null;
+                    
+                    // [수정] Slug 로직: 수동 입력값을 우선하고, 없으면 제목 기반으로 생성
+                    let slug = DOM.$('#post-slug').value.trim();
+                    if (!slug) {
+                        slug = title.toLowerCase().trim()
+                            .replace(/[^\w\s-]/g, '')
+                            .replace(/[\s_-]+/g, '-')
+                            .replace(/^-+|-+$/g, '');
+                    }
+                    
+                    if (!id) { // 새 글일 때만 중복 검사
+                        const { data } = await Services.checkSlugExists(slug);
+                        if (data) slug += `-${Date.now().toString().slice(-6)}`;
+                    }
+                    
+                    // [수정] postData에 tags 추가
+                    const postData = { 
+                        id: id,
+                        title, slug, status, summary, 
+                        author_id: State.user.id, 
+                        refined_content: content, 
+                        category: DOM.$('#category').value, 
+                        thumbnail_url: thumb,
+                        tags: DOM.$('#tags').value.trim() || null, // [신규] tags 값 추가
+                        updated_at: new Date().toISOString() 
+                    };
+                    
+                    const { data: savedPost, error } = await Services.savePost(postData);
+                    if (error) throw error;
+                    
+                    DOM.showToast(status === 'published' ? '발행되었습니다!' : '저장되었습니다.');
+                    Router.navigateTo(status === 'published' ? `/post/${savedPost.slug}` : '/dashboard');
+
+                } catch (e) {
+                    console.error("Save error:", e);
+                    DOM.showToast(`저장 실패: ${e.message}`, true);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = origText;
+                }
+            },
+
+            handlePostDelete: async (id) => {
+                if (!id) return;
+                const confirm = await ViewRenderer.showDeleteConfirmModal('정말 삭제하시겠습니까? 되돌릴 수 없습니다.');
+                if (!confirm) return;
+                
+                DOM.showToast('삭제 중...');
+                const { error } = await Services.deletePost(id);
+                if (error) {
+                    DOM.showToast(`삭제 실패: ${error.message}`, true);
+                } else {
+                    DOM.showToast('삭제되었습니다.');
+                    Router.navigateTo('/dashboard');
+                }
+            },
+
+            /**
+             * [PASTE FIX]
+             * 붙여넣기 핸들러를 수정하여 HTML을 Markdown으로 변환합니다.
+             * (리스트 깨짐 문제 해결)
+             */
+            handlePaste: (e) => {
+                // [SPEED UPDATE] turndown 라이브러리 의존성 확인
+                if (typeof TurndownService === 'undefined') {
+                    DOM.showToast('붙여넣기 기능 로딩 중... 일반 텍스트로 붙여넣습니다.', true);
+                    return; // 기본 동작(e.preventDefault() 없음)을 허용하여 일반 텍스트로 붙여넣기
+                }
+
+                const textarea = DOM.$('#content-editor');
+                if (!textarea) return;
+                
+                e.preventDefault(); // 기본 붙여넣기 동작 중지
+
+                const clipboardData = e.clipboardData;
+                const pastedTextPlain = clipboardData.getData('text/plain');
+                const pastedTextHtml = clipboardData.getData('text/html');
+
+                let contentToInsert = pastedTextPlain; // 기본값: 일반 텍스트
+                let restOfText = '';
+
+                // 1. JSON-LD 스키마 확인 (기존 기능)
+                const jsonBlobRegex = /^({[\s\S]*?})([\s\S]*)/m;
+                const match = pastedTextPlain.match(jsonBlobRegex);
+
+                if (match && match[1]) {
+                    const jsonString = match[1].trim();
+                    restOfText = match[2] ? match[2].trim() : '';
+
+                    try {
+                        const schema = JSON.parse(jsonString);
+                        if (schema['@context'] && schema['@context'].includes('schema.org')) {
+                            if (schema.headline) DOM.$('#title').value = schema.headline;
+                            if (schema.description) DOM.$('#summary').value = schema.description;
+                            
+                            // [수정] tags 필드도 채우기
+                            const keywords = schema.keywords; // "tag1, tag2" 또는 ["tag1", "tag2"]
+                            if (keywords) {
+                                if (Array.isArray(keywords)) {
+                                    DOM.$('#tags').value = keywords.join(', ');
+                                } else if (typeof keywords === 'string') {
+                                    DOM.$('#tags').value = keywords;
+                                }
+                            }
+
+                            const categorySource = schema.articleSection || (Array.isArray(schema.keywords) ? schema.keywords[0] : null);
+                            if (categorySource) {
+                                const matchedCategory = Config.CATEGORIES.find(c => c.toLowerCase() === categorySource.toLowerCase().trim());
+                                if (matchedCategory) DOM.$('#category').value = matchedCategory;
+                            }
+                            
+                            contentToInsert = restOfText; 
+                            DOM.showToast('JSON-LD 스키마를 감지하여 필드를 자동 완성했습니다.', false);
+                        }
+                    } catch (err) {
+                        console.warn('Pasted content start failed to parse as JSON.', err);
+                    }
+                } 
+                
+                // 2. [PASTE FIX] HTML 콘텐츠가 있고, JSON-LD가 아닌 경우
+                if (!match || (match && contentToInsert === pastedTextPlain)) { 
+                    if (pastedTextHtml && typeof TurndownService !== 'undefined') {
+                        try {
+                            if (!window.turndownService) {
+                                window.turndownService = new TurndownService({
+                                    headingStyle: 'atx', // 헤더: #
+                                    codeBlockStyle: 'fenced', // 코드블록: ```
+                                    bulletListMarker: '*', // UL 리스트: *
+                                    emDelimiter: '_', // 기울임: _
+                                });
+                                
+                                // [PASTE FIX - 1] 'keep' 규칙 수정
+                                // 'style' 속성이 있거나, 'u', 's' 태그만 HTML로 유지합니다.
+                                // 'p', 'div', 'span'을 제거하여, 이 태그들이 래퍼(wrapper)로
+                                // 사용될 때 그 안의 리스트가 마크다운으로 올바르게 변환되도록 합니다.
+                                window.turndownService.keep(function (node) {
+                                    const nodeName = node.nodeName.toLowerCase();
+                                    if (node.hasAttribute('style')) {
+                                        return true; // style 속성이 있으면 무조건 HTML로 유지
+                                    }
+                                    // style이 없어도 유지할 태그들 (밑줄, 취소선)
+                                    return ['u', 's'].includes(nodeName); 
+                                });
+
+                                // [PASTE FIX - 2] 리스트 항목(li) 변환 규칙 추가
+                                // <li><p>항목</p></li> 처럼 불필요한 <p> 태그를 제거하여
+                                // 리스트 항목의 불필요한 줄바꿈을 방지합니다.
+                                window.turndownService.addRule('listItemFix', {
+                                    filter: 'li',
+                                    replacement: function (content, node, options) {
+                                        let originalContent = content; // 원본 content 백업
+
+                                        // 1. content 정리 (Turndown 기본 동작 모방)
+                                        content = content
+                                            .replace(/^\n+/, '') // 앞쪽 줄바꿈 제거
+                                            .replace(/\n+$/, '\n') // 뒤쪽 줄바꿈 하나만 남김
+                                            .replace(/\n/gm, '\n    '); // 4칸 들여쓰기
+
+                                        // 2. <li><p>content</p></li> 케이스 감지
+                                        // Google Docs, MS Word 등에서 복사 시 자주 발생
+                                        const childNodes = node.childNodes;
+                                        if (childNodes.length === 1 && childNodes[0].nodeName.toLowerCase() === 'p') {
+                                            // <li> 안에 <p> 하나만 있는 경우, <p> 태그를 무시하고 내용만 사용
+                                            content = childNodes[0].innerHTML.trim();
+                                        } else {
+                                            // 복잡한 중첩 리스트나 여러 문단이 있는 경우
+                                            // Turndown이 이미 <p>를 포함하여 content를 생성했을 수 있음
+                                            // 이 경우, 생성된 <p> 태그를 제거
+                                            content = content.trim().replace(/^<p>/i, '').replace(/<\/p>$/i, '').trim();
+                                            
+                                            // 만약 content가 비어있고, originalContent에 <p> 태그가 있었다면,
+                                            // 이는 Turndown이 <p>를 처리한 것이므로 originalContent를 사용
+                                            if(content === '' && /<p>/.test(originalContent)) {
+                                                content = originalContent
+                                                    .replace(/^\n+/, '') 
+                                                    .replace(/\n+$/, '\n')
+                                                    .replace(/\n/gm, '\n    ');
+                                            }
+                                            
+                                            // <p> 태그 간의 줄바꿈 처리
+                                            content = content.replace(/<\/p>\s*<p>/gi, '\n\n    '); 
+                                            // 남은 <p> 태그 제거
+                                            content = content.replace(/<p>|<\/p>/gi, '');
+                                        }
+                                        
+                                        // 3. 접두사(Prefix) 생성
+                                        let prefix = options.bulletListMarker + '   '; // 4 space indent
+                                        let parent = node.parentNode;
+                                        
+                                        while(parent && parent.nodeName.toLowerCase() !== 'ul' && parent.nodeName.toLowerCase() !== 'ol') {
+                                            parent = parent.parentNode;
+                                        }
+
+                                        if (parent && parent.nodeName.toLowerCase() === 'ol') {
+                                            let start = parent.getAttribute('start');
+                                            let index = Array.prototype.indexOf.call(parent.children, node);
+                                            prefix = (start ? Number(start) + index : index + 1) + '.  '; // 3 space indent
+                                        }
+                                        
+                                        return prefix + content + (node.nextSibling && !/\n$/.test(content) ? '\n' : '');
+                                    }
+                                });
+                            }
+                            
+                            contentToInsert = window.turndownService.turndown(pastedTextHtml);
+                            contentToInsert = `\n${contentToInsert}\n`;
+                            
+                            DOM.showToast('HTML을 마크다운(리스트 수정)으로 변환했습니다.', false);
+                            
+                        } catch (err) {
+                            console.warn('HTML to Markdown conversion failed. Falling back to plain text.', err);
+                            contentToInsert = pastedTextPlain; 
+                        }
+                    } else {
+                        contentToInsert = pastedTextPlain;
+                    }
+                }
+
+                // 3. 최종적으로 변환되거나 원본인 텍스트를 에디터에 삽입
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                textarea.value = textarea.value.substring(0, start) + contentToInsert + textarea.value.substring(end);
+                
+                textarea.selectionStart = textarea.selectionEnd = start + contentToInsert.length;
+                textarea.focus();
+            },
+
+            // 제목에서 키워드를 추출하여 alt 태그 생성
+            generateAltTagFromTitle: () => {
+                const titleEl = DOM.$('#title');
+                if (!titleEl || !titleEl.value.trim()) {
+                    return '이미지';
+                }
+                
+                const title = titleEl.value.trim();
+                
+                // 불용어 목록 (SEO에 도움이 되지 않는 단어들)
+                const stopWords = [
+                    '그리고', '하지만', '그런데', '그래서', '또한', '그러나', '따라서', '즉',
+                    '이것', '그것', '저것', '이런', '그런', '저런', '이렇게', '그렇게', '저렇게',
+                    '있다', '없다', '되다', '하다', '이다', '아니다', '같다', '다르다',
+                    '의', '를', '을', '가', '이', '은', '는', '에', '에서', '로', '으로', '와', '과',
+                    '그', '저', '이', '그냥', '정말', '너무', '매우', '아주', '조금', '많이',
+                    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'
+                ];
+                
+                // 제목을 단어로 분리 (한글, 영문, 숫자만 유지)
+                const words = title
+                    .replace(/[^\w\s가-힣]/g, ' ') // 특수문자 제거
+                    .split(/\s+/) // 공백으로 분리
+                    .filter(word => word.length > 1) // 1글자 단어 제거
+                    .filter(word => !stopWords.includes(word.toLowerCase())) // 불용어 제거
+                    .slice(0, 3); // 최대 3개 키워드만 사용
+                
+                if (words.length === 0) {
+                    return '이미지';
+                }
+                
+                // 키워드들을 조합하여 자연스러운 alt 태그 생성
+                if (words.length === 1) {
+                    return `${words[0]} 관련 이미지`;
+                } else if (words.length === 2) {
+                    return `${words[0]}, ${words[1]} 이미지`;
+                } else {
+                    return `${words[0]}, ${words[1]}, ${words[2]} 관련 이미지`;
+                }
+            },
+
+            handleImageUpload: async (btn) => {
+                // [SPEED UPDATE] exif 라이브러리 의존성 확인
+                if (typeof EXIF === 'undefined') {
+                    DOM.showToast('이미지 처리 라이브러리 로딩 중... 잠시 후 다시 시도하세요.', true);
+                    return;
+                }
+
+                const input = document.createElement('input');
+                input.type = 'file'; input.accept = 'image/*';
+                input.click();
+                
+                input.onchange = async () => {
+                    const file = input.files[0];
+                    if (!file) return;
+
+                    const origText = btn.textContent;
+                    btn.disabled = true; btn.textContent = '업로드 중...';
+                    DOM.showToast('이미지 업로드 중...');
+
+                    try {
+                        const fileToUpload = await App.convertToWebP(file);
+                        const url = await Services.uploadImage(fileToUpload);
+                        
+                        const textarea = DOM.$('#content-editor');
+                        if (textarea) {
+                            // 제목에서 키워드를 추출하여 자동으로 alt 태그 생성
+                            const altText = App.generateAltTagFromTitle();
+                            const markdownImage = `\n![${altText}](${url})\n`;
+                            
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            textarea.value = textarea.value.substring(0, start) + markdownImage + textarea.value.substring(end);
+                            
+                            // alt 텍스트 부분을 선택하여 사용자가 수정할 수 있도록 함
+                            const altStartPos = start + markdownImage.indexOf('[') + 1;
+                            const altEndPos = altStartPos + altText.length;
+                            textarea.selectionStart = altStartPos;
+                            textarea.selectionEnd = altEndPos;
+                            textarea.focus();
+                        }
+
+                        DOM.showToast('업로드 완료!', false);
+                    } catch (e) {
+                        console.error('Upload failed:', e);
+                        DOM.showToast(`이미지 업로드 실패: ${e.message}`, true);
+                    } finally {
+                        btn.disabled = false; btn.textContent = origText;
+                    }
+                };
+            },
+
+            getOrientation: (file) => new Promise((res) => {
+                // [SPEED UPDATE] exif 라이B러리 의존성 확인
+                if (typeof EXIF === 'undefined') { 
+                    console.warn('EXIF.js not loaded. Assuming orientation 1.');
+                    res(1); 
+                    return; 
+                }
+                EXIF.getData(file, function() { 
+                    res(EXIF.getTag(this, 'Orientation') || 1);
+                });
+            }),
+
+            convertToWebP: (file, quality = 0.8) => new Promise((res) => {
+                // [SPEED UPDATE] exif 라이브러리 의존성 확인
+                if (typeof FileReader === 'undefined' || typeof Image === 'undefined' || typeof EXIF === 'undefined') {
+                    console.warn('WebP 변환 API 미지원. 원본 파일 사용.');
+                    res(file);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = async (e) => {
+                    const img = new Image(); 
+                    img.src = e.target.result;
+                    img.onload = async () => {
+                        const orient = await App.getOrientation(file); 
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        let w = img.width, h = img.height;
+                        if (orient >= 5 && orient <= 8) { [w, h] = [h, w]; }
+                        canvas.width = w; canvas.height = h;
+                        const transforms = {2: [-1,0,0,1,w,0], 3: [-1,0,0,-1,w,h], 4: [1,0,0,-1,0,h], 5: [0,1,1,0,0,0], 6: [0,1,-1,0,h,0], 7: [0,-1,-1,0,h,w], 8: [0,-1,1,0,0,w]};
+                        ctx.transform(...(transforms[orient] || [1,0,0,1,0,0]));
+                        ctx.drawImage(img, 0, 0);
+                        
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                let baseName = file.name ? file.name.split('.').slice(0, -1).join('.') : 'image';
+                                const webpFile = new File([blob], `${baseName}.webp`, { type: 'image/webp' });
+                                res(webpFile);
+                            } else {
+                                 res(file); // 변환 실패 시 원본
+                            }
+                        }, 'image/webp', quality);
+                    };
+                    img.onerror = () => res(file); // 이미지 로드 실패 시 원본
+                };
+                reader.onerror = () => res(file); // 리더 실패 시 원본
+            })
         };
 
         // --- [APP START] ---
         document.addEventListener('DOMContentLoaded', App.init);
 
     </script>
+    
+    <!-- PWA Service Worker 등록 -->
+    <script>
+        // Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('PWA: Service Worker 등록 성공', registration.scope);
+                        
+                        // 업데이트 확인
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // 새 버전 사용 가능 알림
+                                    if (confirm('새로운 버전이 사용 가능합니다. 업데이트하시겠습니까?')) {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.log('PWA: Service Worker 등록 실패', error);
+                    });
+                
+                // Service Worker 메시지 수신
+                navigator.serviceWorker.addEventListener('message', event => {
+                    if (event.data && event.data.type === 'SW_UPDATED') {
+                        window.location.reload();
+                    }
+                });
+            });
+        }
+        
+        // PWA 설치 프롬프트 처리
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA: 설치 프롬프트 준비됨');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // 설치 버튼 표시 (선택사항)
+            showInstallButton();
+        });
+        
+        function showInstallButton() {
+            // 설치 버튼이 이미 있는지 확인
+            if (document.getElementById('pwa-install-btn')) return;
+            
+            const installBtn = document.createElement('button');
+            installBtn.id = 'pwa-install-btn';
+            installBtn.innerHTML = '📱 앱으로 설치';
+            installBtn.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 transition-colors z-50';
+            installBtn.style.display = 'block';
+            
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('PWA: 설치 선택:', outcome);
+                    deferredPrompt = null;
+                    installBtn.style.display = 'none';
+                }
+            });
+            
+            document.body.appendChild(installBtn);
+            
+            // 5초 후 자동 숨김
+            setTimeout(() => {
+                if (installBtn && installBtn.parentNode) {
+                    installBtn.style.opacity = '0.7';
+                }
+            }, 5000);
+        }
+        
+        // PWA 설치 완료 감지
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('PWA: 앱이 설치되었습니다');
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn) {
+                installBtn.style.display = 'none';
+            }
+        });
+        
+        // 온라인/오프라인 상태 감지
+        window.addEventListener('online', () => {
+            console.log('PWA: 온라인 상태');
+            // 온라인 상태 UI 업데이트
+            const offlineIndicator = document.getElementById('offline-indicator');
+            if (offlineIndicator) {
+                offlineIndicator.style.display = 'none';
+            }
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('PWA: 오프라인 상태');
+            // 오프라인 상태 표시
+            showOfflineIndicator();
+        });
+        
+        function showOfflineIndicator() {
+            if (document.getElementById('offline-indicator')) return;
+            
+            const indicator = document.createElement('div');
+            indicator.id = 'offline-indicator';
+            indicator.innerHTML = '📡 오프라인 모드';
+            indicator.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            document.body.appendChild(indicator);
+        }
+    </script>
+    
+    <!-- 관리자 시스템 -->
+    <script src="admin.js"></script>
 </body>
 </html>
-
-
