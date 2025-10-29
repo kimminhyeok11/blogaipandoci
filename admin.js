@@ -12,10 +12,30 @@ class AdminSystem {
     }
 
     init() {
-        this.checkSupabaseAuth();
-        this.createAdminUI();
-        this.bindEvents();
-        this.setupAuthListener();
+        // Supabase 초기화를 기다린 후 실행
+        this.waitForSupabase().then(() => {
+            this.checkSupabaseAuth();
+            this.createAdminUI();
+            this.bindEvents();
+            this.setupAuthListener();
+        });
+    }
+
+    // Supabase 초기화 대기
+    async waitForSupabase() {
+        let attempts = 0;
+        const maxAttempts = 50; // 5초 대기 (100ms * 50)
+        
+        while (!window.supabase && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (!window.supabase) {
+            console.warn('[AdminSystem] Supabase 초기화 대기 시간 초과');
+        } else {
+            console.log('[AdminSystem] Supabase 초기화 확인됨');
+        }
     }
 
     // Supabase 인증 상태 확인

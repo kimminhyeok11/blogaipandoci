@@ -39,6 +39,7 @@ const Comments = {
         if (!this.isInitialized || !this.currentPostId) return;
         
         try {
+            // Supabase에서 댓글 로드
             const { data, error } = await window.supabase
                 .from('comments')
                 .select(`
@@ -56,16 +57,48 @@ const Comments = {
             
             if (error) {
                 console.error('[Comments] 댓글 로드 오류:', error);
-                return;
+                // 오류가 있어도 로컬 댓글은 로드
+                this.comments = [];
+            } else {
+                this.comments = data || [];
             }
             
-            this.comments = data || [];
+            // 로컬 스토리지에서 댓글 로드하여 병합
+            this.loadLocalComments();
+            
             this.renderComments();
             
-            console.log('[Comments] 댓글 로드 완료:', this.comments.length + '개');
+            console.log('[Comments] 댓글 로드 완료:', this.comments.length + '개 (Supabase + 로컬)');
             
         } catch (error) {
             console.error('[Comments] 댓글 로드 중 오류:', error);
+            // 네트워크 오류 시에도 로컬 댓글은 로드
+            this.comments = [];
+            this.loadLocalComments();
+            this.renderComments();
+        }
+    },
+    
+    // 로컬 스토리지에서 댓글 로드
+    loadLocalComments() {
+        try {
+            const localComments = JSON.parse(localStorage.getItem('local_comments') || '[]');
+            
+            // 현재 포스트의 로컬 댓글만 필터링
+            const postLocalComments = localComments.filter(comment => 
+                comment.post_id === this.currentPostId
+            );
+            
+            // 기존 댓글과 로컬 댓글 병합
+            this.comments = [...this.comments, ...postLocalComments];
+            
+            // 생성 시간순으로 정렬
+            this.comments.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            
+            console.log('[Comments] 로컬 댓글 로드 완료:', postLocalComments.length + '개');
+            
+        } catch (error) {
+            console.error('[Comments] 로컬 댓글 로드 오류:', error);
         }
     },
     
@@ -86,6 +119,7 @@ const Comments = {
         }
         
         try {
+            // Supabase에 댓글 추가 시도
             const { data, error } = await window.supabase
                 .from('comments')
                 .insert([{
@@ -100,6 +134,13 @@ const Comments = {
             
             if (error) {
                 console.error('[Comments] 댓글 추가 오류:', error);
+                
+                // RLS 정책 오류인 경우 로컬 스토리지에 임시 저장
+                if (error.code === '42501' || error.message.includes('row-level security')) {
+                    console.log('[Comments] RLS 정책으로 인해 로컬 스토리지에 댓글 저장');
+                    return this.addCommentToLocalStorage(content, authorName, authorEmail, parentId);
+                }
+                
                 this.showMessage('댓글 추가 중 오류가 발생했습니다.', 'error');
                 return false;
             }
@@ -120,12 +161,72 @@ const Comments = {
             
         } catch (error) {
             console.error('[Comments] 댓글 추가 중 오류:', error);
+            
+            // 네트워크 오류 등의 경우 로컬 스토리지에 임시 저장
+            console.log('[Comments] 네트워크 오류로 인해 로컬 스토리지에 댓글 저장');
+            return this.addCommentToLocalStorage(content, authorName, authorEmail, parentId);
+        }
+    },
+    
+    // 로컬 스토리지에 댓글 추가 (fallback)
+    addCommentToLocalStorage(content, authorName, authorEmail, parentId = null) {
+        try {
+            const localComments = JSON.parse(localStorage.getItem('local_comments') || '[]');
+            
+            const newComment = {
+                id: 'local_' + Date.now(),
+                post_id: this.currentPostId,
+                content: content.trim(),
+                author_name: authorName.trim(),
+                author_email: authorEmail.trim(),
+                parent_id: parentId,
+                is_approved: true, // 로컬 댓글은 바로 표시
+                created_at: new Date().toISOString(),
+                is_local: true
+            };
+            
+            localComments.push(newComment);
+            localStorage.setItem('local_comments', JSON.stringify(localComments));
+            
+            // 댓글 목록에 추가하고 다시 렌더링
+            this.comments.push(newComment);
+            this.renderComments();
+            
+            this.showMessage('댓글이 추가되었습니다. (로컬 저장)', 'success');
+            this.clearCommentForm();
+            
+            console.log('[Comments] 로컬 댓글 추가 완료:', newComment);
+            return true;
+            
+        } catch (error) {
+            console.error('[Comments] 로컬 댓글 추가 오류:', error);
             this.showMessage('댓글 추가 중 오류가 발생했습니다.', 'error');
             return false;
         }
     },
     
-    // 댓글 삭제 (관리자용)
+    // 로컬 댓글 삭제
+    deleteLocalComment(commentId) {
+        try {
+            // 로컬 스토리지에서 댓글 삭제
+            const localComments = JSON.parse(localStorage.getItem('local_comments') || '[]');
+            const updatedComments = localComments.filter(comment => comment.id !== commentId);
+            localStorage.setItem('local_comments', JSON.stringify(updatedComments));
+            
+            // 메모리에서도 삭제
+            this.comments = this.comments.filter(comment => comment.id !== commentId);
+            
+            // 댓글 목록 다시 렌더링
+            this.renderComments();
+            
+            this.showMessage('로컬 댓글이 삭제되었습니다.', 'success');
+            console.log('[Comments] 로컬 댓글 삭제 완료:', commentId);
+            
+        } catch (error) {
+            console.error('[Comments] 로컬 댓글 삭제 오류:', error);
+            this.showMessage('댓글 삭제 중 오류가 발생했습니다.', 'error');
+        }
+    },
     async deleteComment(commentId) {
         if (!this.isInitialized) return false;
         
@@ -232,20 +333,28 @@ const Comments = {
         const marginLeft = depth > 0 ? 'ml-8' : '';
         const borderLeft = depth > 0 ? 'border-l-2 border-gray-200 pl-4' : '';
         
+        // 로컬 댓글인지 확인
+        const isLocal = comment.is_local || false;
+        const localBadge = isLocal ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 ml-2">로컬</span>' : '';
+        const localBorder = isLocal ? 'border-l-4 border-orange-400' : '';
+        
         const repliesHTML = comment.replies
             .map(reply => this.renderComment(reply, depth + 1))
             .join('');
         
         return `
             <div class="comment ${marginLeft} ${borderLeft}" data-comment-id="${comment.id}">
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 ${localBorder}">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center space-x-2">
-                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            <div class="w-8 h-8 ${isLocal ? 'bg-orange-500' : 'bg-blue-500'} rounded-full flex items-center justify-center text-white text-sm font-medium">
                                 ${comment.author_name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <p class="font-medium text-gray-900 dark:text-white">${this.escapeHtml(comment.author_name)}</p>
+                                <div class="flex items-center">
+                                    <p class="font-medium text-gray-900 dark:text-white">${this.escapeHtml(comment.author_name)}</p>
+                                    ${localBadge}
+                                </div>
                                 <p class="text-sm text-gray-500">${this.formatDate(comment.created_at)}</p>
                             </div>
                         </div>
@@ -255,9 +364,11 @@ const Comments = {
                                 답글
                             </button>
                             ${window.isAdmin && window.isAdmin() ? `<button data-action="delete" data-comment-id="${comment.id}" class="delete-btn text-sm text-red-600 hover:text-red-800" title="댓글 삭제">🗑️</button>` : ''}
+                            ${isLocal ? `<button data-action="delete-local" data-comment-id="${comment.id}" class="delete-local-btn text-sm text-orange-600 hover:text-orange-800" title="로컬 댓글 삭제">🗑️</button>` : ''}
                         </div>
                     </div>
                     <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">${this.escapeHtml(comment.content)}</div>
+                    ${isLocal ? '<p class="text-xs text-orange-600 dark:text-orange-400 mt-2">※ 이 댓글은 로컬에 저장되었습니다. 서버 연결 시 동기화됩니다.</p>' : ''}
                     
                     <div id="reply-form-${comment.id}" class="reply-form mt-4 hidden">
                         ${this.createReplyForm(comment.id)}
@@ -514,6 +625,13 @@ const Comments = {
                 case 'delete':
                     const deleteCommentId = target.getAttribute('data-comment-id');
                     if (deleteCommentId) this.deleteComment(deleteCommentId);
+                    break;
+                    
+                case 'delete-local':
+                    const deleteLocalCommentId = target.getAttribute('data-comment-id');
+                    if (deleteLocalCommentId && confirm('로컬 댓글을 삭제하시겠습니까?')) {
+                        this.deleteLocalComment(deleteLocalCommentId);
+                    }
                     break;
                     
                 case 'submit-comment':

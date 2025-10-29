@@ -29,7 +29,7 @@
     <meta name="msapplication-config" content="none">
     
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google https://unpkg.com http://localhost:* https://localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google http://localhost:* https://localhost:*; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://www.googletagmanager.com https://*.adtrafficquality.google https://unpkg.com http://localhost:* https://localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://www.googletagmanager.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google http://localhost:* https://localhost:*; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
     
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://blogaipandoci.vercel.app">
@@ -43,6 +43,25 @@
     <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        
+        // 개발 환경에서는 실제 추적하지 않음
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            gtag('config', 'GA_MEASUREMENT_ID', {
+                'debug_mode': true,
+                'send_page_view': false
+            });
+            console.log('[Analytics] 개발 환경에서 Google Analytics 초기화됨 (추적 비활성화)');
+        } else {
+            gtag('config', 'GA_MEASUREMENT_ID');
+        }
+    </script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
     <script src="./dark-mode.js" defer></script>
@@ -1037,13 +1056,13 @@
                  const prev = State.supabase.from(Config.DB_TABLE_NAME)
                     .select('title, slug')
                     .lt('created_at', createdAt)
-                    .eq('status', 'published')
+                    .or('status.eq.published,status.is.null')
                     .order('created_at', { ascending: false })
                     .limit(1).single();
                 const next = State.supabase.from(Config.DB_TABLE_NAME)
                     .select('title, slug')
                     .gt('created_at', createdAt)
-                    .eq('status', 'published')
+                    .or('status.eq.published,status.is.null')
                     .order('created_at', { ascending: true })
                     .limit(1).single();
                 return Promise.all([prev, next]);
