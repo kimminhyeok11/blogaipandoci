@@ -195,13 +195,19 @@ const SocialShare = {
         toast.innerHTML = `
             <div class="flex items-center space-x-2">
                 <span>${message}</span>
-                <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+                <button class="toast-close-btn ml-2 text-white hover:text-gray-200">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
         `;
+        
+        // 이벤트 리스너 추가
+        const closeBtn = toast.querySelector('.toast-close-btn');
+        closeBtn.addEventListener('click', () => {
+            toast.remove();
+        });
         
         document.body.appendChild(toast);
         
@@ -238,7 +244,7 @@ const SocialShare = {
         
         if (showFacebook) {
             buttons.push(`
-                <button class="${buttonClass} facebook-share" onclick="SocialShare.shareToFacebook()" 
+                <button class="${buttonClass} facebook-share" data-action="facebook" 
                         aria-label="페이스북에 공유" title="페이스북에 공유">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -249,7 +255,7 @@ const SocialShare = {
         
         if (showInstagram) {
             buttons.push(`
-                <button class="${buttonClass} instagram-share" onclick="SocialShare.shareToInstagram()" 
+                <button class="${buttonClass} instagram-share" data-action="instagram" 
                         aria-label="인스타그램에 공유" title="인스타그램에 공유">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -260,7 +266,7 @@ const SocialShare = {
         
         if (showThreads) {
             buttons.push(`
-                <button class="${buttonClass} threads-share" onclick="SocialShare.shareToThreads()" 
+                <button class="${buttonClass} threads-share" data-action="threads" 
                         aria-label="쓰레드에 공유" title="쓰레드에 공유">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12.5 2C7.3 2 3 6.3 3 11.5S7.3 21 12.5 21s9.5-4.3 9.5-9.5S17.7 2 12.5 2zm0 17c-4.1 0-7.5-3.4-7.5-7.5S8.4 4 12.5 4s7.5 3.4 7.5 7.5S16.6 19 12.5 19z"/>
@@ -275,7 +281,7 @@ const SocialShare = {
         
         if (showCopyLink) {
             buttons.push(`
-                <button class="${buttonClass} copy-link" onclick="SocialShare.copyLink()" 
+                <button class="${buttonClass} copy-link" data-action="copylink" 
                         aria-label="링크 복사" title="링크 복사">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -285,7 +291,7 @@ const SocialShare = {
             `);
         }
         
-        return `
+        const shareButtonsHtml = `
             <div class="${containerClass}">
                 <span class="share-label text-sm font-medium text-gray-600 dark:text-gray-400 mr-3">공유하기:</span>
                 <div class="flex space-x-2">
@@ -293,6 +299,33 @@ const SocialShare = {
                 </div>
             </div>
         `;
+        
+        // 임시 컨테이너를 만들어서 이벤트 리스너 추가
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = shareButtonsHtml;
+        
+        // 각 버튼에 이벤트 리스너 추가
+        tempDiv.querySelectorAll('[data-action]').forEach(button => {
+            const action = button.getAttribute('data-action');
+            button.addEventListener('click', () => {
+                switch(action) {
+                    case 'facebook':
+                        SocialShare.shareToFacebook();
+                        break;
+                    case 'instagram':
+                        SocialShare.shareToInstagram();
+                        break;
+                    case 'threads':
+                        SocialShare.shareToThreads();
+                        break;
+                    case 'copylink':
+                        SocialShare.copyLink();
+                        break;
+                }
+            });
+        });
+        
+        return tempDiv.innerHTML;
     },
     
     /**

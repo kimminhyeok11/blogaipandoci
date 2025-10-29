@@ -62,193 +62,10 @@
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
 
-    <style>
-        :root {
-            --bg-main: #FFFFFF;
-            --bg-content-secondary: #F3F4F6;
-            --border-color: #D1D5DB;
-            --text-primary: #111827;
-            --text-secondary: #374151;
-            --accent: #D946EF;
-            --accent-hover: #C026D3;
-            --font-body: 'Noto Sans KR', sans-serif;
-            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        }
-        html, body { height: 100%; }
-        body {
-            font-family: var(--font-body);
-            background-color: var(--bg-main);
-            color: var(--text-secondary);
-            display: flex;
-            flex-direction: column;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            font-size: 15px;
-            line-height: 1.7;
-        }
-        @media (min-width: 640px) {
-            body { font-size: 16px; line-height: 1.75; }
-        }
-        main#app-container {
-            padding-left: 0.75rem; padding-right: 0.75rem; flex-grow: 1;
-        }
-        @media (min-width: 640px) {
-            main#app-container { padding-left: 1rem; padding-right: 1rem; }
-        }
-        /* [View] 뷰 전환을 위한 기본 클래스 */
-        .app-view { display: none; opacity: 0; }
-        .app-view.active { display: block; }
-
-        /* [Prose] 블로그 포스트 콘텐츠 스타일 (Marked.js 출력 대응) */
-        .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
-        .prose-custom p { margin: 0 0 1.3em; color: var(--text-secondary); }
-        .prose-custom div { margin-bottom: 1.3em; }
-        .prose-custom p br { display: block; margin-bottom: 0.75em; }
-        .prose-custom a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); transition: all 0.2s ease; }
-        .prose-custom a:hover { background-color: var(--accent); color: white; border-bottom-color: transparent; }
-        .prose-custom blockquote { border-left: 3px solid var(--accent); padding-left: 1.5em; font-style: italic; color: var(--text-primary); background-color: var(--bg-content-secondary); border-radius: 0 8px 8px 0; margin-bottom: 1.3em; }
-        
-        .prose-custom ul, .prose-custom ol { 
-            margin-bottom: 1.3em; 
-            padding-left: 1.75em; 
-        }
-        .prose-custom li { 
-            margin-bottom: 0.5em; 
-        }
-        
-        .prose-custom ol { list-style-type: decimal; }
-        .prose-custom ul { list-style-type: disc; }
-
-        .prose-custom ol ul { list-style-type: disc; }
-        .prose-custom ul ul { list-style-type: circle; }
-        .prose-custom ol ol { list-style-type: lower-alpha; }
-        .prose-custom ul ol { list-style-type: lower-alpha; }
-
-        .prose-custom ol ol ol, .prose-custom ul ol ol, .prose-custom ol ul ol, .prose-custom ul ul ol {
-            list-style-type: lower-roman; 
-        }
-        .prose-custom ul ul ul, .prose-custom ol ul ul, .prose-custom ul ol ul, .prose-custom ol ol ul {
-            list-style-type: square; 
-        }
-        
-        .prose-custom ul ul, .prose-custom ol ol, .prose-custom ul ol, .prose-custom ol ul { 
-            margin-top: 0.5em; 
-            margin-bottom: 0.5em; 
-            margin-left: 1.25em; 
-        }
-
-        .prose-custom pre { background-color: #282c34; color: #abb2bf; padding: 1.5em; border-radius: 12px; margin-bottom: 1.5em; overflow-x: auto; }
-        
-        .prose-custom img { 
-            max-width: 90%; 
-            height: auto; 
-            border-radius: 12px; 
-            margin-top: 2em; 
-            margin-bottom: 2em; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            display: block; 
-            margin-left: auto; 
-            margin-right: auto;
-            /* 성능 최적화 */
-            will-change: transform;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-        
-        .prose-custom table { width: 100%; border-collapse: collapse; margin-top: 2em; margin-bottom: 2em; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-radius: 8px; overflow: hidden; }
-        .prose-custom th, .prose-custom td { border: 1px solid var(--border-color); padding: 0.75em 1em; text-align: left; }
-        .prose-custom th { background-color: var(--bg-content-secondary); font-weight: 700; color: var(--text-primary); }
-        .prose-custom tr:nth-child(odd) { background-color: var(--bg-main); }
-        .prose-custom tr:nth-child(even) { background-color: var(--bg-content-secondary); }
-
-        /* [Components] 재사용 가능한 UI 요소 */
-        .category-btn { transition: all 0.2s ease-in-out; border-radius: 9999px; padding: 0.25rem 0.875rem; font-weight: 500; background-color: var(--bg-content-secondary); color: var(--text-primary); border: 1px solid transparent; }
-        .category-btn:hover { background-color: #E5E7EB; }
-        .category-btn.active { background-color: var(--accent); color: #FFFFFF; font-weight: 700; }
-        .loader-spinner { width: 2.5rem; height: 2.5rem; border: 4px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        #content-editor {
-            width: 100%;
-            min-height: 600px;
-            font-family: var(--font-mono);
-            font-size: 0.95em;
-            line-height: 1.6;
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-content-secondary);
-            color: var(--text-primary);
-            resize: vertical;
-        }
-        #content-editor:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.3);
-        }
-        
-        /* [ADS UPDATE] 광고 슬롯의 최소 높이를 지정하여 CLS(Cumulative Layout Shift) 방지 */
-        .ad-slot-placeholder {
-            display: block;
-            width: 100%;
-            min-height: 250px; /* 광고의 평균 최소 높이 증가 */
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* 그라데이션 배경 */
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            box-sizing: border-box;
-            text-align: center;
-            font-size: 0.875rem;
-            color: #6b7280;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            /* CLS 방지 및 성능 최적화 */
-            contain: layout style;
-            will-change: contents;
-        }
-
-
-        /* [Responsive] 모바일 반응형 */
-        @media (max-width: 639px) {
-            .writer-controls-sticky { 
-                position: sticky; bottom: 0; background-color: rgba(255, 255, 255, 0.95); 
-                backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
-                padding: 1rem; border-top: 1px solid #E5E7EB; 
-                margin-left: -0.75rem; margin-right: -0.75rem; 
-                padding-top: 1rem !important; z-index: 30; 
-            }
-            .prose-custom img { 
-                width: calc(100% + 1.5rem); 
-                margin-left: -0.75rem; 
-                margin-right: -0.75rem; 
-                max-width: none;
-                border-radius: 0; 
-                box-shadow: none; 
-            }
-        }
-        /* 이미지 lazy loading은 HTML에서 처리 */
-
-        /* [Accessibility] 포커스 링 */
-        button:focus, a:focus, input:focus, select:focus, textarea:focus { 
-            outline: 2px solid var(--accent); outline-offset: 2px; 
-        }
-
-        /* [Motion] 접근성 - 움직임 최소화 */
-        @media (prefers-reduced-motion: reduce) { 
-            *, *::before, *::after { 
-                animation-duration: 0.01ms !important; 
-                animation-iteration-count: 1 !important; 
-                transition-duration: 0.01ms !important; 
-            } 
-        }
-
-        /* [Layout] 푸터 여백 */
-        footer { margin-top: 16px; } 
-        @media (min-width: 640px) { footer { margin-top: 24px; } }
-    </style>
 </head>
 <body class="antialiased">
     <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center"><div class="loader-spinner"></div></div>
@@ -347,7 +164,7 @@
                 if (!profileInfo || !State.user) return;
 
                 try {
-                    const { data: profile, error } = await Services.supabase
+                    const { data: profile, error } = await State.supabase
                         .from('profiles')
                         .select('*')
                         .eq('id', State.user.id)
@@ -393,7 +210,7 @@
                 if (!State.user) return;
 
                 try {
-                    const { data: profile, error } = await Services.supabase
+                    const { data: profile, error } = await State.supabase
                         .from('profiles')
                         .select('*')
                         .eq('id', State.user.id)
@@ -449,7 +266,7 @@
                         const website = modal.querySelector('#website').value.trim();
 
                         try {
-                            const { error } = await Services.supabase
+                            const { error } = await State.supabase
                                 .from('profiles')
                                 .upsert({
                                     id: State.user.id,
@@ -1056,8 +873,8 @@
                             ${tags.map(({ tag, count }) => {
                                 const size = Math.max(0.75, (count / maxCount) * 1.5);
                                 return `
-                                    <button onclick="ContentManager.searchByTag('${tag}')" 
-                                            class="inline-block bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
+                                    <button data-action="search-tag" data-tag="${tag}" 
+                                            class="tag-search-btn inline-block bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer"
                                             style="font-size: ${size}rem;">
                                         ${tag} (${count})
                                     </button>
@@ -1122,6 +939,16 @@
                         });
                     }
                 }
+                
+                // 태그 검색 이벤트 리스너 추가
+                document.addEventListener('click', (e) => {
+                    if (e.target.getAttribute('data-action') === 'search-tag') {
+                        const tag = e.target.getAttribute('data-tag');
+                        if (tag) {
+                            ContentManager.searchByTag(tag);
+                        }
+                    }
+                });
             }
         };
 
@@ -1479,7 +1306,7 @@
                         ${post.tags.split(',').map(tag => 
                             `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2 cursor-pointer hover:bg-gray-200 transition-colors" 
                                    role="listitem" 
-                                   onclick="ContentManager.searchByTag('${tag.trim()}')">${tag.trim()}</span>`
+                                   data-action="search-tag" data-tag="${tag.trim()}">${tag.trim()}</span>`
                         ).join('')}
                     </div>
                 ` : (post.tags && Array.isArray(post.tags) && post.tags.length > 0) ? `
@@ -1487,7 +1314,7 @@
                         ${post.tags.map(tag => 
                             `<span class="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-medium text-gray-700 mr-2 mb-2 cursor-pointer hover:bg-gray-200 transition-colors" 
                                    role="listitem" 
-                                   onclick="ContentManager.searchByTag('${typeof tag === 'string' ? tag.trim() : tag}')">${typeof tag === 'string' ? tag.trim() : tag}</span>`
+                                   data-action="search-tag" data-tag="${typeof tag === 'string' ? tag.trim() : tag}">${typeof tag === 'string' ? tag.trim() : tag}</span>`
                         ).join('')}
                     </div>
                 ` : '';
@@ -1756,7 +1583,7 @@
                         
                         <div>
                             <label for="tags" class="block text-lg font-bold text-black mb-3">태그 (Tags)</label>
-                            <input type="text" id="tags" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" placeholder="쉼표(,)로 구분하여 태그를 입력하세요 (예: AI, 보험, 부동산)" aria-label="태그 입력" value="${post.tags || ''}">
+                            <input type="text" id="tags" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" placeholder="쉼표(,)로 구분하여 태그를 입력하세요 (예: AI, 보험, 부동산)" aria-label="태그 입력" value="${Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || '')}">
                         </div>
 
                         <div>
@@ -2147,10 +1974,7 @@
                     // 승인 대기 중인 댓글 조회
                     const { data: comments, error } = await window.supabase
                         .from('comments')
-                        .select(`
-                            id, content, author_name, author_email, created_at, post_id,
-                            posts:post_id (title, slug)
-                        `)
+                        .select('id, content, author_name, author_email, created_at, post_id')
                         .eq('is_approved', false)
                         .order('created_at', { ascending: false });
 
@@ -2165,8 +1989,25 @@
                         return;
                     }
 
+                    // 댓글과 관련된 post 정보 가져오기
+                    const postIds = [...new Set(comments.map(comment => comment.post_id))];
+                    const { data: posts } = await window.supabase
+                        .from('posts')
+                        .select('id, title, slug')
+                        .in('id', postIds);
+
+                    // post 정보를 매핑
+                    const postsMap = {};
+                    if (posts) {
+                        posts.forEach(post => {
+                            postsMap[post.id] = post;
+                        });
+                    }
+
                     // 댓글 목록 렌더링
-                    const commentsHtml = comments.map(comment => `
+                    const commentsHtml = comments.map(comment => {
+                        const post = postsMap[comment.post_id];
+                        return `
                         <div class="border border-gray-200 rounded-lg p-4 mb-3 bg-white" data-comment-id="${comment.id}">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
@@ -2175,7 +2016,7 @@
                                         <span class="text-xs text-gray-500">${ViewRenderer.escapeHtml(comment.author_email)}</span>
                                     </div>
                                     <div class="text-xs text-gray-400 mb-2">
-                                        ${comment.posts ? `글: "${ViewRenderer.escapeHtml(comment.posts.title)}"` : '글 정보 없음'} • 
+                                        ${post ? `글: "${ViewRenderer.escapeHtml(post.title)}"` : '글 정보 없음'} • 
                                         ${new Date(comment.created_at).toLocaleString('ko-KR')}
                                     </div>
                                 </div>
@@ -2194,7 +2035,8 @@
                                 ${ViewRenderer.escapeHtml(comment.content)}
                             </div>
                         </div>
-                    `).join('');
+                        `;
+                    }).join('');
 
                     container.innerHTML = `
                         <div class="mb-4 text-sm text-gray-600">
@@ -2502,7 +2344,10 @@
                         if (data) slug += `-${Date.now().toString().slice(-6)}`;
                     }
                     
-                    // [수정] postData에 tags 추가
+                    // [수정] postData에 tags 추가 - 배열 형태로 변환
+                    const tagsValue = DOM.$('#tags').value.trim();
+                    const tagsArray = tagsValue ? tagsValue.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+                    
                     const postData = { 
                         id: id,
                         title, slug, status, summary, 
@@ -2510,7 +2355,7 @@
                         refined_content: content, 
                         category: DOM.$('#category').value, 
                         thumbnail_url: thumb,
-                        tags: DOM.$('#tags').value.trim() || null, // [신규] tags 값 추가
+                        tags: tagsArray.length > 0 ? tagsArray : null, // 배열 형태로 저장
                         updated_at: new Date().toISOString() 
                     };
                     

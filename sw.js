@@ -6,6 +6,7 @@ const DYNAMIC_CACHE = 'insurelog-dynamic-v1';
 // 캐시할 정적 파일들
 const STATIC_FILES = [
     '/',
+    '/styles.css',
     '/social-share.js',
     '/comments.js',
     '/dark-mode.js',

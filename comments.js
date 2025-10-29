@@ -21,6 +21,12 @@ const Comments = {
         
         console.log('[Comments] 초기화 완료, 포스트 ID:', postId);
         
+        // 이벤트 리스너 설정 (한 번만 설정)
+        if (!this.eventListenersSetup) {
+            this.setupEventListeners();
+            this.eventListenersSetup = true;
+        }
+        
         // 댓글 로드
         this.loadComments();
         
@@ -244,11 +250,11 @@ const Comments = {
                             </div>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button onclick="Comments.showReplyForm('${comment.id}')" 
-                                    class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                            <button data-action="reply" data-comment-id="${comment.id}" 
+                                    class="reply-btn text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
                                 답글
                             </button>
-                            ${window.isAdmin && window.isAdmin() ? `<button onclick="Comments.deleteComment('${comment.id}')" class="text-sm text-red-600 hover:text-red-800" title="댓글 삭제">🗑️</button>` : ''}
+                            ${window.isAdmin && window.isAdmin() ? `<button data-action="delete" data-comment-id="${comment.id}" class="delete-btn text-sm text-red-600 hover:text-red-800" title="댓글 삭제">🗑️</button>` : ''}
                         </div>
                     </div>
                     <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">${this.escapeHtml(comment.content)}</div>
@@ -302,8 +308,8 @@ const Comments = {
                         <p class="text-sm text-gray-500">
                             * 필수 항목입니다. 댓글은 관리자 승인 후 표시됩니다.
                         </p>
-                        <button onclick="Comments.submitComment()" 
-                                class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        <button data-action="submit-comment" 
+                                class="submit-comment-btn px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
                             댓글 작성
                         </button>
                     </div>
@@ -335,12 +341,12 @@ const Comments = {
                               placeholder="답글을 입력하세요..."></textarea>
                     
                     <div class="flex items-center space-x-2">
-                        <button onclick="Comments.submitReply('${parentId}')" 
-                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm transition-colors">
+                        <button data-action="submit-reply" data-parent-id="${parentId}" 
+                                class="submit-reply-btn px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm transition-colors">
                             답글 작성
                         </button>
-                        <button onclick="Comments.hideReplyForm('${parentId}')" 
-                                class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm transition-colors">
+                        <button data-action="cancel-reply" data-parent-id="${parentId}" 
+                                class="cancel-reply-btn px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm transition-colors">
                             취소
                         </button>
                     </div>
@@ -487,6 +493,43 @@ const Comments = {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
+        });
+    },
+    
+    // 이벤트 리스너 설정
+    setupEventListeners() {
+        // 이벤트 위임을 사용하여 동적으로 생성되는 버튼들에 이벤트 리스너 추가
+        document.addEventListener('click', (e) => {
+            const target = e.target;
+            const action = target.getAttribute('data-action');
+            
+            if (!action) return;
+            
+            switch(action) {
+                case 'reply':
+                    const commentId = target.getAttribute('data-comment-id');
+                    if (commentId) this.showReplyForm(commentId);
+                    break;
+                    
+                case 'delete':
+                    const deleteCommentId = target.getAttribute('data-comment-id');
+                    if (deleteCommentId) this.deleteComment(deleteCommentId);
+                    break;
+                    
+                case 'submit-comment':
+                    this.submitComment();
+                    break;
+                    
+                case 'submit-reply':
+                    const parentId = target.getAttribute('data-parent-id');
+                    if (parentId) this.submitReply(parentId);
+                    break;
+                    
+                case 'cancel-reply':
+                    const cancelParentId = target.getAttribute('data-parent-id');
+                    if (cancelParentId) this.hideReplyForm(cancelParentId);
+                    break;
+            }
         });
     }
 };
