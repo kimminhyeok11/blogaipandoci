@@ -22,14 +22,14 @@
     <!-- iOS PWA 설정 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="YY Blog">
+    <meta name="apple-mobile-web-app-title" content="InsureLog">
     
     <!-- Windows PWA 설정 -->
     <meta name="msapplication-TileColor" content="#3b82f6">
     <meta name="msapplication-config" content="none">
     
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google https://unpkg.com http://localhost:* https://localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google http://localhost:* https://localhost:*; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
     
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://blogaipandoci.vercel.app">
@@ -463,7 +463,7 @@
 
                             DOM.showToast('프로필이 성공적으로 업데이트되었습니다.');
                             document.body.removeChild(modal);
-                            ViewRenderer.loadUserProfile();
+                            DOM.loadUserProfile();
                         } catch (error) {
                             console.error('프로필 업데이트 실패:', error);
                             DOM.showToast('프로필 업데이트에 실패했습니다.', true);
@@ -1137,6 +1137,7 @@
                 
                 try {
                     State.supabase = createClient(Config.SUPABASE_URL, Config.SUPABASE_ANON_KEY);
+                    window.supabase = State.supabase; // 전역 접근을 위한 설정
                     console.log('[Services] Supabase 클라이언트 생성 완료');
                 } catch (error) {
                     console.error('[Services] Supabase 초기화 실패:', error);
@@ -1693,7 +1694,7 @@
                 });
                 
                 // 프로필 정보 로드
-                ViewRenderer.loadUserProfile();
+                DOM.loadUserProfile();
             },
 
             renderWriter: async (container, slug) => {

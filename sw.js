@@ -1,12 +1,11 @@
-// Service Worker for YY Blog PWA
-const CACHE_NAME = 'yy-blog-v1.0.0';
-const STATIC_CACHE = 'yy-blog-static-v1';
-const DYNAMIC_CACHE = 'yy-blog-dynamic-v1';
+// Service Worker for InsureLog PWA
+const CACHE_NAME = 'insurelog-v1.0.0';
+const STATIC_CACHE = 'insurelog-static-v1';
+const DYNAMIC_CACHE = 'insurelog-dynamic-v1';
 
 // 캐시할 정적 파일들
 const STATIC_FILES = [
     '/',
-    '/yyyyyyy.html',
     '/social-share.js',
     '/comments.js',
     '/dark-mode.js',
