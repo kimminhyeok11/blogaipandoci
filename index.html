@@ -2303,6 +2303,18 @@
                                 case 'copylink':
                                     SocialShare.copyLink();
                                     break;
+                                case 'save-draft':
+                                    // 초안 저장 처리
+                                    if (typeof handlePostSave === 'function') {
+                                        handlePostSave(false); // false = 초안으로 저장
+                                    }
+                                    break;
+                                case 'publish':
+                                    // 발행 처리
+                                    if (typeof handlePostSave === 'function') {
+                                        handlePostSave(true); // true = 발행
+                                    }
+                                    break;
                                 default:
                                     console.warn(`알 수 없는 공유 액션: ${action}`);
                             }
@@ -2385,6 +2397,12 @@
                     return;
                 }
 
+                // 사용자 인증 확인
+                if (!State.user) {
+                    DOM.showToast('로그인이 필요합니다.', true);
+                    return;
+                }
+
                 const origText = btn.textContent;
                 btn.disabled = true;
                 btn.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
@@ -2394,9 +2412,16 @@
                     const status = action === 'publish' ? 'published' : 'draft';
                     const content = DOM.$('#content-editor').value; 
                     
-                    if (!content || content.trim().length < 10) {
-                        throw new Error('본문이 너무 짧습니다.');
+                    // 입력값 검증
+                    if (!title) {
+                        throw new Error('제목을 입력해주세요.');
                     }
+                    
+                    if (!content || content.trim().length < 10) {
+                        throw new Error('본문이 너무 짧습니다. (최소 10자 이상)');
+                    }
+                    
+                    console.log('[PostSave] 저장 시작:', { action, status, title: title.substring(0, 20) + '...' });
                     
                     let summary = DOM.$('#summary').value.trim();
                     if (!summary) {
@@ -2434,8 +2459,16 @@
                     }
                     
                     if (!id) { // 새 글일 때만 중복 검사
-                        const { data } = await Services.checkSlugExists(slug);
-                        if (data) slug += `-${Date.now().toString().slice(-6)}`;
+                        console.log('[PostSave] Slug 중복 검사:', slug);
+                        const { data, error: slugError } = await Services.checkSlugExists(slug);
+                        if (slugError) {
+                            console.error('[PostSave] Slug 검사 오류:', slugError);
+                            throw new Error('Slug 중복 검사 중 오류가 발생했습니다.');
+                        }
+                        if (data) {
+                            slug += `-${Date.now().toString().slice(-6)}`;
+                            console.log('[PostSave] Slug 중복으로 변경:', slug);
+                        }
                     }
                     
                     // [수정] postData에 tags 추가 - 배열 형태로 변환
@@ -2453,14 +2486,23 @@
                         updated_at: new Date().toISOString() 
                     };
                     
-                    const { data: savedPost, error } = await Services.savePost(postData);
-                    if (error) throw error;
+                    console.log('[PostSave] 저장할 데이터:', { 
+                        ...postData, 
+                        refined_content: postData.refined_content.substring(0, 50) + '...' 
+                    });
                     
+                    const { data: savedPost, error } = await Services.savePost(postData);
+                    if (error) {
+                        console.error('[PostSave] 저장 오류:', error);
+                        throw new Error(`저장 실패: ${error.message || error.details || '알 수 없는 오류'}`);
+                    }
+                    
+                    console.log('[PostSave] 저장 성공:', savedPost);
                     DOM.showToast(status === 'published' ? '발행되었습니다!' : '저장되었습니다.');
                     Router.navigateTo(status === 'published' ? `/post/${savedPost.slug}` : '/dashboard');
 
                 } catch (e) {
-                    console.error("Save error:", e);
+                    console.error("[PostSave] 전체 오류:", e);
                     DOM.showToast(`저장 실패: ${e.message}`, true);
                 } finally {
                     btn.disabled = false;
