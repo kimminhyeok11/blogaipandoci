@@ -2282,41 +2282,50 @@
                 if (typeof SocialShare !== 'undefined') {
                     SocialShare.init();
                     
-                    // 공유 버튼 이벤트 리스너 설정
+                    // 액션 버튼 이벤트 리스너 설정
                     document.addEventListener('click', (e) => {
-                        const shareButton = e.target.closest('[data-action]');
-                        if (shareButton) {
+                        const actionButton = e.target.closest('[data-action]');
+                        if (actionButton) {
                             e.preventDefault();
-                            const action = shareButton.getAttribute('data-action');
-                            console.log(`공유 버튼 클릭: ${action}`);
+                            const action = actionButton.getAttribute('data-action');
                             
                             switch(action) {
                                 case 'facebook':
+                                    console.log(`공유 버튼 클릭: ${action}`);
                                     SocialShare.shareToFacebook();
                                     break;
                                 case 'instagram':
+                                    console.log(`공유 버튼 클릭: ${action}`);
                                     SocialShare.shareToInstagram();
                                     break;
                                 case 'threads':
+                                    console.log(`공유 버튼 클릭: ${action}`);
                                     SocialShare.shareToThreads();
                                     break;
                                 case 'copylink':
+                                    console.log(`공유 버튼 클릭: ${action}`);
                                     SocialShare.copyLink();
                                     break;
                                 case 'save-draft':
+                                    console.log(`초안 저장 버튼 클릭`);
                                     // 초안 저장 처리
                                     if (typeof handlePostSave === 'function') {
                                         handlePostSave(false); // false = 초안으로 저장
+                                    } else {
+                                        console.error('handlePostSave 함수를 찾을 수 없습니다.');
                                     }
                                     break;
                                 case 'publish':
+                                    console.log(`발행하기 버튼 클릭`);
                                     // 발행 처리
                                     if (typeof handlePostSave === 'function') {
                                         handlePostSave(true); // true = 발행
+                                    } else {
+                                        console.error('handlePostSave 함수를 찾을 수 없습니다.');
                                     }
                                     break;
                                 default:
-                                    console.warn(`알 수 없는 공유 액션: ${action}`);
+                                    console.warn(`알 수 없는 액션: ${action}`);
                             }
                         }
                     });
