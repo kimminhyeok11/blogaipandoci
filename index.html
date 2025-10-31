@@ -1129,6 +1129,28 @@
             },
 
             uploadImage: async (file) => {
+                // 사용자 인증 확인
+                if (!State.user || !State.user.id) {
+                    throw new Error('로그인이 필요합니다.');
+                }
+
+                // 파일 유효성 검사
+                if (!file || file.size === 0) {
+                    throw new Error('유효하지 않은 파일입니다.');
+                }
+
+                // 파일 크기 제한 (10MB)
+                const MAX_FILE_SIZE = 10 * 1024 * 1024;
+                if (file.size > MAX_FILE_SIZE) {
+                    throw new Error('파일 크기가 너무 큽니다. (최대 10MB)');
+                }
+
+                // 이미지 파일 타입 확인
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+                if (!allowedTypes.includes(file.type)) {
+                    throw new Error('지원하지 않는 이미지 형식입니다.');
+                }
+
                 let baseName = 'upload';
                 let ext = 'bin';
 
@@ -1157,12 +1179,43 @@
                 
                 const path = `${State.user.id}/${sanitizedBaseName}-${Date.now()}.${ext}`;
 
-                const { error } = await State.supabase.storage.from(Config.IMAGE_BUCKET_NAME).upload(path, file, { upsert: true });
-                if (error) throw new Error(`업로드 실패: ${error.message}`);
-                
-                const { data } = State.supabase.storage.from(Config.IMAGE_BUCKET_NAME).getPublicUrl(path);
-                if (!data?.publicUrl) throw new Error('Public URL 실패');
-                return data.publicUrl;
+                console.log('[ImageUpload] 업로드 시작:', { 
+                    fileName: file.name, 
+                    fileSize: file.size, 
+                    fileType: file.type, 
+                    path: path 
+                });
+
+                try {
+                    const { data: uploadData, error } = await State.supabase.storage
+                        .from(Config.IMAGE_BUCKET_NAME)
+                        .upload(path, file, { 
+                            upsert: true,
+                            contentType: file.type
+                        });
+
+                    if (error) {
+                        console.error('[ImageUpload] 업로드 오류:', error);
+                        throw new Error(`업로드 실패: ${error.message}`);
+                    }
+
+                    console.log('[ImageUpload] 업로드 성공:', uploadData);
+
+                    const { data } = State.supabase.storage
+                        .from(Config.IMAGE_BUCKET_NAME)
+                        .getPublicUrl(path);
+                    
+                    if (!data?.publicUrl) {
+                        throw new Error('Public URL 생성 실패');
+                    }
+
+                    console.log('[ImageUpload] Public URL 생성:', data.publicUrl);
+                    return data.publicUrl;
+
+                } catch (uploadError) {
+                    console.error('[ImageUpload] 전체 오류:', uploadError);
+                    throw uploadError;
+                }
             }
         };
 
@@ -2309,21 +2362,25 @@
                                 case 'save-draft':
                                     console.log(`초안 저장 버튼 클릭`);
                                     // 초안 저장 처리
-                                    if (typeof handlePostSave === 'function') {
-                                        handlePostSave(false); // false = 초안으로 저장
+                                    if (typeof App.handlePostSave === 'function') {
+                                        App.handlePostSave('save-draft', e.target);
                                     } else {
-                                        console.error('handlePostSave 함수를 찾을 수 없습니다.');
+                                        console.error('App.handlePostSave 함수를 찾을 수 없습니다.');
                                     }
                                     break;
                                 case 'publish':
                                     console.log(`발행하기 버튼 클릭`);
                                     // 발행 처리
-                                    if (typeof handlePostSave === 'function') {
-                                        handlePostSave(true); // true = 발행
+                                    if (typeof App.handlePostSave === 'function') {
+                                        App.handlePostSave('publish', e.target);
                                     } else {
-                                        console.error('handlePostSave 함수를 찾을 수 없습니다.');
+                                        console.error('App.handlePostSave 함수를 찾을 수 없습니다.');
                                     }
                                     break;
+                                case 'upload-image':
+                                    console.log(`이미지 업로드 버튼 클릭`);
+                                    // 이미지 업로드는 별도 처리하지 않음 (파일 input의 기본 동작 사용)
+                                    return; // preventDefault 하지 않음
                                 default:
                                     console.warn(`알 수 없는 액션: ${action}`);
                             }
