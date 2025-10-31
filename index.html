@@ -69,6 +69,14 @@
     <script src="./social-share.js" defer></script>
     <script src="./analytics.js" defer></script>
     <script src="./comments.js" defer></script>
+    <script src="./performance-monitor.js" defer></script>
+    <script src="./image-optimizer.js" defer></script>
+    <script src="./schema-generator.js" defer></script>
+    <script src="./css-optimizer.js" defer></script>
+    <script src="./js-optimizer.js" defer></script>
+    <script src="./cache-optimizer.js" defer></script>
+    <script src="./font-optimizer.js" defer></script>
+    <script src="./bundle-analyzer.js" defer></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     
@@ -434,12 +442,24 @@
                 adSlot.classList.remove('ad-slot-placeholder');
 
                 try {
-                    (window.adsbygoogle = window.adsbygoogle || []).push({});
+                    // AdSense 스크립트가 로드되었는지 확인
+                    if (typeof window.adsbygoogle !== 'undefined') {
+                        (window.adsbygoogle = window.adsbygoogle || []).push({});
+                    } else {
+                        // AdSense 스크립트가 로드되지 않은 경우 대기
+                        setTimeout(() => {
+                            if (typeof window.adsbygoogle !== 'undefined') {
+                                (window.adsbygoogle = window.adsbygoogle || []).push({});
+                            } else {
+                                console.warn("AdSense script not loaded, hiding ad slot");
+                                adSlot.style.display = 'none';
+                            }
+                        }, 1000);
+                    }
                 } catch (e) {
-                    console.warn("Adsense push error:", e);
-                    // 오류 발생 시 플레이스홀더를 다시 표시하거나 숨김
-                    adSlot.innerHTML = '광고 로드 오류';
-                    adSlot.classList.add('ad-slot-placeholder');
+                    console.warn("AdSense push error:", e);
+                    // 오류 발생 시 광고 슬롯 숨김
+                    adSlot.style.display = 'none';
                 }
             }
         };
@@ -620,9 +640,16 @@
                     
                     ad.dataset.loaded = 'true';
                     try {
-                        (window.adsbygoogle = window.adsbygoogle || []).push({});
+                        // AdSense 스크립트가 로드되었는지 확인
+                        if (typeof window.adsbygoogle !== 'undefined') {
+                            (window.adsbygoogle = window.adsbygoogle || []).push({});
+                        } else {
+                            console.warn("AdSense script not available for lazy loading");
+                            ad.style.display = 'none';
+                        }
                     } catch (e) {
                         console.warn("AdSense load error:", e);
+                        ad.style.display = 'none';
                     }
                 };
 
@@ -1361,7 +1388,7 @@
                             
                             ${tagsHtml}
                             
-                            ${typeof SocialShare !== 'undefined' ? SocialShare.createShareButtons() : ''}
+                            <div id="social-share-container"></div>
                         </article>
 
                         ${ViewRenderer._templates.adSlot(AD_SLOT_CONTENT_MIDDLE)}
@@ -1462,6 +1489,27 @@
                     });
                     
                     DOM.$('#post-content').querySelectorAll('a[target="_blank"]').forEach(a => { a.rel = 'noopener noreferrer'; });
+                    
+                    // 공유 버튼 초기화 (모듈 로딩 대기)
+                    const initShareButtons = () => {
+                        if (typeof SocialShare !== 'undefined' && typeof SocialShare.createShareButtonsHTML === 'function') {
+                            const shareContainer = DOM.$('#social-share-container');
+                            if (shareContainer) {
+                                shareContainer.innerHTML = SocialShare.createShareButtonsHTML();
+                                return true;
+                            }
+                        }
+                        return false;
+                    };
+                    
+                    // 즉시 시도하고, 실패하면 지연 후 재시도
+                    if (!initShareButtons()) {
+                        setTimeout(() => {
+                            if (!initShareButtons()) {
+                                setTimeout(initShareButtons, 500);
+                            }
+                        }, 100);
+                    }
                     
                     // 댓글 시스템 초기화
                     if (typeof Comments !== 'undefined') {
@@ -2233,6 +2281,33 @@
                 // 소셜 공유 기능 초기화
                 if (typeof SocialShare !== 'undefined') {
                     SocialShare.init();
+                    
+                    // 공유 버튼 이벤트 리스너 설정
+                    document.addEventListener('click', (e) => {
+                        const shareButton = e.target.closest('[data-action]');
+                        if (shareButton) {
+                            e.preventDefault();
+                            const action = shareButton.getAttribute('data-action');
+                            console.log(`공유 버튼 클릭: ${action}`);
+                            
+                            switch(action) {
+                                case 'facebook':
+                                    SocialShare.shareToFacebook();
+                                    break;
+                                case 'instagram':
+                                    SocialShare.shareToInstagram();
+                                    break;
+                                case 'threads':
+                                    SocialShare.shareToThreads();
+                                    break;
+                                case 'copylink':
+                                    SocialShare.copyLink();
+                                    break;
+                                default:
+                                    console.warn(`알 수 없는 공유 액션: ${action}`);
+                            }
+                        }
+                    });
                 }
                 
                 // Analytics 초기화
@@ -2839,8 +2914,5 @@
             document.body.appendChild(indicator);
         }
     </script>
-    
-    <!-- 관리자 시스템 -->
-    <script src="admin.js"></script>
 </body>
 </html>

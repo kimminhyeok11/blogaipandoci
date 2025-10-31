@@ -12,6 +12,17 @@
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+/* Dark mode variables */
+.dark {
+    --bg-main: #111827;
+    --bg-content-secondary: #1f2937;
+    --border-color: #374151;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --accent: #a855f7;
+    --accent-hover: #9333ea;
+}
+
 /* Base Styles */
 html, body { 
     height: 100%; 
@@ -348,6 +359,137 @@ textarea:focus {
     } 
 }
 
+/* Dark Mode Specific Styles */
+.dark .category-btn {
+    background-color: var(--bg-content-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.dark .category-btn:hover {
+    background-color: #374151;
+}
+
+.dark .category-btn.active {
+    background-color: var(--accent);
+    color: #FFFFFF;
+}
+
+.dark .loader-spinner {
+    border-color: var(--border-color);
+    border-top-color: var(--accent);
+}
+
+.dark #content-editor {
+    background-color: var(--bg-content-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.dark #content-editor:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.3);
+}
+
+.dark .ad-slot-placeholder {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+}
+
+.dark .writer-controls-sticky {
+    background-color: rgba(17, 24, 39, 0.95) !important;
+    border-top-color: var(--border-color) !important;
+}
+
+/* Dark mode for comments */
+.dark .comment {
+    background-color: var(--bg-content-secondary);
+    border-color: var(--border-color);
+}
+
+.dark .comment-author {
+    color: var(--text-primary);
+}
+
+.dark .comment-content {
+    color: var(--text-secondary);
+}
+
+.dark .comment-meta {
+    color: #9ca3af;
+}
+
+.dark .comment-actions button {
+    color: var(--text-secondary);
+    background-color: transparent;
+    border-color: var(--border-color);
+}
+
+.dark .comment-actions button:hover {
+    background-color: var(--bg-content-secondary);
+    color: var(--text-primary);
+}
+
+/* Dark mode for forms */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark textarea,
+.dark select {
+    background-color: var(--bg-content-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark textarea:focus,
+.dark select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.1);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #6b7280;
+}
+
+/* Dark mode for buttons */
+.dark button {
+    background-color: var(--bg-content-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.dark button:hover {
+    background-color: #374151;
+}
+
+.dark button.primary {
+    background-color: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+}
+
+.dark button.primary:hover {
+    background-color: var(--accent-hover);
+}
+
+/* Dark mode for navigation */
+.dark nav,
+.dark header {
+    background-color: var(--bg-main);
+    border-color: var(--border-color);
+}
+
+.dark nav a,
+.dark header a {
+    color: var(--text-secondary);
+}
+
+.dark nav a:hover,
+.dark header a:hover {
+    color: var(--text-primary);
+}
+
 /* Layout - Footer */
 footer { 
     margin-top: 16px; 
@@ -357,4 +499,38 @@ footer {
     footer { 
         margin-top: 24px; 
     } 
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-content-secondary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+    background: #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #6B7280;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
 }

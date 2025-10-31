@@ -2,6 +2,74 @@
  * 소셜 공유 기능을 관리하는 모듈
  */
 const SocialShare = {
+    // 기본 도메인 설정 (배포 환경에 맞게 수정)
+    baseDomain: 'https://blogaipndoci.vercel.app',
+    
+    /**
+     * 현재 페이지의 슬러그를 추출합니다
+     * @returns {string} 슬러그
+     */
+    getCurrentSlug() {
+        // URL에서 슬러그 추출 (여러 방법 시도)
+        
+        // 1. URL 파라미터에서 슬러그 추출
+        const urlParams = new URLSearchParams(window.location.search);
+        const slugFromParam = urlParams.get('slug') || urlParams.get('id');
+        if (slugFromParam) {
+            return slugFromParam;
+        }
+        
+        // 2. 해시에서 슬러그 추출 (#post/슬러그 형태)
+        const hash = window.location.hash;
+        if (hash.includes('/')) {
+            const hashParts = hash.split('/');
+            if (hashParts.length > 1) {
+                return hashParts[hashParts.length - 1];
+            }
+        }
+        
+        // 3. 메타 태그에서 슬러그 추출
+        const slugMeta = document.querySelector('meta[name="slug"]')?.content ||
+                        document.querySelector('meta[property="article:slug"]')?.content;
+        if (slugMeta) {
+            return slugMeta;
+        }
+        
+        // 4. 페이지 제목을 슬러그로 변환 (폴백)
+        const title = document.querySelector('h1')?.textContent || 
+                     document.querySelector('title')?.textContent || 
+                     document.title;
+        if (title) {
+            return this.titleToSlug(title);
+        }
+        
+        // 5. 기본값
+        return 'home';
+    },
+    
+    /**
+     * 제목을 슬러그로 변환합니다
+     * @param {string} title - 제목
+     * @returns {string} 슬러그
+     */
+    titleToSlug(title) {
+        return title
+            .toLowerCase()
+            .replace(/[^\w\s가-힣]/g, '') // 특수문자 제거 (한글 유지)
+            .replace(/\s+/g, '-') // 공백을 하이픈으로
+            .replace(/-+/g, '-') // 연속 하이픈 제거
+            .trim();
+    },
+    
+    /**
+     * 공유용 URL을 생성합니다
+     * @returns {string} 공유용 URL
+     */
+    getShareUrl() {
+        const slug = this.getCurrentSlug();
+        return `${this.baseDomain}/${slug}`;
+    },
+    
     /**
      * 현재 페이지 정보를 가져옵니다
      * @returns {Object} 페이지 정보
@@ -13,7 +81,9 @@ const SocialShare = {
         const description = document.querySelector('meta[property="og:description"]')?.content || 
                            document.querySelector('meta[name="description"]')?.content || '';
         const image = document.querySelector('meta[property="og:image"]')?.content || '';
-        const url = window.location.href;
+        
+        // 슬러그 기반 URL 사용
+        const url = this.getShareUrl();
         
         return { title, description, image, url };
     },
@@ -228,7 +298,7 @@ const SocialShare = {
     /**
      * 공유 버튼들을 생성합니다
      * @param {Object} options - 옵션
-     * @returns {string} HTML 문자열
+     * @returns {HTMLElement} DOM 요소
      */
     createShareButtons(options = {}) {
         const {
@@ -291,23 +361,23 @@ const SocialShare = {
             `);
         }
         
-        const shareButtonsHtml = `
-            <div class="${containerClass}">
-                <span class="share-label text-sm font-medium text-gray-600 dark:text-gray-400 mr-3">공유하기:</span>
-                <div class="flex space-x-2">
-                    ${buttons.join('')}
-                </div>
+        // DOM 요소 생성
+        const container = document.createElement('div');
+        container.className = containerClass;
+        container.innerHTML = `
+            <span class="share-label text-sm font-medium text-gray-600 dark:text-gray-400 mr-3">공유하기:</span>
+            <div class="flex space-x-2">
+                ${buttons.join('')}
             </div>
         `;
         
-        // 임시 컨테이너를 만들어서 이벤트 리스너 추가
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = shareButtonsHtml;
-        
         // 각 버튼에 이벤트 리스너 추가
-        tempDiv.querySelectorAll('[data-action]').forEach(button => {
+        container.querySelectorAll('[data-action]').forEach(button => {
             const action = button.getAttribute('data-action');
-            button.addEventListener('click', () => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log(`공유 버튼 클릭: ${action}`);
+                
                 switch(action) {
                     case 'facebook':
                         SocialShare.shareToFacebook();
@@ -321,11 +391,89 @@ const SocialShare = {
                     case 'copylink':
                         SocialShare.copyLink();
                         break;
+                    default:
+                        console.warn(`알 수 없는 공유 액션: ${action}`);
                 }
             });
         });
         
-        return tempDiv.innerHTML;
+        return container;
+    },
+
+    /**
+     * 공유 버튼들의 HTML 문자열을 생성합니다 (템플릿용)
+     * @param {Object} options - 옵션
+     * @returns {string} HTML 문자열
+     */
+    createShareButtonsHTML(options = {}) {
+        const {
+            showFacebook = true,
+            showInstagram = true,
+            showThreads = true,
+            showCopyLink = true,
+            buttonClass = 'share-btn',
+            containerClass = 'share-buttons'
+        } = options;
+        
+        const buttons = [];
+        
+        if (showFacebook) {
+            buttons.push(`
+                <button class="${buttonClass} facebook-share" data-action="facebook" 
+                        aria-label="페이스북에 공유" title="페이스북에 공유">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                </button>
+            `);
+        }
+        
+        if (showInstagram) {
+            buttons.push(`
+                <button class="${buttonClass} instagram-share" data-action="instagram" 
+                        aria-label="인스타그램에 공유" title="인스타그램에 공유">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                </button>
+            `);
+        }
+        
+        if (showThreads) {
+            buttons.push(`
+                <button class="${buttonClass} threads-share" data-action="threads" 
+                        aria-label="쓰레드에 공유" title="쓰레드에 공유">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.5 2C7.3 2 3 6.3 3 11.5S7.3 21 12.5 21s9.5-4.3 9.5-9.5S17.7 2 12.5 2zm0 17c-4.1 0-7.5-3.4-7.5-7.5S8.4 4 12.5 4s7.5 3.4 7.5 7.5S16.6 19 12.5 19z"/>
+                        <path d="M16 8.5c0-1.4-1.1-2.5-2.5-2.5S11 7.1 11 8.5s1.1 2.5 2.5 2.5S16 9.9 16 8.5zm-3 0c0-.3.2-.5.5-.5s.5.2.5.5-.2.5-.5.5-.5-.2-.5-.5z"/>
+                        <path d="M8.5 13c-1.4 0-2.5 1.1-2.5 2.5S7.1 18 8.5 18s2.5-1.1 2.5-2.5S9.9 13 8.5 13zm0 3c-.3 0-.5-.2-.5-.5s.2-.5.5-.5.5.2.5.5-.2.5-.5.5z"/>
+                        <path d="M15.5 13c-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5-1.1-2.5-2.5-2.5zm0 3c-.3 0-.5-.2-.5-.5s.2-.5.5-.5.5.2.5.5-.2.5-.5.5z"/>
+                        <path d="M13.5 11c-.6 0-1 .4-1 1v1c0 .6.4 1 1 1s1-.4 1-1v-1c0-.6-.4-1-1-1z"/>
+                    </svg>
+                </button>
+            `);
+        }
+        
+        if (showCopyLink) {
+            buttons.push(`
+                <button class="${buttonClass} copy-link" data-action="copylink" 
+                        aria-label="링크 복사" title="링크 복사">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                </button>
+            `);
+        }
+        
+        return `
+            <div class="${containerClass}">
+                <span class="share-label text-sm font-medium text-gray-600 dark:text-gray-400 mr-3">공유하기:</span>
+                <div class="flex space-x-2">
+                    ${buttons.join('')}
+                </div>
+            </div>
+        `;
     },
     
     /**
@@ -428,7 +576,60 @@ const SocialShare = {
     }
 };
 
-// 모듈 내보내기
+// 전역 인스턴스는 이미 SocialShare 객체 자체입니다
+
+// 모듈 내보내기 및 전역 노출 (즉시 실행)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SocialShare;
+} else {
+    // 더 엄격한 SocialShare 인스턴스 체크
+    if (window.SocialShare && 
+        typeof window.SocialShare === 'object' && 
+        typeof window.SocialShare.getShareStats === 'function' &&
+        typeof window.SocialShare.init === 'function') {
+        console.log('=== 기존 SocialShare 인스턴스 재사용 ===');
+    } else {
+        // 브라우저 환경에서 전역 객체로 즉시 노출
+        window.SocialShare = SocialShare;
+        window.socialShare = SocialShare;
+        console.log('=== 새 SocialShare 인스턴스 생성 ===');
+        
+        // 즉시 초기화 시도
+        try {
+            SocialShare.init();
+            console.log('SocialShare 즉시 초기화 완료');
+        } catch (error) {
+            console.warn('SocialShare 즉시 초기화 실패:', error);
+            // DOM 로드 완료 후 초기화
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    SocialShare.init();
+                });
+            } else {
+                setTimeout(() => SocialShare.init(), 100);
+            }
+        }
+    }
+    
+    console.log('=== SocialShare 전역 노출 완료 ===');
+    console.log('window.SocialShare 타입:', typeof window.SocialShare);
+    console.log('window.SocialShare.getShareStats 타입:', typeof window.SocialShare.getShareStats);
+    console.log('window.SocialShare 객체:', window.SocialShare);
+    console.log('SocialShare 메서드 확인:', Object.getOwnPropertyNames(SocialShare));
+    
+    // 즉시 초기화 시도
+    try {
+        SocialShare.init();
+        console.log('SocialShare 즉시 초기화 완료');
+    } catch (error) {
+        console.warn('SocialShare 즉시 초기화 실패:', error);
+        // DOM 로드 완료 후 초기화
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                SocialShare.init();
+            });
+        } else {
+            setTimeout(() => SocialShare.init(), 100);
+        }
+    }
 }

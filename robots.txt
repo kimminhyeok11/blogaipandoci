@@ -1,0 +1,62 @@
+# InsureLog - Robots.txt
+# SEO 최적화를 위한 검색엔진 크롤링 가이드
+
+User-agent: *
+Allow: /
+
+# 관리자 페이지 차단
+Disallow: /admin.html
+Disallow: /admin/
+Disallow: /dashboard/private/
+
+# 개발 및 테스트 파일 차단
+Disallow: /*.js$
+Disallow: /*.css$
+Disallow: /*.json$
+Disallow: /sw.js
+Disallow: /manifest.json
+
+# 임시 파일 및 백업 차단
+Disallow: /temp/
+Disallow: /backup/
+Disallow: /*.tmp
+Disallow: /*.bak
+
+# API 엔드포인트 차단 (필요시)
+Disallow: /api/private/
+
+# 사이트맵 위치 명시
+Sitemap: https://blogaipandoci.vercel.app/sitemap.xml
+
+# 주요 검색엔진별 최적화
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: NaverBot
+Allow: /
+Crawl-delay: 1
+
+# 소셜 미디어 봇 허용
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# 악성 봇 차단
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /

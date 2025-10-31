@@ -104,128 +104,9 @@ const DarkMode = {
     }
 };
 
-// CSS 변수 정의 (다크모드 스타일)
+// 다크모드 스타일 (간소화된 버전 - 주요 스타일은 styles.css에서 처리)
 const darkModeStyles = `
-:root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --border-color: #e5e7eb;
-    --accent-color: #3b82f6;
-}
-
-.dark {
-    --bg-primary: #111827;
-    --bg-secondary: #1f2937;
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --border-color: #374151;
-    --accent-color: #60a5fa;
-}
-
-/* 다크모드 기본 스타일 */
-.dark body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-.dark .bg-white {
-    background-color: var(--bg-primary) !important;
-}
-
-.dark .bg-gray-50 {
-    background-color: var(--bg-secondary) !important;
-}
-
-.dark .text-black,
-.dark .text-gray-900 {
-    color: var(--text-primary) !important;
-}
-
-.dark .text-gray-600,
-.dark .text-gray-500 {
-    color: var(--text-secondary) !important;
-}
-
-.dark .border-gray-200 {
-    border-color: var(--border-color) !important;
-}
-
-/* 다크모드 프로즈 스타일 */
-.dark .prose-custom {
-    color: var(--text-primary);
-}
-
-.dark .prose-custom h1,
-.dark .prose-custom h2,
-.dark .prose-custom h3,
-.dark .prose-custom h4,
-.dark .prose-custom h5,
-.dark .prose-custom h6 {
-    color: var(--text-primary);
-}
-
-.dark .prose-custom p,
-.dark .prose-custom li {
-    color: var(--text-secondary);
-}
-
-.dark .prose-custom blockquote {
-    border-left-color: var(--accent-color);
-    background-color: var(--bg-secondary);
-    color: var(--text-secondary);
-}
-
-.dark .prose-custom code {
-    background-color: var(--bg-secondary);
-    color: var(--accent-color);
-}
-
-.dark .prose-custom pre {
-    background-color: #0d1117;
-    border: 1px solid var(--border-color);
-}
-
-/* 다크모드 버튼 및 링크 */
-.dark a {
-    color: var(--accent-color);
-}
-
-.dark a:hover {
-    color: #93c5fd;
-}
-
-/* 다크모드 폼 요소 */
-.dark input,
-.dark textarea,
-.dark select {
-    background-color: var(--bg-secondary);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-}
-
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
-}
-
-/* 다크모드 카드 */
-.dark .card,
-.dark .post-card {
-    background-color: var(--bg-secondary);
-    border-color: var(--border-color);
-}
-
-/* 다크모드 네비게이션 */
-.dark nav {
-    background-color: var(--bg-primary);
-    border-color: var(--border-color);
-}
-
-/* 다크모드 애니메이션 */
+/* 다크모드 전환 애니메이션 */
 * {
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
@@ -236,7 +117,7 @@ const darkModeStyles = `
 }
 
 .dark ::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
+    background: var(--bg-content-secondary);
 }
 
 .dark ::-webkit-scrollbar-thumb {
@@ -246,6 +127,23 @@ const darkModeStyles = `
 
 .dark ::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
+}
+
+/* 다크모드 특수 요소들 */
+.dark .highlight {
+    background-color: rgba(168, 85, 247, 0.2);
+}
+
+.dark .shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.dark .border {
+    border-color: var(--border-color);
+}
+
+.dark .bg-opacity-90 {
+    background-color: rgba(17, 24, 39, 0.9);
 }
 `;
 
