@@ -391,6 +391,11 @@ const SocialShare = {
                     case 'copylink':
                         SocialShare.copyLink();
                         break;
+                    case 'upload-image':
+                    case 'save-draft':
+                    case 'publish':
+                        // 이미지 업로드, 초안 저장, 발행 액션은 다른 곳에서 처리됨
+                        return;
                     default:
                         console.warn(`알 수 없는 공유 액션: ${action}`);
                 }

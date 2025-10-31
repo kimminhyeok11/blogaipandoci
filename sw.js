@@ -256,6 +256,11 @@ async function handleRequest(request, strategy) {
  */
 async function cacheFirst(request, cache, strategy) {
     try {
+        // POST 요청은 캐시하지 않음
+        if (request.method !== 'GET') {
+            return fetch(request);
+        }
+        
         const cachedResponse = await cache.match(request);
         
         if (cachedResponse && !isExpired(cachedResponse, strategy.maxAge)) {
@@ -284,6 +289,11 @@ async function cacheFirst(request, cache, strategy) {
  */
 async function networkFirst(request, cache, strategy) {
     try {
+        // POST 요청은 캐시하지 않음
+        if (request.method !== 'GET') {
+            return fetch(request);
+        }
+        
         const networkResponse = await fetch(request);
         
         if (networkResponse.status === 200) {
@@ -305,6 +315,11 @@ async function networkFirst(request, cache, strategy) {
  * Stale While Revalidate 전략
  */
 async function staleWhileRevalidate(request, cache, strategy) {
+    // POST 요청은 캐시하지 않음
+    if (request.method !== 'GET') {
+        return fetch(request);
+    }
+    
     const cachedResponse = await cache.match(request);
     
     const fetchPromise = fetch(request).then(networkResponse => {

@@ -86,10 +86,29 @@ class FontOptimizer {
 
             // 안전한 폰트 스타일 적용
             const applyFontStyles = async () => {
-                const fontUrl = 'https://fonts.gstatic.com/s/notosanskr/v36/PbykFmXiEBPT4ITbgNA5Cgm20xz64px_1hVWr0wuPNGmlQNMEfD4.woff2';
-                
-                // 폰트 로딩 시도
-                const fontLoaded = await loadFontWithFallback(fontUrl, 'Noto Sans KR', '400');
+                // Google Fonts CSS API를 통해 최신 폰트 URL 가져오기
+                let fontLoaded = false;
+                try {
+                    // Google Fonts CSS API 호출
+                    const response = await fetch('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+                    if (response.ok) {
+                        const cssText = await response.text();
+                        // CSS에서 woff2 URL 추출
+                        const woff2Match = cssText.match(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+\.woff2)\)/);
+                        if (woff2Match) {
+                            const fontUrl = woff2Match[1];
+                            console.log('[FontOptimizer] 최신 폰트 URL:', fontUrl);
+                            fontLoaded = await loadFontWithFallback(fontUrl, 'Noto Sans KR', '400');
+                        } else {
+                            throw new Error('폰트 URL을 찾을 수 없습니다');
+                        }
+                    } else {
+                        throw new Error(`Google Fonts API 응답 오류: ${response.status}`);
+                    }
+                } catch (error) {
+                    console.warn('[FontOptimizer] Google Fonts 로딩 실패, 시스템 폰트 사용:', error);
+                    fontLoaded = false;
+                }
                 
                 const style = document.createElement('style');
                 

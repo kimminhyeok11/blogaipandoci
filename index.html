@@ -1183,10 +1183,21 @@
                     fileName: file.name, 
                     fileSize: file.size, 
                     fileType: file.type, 
-                    path: path 
+                    path: path,
+                    userId: State.user?.id,
+                    userEmail: State.user?.email,
+                    isAuthenticated: !!State.user
                 });
 
                 try {
+                    // Supabase 인증 상태 확인
+                    const { data: { session }, error: sessionError } = await State.supabase.auth.getSession();
+                    console.log('[ImageUpload] Supabase 세션:', { 
+                        hasSession: !!session, 
+                        sessionError: sessionError,
+                        accessToken: session?.access_token ? 'present' : 'missing'
+                    });
+
                     const { data: uploadData, error } = await State.supabase.storage
                         .from(Config.IMAGE_BUCKET_NAME)
                         .upload(path, file, { 
