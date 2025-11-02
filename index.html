@@ -11,12 +11,6 @@
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
     
-    <!-- 
-      [FIX] CSP (Content Security Policy) 수정
-      1. 'frame-ancestors' 제거: <meta> 태그에서는 지원되지 않으며 콘솔 경고를 유발합니다.
-      2. 'frame-src' 확장: Google AdSense가 필요로 하는 도메인을 추가합니다.
-      3. [FIX] 'img-src' 확장: ep1.adtrafficquality.google을 허용합니다.
-    -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
     
     <!-- Open Graph / Facebook -->
@@ -318,7 +312,8 @@
             _sources: {
                 'hljs': 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
                 'dompurify': 'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js',
-                'edjsHTML': 'https://cdn.jsdelivr.net/npm/editorjs-html@latest',
+                // [FIX] 'module is not defined' 오류를 해결하기 위해 브라우저용 UMD 빌드를 사용합니다.
+                'edjsHTML': 'https://cdn.jsdelivr.net/npm/editorjs-html@latest/dist/browser.js',
                 'exif': 'https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js',
                 'editorjs': 'https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest',
                 'header': 'https://cdn.jsdelivr.net/npm/@editorjs/header@latest',
@@ -575,7 +570,8 @@
                         console.error('One or more rendering libraries failed to load (edjsHTML or DOMPurify).');
                         throw new Error('Rendering libraries not found.');
                     }
-
+                    
+                    // [FIX] edjsHTML이 UMD 빌드로 로드되면 window.edjsHTML에 할당됩니다.
                     const parser = edjsHTML();
                     let savedData = { blocks: [] }; // 기본값
 
@@ -758,7 +754,6 @@
 
                 } catch (libError) {
                     console.error("Failed to load editor libraries:", libError);
-                    // [FIX] 'P ' 오타 수정
                     DOM.$('#editorjs-holder').innerHTML = `<p class="text-red-500">에디터를 불러오는 데 실패했습니다. 페이지를 새로고침해주세요.</p>`;
                 }
 
@@ -1106,7 +1101,6 @@
                     img.onload = async () => {
                         const orient = await App.getOrientation(file);
                         const canvas = document.createElement('canvas');
-                        // [FIX] 'd' -> '2d'
                         const ctx = canvas.getContext('2d');
                         if (!ctx) {
                             console.warn('2D context not available, skipping image optimization.');
