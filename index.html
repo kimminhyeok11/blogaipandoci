@@ -15,8 +15,9 @@
       [FIX] CSP (Content Security Policy) 수정
       1. 'frame-ancestors' 제거: <meta> 태그에서는 지원되지 않으며 콘솔 경고를 유발합니다.
       2. 'frame-src' 확장: Google AdSense가 필요로 하는 도메인을 추가합니다.
+      3. [FIX] 'img-src' 확장: ep1.adtrafficquality.google을 허용합니다.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -397,7 +398,6 @@
                 if (category !== '전체') query = query.eq('category', category);
                 return query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
             },
-            // [FIX] RLS(Row Level Security) 문제를 피하기 위해 `select('*')` 대신 필요한 컬럼을 명시적으로 지정합니다.
             getPostBySlug: (slug) => State.supabase.from(Config.DB_TABLE_NAME)
                 .select('id, title, slug, summary, category, thumbnail_url, refined_content, created_at, updated_at, author_id')
                 .eq('slug', slug)
@@ -567,13 +567,12 @@
                         ${popularHtml}${navHtml}
                     </div>`;
                 
-                // [FIX] 렌더링 로직을 더 견고하게 수정
                 try {
                     await ScriptLoader.loadRenderer(); 
 
                     // 라이브러리가 로드되었는지 확인
-                    if (typeof edjsHTML === 'undefined' || typeof DOMPurify === 'undefined' || typeof hljs === 'undefined') {
-                        console.error('One or more rendering libraries failed to load.');
+                    if (typeof edjsHTML === 'undefined' || typeof DOMPurify === 'undefined') {
+                        console.error('One or more rendering libraries failed to load (edjsHTML or DOMPurify).');
                         throw new Error('Rendering libraries not found.');
                     }
 
@@ -629,6 +628,8 @@
                         contentEl.querySelectorAll('pre code').forEach(el => {
                             if (typeof hljs !== 'undefined' && hljs.highlightElement) {
                                 hljs.highlightElement(el);
+                            } else if (typeof hljs === 'undefined') {
+                                console.warn('highlight.js (hljs) is not loaded, skipping code highlighting.');
                             }
                         });
 
@@ -636,7 +637,7 @@
                         contentEl.querySelectorAll('a[target="_blank"]').forEach(a => { a.rel = 'noopener noreferrer'; });
                     }
 
-                } catch (renderError) { // [FIX] 변수명 및 로그 메시지 수정
+                } catch (renderError) {
                     console.error("Error during post content rendering:", renderError); 
                     const contentEl = DOM.$('#post-content');
                     if(contentEl) {
@@ -757,7 +758,8 @@
 
                 } catch (libError) {
                     console.error("Failed to load editor libraries:", libError);
-P                    DOM.$('#editorjs-holder').innerHTML = `<p class="text-red-500">에디터를 불러오는 데 실패했습니다. 페이지를 새로고침해주세요.</p>`;
+                    // [FIX] 'P ' 오타 수정
+                    DOM.$('#editorjs-holder').innerHTML = `<p class="text-red-500">에디터를 불러오는 데 실패했습니다. 페이지를 새로고침해주세요.</p>`;
                 }
 
                 ViewRenderer._bindWriterEvents(post);
@@ -1104,7 +1106,13 @@ P                    DOM.$('#editorjs-holder').innerHTML = `<p class="text-red-5
                     img.onload = async () => {
                         const orient = await App.getOrientation(file);
                         const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('d');
+                        // [FIX] 'd' -> '2d'
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) {
+                            console.warn('2D context not available, skipping image optimization.');
+                            res(file);
+                            return;
+                        }
                         let w = img.width, h = img.height;
                         if (orient >= 5 && orient <= 8) { [w, h] = [h, w]; }
                         canvas.width = w; canvas.height = h;
