@@ -11,6 +11,8 @@
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
     
+    <!-- CSP (Content Security Policy) -->
+    <!-- 참고: 'unsafe-eval'은 Editor.js 또는 기타 라이브러리에서 필요할 수 있으나, 가능하면 제거하는 것이 보안에 좋습니다. -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
     
     <!-- Open Graph / Facebook -->
@@ -210,13 +212,11 @@
 
         /**
          * [Module: Config]
+         * 앱의 핵심 설정을 정의합니다. (변경 없음)
          */
         const Config = {
             SITE_URL: 'https://blogaipandoci.vercel.app',
             SUPABASE_URL: 'https://ddehwkwzmmvcxltlplua.supabase.co',
-            // [!!! 중요 !!!]
-            // 401 오류가 계속 발생한다면, Supabase 대시보드에서 'anon' (public) 키를 복사하여 
-            // 아래 키와 일치하는지, 또는 변경되었는지 확인해 주세요.
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To',
             IMAGE_BUCKET_NAME: 'thought-images', 
             DB_TABLE_NAME: 'posts', 
@@ -225,19 +225,8 @@
         };
 
         /**
-         * [Module: State]
-         */
-        const State = {
-            user: null,
-            isAuthReady: false,
-            currentCategory: '전체',
-            supabase: null,
-            editorInstance: null,
-            nonce: null,
-        };
-
-        /**
          * [Module: DOM]
+         * DOM 관련 헬퍼 함수들을 모아놓은 유틸리티 객체입니다. (변경 없음)
          */
         const DOM = {
             $: document.querySelector.bind(document),
@@ -248,7 +237,6 @@
                     const opts = show ? { opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' } : { opacity: 0, duration: 200, easing: 'easeInQuad' };
                     return anime({ targets: el, ...opts }).finished;
                 } else {
-                    // console.warn('anime.js is not loaded.'); // [FIX] Hide console
                     el.style.opacity = show ? 1 : 0;
                     return Promise.resolve();
                 }
@@ -306,13 +294,15 @@
 
         /**
          * [Module: ScriptLoader]
+         * 스크립트 동적 로딩을 관리합니다. (nonce 설정 로직 추가)
          */
         const ScriptLoader = {
-            _loaded: new Set(), 
+            _loaded: new Set(),
+            _nonce: null,
             _sources: {
                 'hljs': 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
                 'dompurify': 'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js',
-                // [FIX] 'browser.js'가 404 오류를 반환하여 'editorjs-html.js'로 수정합니다.
+                // [FIX] 404 오류 수정을 위해 'browser.js' -> 'editorjs-html.js'로 변경
                 'edjsHTML': 'https://cdn.jsdelivr.net/npm/editorjs-html@latest/dist/editorjs-html.js',
                 'exif': 'https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js',
                 'editorjs': 'https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest',
@@ -323,6 +313,10 @@
                 'code': 'https://cdn.jsdelivr.net/npm/@editorjs/code@latest',
                 'table': 'https://cdn.jsdelivr.net/npm/@editorjs/table@latest',
                 'delimiter': 'https://cdn.jsdelivr.net/npm/@editorjs/delimiter@latest',
+            },
+
+            setNonce: (nonce) => {
+                ScriptLoader._nonce = nonce;
             },
 
             load: (id) => {
@@ -339,8 +333,8 @@
                     script.defer = true;
                     script.crossOrigin = 'anonymous';
                     script.id = `script-${id}`;
-                    if (State.nonce) {
-                        script.nonce = State.nonce;
+                    if (ScriptLoader._nonce) {
+                        script.nonce = ScriptLoader._nonce;
                     }
                     script.onload = () => {
                         ScriptLoader._loaded.add(id);
@@ -371,109 +365,211 @@
             loadExif: () => ScriptLoader.load('exif')
         };
 
-        /**
-         * [Module: Services]
-         */
-        const Services = {
-            init: () => {
-                try {
-                    State.supabase = createClient(Config.SUPABASE_URL, Config.SUPABASE_ANON_KEY);
-                    // console.log("Supabase client initialized."); // 디버깅용
-                } catch (e) {
-                    console.error("Failed to initialize Supabase client:", e);
-                }
-            },
-            onAuthChange: (callback) => State.supabase.auth.onAuthStateChange((_, session) => callback(session?.user || null)),
-            signIn: (email) => State.supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: Config.SITE_URL } }),
-            signOut: () => State.supabase.auth.signOut(),
-            getPosts: (page, category) => {
-                const { from, to } = { from: (page - 1) * Config.POSTS_PER_PAGE, to: page * Config.POSTS_PER_PAGE - 1 };
-                let query = State.supabase.from(Config.DB_TABLE_NAME)
-                    .select('id, title, slug, summary, category, thumbnail_url', { count: 'exact' });
-                if (category !== '전체') query = query.eq('category', category);
-                return query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
-            },
-            getPostBySlug: (slug) => State.supabase.from(Config.DB_TABLE_NAME)
-                .select('id, title, slug, summary, category, thumbnail_url, refined_content, created_at, updated_at, author_id')
-                .eq('slug', slug)
-                .single(),
-            getDashboardPosts: (userId) => State.supabase.from(Config.DB_TABLE_NAME)
-                .select('id, title, slug, status, created_at')
-                .eq('author_id', userId)
-                .order('created_at', { ascending: false }),
-            getRelatedPosts: (slug) => State.supabase.from(Config.DB_TABLE_NAME)
-                .select('title, slug')
-                .eq('status', 'published')
-                .neq('slug', slug)
-                .order('view_count', { ascending: false, nullsFirst: false })
-                .limit(5),
-            getAdjacentPosts: (createdAt) => {
-                 const prev = State.supabase.from(Config.DB_TABLE_NAME)
-                    .select('title, slug')
-                    .lt('created_at', createdAt)
-                    .eq('status', 'published')
-                    .order('created_at', { ascending: false })
-                    .limit(1).single();
-                const next = State.supabase.from(Config.DB_TABLE_NAME)
-                    .select('title, slug')
-                    .gt('created_at', createdAt)
-                    .eq('status', 'published')
-                    .order('created_at', { ascending: true })
-                    .limit(1).single();
-                return Promise.all([prev, next]);
-            },
-            incrementViewCount: (slug) => {
-                try {
-                    const viewed = JSON.parse(sessionStorage.getItem('viewed_posts') || '[]');
-                    if (!viewed.includes(slug)) {
-                        State.supabase.rpc('increment_post_view', { post_slug: slug }).then(({error}) => {
-                           if(error) console.warn("View count RPC error:", error);
-                           else {
-                                viewed.push(slug);
-                                sessionStorage.setItem('viewed_posts', JSON.stringify(viewed));
-                           }
-                        });
-                    }
-                } catch (e) { console.warn('View count error:', e); }
-            },
-            savePost: (data) => {
-                const id = data.id;
-                delete data.id; 
-                if (id) {
-                    return State.supabase.from(Config.DB_TABLE_NAME).update(data).eq('id', id).select().single();
-                } else {
-                    return State.supabase.from(Config.DB_TABLE_NAME).insert(data).select().single();
-                }
-            },
-            checkSlugExists: (slug) => State.supabase.from(Config.DB_TABLE_NAME).select('id').eq('slug', slug).maybeSingle(),
-            deletePost: (id) => State.supabase.from(Config.DB_TABLE_NAME).delete().eq('id', id),
-            uploadImage: async (file) => {
-                const optimizedFile = await App.convertToWebP(file);
-                let baseName = 'upload', ext = 'webp';
-                if (optimizedFile.name) {
-                    const parts = optimizedFile.name.split('.');
-                    if (parts.length > 1) {
-                        ext = parts.pop().toLowerCase();
-                        baseName = parts.join('.').replace(/[^\w-]/g, '_');
-                    } else {
-                        baseName = optimizedFile.name.replace(/[^\w-]/g, '_');
-                    }
-                }
-                if (!baseName) baseName = 'image';
-                const path = `${State.user.id}/${baseName}-${Date.now()}.${ext}`;
-                const { error } = await State.supabase.storage.from(Config.IMAGE_BUCKET_NAME).upload(path, optimizedFile, { upsert: true });
-                if (error) throw new Error(`업로드 실패: ${error.message}`);
-                const { data } = State.supabase.storage.from(Config.IMAGE_BUCKET_NAME).getPublicUrl(path);
-                if (!data?.publicUrl) throw new Error('Public URL 실패');
-                return data.publicUrl;
-            }
-        };
 
         /**
-         * [Module: ViewRenderer]
+         * [Main App Class: BlogApp]
+         * 애플리케이션의 모든 로직을 캡슐화하는 메인 클래스입니다.
+         * 기존의 State, Services, ViewRenderer, Router, App 모듈이 모두 이 클래스 내부의
+         * state와 method로 통합되었습니다.
          */
-        const ViewRenderer = {
-            _templates: {
+        class BlogApp {
+            
+            // 앱 상태 (State)
+            state = {
+                user: null,
+                isAuthReady: false,
+                currentCategory: '전체',
+                editorInstance: null,
+            };
+
+            // 서비스 인스턴스
+            supabase = null;
+            
+            constructor() {
+                // 1. Supabase 클라이언트 초기화
+                try {
+                    this.supabase = createClient(Config.SUPABASE_URL, Config.SUPABASE_ANON_KEY);
+                } catch (e) {
+                    console.error("Failed to initialize Supabase client:", e);
+                    DOM.showToast('앱 초기화 실패. 페이지를 새로고침해주세요.', true);
+                    return;
+                }
+                
+                // 2. Nonce 값 설정 (CSP용)
+                const nonce = document.querySelector('script[nonce]')?.nonce || null;
+                ScriptLoader.setNonce(nonce);
+
+                // 3. 이벤트 핸들러 'this' 컨텍스트 바인딩
+                this.handleGlobalClick = this.handleGlobalClick.bind(this);
+                this.handlePopState = this.handlePopState.bind(this);
+
+                // 4. 앱 초기화 시작
+                this.init();
+            }
+
+            /**
+             * [App Init]
+             * 앱의 핵심 로직을 초기화하고 인증 상태 변경을 감지합니다.
+             */
+            init() {
+                this.bindGlobalListeners();
+
+                this.supabase.auth.onAuthStateChange((_, session) => {
+                    const user = session?.user || null;
+                    const authChanged = this.state.user?.id !== user?.id;
+                    this.state.user = user;
+
+                    if (!this.state.isAuthReady) {
+                        // 첫 로드 시:
+                        this.state.isAuthReady = true;
+                        this.renderNav(); // 네비게이션 렌더링
+                        this.handleRouting(); // 라우팅 시작
+                        window.addEventListener('popstate', this.handlePopState); // 뒤로가기/앞으로가기 감지
+                        
+                        // 앱 로더 숨기기
+                        const loader = DOM.$('#app-loader');
+                        if (loader) {
+                            DOM.animateSwitch(loader, false).then(() => loader.remove());
+                        }
+                    } else if (authChanged) {
+                        // 인증 상태 변경 시 (로그인/로그아웃)
+                        this.renderNav();
+                        this.handleRouting(); // 현재 뷰를 다시 렌더링 (예: 대시보드 접근 권한)
+                    }
+                });
+            }
+
+            /**
+             * [Event Listeners]
+             * 전역 이벤트 리스너를 바인딩합니다.
+             */
+            bindGlobalListeners() {
+                document.addEventListener('click', this.handleGlobalClick);
+                
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const modal = DOM.$('[role="dialog"]');
+                        if (modal) DOM.closeModal(modal.id);
+                    }
+                });
+            }
+
+            handleGlobalClick(e) {
+                // 1. 데이터 액션 버튼 (data-action)
+                const actionBtn = e.target.closest('[data-action]');
+                if (actionBtn && !actionBtn.closest('form')) {
+                    e.preventDefault();
+                    const action = actionBtn.dataset.action;
+                    switch (action) {
+                        case 'auth': return this.showAuthModal();
+                        case 'logout': return this.handleLogout();
+                        case 'filter-category': 
+                            return this.navigateTo(DOM.buildUrl('/', { page: 1, category: actionBtn.dataset.category }));
+                        case 'close-modal':
+                            return DOM.closeModal(actionBtn.closest('[role="dialog"]').id);
+                    }
+                }
+
+                // 2. 내부 링크 라우팅 (SPA)
+                const link = e.target.closest('a');
+                if (link && link.href && link.origin === window.location.origin && !link.dataset.action && !link.href.endsWith('#') && link.target !== '_blank' && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                    this.navigateTo(link.href);
+                }
+            }
+
+            handlePopState() {
+                this.handleRouting();
+            }
+
+            // =================================================================
+            // [Router Methods] (라우터)
+            // =================================================================
+
+            navigateTo(path, replace = false) {
+                let relativePath;
+                try {
+                    const url = new URL(path, window.location.origin);
+                    if (url.origin === window.location.origin) {
+                        relativePath = url.pathname + url.search + url.hash;
+                    } else {
+                        window.location.href = path; // 외부 링크는 그냥 이동
+                        return;
+                    }
+                } catch (e) {
+                    relativePath = path || '/';
+                }
+                
+                const action = replace ? 'replaceState' : 'pushState';
+                const currentPath = window.location.pathname + window.location.search + window.location.hash;
+                
+                if (currentPath !== relativePath) {
+                    history[action]({ path: relativePath }, '', relativePath);
+                }
+                this.handleRouting(); // 상태 변경 후 라우팅 실행
+            }
+
+            async switchView(viewId, callback) {
+                const current = DOM.$('.app-view.active');
+                if (current) {
+                    await DOM.animateSwitch(current, false);
+                    current.classList.remove('active');
+                    current.innerHTML = '';
+                }
+                
+                const next = DOM.$(`#${viewId}`);
+                if (next) {
+                    next.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
+                    next.classList.add('active');
+                    await DOM.animateSwitch(next);
+                    
+                    try {
+                        await callback(next); // 뷰 렌더링 콜백 실행
+                    } catch (error) {
+                        console.error(`Error rendering ${viewId}:`, error);
+                        next.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.</p>`;
+                    }
+                    window.scrollTo(0, 0); // 페이지 상단으로 스크롤
+                }
+            }
+
+            handleRouting() {
+                if (!this.state.isAuthReady) return; // 인증 준비 전에는 라우팅 안 함
+
+                const path = window.location.pathname;
+                const params = new URLSearchParams(window.location.search);
+                const parts = path.split('/').filter(Boolean);
+                const route = parts[0] || 'library';
+                const param = parts[1] || null;
+
+                // 1. 인증이 필요한 페이지 (대시보드, 글쓰기)
+                if (!this.state.user && ['dashboard', 'writer'].includes(route)) {
+                    DOM.showToast('이 기능을 사용하려면 로그인이 필요합니다.', true);
+                    this.navigateTo('/');
+                    return;
+                }
+
+                // 2. 뷰 전환
+                switch (route) {
+                    case 'post': 
+                        return this.switchView('view-post', el => this.renderPost(el, param));
+                    case 'dashboard': 
+                        return this.switchView('view-dashboard', el => this.renderDashboard(el));
+                    case 'writer': 
+                        return this.switchView('view-writer', el => this.renderWriter(el, param));
+                    default: 
+                        const page = parseInt(params.get('page'), 10) || 1;
+                        this.state.currentCategory = params.get('category') || '전체';
+                        return this.switchView('view-library', el => this.renderLibrary(el, page, this.state.currentCategory));
+                }
+            }
+
+            // =================================================================
+            // [ViewRenderer Methods] (뷰 렌더링)
+            // =================================================================
+
+            // --- 템플릿 헬퍼 ---
+            _templates = {
                 nav: (user) => `
                     <nav class="w-full flex items-center justify-between py-2 px-4 sm:py-3 sm:px-5 bg-white/50 backdrop-blur-xl border border-black/10 rounded-3xl shadow-lg" role="banner">
                         <a href="/" data-route class="font-black text-xl text-gray-900 tracking-tighter" aria-label="InsureLog 홈으로 이동">InsureLog</a>
@@ -489,21 +585,24 @@
                     const nextUrl = page < totalPages ? DOM.buildUrl(basePath, { ...params, page: page + 1 }) : '#';
                     return `<div class="flex justify-center items-center gap-4 mt-12" role="navigation" aria-label="페이지 탐색"><a href="${prevUrl}" data-route aria-label="이전 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${page === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">이전</a><span class="text-sm font-medium text-gray-500">${page} / ${totalPages}</span><a href="${nextUrl}" data-route aria-label="다음 페이지로 가기" class="px-4 py-2 text-sm rounded-full bg-gray-100 ${page >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-200'} text-gray-800">다음</a></div>`;
                 }
-            },
-            renderNav: () => {
-                DOM.$('#main-nav-container').innerHTML = ViewRenderer._templates.nav(State.user);
-            },
+            }
 
-            renderLibrary: async (container, page, category) => {
-                ViewRenderer.updateMetaTags();
+            // --- 뷰 렌더링 ---
+
+            renderNav() {
+                DOM.$('#main-nav-container').innerHTML = this._templates.nav(this.state.user);
+            }
+
+            async renderLibrary(container, page, category) {
+                this.updateMetaTags();
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
                         <div class="text-center mb-12"><h1 class="text-5xl sm:text-7xl font-black mb-4 text-black tracking-tighter">InsureLog</h1><p class="text-lg text-gray-500">AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.</p></div>
-                        <div class="flex items-center justify-center gap-2 mb-8 flex-wrap" role="tablist">${ViewRenderer._templates.categoryBtns(category)}</div>
+                        <div class="flex items-center justify-center gap-2 mb-8 flex-wrap" role="tablist">${this._templates.categoryBtns(category)}</div>
                         <div id="post-list-container" class="border border-gray-200/80 rounded-2xl overflow-hidden min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>
                     </div>`;
                 
-                const { data: posts, error, count } = await Services.getPosts(page, category);
+                const { data: posts, error, count } = await this.getPosts(page, category);
                 const listContainer = DOM.$('#post-list-container');
                 
                 if (error) {
@@ -519,28 +618,28 @@
                         const thumb = post.thumbnail_url ? `<div class="w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0 mr-4 sm:mr-5"><img src="${post.thumbnail_url}" alt="${post.title} 썸네일" class="w-full h-full object-cover rounded-lg bg-gray-100 post-thumbnail"></div>` : '';
                         return `<a href="/post/${post.slug}" data-route class="flex items-center p-4 transition-all duration-300 bg-transparent hover:bg-gray-50/80" role="article">${thumb}<div class="flex-grow"><p class="text-xs font-semibold text-fuchsia-500 mb-1">${post.category || '미분류'}</p><h3 class="text-gray-800 text-sm font-bold">${post.title}</h3><p class="text-xs text-gray-500 mt-1 line-clamp-2">${post.summary || ''}</p></div></a>`;
                     }).join('')}</div>`
-                    : `<div class="text-center py-20 text-gray-500"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${State.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
+                    : `<div class="text-center py-20 text-gray-500"><p class="mb-5 text-lg">아직 작성된 글이 없습니다.</p>${this.state.user ? `<a href="/writer" data-route class="inline-block px-6 py-3 text-base font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">첫 글 작성하기</a>` : ''}</div>`;
                 
-                listContainer.innerHTML = `${postsHtml}${ViewRenderer._templates.pagination(page, total, '/', { category })}`;
+                listContainer.innerHTML = `${postsHtml}${this._templates.pagination(page, total, '/', { category })}`;
                 listContainer.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
-            },
+            }
 
-            renderPost: async (container, slug) => {
-                const { data: post, error } = await Services.getPostBySlug(slug);
+            async renderPost(container, slug) {
+                const { data: post, error } = await this.getPostBySlug(slug);
                 if (error || !post) {
                     console.error("Error fetching post:", slug, error);
                     DOM.showToast('글을 찾을 수 없습니다.', true);
-                    Router.navigateTo('/');
+                    this.navigateTo('/');
                     return;
                 }
                 
-                Services.incrementViewCount(slug);
-                const { data: popular } = await Services.getRelatedPosts(slug);
-                const [{ data: prev }, { data: next }] = await Services.getAdjacentPosts(post.created_at);
-                const popularHtml = popular?.length > 0 ? `<div class="mt-20"><h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2><div class="border-t border-gray-200">${popular.map(p => `<a href="/post/${p.slug}" class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50" role="link"><h4 class="font-semibold text-gray-800 text-base">${p.title}</h4></a>`).join('')}</div></div>` : '';
-                const navHtml = `<nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10" role="navigation" aria-label="이전/다음 글 탐색"><div>${prev ? `<a href="/post/${prev.slug}" class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prev.title}</h4></a>` : ''}</div><div class="text-left md:text-right">${next ? `<a href="/post/${next.slug}" class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${next.title}</h4></a>` : ''}</div></nav>`;
-                ViewRenderer.updateMetaTags(post);
-                const editBtn = (State.user && State.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200" aria-label="글 수정">수정</a>` : '';
+                this.incrementViewCount(slug);
+                const { data: popular } = await this.getRelatedPosts(slug);
+                const [{ data: prev }, { data: next }] = await this.getAdjacentPosts(post.created_at);
+                const popularHtml = popular?.length > 0 ? `<div class="mt-20"><h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2><div class="border-t border-gray-200">${popular.map(p => `<a href="/post/${p.slug}" data-route class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50" role="link"><h4 class="font-semibold text-gray-800 text-base">${p.title}</h4></a>`).join('')}</div></div>` : '';
+                const navHtml = `<nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10" role="navigation" aria-label="이전/다음 글 탐색"><div>${prev ? `<a href="/post/${prev.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prev.title}</h4></a>` : ''}</div><div class="text-left md:text-right">${next ? `<a href="/post/${next.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${next.title}</h4></a>` : ''}</div></nav>`;
+                this.updateMetaTags(post);
+                const editBtn = (this.state.user && this.state.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200" aria-label="글 수정">수정</a>` : '';
                 const adTestAttr = ['localhost','127.0.0.1'].includes(window.location.hostname) ? ' data-adtest="on"' : '';
                 
                 container.innerHTML = `
@@ -565,33 +664,33 @@
                 try {
                     await ScriptLoader.loadRenderer(); 
 
-                    // 라이브러리가 로드되었는지 확인
-                    if (typeof edjsHTML === 'undefined' || typeof DOMPurify === 'undefined') {
-                        console.error('One or more rendering libraries failed to load (edjsHTML or DOMPurify).');
-                        throw new Error('Rendering libraries not found.');
+                    // edjsHTML이 UMD 빌드로 로드되면 window.edjsHTML에 할당됩니다.
+                    // (이전 버전에서는 edjsHTML이었으나, 새 UMD 빌드에서는 edjsHTML.default 또는 edjsHTML일 수 있습니다.
+                    // 'editorjs-html.js'는 'edjsHTML'을 전역으로 노출합니다.)
+                    const parser = edjsHTML(); 
+                    if (typeof parser?.parse !== 'function') {
+                         console.error('edjsHTML parser not found. Check library loading.');
+                         throw new Error('edjsHTML parser not found');
                     }
                     
-                    // [FIX] edjsHTML이 UMD 빌드로 로드되면 window.edjsHTML에 할당됩니다.
-                    const parser = window.edjsHTML(); // edjsHTML()로 호출
-                    let savedData = { blocks: [] }; // 기본값
-
+                    let savedData = { blocks: [] };
                     if(post.refined_content) {
                         try {
                             const parsed = JSON.parse(post.refined_content);
-                            // 파싱된 데이터가 유효한 Editor.js OutputData 형식인지 확인
                             if (parsed && typeof parsed === 'object' && Array.isArray(parsed.blocks)) {
-                                savedData = parsed; // 유효한 경우에만 할당
+                                savedData = parsed;
                             } else {
-                                console.warn("Parsed content is not valid Editor.js OutputData. Using empty blocks.");
+                                console.warn("Parsed content is not valid Editor.js OutputData.");
                             }
                         } catch(e) { 
-                            console.warn("Could not parse post content JSON. Using empty blocks.", e); 
+                            console.warn("Could not parse post content JSON.", e); 
                         }
                     }
                     
                     const htmlBlocks = parser.parse(savedData);
                     const rawHtml = htmlBlocks.join('');
 
+                    // DOMPurify 훅 설정 (중복 방지)
                     if (!window.__dompurifyHooked) {
                         DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
                             if (data.attrName === 'style') {
@@ -620,12 +719,10 @@
                         contentEl.innerHTML = safeContent;
                         contentEl.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
                         
-                        // hljs가 로드되었는지 확인하고 실행
+                        // 코드 하이라이팅
                         contentEl.querySelectorAll('pre code').forEach(el => {
                             if (typeof hljs !== 'undefined' && hljs.highlightElement) {
                                 hljs.highlightElement(el);
-                            } else if (typeof hljs === 'undefined') {
-                                console.warn('highlight.js (hljs) is not loaded, skipping code highlighting.');
                             }
                         });
 
@@ -635,27 +732,22 @@
 
                 } catch (renderError) {
                     console.error("Error during post content rendering:", renderError); 
-                    const contentEl = DOM.$('#post-content');
-                    if(contentEl) {
-                        contentEl.innerHTML = `<p class="text-red-500">콘텐츠를 렌더링하는 중 오류가 발생했습니다.</p>`;
-                        contentEl.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
-                    }
+                    DOM.$('#post-content').innerHTML = `<p class="text-red-500">콘텐츠를 렌더링하는 중 오류가 발생했습니다.</p>`;
                 }
                 
+                // 애드센스 로드
                 try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("Adsense error:", e); }
-            },
+            }
 
-
-            renderDashboard: async (container) => {
-                ViewRenderer.updateMetaTags({ title: '대시보드' });
+            async renderDashboard(container) {
+                this.updateMetaTags({ title: '대시보드' });
                 container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><div class="flex justify-between items-center mb-8 sm:mb-10"><h1 class="text-4xl font-black text-black tracking-tighter">대시보드</h1><a href="/writer" data-route class="px-5 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]" aria-label="새 글 작성">새 글 작성</a></div><div id="dashboard-post-list" class="bg-transparent space-y-2 min-h-[200px] flex items-center justify-center"><div class="loader-spinner"></div></div></div>`;
                 
-                if (!State.user) return;
-                const { data: posts, error } = await Services.getDashboardPosts(State.user.id);
+                if (!this.state.user) return; // 방어 코드
+                const { data: posts, error } = await this.getDashboardPosts(this.state.user.id);
                 const list = DOM.$('#dashboard-post-list');
                 
                 if (error) {
-                    console.error("Error fetching dashboard posts:", error);
                     list.innerHTML = '<p class="text-center text-gray-400">글 목록을 불러오는 데 실패했습니다.</p>';
                     return;
                 }
@@ -663,26 +755,27 @@
                     list.innerHTML = '<p class="text-center text-gray-400 py-10">작성한 글이 없습니다.</p>';
                     return;
                 }
-                list.innerHTML = `<ul class="w-full" role="list">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors" role="listitem"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" class="font-bold text-black hover:text-[#D946EF]" aria-label="글 보기: ${post.title}">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black" aria-label="글 수정: ${post.title}">수정</a></li>`).join('')}</ul>`;
+                list.innerHTML = `<ul class="w-full" role="list">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors" role="listitem"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-black hover:text-[#D946EF]" aria-label="글 보기: ${post.title}">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black" aria-label="글 수정: ${post.title}">수정</a></li>`).join('')}</ul>`;
                 list.classList.remove('min-h-[200px]', 'flex', 'items-center', 'justify-center');
-            },
+            }
 
-            renderWriter: async (container, slug) => {
-                if (State.editorInstance) {
+            async renderWriter(container, slug) {
+                // 기존 에디터 인스턴스 파괴
+                if (this.state.editorInstance) {
                     try {
-                        State.editorInstance.destroy();
+                        await this.state.editorInstance.destroy();
                     } catch(e) { console.warn("Editor.js destroy error", e); }
-                    State.editorInstance = null;
+                    this.state.editorInstance = null;
                 }
                 
-                ViewRenderer.updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
+                this.updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
 
                 let post = { id: null, title: '', summary: '', refined_content: null, slug: '', category: Config.CATEGORIES[0] };
                 if (slug) {
-                    const { data, error } = await Services.getPostBySlug(slug);
-                    if (error || !data || data.author_id !== State.user.id) {
+                    const { data, error } = await this.getPostBySlug(slug);
+                    if (error || !data || data.author_id !== this.state.user.id) {
                         DOM.showToast('수정 권한이 없거나 글을 찾을 수 없습니다.', true);
-                        Router.navigateTo('/dashboard');
+                        this.navigateTo('/dashboard');
                         return;
                     }
                     post = data;
@@ -704,11 +797,8 @@
                         ScriptLoader.loadExif() 
                     ]);
                     
-                    const holder = DOM.$('#editorjs-holder');
-                    if(holder) {
-                        holder.innerHTML = '';
-                        holder.classList.remove('flex', 'items-center', 'justify-center', 'min-h-[400px]');
-                    }
+                    DOM.$('#editorjs-holder').innerHTML = '';
+                    DOM.$('#editorjs-holder').classList.remove('flex', 'items-center', 'justify-center', 'min-h-[400px]');
                     
                     let editorData = { blocks: [] };
                     if (post.refined_content) {
@@ -716,14 +806,13 @@
                             const parsed = JSON.parse(post.refined_content);
                             if (parsed && typeof parsed === 'object' && Array.isArray(parsed.blocks)) {
                                 editorData = parsed;
-                            } else {
-                                console.warn("Writer: Parsed content is not valid. Starting fresh.");
                             }
                         }
                         catch(e) { console.warn("Failed to parse editor JSON, starting fresh.", e); }
                     }
 
-                    State.editorInstance = new EditorJS({
+                    // 전역 변수로 노출된 라이브러리 사용
+                    this.state.editorInstance = new EditorJS({
                         holder: 'editorjs-holder',
                         autofocus: false,
                         placeholder: '여기에 이야기를 작성하세요...',
@@ -739,17 +828,12 @@
                                 class: ImageTool,
                                 config: {
                                     uploader: {
-                                        uploadByFile: (file) => App.uploadImageForEditor(file)
+                                        uploadByFile: (file) => this.uploadImageForEditor(file)
                                     }
                                 }
                             }
                         },
-                        onReady: () => {
-                            console.log('Editor.js is ready!');
-                        },
-                        onChange: (api, event) => {
-                            // console.log('Editor.js changed:', event);
-                        }
+                        onReady: () => { /* console.log('Editor.js is ready!') */ },
                     });
 
                 } catch (libError) {
@@ -757,31 +841,39 @@
                     DOM.$('#editorjs-holder').innerHTML = `<p class="text-red-500">에디터를 불러오는 데 실패했습니다. 페이지를 새로고침해주세요.</p>`;
                 }
 
-                ViewRenderer._bindWriterEvents(post);
-            },
-            
-            _bindWriterEvents: (post) => {
+                // 폼 이벤트 바인딩
                 const form = DOM.$('#writer-form');
                 if (!form) return;
+                
                 form.onsubmit = (e) => {
                     e.preventDefault();
-                    if (!ViewRenderer._validateForm()) return;
-                    if (e.submitter?.dataset.action) App.handlePostSave(e.submitter.dataset.action, e.submitter);
+                    if (!this._validateForm()) return;
+                    if (e.submitter?.dataset.action) {
+                        this.handlePostSave(e.submitter.dataset.action, e.submitter);
+                    }
                 };
+                
                 const delBtn = form.querySelector('[data-action="delete"]');
-                if (delBtn) delBtn.onclick = (e) => { e.preventDefault(); App.handlePostDelete(post.id); };
-            },
-
-            _validateForm: () => {
+                if (delBtn) {
+                    delBtn.onclick = (e) => { 
+                        e.preventDefault(); 
+                        this.handlePostDelete(post.id); 
+                    };
+                }
+            }
+            
+            _validateForm() {
                 const title = DOM.$('#title')?.value.trim();
                 const cat = DOM.$('#category')?.value;
                 if (!title) { DOM.showToast('제목은 필수 항목입니다.', true); DOM.$('#title')?.focus(); return false; }
                 if (!cat) { DOM.showToast('카테고리를 선택해주세요.', true); DOM.$('#category')?.focus(); return false; }
-                if (!State.editorInstance) { DOM.showToast('에디터가 아직 로드되지 않았습니다.', true); return false; }
+                if (!this.state.editorInstance) { DOM.showToast('에디터가 아직 로드되지 않았습니다.', true); return false; }
                 return true;
-            },
+            }
 
-            showAuthModal: () => {
+            // --- 모달 렌더링 ---
+            
+            showAuthModal() {
                 const modalId = 'auth-modal';
                 const html = `<div id="auth-modal-content" class="modal-content bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8 relative" role="document">
                     <button data-action="close-modal" aria-label="닫기" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl leading-none">&times;</button>
@@ -795,13 +887,16 @@
                 
                 const modal = DOM.showModal(modalId, html);
                 if (!modal) return;
+                
                 modal.querySelector('#auth-form').onsubmit = async (e) => {
                     e.preventDefault();
                     const email = DOM.$('#email-input').value.trim();
                     if (!email) { DOM.showToast('이메일 입력해주세요.', true); return; }
                     const btn = e.target.querySelector('button');
                     btn.disabled = true; btn.textContent = '전송 중...';
-                    const { error } = await Services.signIn(email);
+                    
+                    const { error } = await this.signIn(email); // Services.signIn -> this.signIn
+                    
                     if (error) { 
                         DOM.showToast(`오류: ${error.message}`, true); 
                         btn.disabled = false; btn.textContent = '매직 링크 받기';
@@ -810,25 +905,28 @@
                         DOM.closeModal(modalId); 
                     }
                 };
-            },
+            }
             
-            showDeleteConfirmModal: (msg) => new Promise(res => {
-                const modalId = 'delete-confirm-modal';
-                const html = `<div id="delete-modal-content" class="modal-content bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8" role="document">
-                    <h3 id="delete-modal-title" class="sr-only">삭제 확인</h3>
-                    <p class="text-center text-black text-lg mb-8">${msg}</p>
-                    <div class="flex justify-center gap-4">
-                        <button data-action="delete-no" class="px-6 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">취소</button>
-                        <button data-action="delete-yes" class="px-6 py-2.5 text-sm font-bold rounded-full bg-red-600 text-white hover:bg-red-700 transition">삭제 확인</button>
-                    </div>
-                </div>`;
-                const modal = DOM.showModal(modalId, html);
-                if (!modal) return res(false);
-                modal.querySelector('[data-action="delete-yes"]').onclick = () => { DOM.closeModal(modalId); res(true); };
-                modal.querySelector('[data-action="delete-no"]').onclick = () => { DOM.closeModal(modalId); res(false); };
-            }),
+            showDeleteConfirmModal(msg) {
+                return new Promise(res => {
+                    const modalId = 'delete-confirm-modal';
+                    const html = `<div id="delete-modal-content" class="modal-content bg-white border border-gray-200 rounded-2xl shadow-lg w-full max-w-sm p-8" role="document">
+                        <h3 id="delete-modal-title" class="sr-only">삭제 확인</h3>
+                        <p class="text-center text-black text-lg mb-8">${msg}</p>
+                        <div class="flex justify-center gap-4">
+                            <button data-action="delete-no" class="px-6 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">취소</button>
+                            <button data-action="delete-yes" class="px-6 py-2.5 text-sm font-bold rounded-full bg-red-600 text-white hover:bg-red-700 transition">삭제 확인</button>
+                        </div>
+                    </div>`;
+                    const modal = DOM.showModal(modalId, html);
+                    if (!modal) return res(false);
+                    modal.querySelector('[data-action="delete-yes"]').onclick = () => { DOM.closeModal(modalId); res(true); };
+                    modal.querySelector('[data-action="delete-no"]').onclick = () => { DOM.closeModal(modalId); res(false); };
+                });
+            }
 
-            updateMetaTags: (post = null) => {
+            // --- 메타 태그 업데이트 ---
+            updateMetaTags(post = null) {
                 const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
                 const desc = post ? post.summary : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
                 const url = post ? `${Config.SITE_URL}/post/${post.slug}` : Config.SITE_URL;
@@ -867,155 +965,146 @@
                 });
                 if (!DOM.$('#ld-json')) document.head.appendChild(ld);
             }
-        };
 
-        /**
-         * [Module: Router]
-         */
-        const Router = {
-            init: () => {
-                window.addEventListener('popstate', Router.handleRouting);
-                Router.handleRouting();
-            },
-            navigateTo: (path, replace = false) => {
-                let relativePath;
+            // =================================================================
+            // [Service Methods] (API 및 비즈니스 로직)
+            // =================================================================
+            
+            signIn(email) {
+                return this.supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: Config.SITE_URL } });
+            }
+
+            signOut() {
+                return this.supabase.auth.signOut();
+            }
+
+            getPosts(page, category) {
+                const { from, to } = { from: (page - 1) * Config.POSTS_PER_PAGE, to: page * Config.POSTS_PER_PAGE - 1 };
+                let query = this.supabase.from(Config.DB_TABLE_NAME)
+                    .select('id, title, slug, summary, category, thumbnail_url', { count: 'exact' });
+                if (category !== '전체') query = query.eq('category', category);
+                return query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
+            }
+
+            getPostBySlug(slug) {
+                return this.supabase.from(Config.DB_TABLE_NAME)
+                    .select('id, title, slug, summary, category, thumbnail_url, refined_content, created_at, updated_at, author_id')
+                    .eq('slug', slug)
+                    .single();
+            }
+
+            getDashboardPosts(userId) {
+                return this.supabase.from(Config.DB_TABLE_NAME)
+                    .select('id, title, slug, status, created_at')
+                    .eq('author_id', userId)
+                    .order('created_at', { ascending: false });
+            }
+
+            getRelatedPosts(slug) {
+                return this.supabase.from(Config.DB_TABLE_NAME)
+                    .select('title, slug')
+                    .eq('status', 'published')
+                    .neq('slug', slug)
+                    .order('view_count', { ascending: false, nullsFirst: false })
+                    .limit(5);
+            }
+
+            getAdjacentPosts(createdAt) {
+                 const prev = this.supabase.from(Config.DB_TABLE_NAME)
+                    .select('title, slug')
+                    .lt('created_at', createdAt)
+                    .eq('status', 'published')
+                    .order('created_at', { ascending: false })
+                    .limit(1).single();
+                const next = this.supabase.from(Config.DB_TABLE_NAME)
+                    .select('title, slug')
+                    .gt('created_at', createdAt)
+                    .eq('status', 'published')
+                    .order('created_at', { ascending: true })
+                    .limit(1).single();
+                return Promise.all([prev, next]);
+            }
+
+            incrementViewCount(slug) {
                 try {
-                    const url = new URL(path);
-                    if (url.origin === window.location.origin) {
-                        relativePath = url.pathname + url.search + url.hash;
-                    } else {
-                        window.location.href = path;
-                        return;
+                    const viewed = JSON.parse(sessionStorage.getItem('viewed_posts') || '[]');
+                    if (!viewed.includes(slug)) {
+                        this.supabase.rpc('increment_post_view', { post_slug: slug }).then(({error}) => {
+                           if(error) console.warn("View count RPC error:", error);
+                           else {
+                                viewed.push(slug);
+                                sessionStorage.setItem('viewed_posts', JSON.stringify(viewed));
+                           }
+                        });
                     }
-                } catch (e) {
-                    relativePath = path || '/';
-                }
-                const action = replace ? 'replaceState' : 'pushState';
-                const currentPath = window.location.pathname + window.location.search + window.location.hash;
-                if (currentPath !== relativePath) {
-                    history[action]({ path: relativePath }, '', relativePath);
-                }
-                Router.handleRouting();
-            },
-            switchView: async (viewId, callback) => {
-                const current = DOM.$('.app-view.active');
-                if (current) {
-                    await DOM.animateSwitch(current, false);
-                    current.classList.remove('active');
-                    current.innerHTML = '';
-                }
-                const next = DOM.$(`#${viewId}`);
-                if (next) {
-                    next.innerHTML = `<div class="min-h-[400px] flex items-center justify-center"><div class="loader-spinner"></div></div>`;
-                    next.classList.add('active');
-                    await DOM.animateSwitch(next);
-                    try {
-                        await callback(next); 
-                    } catch (error) {
-                        console.error(`Error rendering ${viewId}:`, error);
-                        next.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.</p>`;
-                    }
-                    window.scrollTo(0, 0);
-                }
-            },
-            handleRouting: () => {
-                if (!State.isAuthReady) return; 
-                const path = window.location.pathname;
-                const params = new URLSearchParams(window.location.search);
-                const parts = path.split('/').filter(Boolean);
-                const route = parts[0] || 'library';
-                const param = parts[1] || null;
-                if (!State.user && ['dashboard', 'writer'].includes(route)) {
-                    DOM.showToast('이 기능을 사용하려면 로그인이 필요합니다.', true);
-                    Router.navigateTo('/');
-                    return;
-                }
-                switch (route) {
-                    case 'post': 
-                        return Router.switchView('view-post', el => ViewRenderer.renderPost(el, param));
-                    case 'dashboard': 
-                        return Router.switchView('view-dashboard', el => ViewRenderer.renderDashboard(el));
-                    case 'writer': 
-                        return Router.switchView('view-writer', el => ViewRenderer.renderWriter(el, param));
-                    default: 
-                        const page = parseInt(params.get('page'), 10) || 1;
-                        State.currentCategory = params.get('category') || '전체';
-                        return Router.switchView('view-library', el => ViewRenderer.renderLibrary(el, page, State.currentCategory));
+                } catch (e) { console.warn('View count error:', e); }
+            }
+
+            savePost(data) {
+                const id = data.id;
+                delete data.id; 
+                if (id) {
+                    return this.supabase.from(Config.DB_TABLE_NAME).update(data).eq('id', id).select().single();
+                } else {
+                    return this.supabase.from(Config.DB_TABLE_NAME).insert(data).select().single();
                 }
             }
-        };
 
-        /**
-         * [Module: App]
-         */
-        const App = {
-            init: () => {
-                State.nonce = document.querySelector('script[nonce]')?.nonce || null;
-                Services.init();
-                App.bindGlobalListeners();
-                Services.onAuthChange((user) => {
-                    const authChanged = State.user?.id !== user?.id;
-                    State.user = user;
-                    if (!State.isAuthReady) {
-                        State.isAuthReady = true;
-                        ViewRenderer.renderNav();
-                        Router.init(); 
-                        DOM.animateSwitch(DOM.$('#app-loader'), false).then(() => DOM.$('#app-loader').remove());
-                    } else if (authChanged) {
-                        ViewRenderer.renderNav();
-                        Router.handleRouting(); 
+            checkSlugExists(slug) {
+                return this.supabase.from(Config.DB_TABLE_NAME).select('id').eq('slug', slug).maybeSingle();
+            }
+
+            deletePost(id) {
+                // TODO: 스토리지의 이미지도 함께 삭제하는 로직을 추가하면 좋습니다.
+                return this.supabase.from(Config.DB_TABLE_NAME).delete().eq('id', id);
+            }
+
+            async uploadImage(file) {
+                const optimizedFile = await this.convertToWebP(file);
+                let baseName = 'upload', ext = 'webp';
+                if (optimizedFile.name) {
+                    const parts = optimizedFile.name.split('.');
+                    if (parts.length > 1) {
+                        ext = parts.pop().toLowerCase();
+                        baseName = parts.join('.').replace(/[^\w-]/g, '_');
+                    } else {
+                        baseName = optimizedFile.name.replace(/[^\w-]/g, '_');
                     }
-                });
-            },
-            bindGlobalListeners: () => {
-                document.addEventListener('click', (e) => {
-                    const action = e.target.closest('[data-action]');
-                    if (action && !action.closest('form')) {
-                        e.preventDefault();
-                        const act = action.dataset.action;
-                        switch (act) {
-                            case 'auth': return ViewRenderer.showAuthModal();
-                            case 'logout': return App.handleLogout();
-                            case 'filter-category': 
-                                return Router.navigateTo(DOM.buildUrl('/', { page: 1, category: action.dataset.category }));
-                            case 'close-modal':
-                                return DOM.closeModal(action.closest('[role="dialog"]').id);
-                        }
-                    }
-                    const link = e.target.closest('a');
-                    if (link && link.href && link.origin === window.location.origin && !link.dataset.action && !link.href.endsWith('#') && link.target !== '_blank' && !e.ctrlKey && !e.metaKey) {
-                        e.preventDefault();
-                        Router.navigateTo(link.href);
-                        return; 
-                    }
-                });
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        const modal = DOM.$('[role="dialog"]');
-                        if (modal) DOM.closeModal(modal.id);
-                    }
-                });
-            },
-            handleLogout: async () => {
+                }
+                if (!baseName) baseName = 'image';
+                const path = `${this.state.user.id}/${baseName}-${Date.now()}.${ext}`;
+                const { error } = await this.supabase.storage.from(Config.IMAGE_BUCKET_NAME).upload(path, optimizedFile, { upsert: true });
+                if (error) throw new Error(`업로드 실패: ${error.message}`);
+                const { data } = this.supabase.storage.from(Config.IMAGE_BUCKET_NAME).getPublicUrl(path);
+                if (!data?.publicUrl) throw new Error('Public URL 실패');
+                return data.publicUrl;
+            }
+
+            // =================================================================
+            // [App Logic / Handlers] (기타 로직)
+            // =================================================================
+
+            async handleLogout() {
                 try { 
-                    await Services.signOut(); 
+                    await this.signOut(); 
                     DOM.showToast('로그아웃되었습니다.'); 
                 } catch (e) { 
-                    console.error('Logout error:', e);
                     DOM.showToast('로그아웃 실패.', true);
                 }
-                Router.navigateTo('/', true);
-            },
-            handlePostSave: async (action, btn) => {
-                if (!State.editorInstance) {
+                this.navigateTo('/', true); // 홈으로 리다이렉트
+            }
+
+            async handlePostSave(action, btn) {
+                if (!this.state.editorInstance) {
                     DOM.showToast('에디터가 준비되지 않았습니다.', true);
                     return;
                 }
                 const origText = btn.textContent;
                 btn.disabled = true;
                 btn.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
+                
                 try {
-                    const savedData = await State.editorInstance.save();
+                    const savedData = await this.state.editorInstance.save();
                     if (savedData.blocks.length === 0) {
                         DOM.showToast('본문은 필수 항목입니다.', true);
                         throw new Error('Content is empty.');
@@ -1031,15 +1120,20 @@
                     const thumb = firstImg ? firstImg.data.file.url : null;
                     const id = DOM.$('#post-id').value || null;
                     let slug = DOM.$('#post-slug').value.trim() || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
-                    if (!id) {
-                        const { data } = await Services.checkSlugExists(slug);
+                    
+                    if (!id) { // 새 글일 때만 슬러그 중복 검사
+                        const { data } = await this.checkSlugExists(slug);
                         if (data) slug += `-${Date.now().toString().slice(-6)}`;
                     }
-                    const postData = { id, title, slug, status, summary, author_id: State.user.id, refined_content: JSON.stringify(savedData), category: DOM.$('#category').value, thumbnail_url: thumb };
-                    const { data: savedPost, error } = await Services.savePost(postData);
+
+                    const postData = { id, title, slug, status, summary, author_id: this.state.user.id, refined_content: JSON.stringify(savedData), category: DOM.$('#category').value, thumbnail_url: thumb };
+                    const { data: savedPost, error } = await this.savePost(postData);
+                    
                     if (error) throw error;
+                    
                     DOM.showToast(status === 'published' ? '발행되었습니다!' : '저장되었습니다.');
-                    Router.navigateTo(status === 'published' ? `/post/${savedPost.slug}` : '/dashboard');
+                    this.navigateTo(status === 'published' ? `/post/${savedPost.slug}` : '/dashboard');
+
                 } catch (e) {
                     console.error("Save error:", e);
                     if (e.message !== 'Content is empty.') {
@@ -1049,24 +1143,27 @@
                     btn.disabled = false;
                     btn.textContent = origText;
                 }
-            },
-            handlePostDelete: async (id) => {
+            }
+
+            async handlePostDelete(id) {
                 if (!id) return;
-                const confirm = await ViewRenderer.showDeleteConfirmModal('정말 삭제하시겠습니까? 되돌릴 수 없습니다.');
+                const confirm = await this.showDeleteConfirmModal('정말 삭제하시겠습니까? 되돌릴 수 없습니다.');
                 if (!confirm) return;
+                
                 DOM.showToast('삭제 중...');
-                const { error } = await Services.deletePost(id);
+                const { error } = await this.deletePost(id);
                 if (error) {
                     DOM.showToast(`삭제 실패: ${error.message}`, true);
                 } else {
                     DOM.showToast('삭제되었습니다.');
-                    Router.navigateTo('/dashboard');
+                    this.navigateTo('/dashboard');
                 }
-            },
-            uploadImageForEditor: async (file) => {
+            }
+
+            async uploadImageForEditor(file) {
                 try {
                     DOM.showToast('이미지 업로드 및 변환 중...');
-                    const url = await Services.uploadImage(file); 
+                    const url = await this.uploadImage(file); 
                     DOM.showToast('업로드 완료!', false);
                     return { success: 1, file: { url: url } };
                 } catch (e) {
@@ -1074,69 +1171,75 @@
                     DOM.showToast(`이미지 업로드 실패: ${e.message}`, true);
                     return { success: 0 };
                 }
-            },
-            getOrientation: (file) => new Promise((res) => {
-                if (typeof EXIF === 'undefined') { 
-                    console.warn('EXIF.js not loaded. Assuming orientation 1.');
-                    res(1); 
-                    return; 
-                }
-                EXIF.getData(file, function() { 
-                    res(EXIF.getTag(this, 'Orientation') || 1);
-                });
-            }),
-            convertToWebP: (file, quality = 0.8) => new Promise((res) => {
-                if (typeof FileReader === 'undefined' || typeof Image === 'undefined' || typeof EXIF === 'undefined' || file.type === 'image/webp' || file.type === 'image/gif') {
-                    if (typeof EXIF === 'undefined' && file.type !== 'image/webp' && file.type !== 'image/gif') {
-                         console.warn('EXIF.js not loaded. Cannot check orientation for WebP conversion.');
+            }
+
+            // --- 이미지 유틸리티 ---
+            getOrientation(file) {
+                return new Promise((res) => {
+                    if (typeof EXIF === 'undefined') { 
+                        res(1); 
+                        return; 
                     }
-                    res(file);
-                    return;
-                }
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = async (e) => {
-                    const img = new Image(); 
-                    img.src = e.target.result;
-                    img.onload = async () => {
-                        const orient = await App.getOrientation(file);
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        if (!ctx) {
-                            console.warn('2D context not available, skipping image optimization.');
-                            res(file);
-                            return;
-                        }
-                        let w = img.width, h = img.height;
-                        if (orient >= 5 && orient <= 8) { [w, h] = [h, w]; }
-                        canvas.width = w; canvas.height = h;
-                        const transforms = {2: [-1,0,0,1,w,0], 3: [-1,0,0,-1,w,h], 4: [1,0,0,-1,0,h], 5: [0,1,1,0,0,0], 6: [0,1,-1,0,h,0], 7: [0,-1,-1,0,h,w], 8: [0,-1,1,0,0,w]};
-                        ctx.transform(...(transforms[orient] || [1,0,0,1,0,0]));
-                        if (orient >= 5 && orient <= 8) {
-                             ctx.drawImage(img, 0, 0, img.height, img.width);
-                        } else {
-                             ctx.drawImage(img, 0, 0, img.width, img.height);
-                        }
-                        canvas.toBlob((blob) => {
-                            if (blob) {
-                                let baseName = file.name ? file.name.split('.').slice(0, -1).join('.') : 'image';
-                                const webpFile = new File([blob], `${baseName}.webp`, { type: 'image/webp' });
-                                res(webpFile);
-                            } else {
-                                 res(file);
+                    EXIF.getData(file, function() { 
+                        res(EXIF.getTag(this, 'Orientation') || 1);
+                    });
+                });
+            }
+
+            convertToWebP(file, quality = 0.8) {
+                return new Promise((res) => {
+                    if (typeof FileReader === 'undefined' || typeof Image === 'undefined' || typeof EXIF === 'undefined' || file.type === 'image/webp' || file.type === 'image/gif') {
+                        res(file);
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = async (e) => {
+                        const img = new Image(); 
+                        img.src = e.target.result;
+                        img.onload = async () => {
+                            const orient = await this.getOrientation(file);
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            if (!ctx) {
+                                res(file);
+                                return;
                             }
-                        }, 'image/webp', quality);
+                            let w = img.width, h = img.height;
+                            if (orient >= 5 && orient <= 8) { [w, h] = [h, w]; }
+                            canvas.width = w; canvas.height = h;
+                            const transforms = {2: [-1,0,0,1,w,0], 3: [-1,0,0,-1,w,h], 4: [1,0,0,-1,0,h], 5: [0,1,1,0,0,0], 6: [0,1,-1,0,h,0], 7: [0,-1,-1,0,h,w], 8: [0,-1,1,0,0,w]};
+                            ctx.transform(...(transforms[orient] || [1,0,0,1,0,0]));
+                            if (orient >= 5 && orient <= 8) {
+                                 ctx.drawImage(img, 0, 0, img.height, img.width);
+                            } else {
+                                 ctx.drawImage(img, 0, 0, img.width, img.height);
+                            }
+                            canvas.toBlob((blob) => {
+                                if (blob) {
+                                    let baseName = file.name ? file.name.split('.').slice(0, -1).join('.') : 'image';
+                                    const webpFile = new File([blob], `${baseName}.webp`, { type: 'image/webp' });
+                                    res(webpFile);
+                                } else {
+                                     res(file);
+                                }
+                            }, 'image/webp', quality);
+                        };
+                        img.onerror = () => res(file);
                     };
-                    img.onerror = () => res(file);
-                };
-                reader.onerror = () => res(file);
-            })
-        };
+                    reader.onerror = () => res(file);
+                });
+            }
+        }
 
         // --- [APP START] ---
-        document.addEventListener('DOMContentLoaded', App.init);
+        // DOMContentLoaded 이벤트 발생 시 BlogApp 클래스의 인스턴스를 생성하여 앱을 시작합니다.
+        document.addEventListener('DOMContentLoaded', () => {
+            new BlogApp();
+        });
 
     </script>
 </body>
 </html>
+
 
