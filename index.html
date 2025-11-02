@@ -253,7 +253,8 @@
                     const opts = show ? { opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' } : { opacity: 0, duration: 200, easing: 'easeInQuad' };
                     return anime({ targets: el, ...opts }).finished;
                 } else {
-                    // console.warn('anime.js is not loaded.'); // [FIX] Hide console
+                    // [FIX] Show console warning if anime.js is not loaded
+                    console.warn('anime.js is not loaded.'); 
                     el.style.opacity = show ? 1 : 0;
                     return Promise.resolve();
                 }
@@ -397,7 +398,11 @@
                 if (category !== '전체') query = query.eq('category', category);
                 return query.eq('status', 'published').order('created_at', { ascending: false }).range(from, to);
             },
-            getPostBySlug: (slug) => State.supabase.from(Config.DB_TABLE_NAME).select('*').eq('slug', slug).single(),
+            // [FIX] RLS(Row Level Security) 문제를 피하기 위해 `select('*')` 대신 필요한 컬럼을 명시적으로 지정합니다.
+            getPostBySlug: (slug) => State.supabase.from(Config.DB_TABLE_NAME)
+                .select('id, title, slug, summary, category, thumbnail_url, refined_content, created_at, updated_at, author_id')
+                .eq('slug', slug)
+                .single(),
             getDashboardPosts: (userId) => State.supabase.from(Config.DB_TABLE_NAME)
                 .select('id, title, slug, status, created_at')
                 .eq('author_id', userId)
@@ -1101,5 +1106,4 @@
     </script>
 </body>
 </html>
-
 
