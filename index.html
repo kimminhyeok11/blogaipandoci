@@ -10,12 +10,7 @@
     <meta name="robots" content="index,follow">
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
-    <!-- 
-      [CSP] 
-      - nonce="r4nd0m"을 메인 스크립트에 적용했습니다.
-      - 'unsafe-eval'은 Supabase-js v2의 ES module에서 필요할 수 있습니다.
-      - 'unsafe-inline'은 Tailwind CSS의 JIT 엔진에 필요합니다.
-    -->
+    
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
     
     <!-- Open Graph / Facebook -->
@@ -35,16 +30,28 @@
     
     <!-- 
       [WORKFLOW CHANGE]
-      - Quill.js 관련 CSS/JS 완전 제거
-      - Markdown 파서(marked.js) 및 이미지 방향(exif.js) 스크립트 추가
+      - Markdown(marked.js) 관련 스크립트 제거
+      - Editor.js 및 관련 도구, 렌더러 스크립트 추가
     -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@12/lib/marked.umd.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+
+    <!-- [NEW] Editor.js Core -->
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+    <!-- [NEW] Editor.js Tools -->
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/list@latest" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/image@latest" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@latest" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/code@latest" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/table@latest" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/delimiter@latest" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+    <!-- [NEW] Editor.js JSON to HTML Renderer -->
+    <script src="https://cdn.jsdelivr.net/npm/editorjs-html@latest" defer crossorigin="anonymous" nonce="r4nd0m"></script>
+
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,11 +67,6 @@
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112" crossorigin="anonymous"></script>
 
-    <!-- 
-      [STYLE]
-      - Quill 에디터 관련 스타일 제거
-      - Markdown <textarea> 스타일 추가
-    -->
     <style>
         :root {
             --bg-main: #FFFFFF;
@@ -102,8 +104,14 @@
         .app-view { display: none; opacity: 0; }
         .app-view.active { display: block; }
 
-        /* [Prose] 블로그 포스트 콘텐츠 스타일 (Marked.js 출력 대응) */
+        /* * [Prose] 블로그 포스트 콘텐츠 스타일 (Editor.js + edjsHTML 출력 대응)
+         * .prose-custom은 이제 방문자 뷰와 에디터 뷰 양쪽에서 사용됩니다.
+         */
         .prose-custom h1, .prose-custom h2, .prose-custom h3 { color: var(--text-primary); font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
+        .prose-custom h1 { font-size: 2.25rem; } /* 36px */
+        .prose-custom h2 { font-size: 1.875rem; } /* 30px */
+        .prose-custom h3 { font-size: 1.5rem; } /* 24px */
+        
         .prose-custom p { margin: 0 0 1.3em; color: var(--text-secondary); }
         .prose-custom div { margin-bottom: 1.3em; }
         .prose-custom p br { display: block; margin-bottom: 0.75em; }
@@ -116,7 +124,8 @@
         .prose-custom ul ul, .prose-custom ol ol, .prose-custom ul ol, .prose-custom ol ul { margin-top: 0.5em; margin-bottom: 0.5em; margin-left: 1.25em; }
         .prose-custom pre { background-color: #282c34; color: #abb2bf; padding: 1.5em; border-radius: 12px; margin-bottom: 1.5em; overflow-x: auto; }
         
-        .prose-custom img { 
+        /* edjsHTML은 img 태그를 figure로 감쌀 수 있습니다. */
+        .prose-custom img, .prose-custom figure { 
             max-width: 90%; 
             height: auto; 
             border-radius: 12px; 
@@ -127,6 +136,9 @@
             margin-left: auto; 
             margin-right: auto; 
         }
+        .prose-custom figure { max-width: 100%; } /* Figure는 컨테이너 역할 */
+        .prose-custom figure img { max-width: 100%; margin-top:0; margin-bottom: 0.5em; } /* Figure 내부 이미지는 100% */
+        .prose-custom figcaption { text-align: center; font-size: 0.9em; color: var(--text-secondary); }
         
         .prose-custom table { width: 100%; border-collapse: collapse; margin-top: 2em; margin-bottom: 2em; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-radius: 8px; overflow: hidden; }
         .prose-custom th, .prose-custom td { border: 1px solid var(--border-color); padding: 0.75em 1em; text-align: left; }
@@ -141,24 +153,40 @@
         .loader-spinner { width: 2.5rem; height: 2.5rem; border: 4px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* [WORKFLOW CHANGE] Markdown 에디터 스타일 */
-        #content-editor {
+        /* [NEW] Editor.js 스타일 오버라이드 */
+        #editorjs-holder {
             width: 100%;
             min-height: 600px;
-            font-family: var(--font-mono);
-            font-size: 0.95em;
-            line-height: 1.6;
             padding: 1.5rem;
             border-radius: 12px;
             border: 1px solid var(--border-color);
-            background-color: var(--bg-content-secondary);
+            background-color: var(--bg-main); /* 일반 배경색 */
             color: var(--text-primary);
-            resize: vertical;
         }
-        #content-editor:focus {
+        #editorjs-holder:focus-within {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.3);
+        }
+        /* Editor.js 내부 폰트 및 스타일을 .prose-custom과 일치시킵니다. */
+        .codex-editor__redactor {
+            padding-bottom: 100px !important; /* 편집기 하단 여백 */
+        }
+        .ce-block__content, .ce-toolbar__content {
+            max-width: 100%; /* prose-custom과 맞춤 */
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .ce-toolbar__actions {
+            left: -12px !important;
+        }
+        .ce-inline-toolbar {
+            color: #333; /* 인라인 툴바 색상 */
+        }
+        /* 이미지 업로드 UI */
+        .image-tool__image-picture {
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
 
 
@@ -171,7 +199,7 @@
                 margin-left: -0.75rem; margin-right: -0.75rem; 
                 padding-top: 1rem !important; z-index: 30; 
             }
-            .prose-custom img { 
+            .prose-custom img, .prose-custom figure { 
                 width: calc(100% + 1.5rem); 
                 margin-left: -0.75rem; 
                 margin-right: -0.75rem; 
@@ -185,6 +213,10 @@
         /* [Accessibility] 포커스 링 */
         button:focus, a:focus, input:focus, select:focus, textarea:focus { 
             outline: 2px solid var(--accent); outline-offset: 2px; 
+        }
+        /* Editor.js 포커스 링은 자체적으로 처리하나, 홀더에 적용 */
+        #editorjs-holder:focus, #editorjs-holder:focus-within {
+             outline: 2px solid var(--accent); outline-offset: 2px; 
         }
 
         /* [Motion] 접근성 - 움직임 최소화 */
@@ -230,9 +262,7 @@
     
     <!-- 
       ==================================================================
-      [APP SCRIPT] - 메인 애플리케이션 (모듈형 리팩터링)
-      - [WORKFLOW CHANGE] QuillEditor 모듈 완전 삭제
-      - [WORKFLOW CHANGE] App 모듈에 이미지 업로드 및 최적화 로직 추가
+      [APP SCRIPT] - 메인 애플리케이션 (Editor.js 기반으로 리팩터링)
       ==================================================================
     -->
 
@@ -247,7 +277,7 @@
         const Config = {
             SITE_URL: 'https://blogaipandoci.vercel.app',
             SUPABASE_URL: 'https://ddehwkwzmmvcxltlplua.supabase.co',
-            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To',
+            SUPABASE_ANON_KEY: 'eyJhbciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To',
             IMAGE_BUCKET_NAME: 'thought-images', 
             DB_TABLE_NAME: 'posts', 
             POSTS_PER_PAGE: 10,
@@ -256,18 +286,19 @@
 
         /**
          * [Module: State]
-         * 전역 상태를 관리합니다. (사용자, 인증 상태, 현재 카테고리 등)
+         * 전역 상태를 관리합니다. (Editor.js 인스턴스 추가)
          */
         const State = {
             user: null,
             isAuthReady: false,
             currentCategory: '전체',
             supabase: null,
+            editorInstance: null, // [NEW] Editor.js 인스턴스를 상태로 관리
         };
 
         /**
          * [Module: DOM]
-         * DOM 조작과 관련된 헬퍼 함수들을 관리합니다.
+         * DOM 조작과 관련된 헬퍼 함수들을 관리합니다. (변경 없음)
          */
         const DOM = {
             $: document.querySelector.bind(document),
@@ -339,7 +370,7 @@
 
         /**
          * [Module: Services]
-         * Supabase API 호출 등 백엔드 통신을 관리합니다.
+         * Supabase API 호출 등 백엔드 통신을 관리합니다. (uploadImage 로직 개선)
          */
         const Services = {
             init: () => {
@@ -372,6 +403,7 @@
             },
 
             getPostBySlug: (slug) => {
+                // [DB CHANGE] `refined_content`는 이제 JSON 텍스트입니다.
                 return State.supabase.from(Config.DB_TABLE_NAME).select('*').eq('slug', slug).single();
             },
 
@@ -411,7 +443,7 @@
             incrementViewCount: (slug) => {
                 try {
                     const viewed = JSON.parse(sessionStorage.getItem('viewed_posts') || '[]');
-                    if (!viewed.includes(slug)) { // slug 기반으로 변경
+                    if (!viewed.includes(slug)) {
                         State.supabase.rpc('increment_post_view', { post_slug: slug }).then(({error}) => {
                            if(error) console.warn("View count RPC error:", error);
                            else {
@@ -424,13 +456,12 @@
             },
             
             savePost: (data) => {
+                // [DB CHANGE] `refined_content`는 이제 JSON 문자열입니다.
                 const id = data.id;
-                delete data.id; // insert/update 객체에서 id 제거
+                delete data.id; 
                 if (id) {
-                    // Update
                     return State.supabase.from(Config.DB_TABLE_NAME).update(data).eq('id', id).select().single();
                 } else {
-                    // Insert
                     return State.supabase.from(Config.DB_TABLE_NAME).insert(data).select().single();
                 }
             },
@@ -443,49 +474,41 @@
                 return State.supabase.from(Config.DB_TABLE_NAME).delete().eq('id', id);
             },
 
+            /**
+             * [REFACTOR]
+             * 이미지 업로드 로직을 WebP 변환과 통합하여 Editor.js에서 사용하기 쉽게 만듭니다.
+             */
             uploadImage: async (file) => {
+                // 1. WebP로 변환 시도 (App 모듈의 헬퍼 사용)
+                const optimizedFile = await App.convertToWebP(file);
+                
+                // 2. 파일 이름 및 경로 생성
                 let baseName = 'upload';
-                let ext = 'bin';
+                let ext = 'webp'; // 기본 확장자를 webp로 설정
 
-                if (file.name) {
-                    const parts = file.name.split('.');
+                if (optimizedFile.name) {
+                    const parts = optimizedFile.name.split('.');
                     if (parts.length > 1) {
                         ext = parts.pop().toLowerCase();
-                        baseName = parts.join('.');
+                        baseName = parts.join('.').replace(/[^\w-]/g, '_');
                     } else {
-                        baseName = file.name;
+                        baseName = optimizedFile.name.replace(/[^\w-]/g, '_');
                     }
                 }
+                if (!baseName) baseName = 'image';
                 
-                // 파일 타입에서 확장자 추론 (이름에 없는 경우)
-                if(ext === 'bin' || !file.name) {
-                     if (file.type === 'image/jpeg') ext = 'jpg';
-                     else if (file.type === 'image/png') ext = 'png';
-                     else if (file.type === 'image/webp') ext = 'webp';
-                     else if (file.type === 'image/gif') ext = 'gif';
-                     else if (file.type === 'image/svg+xml') ext = 'svg';
-                }
+                const path = `${State.user.id}/${baseName}-${Date.now()}.${ext}`;
 
-                let sanitizedBaseName = baseName.replace(/[^\w-]/g, '_');
-                if (!sanitizedBaseName || sanitizedBaseName.startsWith('-')) {
-                    sanitizedBaseName = 'image';
-                }
-                
-                const path = `${State.user.id}/${sanitizedBaseName}-${Date.now()}.${ext}`;
-
-                const { error } = await State.supabase.storage.from(Config.IMAGE_BUCKET_NAME).upload(path, file, { upsert: true });
+                // 3. 최적화된 파일 업로드
+                const { error } = await State.supabase.storage.from(Config.IMAGE_BUCKET_NAME).upload(path, optimizedFile, { upsert: true });
                 if (error) throw new Error(`업로드 실패: ${error.message}`);
                 
+                // 4. Public URL 반환
                 const { data } = State.supabase.storage.from(Config.IMAGE_BUCKET_NAME).getPublicUrl(path);
                 if (!data?.publicUrl) throw new Error('Public URL 실패');
                 return data.publicUrl;
             }
         };
-
-        /**
-         * [WORKFLOW CHANGE]
-         * QuillEditor 모듈이 완전히 삭제되었습니다.
-         */
 
         /**
          * [Module: ViewRenderer]
@@ -544,6 +567,12 @@
                 listContainer.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
             },
 
+            /**
+             * [REFACTOR]
+             * - renderPost가 marked.js 대신 edjsHTML(Editor.js JSON 렌더러)을 사용합니다.
+             * - DOMPurify를 사용해 렌더링된 HTML을 소독합니다.
+             * - hljs는 코드 블록을 위해 계속 사용합니다.
+             */
             renderPost: async (container, slug) => {
                 const { data: post, error } = await Services.getPostBySlug(slug);
                 if (error || !post) {
@@ -553,18 +582,19 @@
                     return;
                 }
                 
-                Services.incrementViewCount(slug); // 조회수 증가 (id 대신 slug)
+                Services.incrementViewCount(slug);
 
                 const { data: popular } = await Services.getRelatedPosts(slug);
                 const [{ data: prev }, { data: next }] = await Services.getAdjacentPosts(post.created_at);
 
-                const popularHtml = popular?.length > 0 ? `<div class="mt-20"><h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2><div class="border-t border-gray-200">${popular.map(p => `<a href="/post/${p.slug}" data-route class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50" role="link"><h4 class="font-semibold text-gray-800 text-base">${p.title}</h4></a>`).join('')}</div></div>` : '';
-                const navHtml = `<nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10" role="navigation" aria-label="이전/다음 글 탐색"><div>${prev ? `<a href="/post/${prev.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prev.title}</h4></a>` : ''}</div><div class="text-left md:text-right">${next ? `<a href="/post/${next.slug}" data-route class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${next.title}</h4></a>` : ''}</div></nav>`;
+                const popularHtml = popular?.length > 0 ? `<div class="mt-20"><h2 class="text-2xl font-bold text-black mb-4">많이 본 글</h2><div class="border-t border-gray-200">${popular.map(p => `<a href="/post/${p.slug}" class="block text-left py-4 px-2 border-b border-gray-200 transition-colors hover:bg-gray-50" role="link"><h4 class="font-semibold text-gray-800 text-base">${p.title}</h4></a>`).join('')}</div></div>` : '';
+                const navHtml = `<nav class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-20 pt-8 border-t border-black/10" role="navigation" aria-label="이전/다음 글 탐색"><div>${prev ? `<a href="/post/${prev.slug}" class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">이전 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${prev.title}</h4></a>` : ''}</div><div class="text-left md:text-right">${next ? `<a href="/post/${next.slug}" class="p-6 block rounded-2xl hover:bg-gray-50 transition h-full" role="link"><span class="text-sm text-gray-500">다음 글</span><h4 class="text-gray-900 font-bold mt-2 text-base">${next.title}</h4></a>` : ''}</div></nav>`;
                 
                 ViewRenderer.updateMetaTags(post);
                 const editBtn = (State.user && State.user.id === post.author_id) ? `<a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs font-bold rounded-full transition bg-gray-100 text-gray-800 hover:bg-gray-200" aria-label="글 수정">수정</a>` : '';
                 
                 const adTestAttr = ['localhost','127.0.0.1'].includes(window.location.hostname) ? ' data-adtest="on"' : '';
+                
                 container.innerHTML = `
                     <div class="max-w-4xl mx-auto py-8 sm:py-16">
                         <article role="article">
@@ -576,23 +606,44 @@
                                     ${editBtn}
                                 </div>
                             </header>
-                            <div id="post-content" class="prose-custom max-w-none"></div>
+                            
+                            <!-- 렌더링 전 로더 표시 -->
+                            <div id="post-content" class="prose-custom max-w-none min-h-[300px] flex items-center justify-center">
+                                <div class="loader-spinner"></div>
+                            </div>
+
                         </article>
                         <div class="my-16"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"${adTestAttr}></ins></div>
                         ${popularHtml}${navHtml}
                     </div>`;
                 
-                /**
-                 * [WORKFLOW CHANGE]
-                 * DB에서 가져온 Markdown (post.refined_content)을 marked.js로 파싱하고,
-                 * DOMPurify로 소독(sanitize)한 후 렌더링합니다.
-                 */
-                if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
-                    // 1. Markdown을 HTML로 변환
-                    const rawHtml = marked.parse(post.refined_content || '');
+                // [FIX] 렌더링 라이브러리 (edjsHTML, DOMPurify, hljs) 로드를 기다립니다.
+                try {
+                    await App.waitForGlobals(['edjsHTML', 'DOMPurify', 'hljs'], 5000); 
 
-                    // 2. DOMPurify Hook (기존 로직 재사용, 스타일 허용)
-                    if (!window.__dompurifyHooked) {
+                    if (typeof edjsHTML === 'undefined' || typeof DOMPurify === 'undefined') {
+                        throw new Error('Content rendering libraries are not available.');
+                    }
+
+                    // 1. edjsHTML 파서 인스턴스 생성
+                    const parser = edjsHTML();
+                    
+                    // 2. DB에서 가져온 JSON 파싱 (없으면 빈 객체)
+                    let savedData = { blocks: [] };
+                    if(post.refined_content) {
+                        try {
+                            savedData = JSON.parse(post.refined_content);
+                        } catch(e) { console.warn("Could not parse post content JSON.", e); }
+                    }
+
+                    // 3. JSON을 HTML 블록 배열로 변환
+                    const htmlBlocks = parser.parse(savedData);
+                    
+                    // 4. HTML 블록을 단일 문자열로 결합
+                    const rawHtml = htmlBlocks.join('');
+
+                    // 5. DOMPurify로 HTML 소독
+                    if (!window.__dompurifyHooked) { // 훅 설정 (renderPost에서만 필요)
                         DOMPurify.addHook('uponSanitizeAttribute', function(node, data) {
                             if (data.attrName === 'style') {
                                 try {
@@ -602,7 +653,6 @@
                                     if (mAlign) allowedStyles.push(`text-align:${mAlign[1]}`);
                                     const mWidth = style.match(/(?:^|;|\s)width\s*:\s*([0-9]+(?:\.[0-9]+)?)(px|%)/);
                                     if (mWidth) allowedStyles.push(`width:${mWidth[1]}${mWidth[2]}`);
-                                    // ... (기타 스타일 규칙은 간결성을 위해 생략되었으나, 기존 로직이 여기에 포함됨)
                                     data.attrValue = allowedStyles.join(';');
                                     if (!data.attrValue) data.keepAttr = false;
                                 } catch (_) { data.keepAttr = false; }
@@ -610,35 +660,40 @@
                         });
                         window.__dompurifyHooked = true;
                     }
-                    
-                    // 3. HTML 소독 (iframe, table 등 허용)
                     const safeContent = DOMPurify.sanitize(rawHtml, { 
-                        ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead", "tfoot", "col", "colgroup", "span"], 
+                        ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead", "tfoot", "col", "colgroup", "span", "figure", "figcaption"], 
                         ADD_ATTR: ["rowspan","colspan","style","class","width","height","align", "frameborder", "allow", "allowfullscreen"] 
                     });
                     
-                    // 4. DOM에 삽입
-                    DOM.$('#post-content').innerHTML = safeContent;
+                    const contentEl = DOM.$('#post-content');
+                    if(contentEl) {
+                        // 6. DOM에 삽입 (로더 제거)
+                        contentEl.innerHTML = safeContent;
+                        contentEl.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
 
-                } else {
-                    console.warn('marked.js or DOMPurify.js not loaded.');
-                    // 라이브러리 로드 실패 시 원본 텍스트(마크다운)를 그대로 표시
-                    DOM.$('#post-content').textContent = post.refined_content || ''; 
+                        // 7. 구문 강조 (hljs가 로드된 것이 보장됨)
+                        if (typeof hljs !== 'undefined') {
+                            contentEl.querySelectorAll('pre code').forEach(hljs.highlightElement);
+                        }
+                        
+                        // 8. 기타 후처리
+                        contentEl.querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async'; });
+                        contentEl.querySelectorAll('a[target="_blank"]').forEach(a => { a.rel = 'noopener noreferrer'; });
+                    }
+
+                } catch (libError) {
+                    console.error(libError);
+                    const contentEl = DOM.$('#post-content');
+                    if(contentEl) {
+                        contentEl.innerHTML = `<p class="text-red-500">콘텐츠를 렌더링하는 중 오류가 발생했습니다.</p>`;
+                        contentEl.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
+                    }
                 }
                 
+                // 애드센스 로드
                 try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("Adsense error:", e); }
-                
-                // 구문 강조(highlight.js)는 marked.js가 생성한 <pre><code> 태그에 적용됩니다.
-                setTimeout(() => {
-                    if (typeof hljs !== 'undefined') {
-                        DOM.$('#post-content').querySelectorAll('pre code').forEach(hljs.highlightElement);
-                    } else {
-                        console.warn('highlight.js not loaded.');
-                    }
-                    DOM.$('#post-content').querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async'; });
-                    DOM.$('#post-content').querySelectorAll('a[target="_blank"]').forEach(a => { a.rel = 'noopener noreferrer'; });
-                }, 100);
             },
+
 
             renderDashboard: async (container) => {
                 ViewRenderer.updateMetaTags({ title: '대시보드' });
@@ -656,15 +711,28 @@
                     list.innerHTML = '<p class="text-center text-gray-400 py-10">작성한 글이 없습니다.</p>';
                     return;
                 }
-                list.innerHTML = `<ul class="w-full" role="list">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors" role="listitem"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" data-route class="font-bold text-black hover:text-[#D946EF]" aria-label="글 보기: ${post.title}">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black" aria-label="글 수정: ${post.title}">수정</a></li>`).join('')}</ul>`;
+                list.innerHTML = `<ul class="w-full" role="list">${posts.map(post => `<li class="flex justify-between items-center p-4 rounded-xl hover:bg-gray-100 transition-colors" role="listitem"><div class="flex items-center"><span class="px-3 py-1 mr-4 rounded-full text-xs font-bold text-white ${post.status === 'published' ? 'bg-[#D946EF]' : 'bg-gray-500'}">${post.status === 'published' ? '발행' : '초안'}</span><div><a href="/post/${post.slug}" class="font-bold text-black hover:text-[#D946EF]" aria-label="글 보기: ${post.title}">${post.title}</a><div class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleDateString('ko-KR')}</div></div></div><a href="/writer/${post.slug}" data-route class="px-4 py-2 text-xs rounded-full bg-black/5 hover:bg-black/10 text-black" aria-label="글 수정: ${post.title}">수정</a></li>`).join('')}</ul>`;
                 list.classList.remove('min-h-[200px]', 'flex', 'items-center', 'justify-center');
             },
 
+            /**
+             * [REFACTOR]
+             * - renderWriter가 Editor.js를 초기화합니다.
+             * - <textarea>를 <div id="editorjs-holder">로 대체합니다.
+             * - 불필해진 버튼(이미지 업로드, 마크다운 가이드)을 제거합니다.
+             */
             renderWriter: async (container, slug) => {
-                // QuillEditor.destroy(); // Quill이 없으므로 제거
+                // SPA 이동 시 기존 에디터 인스턴스 파괴
+                if (State.editorInstance) {
+                    try {
+                        State.editorInstance.destroy();
+                    } catch(e) { console.warn("Editor.js destroy error", e); }
+                    State.editorInstance = null;
+                }
+                
                 ViewRenderer.updateMetaTags({ title: slug ? '글 수정' : '새 글 작성' });
 
-                let post = { id: null, title: '', summary: '', refined_content: '', slug: '', category: Config.CATEGORIES[0] };
+                let post = { id: null, title: '', summary: '', refined_content: null, slug: '', category: Config.CATEGORIES[0] };
                 if (slug) {
                     const { data, error } = await Services.getPostBySlug(slug);
                     if (error || !data || data.author_id !== State.user.id) {
@@ -677,16 +745,64 @@
                 
                 const categoryOpts = Config.CATEGORIES.map(c => `<option value="${c}" ${post.category === c ? 'selected' : ''}>${c}</option>`).join('');
                 
-                /**
-                 * [WORKFLOW CHANGE]
-                 * Quill 에디터 영역을 단순 <textarea>로 교체합니다.
-                 * '표 삽입' 버튼을 '이미지 업로드' 버튼과 '마크다운 안내' 링크로 교체합니다.
-                 */
-                container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate><input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}"><div><select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select><textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea></div><div><label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label><textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea></div><div><label for="content-editor" class="block text-lg font-bold text-black mb-3">본문 (Markdown)</label><textarea id="content-editor" aria-label="본문 에디터 (마크다운)" placeholder="여기에 마크다운 형식으로 본문을 작성하세요...">${post.refined_content || ''}</textarea></div><div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky"><div class="flex items-center gap-3"><button type="button" data-action="upload-image" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition" aria-label="이미지 업로드">이미지 업로드</button><a href="https://www.markdownguide.org/basic-syntax/" target="_blank" rel="noopener" class="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-gray-100 text-black hover:bg-gray-200 transition" aria-label="마크다운 안내">마크다운 안내</a></div><div class="flex items-center space-x-3"><button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button><button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>${post.id ? `<button type="button" data-action="delete" class="ml-4 px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제</button>` : ''}</div></div></form></div>`;
+                container.innerHTML = `<div class="max-w-4xl mx-auto py-8 sm:py-12"><form id="writer-form" class="space-y-8 sm:pb-0 pb-20" novalidate><input type="hidden" id="post-id" value="${post.id || ''}"> <input type="hidden" id="post-slug" value="${post.slug || ''}"><div><select id="category" class="w-auto bg-gray-100 border border-gray-300 rounded-full p-2 pl-4 pr-3 text-black text-sm font-bold mb-4" required aria-label="카테고리 선택">${categoryOpts}</select><textarea id="title" class="w-full bg-transparent text-4xl font-black text-black placeholder-gray-400 focus:outline-none resize-none" rows="2" placeholder="제목을 입력하세요..." required aria-label="제목 입력" maxlength="200">${post.title || ''}</textarea></div><div><label for="summary" class="block text-lg font-bold text-black mb-3">요약 (Summary)</label><textarea id="summary" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-4 text-black placeholder-gray-500" rows="3" maxlength="150" placeholder="검색 결과 및 미리보기에 표시됩니다 (150자 이내)" aria-label="요약 입력">${post.summary || ''}</textarea></div><div><label for="editorjs-holder" class="block text-lg font-bold text-black mb-3">본문</label>
+                    
+                    <!-- [REPLACE] <textarea> -> <div id="editorjs-holder"> -->
+                    <div id="editorjs-holder" class="prose-custom max-w-none"></div> 
+
+                </div><div class="flex justify-between items-center pt-8 sm:pt-5 writer-controls-sticky">
+                    <!-- [REPLACE] 이미지 업로드 버튼 등 제거 (에디터 내장) -->
+                    <div></div> 
+                    <div class="flex items-center space-x-3"><button type="submit" data-action="save-draft" class="px-5 py-2.5 text-sm font-bold rounded-full bg-gray-200 text-black hover:bg-gray-300 transition">초안 저장</button><button type="submit" data-action="publish" class="px-6 py-2.5 text-sm font-bold rounded-full transition bg-[#D946EF] text-white hover:bg-[#C026D3]">발행하기</button>${post.id ? `<button type="button" data-action="delete" class="ml-4 px-5 py-2.5 text-sm font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition" aria-label="글 삭제">삭제</button>` : ''}</div></div></form></div>`;
                 
-                // Quill 초기화 코드가 모두 제거되었습니다.
-                
-                // 이벤트 리스너 바인딩
+                // [NEW] Editor.js 초기화
+                try {
+                    // 에디터 라이브러리 로드 대기
+                    await App.waitForGlobals(['EditorJS', 'Header', 'List', 'ImageTool', 'Quote', 'CodeTool', 'Table', 'Delimiter'], 10000);
+                    
+                    let editorData = { blocks: [] };
+                    if (post.refined_content) {
+                        try { editorData = JSON.parse(post.refined_content); }
+                        catch(e) { console.warn("Failed to parse editor JSON, starting fresh.", e); }
+                    }
+
+                    State.editorInstance = new EditorJS({
+                        holder: 'editorjs-holder',
+                        autofocus: false,
+                        placeholder: '여기에 이야기를 작성하세요...',
+                        data: editorData, // DB에서 불러온 JSON 데이터
+                        tools: {
+                            header: { class: Header, inlineToolbar: true },
+                            list: { class: List, inlineToolbar: true },
+                            quote: { class: Quote, inlineToolbar: true },
+                            delimiter: Delimiter,
+                            code: CodeTool,
+                            table: { class: Table, inlineToolbar: true },
+                            image: {
+                                class: ImageTool,
+                                config: {
+                                    // [NEW] WebP 변환 업로더 연결
+                                    uploader: {
+                                        uploadByFile: (file) => App.uploadImageForEditor(file)
+                                    }
+                                }
+                            }
+                        },
+                        // 붙여넣기 시 HTML/Markdown 자동 변환 활성화
+                        onReady: () => {
+                            console.log('Editor.js is ready!');
+                        },
+                        onChange: (api, event) => {
+                            // console.log('Editor.js changed:', event);
+                        }
+                    });
+
+                } catch (libError) {
+                    console.error(libError);
+                    DOM.$('#editorjs-holder').innerHTML = `<p class="text-red-500">에디터를 불러오는 데 실패했습니다. 페이지를 새로고침해주세요.</p>`;
+                }
+
+                // 폼 이벤트 바인딩
                 ViewRenderer._bindWriterEvents(post);
             },
             
@@ -703,29 +819,16 @@
                 const delBtn = form.querySelector('[data-action="delete"]');
                 if (delBtn) delBtn.onclick = (e) => { e.preventDefault(); App.handlePostDelete(post.id); };
                 
-                // [WORKFLOW CHANGE] 이미지 업로드 버튼 바인딩
-                const uploadBtn = form.querySelector('[data-action="upload-image"]');
-                if (uploadBtn) uploadBtn.onclick = (e) => { 
-                    e.preventDefault(); 
-                    App.handleImageUpload(e.target); 
-                };
-                
-                const titleEl = DOM.$('#title');
-                if (titleEl) titleEl.oninput = DOM.debounce(() => {
-                    const slugEl = DOM.$('#post-slug');
-                    if (slugEl && !slugEl.value) { // slug가 이미 있는 글은 자동생성 안함
-                        // (옵션) 자동 생성된 slug를 사용자에게 표시할 수 있음
-                    }
-                }, 300);
+                // [REMOVED] 이미지 업로드, 마크다운 가이드 버튼 관련 로직 제거
             },
 
             _validateForm: () => {
                 const title = DOM.$('#title')?.value.trim();
-                const content = DOM.$('#content-editor')?.value.trim();
                 const cat = DOM.$('#category')?.value;
                 if (!title) { DOM.showToast('제목은 필수 항목입니다.', true); DOM.$('#title')?.focus(); return false; }
                 if (!cat) { DOM.showToast('카테고리를 선택해주세요.', true); DOM.$('#category')?.focus(); return false; }
-                if (!content) { DOM.showToast('본문은 필수 항목입니다.', true); DOM.$('#content-editor')?.focus(); return false; }
+                if (!State.editorInstance) { DOM.showToast('에디터가 아직 로드되지 않았습니다.', true); return false; }
+                // [FIX] 본문 유효성 검사는 handlePostSave에서 editor.save() 후로 이동
                 return true;
             },
 
@@ -780,8 +883,6 @@
                 modal.querySelector('[data-action="delete-no"]').onclick = () => { DOM.closeModal(modalId); res(false); };
             }),
 
-            // [WORKFLOW CHANGE] 테이블 도움말 모달 삭제 (showTableHelpModal)
-
             updateMetaTags: (post = null) => {
                 const title = post ? `${post.title} | InsureLog` : 'InsureLog - AI, 기술, 그리고 보험';
                 const desc = post ? post.summary : 'AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.';
@@ -827,7 +928,7 @@
 
         /**
          * [Module: Router]
-         * 브라우저 히스토리 및 뷰 전환을 관리합니다. (변경 없음)
+         * 브라우저 히스토리 및 뷰 전환을 관리합니다.
          */
         const Router = {
             init: () => {
@@ -836,13 +937,29 @@
             },
 
             navigateTo: (path, replace = false) => {
-                const newPath = path || '/';
-                const action = replace ? 'replaceState' : 'pushState';
-                if (window.location.pathname + window.location.search !== newPath) {
-                    history[action]({ path: newPath }, '', newPath);
+                let relativePath;
+                try {
+                    const url = new URL(path);
+                    if (url.origin === window.location.origin) {
+                        relativePath = url.pathname + url.search + url.hash;
+                    } else {
+                        window.location.href = path;
+                        return;
+                    }
+                } catch (e) {
+                    relativePath = path || '/';
                 }
+                
+                const action = replace ? 'replaceState' : 'pushState';
+                const currentPath = window.location.pathname + window.location.search + window.location.hash;
+
+                if (currentPath !== relativePath) {
+                    history[action]({ path: relativePath }, '', relativePath);
+                }
+                
                 Router.handleRouting();
             },
+
 
             switchView: async (viewId, callback) => {
                 const current = DOM.$('.app-view.active');
@@ -867,7 +984,7 @@
             },
 
             handleRouting: () => {
-                if (!State.isAuthReady) return; // 인증 상태 확인 전에는 라우팅 금지
+                if (!State.isAuthReady) return; 
                 
                 const path = window.location.pathname;
                 const params = new URLSearchParams(window.location.search);
@@ -899,7 +1016,6 @@
         /**
          * [Module: App]
          * 애플리케이션의 메인 진입점. 초기화 및 전역 이벤트 핸들러를 관리합니다.
-         * [WORKFLOW CHANGE] 이미지 업로드 및 최적화 로직 추가
          */
         const App = {
             init: () => {
@@ -924,13 +1040,6 @@
 
             bindGlobalListeners: () => {
                 document.addEventListener('click', (e) => {
-                    const route = e.target.closest('[data-route]');
-                    if (route && route.href !== '#') { 
-                        e.preventDefault(); 
-                        Router.navigateTo(route.href); 
-                        return; 
-                    }
-                    
                     const action = e.target.closest('[data-action]');
                     if (action && !action.closest('form')) {
                         e.preventDefault();
@@ -942,8 +1051,21 @@
                                 return Router.navigateTo(DOM.buildUrl('/', { page: 1, category: action.dataset.category }));
                             case 'close-modal':
                                 return DOM.closeModal(action.closest('[role="dialog"]').id);
-                            // 'upload-image' 등 writer 뷰 내의 버튼들은 _bindWriterEvents에서 처리
                         }
+                    }
+                    
+                    const link = e.target.closest('a');
+                    if (link && 
+                        link.href &&
+                        link.origin === window.location.origin &&
+                        !link.dataset.action &&
+                        !link.href.endsWith('#') &&
+                        link.target !== '_blank' &&
+                        !e.ctrlKey && !e.metaKey
+                    ) {
+                        e.preventDefault();
+                        Router.navigateTo(link.href);
+                        return; 
                     }
                 });
 
@@ -952,6 +1074,24 @@
                         const modal = DOM.$('[role="dialog"]');
                         if (modal) DOM.closeModal(modal.id);
                     }
+                });
+            },
+
+            waitForGlobals: (globals, timeout = 3000) => {
+                return new Promise((resolve, reject) => {
+                    const startTime = Date.now();
+                    function check() {
+                        const missing = globals.filter(g => typeof window[g] === 'undefined');
+                        if (missing.length === 0) {
+                            return resolve(true);
+                        }
+                        if (Date.now() - startTime > timeout) {
+                            console.warn('Library timeout:', missing);
+                            return reject(new Error(`Libraries failed to load: ${missing.join(', ')}`));
+                        }
+                        setTimeout(check, 50); // 50ms 마다 확인
+                    }
+                    check();
                 });
             },
 
@@ -966,33 +1106,44 @@
                 Router.navigateTo('/', true);
             },
 
+            /**
+             * [REFACTOR]
+             * - handlePostSave가 Editor.js 인스턴스에서 데이터를 가져옵니다.
+             * - editor.save()를 호출하여 JSON 데이터를 받습니다.
+             * - JSON 데이터를 기반으로 요약(summary)과 썸네일(thumb)을 생성합니다.
+             * - JSON을 문자열화하여 `refined_content`로 저장합니다.
+             */
             handlePostSave: async (action, btn) => {
+                if (!State.editorInstance) {
+                    DOM.showToast('에디터가 준비되지 않았습니다.', true);
+                    return;
+                }
+
                 const origText = btn.textContent;
                 btn.disabled = true;
                 btn.innerHTML = `<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>`;
                 
                 try {
+                    const savedData = await State.editorInstance.save();
+
+                    if (savedData.blocks.length === 0) {
+                        DOM.showToast('본문은 필수 항목입니다.', true);
+                        throw new Error('Content is empty.');
+                    }
+                    
                     const title = DOM.$('#title').value.trim();
                     const status = action === 'publish' ? 'published' : 'draft';
                     
-                    // [WORKFLOW CHANGE] <textarea>에서 마크다운 텍스트 가져오기
-                    const content = DOM.$('#content-editor').value; 
-                    
-                    if (!content || content.trim().length < 10) {
-                        throw new Error('본문이 너무 짧습니다.');
+                    // [NEW] JSON 기반 요약 생성
+                    let summary = DOM.$('#summary').value.trim();
+                    if (!summary) {
+                        const firstP = savedData.blocks.find(b => b.type === 'paragraph');
+                        summary = firstP ? firstP.data.text.replace(/&nbsp;/g, ' ').slice(0, 150) + '...' : '';
                     }
-                    
-                    // [WORKFLOW CHANGE] 요약 생성 (마크다운 텍스트 기반)
-                    let summary = DOM.$('#summary').value.trim() || content.trim().replace(/\s+/g, ' ').slice(0, 150) + '...';
-                    
-                    // [WORKFLOW CHANGE] 썸네일 생성 (마크다운 파싱 기반)
-                    let thumb = null;
-                    if (typeof marked !== 'undefined') {
-                        const parsedForThumb = marked.parse(content);
-                        const temp = document.createElement('div'); 
-                        temp.innerHTML = parsedForThumb;
-                        thumb = temp.querySelector('img')?.src || null;
-                    }
+
+                    // [NEW] JSON 기반 썸네일 생성
+                    const firstImg = savedData.blocks.find(b => b.type === 'image');
+                    const thumb = firstImg ? firstImg.data.file.url : null;
                     
                     const id = DOM.$('#post-id').value || null;
                     let slug = DOM.$('#post-slug').value.trim() || title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
@@ -1006,9 +1157,9 @@
                         id: id,
                         title, slug, status, summary, 
                         author_id: State.user.id, 
-                        refined_content: content, // 마크다운 원본 저장
+                        refined_content: JSON.stringify(savedData), // [NEW] JSON을 문자열로 저장
                         category: DOM.$('#category').value, 
-                        thumbnail_url: thumb 
+                        thumbnail_url: thumb // [NEW] JSON에서 추출한 썸네일
                     };
                     
                     const { data: savedPost, error } = await Services.savePost(postData);
@@ -1019,7 +1170,10 @@
 
                 } catch (e) {
                     console.error("Save error:", e);
-                    DOM.showToast(`저장 실패: ${e.message}`, true);
+                    // 'Content is empty.' 오류는 사용자에게 표시하지 않음 (이미 토스트로 처리됨)
+                    if (e.message !== 'Content is empty.') {
+                        DOM.showToast(`저장 실패: ${e.message}`, true);
+                    }
                 } finally {
                     btn.disabled = false;
                     btn.textContent = origText;
@@ -1042,57 +1196,30 @@
             },
 
             /**
-             * [WORKFLOW CHANGE]
-             * 마크다운 에디터를 위한 새 이미지 업로드 핸들러
+             * [NEW]
+             * Editor.js 이미지 업로더를 위한 래퍼 함수입니다.
+             * WebP 변환 및 Supabase 업로드를 처리하고 Editor.js가 요구하는 형식으로 반환합니다.
              */
-            handleImageUpload: async (btn) => {
-                const input = document.createElement('input');
-                input.type = 'file'; input.accept = 'image/*';
-                input.click();
-                
-                input.onchange = async () => {
-                    const file = input.files[0];
-                    if (!file) return;
-
-                    const origText = btn.textContent;
-                    btn.disabled = true; btn.textContent = '업로드 중...';
-                    DOM.showToast('이미지 업로드 중...');
-
-                    try {
-                        // 이미지 최적화 (WebP 변환)
-                        const fileToUpload = await App.convertToWebP(file);
-                        const url = await Services.uploadImage(fileToUpload);
-                        
-                        // <textarea>에 마크다운 태그 삽입
-                        const textarea = DOM.$('#content-editor');
-                        if (textarea) {
-                            const markdownImage = `\n![이미지 설명](${url})\n`;
-                            
-                            // 현재 커서 위치에 텍스트 삽입
-                            const start = textarea.selectionStart;
-                            const end = textarea.selectionEnd;
-                            textarea.value = textarea.value.substring(0, start) + markdownImage + textarea.value.substring(end);
-                            
-                            // 삽입된 태그의 '이미지 설명' 부분으로 커서 이동
-                            const newCursorPos = start + markdownImage.indexOf(']') - 4;
-                            textarea.selectionStart = newCursorPos;
-                            textarea.selectionEnd = newCursorPos + 6;
-                            textarea.focus();
-                        }
-
-                        DOM.showToast('업로드 완료!', false);
-                    } catch (e) {
-                        console.error('Upload failed:', e);
-                        DOM.showToast(`이미지 업로드 실패: ${e.message}`, true);
-                    } finally {
-                        btn.disabled = false; btn.textContent = origText;
-                    }
-                };
+            uploadImageForEditor: async (file) => {
+                try {
+                    DOM.showToast('이미지 업로드 및 변환 중...');
+                    // Services.uploadImage는 WebP 변환을 포함합니다.
+                    const url = await Services.uploadImage(file); 
+                    DOM.showToast('업로드 완료!', false);
+                    return {
+                        success: 1,
+                        file: { url: url }
+                    };
+                } catch (e) {
+                    console.error('Editor image upload failed:', e);
+                    DOM.showToast(`이미지 업로드 실패: ${e.message}`, true);
+                    return { success: 0 };
+                }
             },
 
             /**
-             * [WORKFLOW CHANGE]
-             * 이미지 최적화 헬퍼 함수들을 QuillEditor 모듈에서 App 모듈로 이동
+             * [REFACTOR]
+             * 이미지 최적화 헬퍼 함수 (WebP 변환)
              */
             getOrientation: (file) => new Promise((res) => {
                 if (typeof EXIF === 'undefined') { 
@@ -1106,26 +1233,34 @@
             }),
 
             convertToWebP: (file, quality = 0.8) => new Promise((res) => {
-                if (typeof FileReader === 'undefined' || typeof Image === 'undefined' || typeof EXIF === 'undefined') {
-                    console.warn('WebP 변환 API 미지원. 원본 파일 사용.');
+                // WebP 변환을 지원하지 않거나, 이미 WebP이거나, GIF인 경우 원본 반환
+                if (typeof FileReader === 'undefined' || typeof Image === 'undefined' || typeof EXIF === 'undefined' || file.type === 'image/webp' || file.type === 'image/gif') {
+                    console.warn('WebP 변환 API 미지원 또는 불필요. 원본 파일 사용.');
                     res(file);
                     return;
                 }
+                
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = async (e) => {
                     const img = new Image(); 
                     img.src = e.target.result;
                     img.onload = async () => {
-                        const orient = await App.getOrientation(file); // App.getOrientation으로 변경
+                        const orient = await App.getOrientation(file);
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
                         let w = img.width, h = img.height;
+                        
+                        // EXIF 방향에 따라 캔버스 회전
                         if (orient >= 5 && orient <= 8) { [w, h] = [h, w]; }
                         canvas.width = w; canvas.height = h;
                         const transforms = {2: [-1,0,0,1,w,0], 3: [-1,0,0,-1,w,h], 4: [1,0,0,-1,0,h], 5: [0,1,1,0,0,0], 6: [0,1,-1,0,h,0], 7: [0,-1,-1,0,h,w], 8: [0,-1,1,0,0,w]};
                         ctx.transform(...(transforms[orient] || [1,0,0,1,0,0]));
-                        ctx.drawImage(img, 0, 0);
+                        if (orient >= 5 && orient <= 8) {
+                             ctx.drawImage(img, 0, 0, img.height, img.width);
+                        } else {
+                             ctx.drawImage(img, 0, 0, img.width, img.height);
+                        }
                         
                         canvas.toBlob((blob) => {
                             if (blob) {
@@ -1149,3 +1284,5 @@
     </script>
 </body>
 </html>
+
+
