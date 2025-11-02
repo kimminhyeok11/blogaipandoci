@@ -253,8 +253,7 @@
                     const opts = show ? { opacity: [0, 1], translateY: [10, 0], duration: 300, easing: 'easeOutQuad' } : { opacity: 0, duration: 200, easing: 'easeInQuad' };
                     return anime({ targets: el, ...opts }).finished;
                 } else {
-                    // [FIX] Show console warning if anime.js is not loaded
-                    console.warn('anime.js is not loaded.'); 
+                    // console.warn('anime.js is not loaded.'); // [FIX] Hide console
                     el.style.opacity = show ? 1 : 0;
                     return Promise.resolve();
                 }
@@ -509,7 +508,6 @@
                         <div id="post-list-container" class="border border-gray-200/80 rounded-2xl overflow-hidden min-h-[300px] flex items-center justify-center"><div class="loader-spinner"></div></div>
                     </div>`;
                 
-                // [FIX] 오류 로깅을 다시 활성화하여 401 오류를 명확히 봅니다.
                 const { data: posts, error, count } = await Services.getPosts(page, category);
                 const listContainer = DOM.$('#post-list-container');
                 
@@ -535,7 +533,7 @@
             renderPost: async (container, slug) => {
                 const { data: post, error } = await Services.getPostBySlug(slug);
                 if (error || !post) {
-                    console.error("Error fetching post:", slug, error); // [FIX] 오류 로깅 복원
+                    console.error("Error fetching post:", slug, error);
                     DOM.showToast('글을 찾을 수 없습니다.', true);
                     Router.navigateTo('/');
                     return;
@@ -569,15 +567,33 @@
                         ${popularHtml}${navHtml}
                     </div>`;
                 
+                // [FIX] 렌더링 로직을 더 견고하게 수정
                 try {
                     await ScriptLoader.loadRenderer(); 
+
+                    // 라이브러리가 로드되었는지 확인
+                    if (typeof edjsHTML === 'undefined' || typeof DOMPurify === 'undefined' || typeof hljs === 'undefined') {
+                        console.error('One or more rendering libraries failed to load.');
+                        throw new Error('Rendering libraries not found.');
+                    }
+
                     const parser = edjsHTML();
-                    let savedData = { blocks: [] };
+                    let savedData = { blocks: [] }; // 기본값
+
                     if(post.refined_content) {
                         try {
-                            savedData = JSON.parse(post.refined_content);
-                        } catch(e) { console.warn("Could not parse post content JSON.", e); }
+                            const parsed = JSON.parse(post.refined_content);
+                            // 파싱된 데이터가 유효한 Editor.js OutputData 형식인지 확인
+                            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.blocks)) {
+                                savedData = parsed; // 유효한 경우에만 할당
+                            } else {
+                                console.warn("Parsed content is not valid Editor.js OutputData. Using empty blocks.");
+                            }
+                        } catch(e) { 
+                            console.warn("Could not parse post content JSON. Using empty blocks.", e); 
+                        }
                     }
+                    
                     const htmlBlocks = parser.parse(savedData);
                     const rawHtml = htmlBlocks.join('');
 
@@ -598,6 +614,7 @@
                         });
                         window.__dompurifyHooked = true;
                     }
+                    
                     const safeContent = DOMPurify.sanitize(rawHtml, { 
                         ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead", "tfoot", "col", "colgroup", "span", "figure", "figcaption"], 
                         ADD_ATTR: ["rowspan","colspan","style","class","width","height","align", "frameborder", "allow", "allowfullscreen"] 
@@ -607,13 +624,20 @@
                     if(contentEl) {
                         contentEl.innerHTML = safeContent;
                         contentEl.classList.remove('min-h-[300px]', 'flex', 'items-center', 'justify-center');
-                        contentEl.querySelectorAll('pre code').forEach(hljs.highlightElement);
+                        
+                        // hljs가 로드되었는지 확인하고 실행
+                        contentEl.querySelectorAll('pre code').forEach(el => {
+                            if (typeof hljs !== 'undefined' && hljs.highlightElement) {
+                                hljs.highlightElement(el);
+                            }
+                        });
+
                         contentEl.querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async'; });
                         contentEl.querySelectorAll('a[target="_blank"]').forEach(a => { a.rel = 'noopener noreferrer'; });
                     }
 
-                } catch (libError) {
-                    console.error("Failed to load rendering libraries:", libError); // [FIX] 오류 로깅 복원
+                } catch (renderError) { // [FIX] 변수명 및 로그 메시지 수정
+                    console.error("Error during post content rendering:", renderError); 
                     const contentEl = DOM.$('#post-content');
                     if(contentEl) {
                         contentEl.innerHTML = `<p class="text-red-500">콘텐츠를 렌더링하는 중 오류가 발생했습니다.</p>`;
@@ -634,7 +658,7 @@
                 const list = DOM.$('#dashboard-post-list');
                 
                 if (error) {
-                    console.error("Error fetching dashboard posts:", error); // [FIX] 오류 로깅 복원
+                    console.error("Error fetching dashboard posts:", error);
                     list.innerHTML = '<p class="text-center text-gray-400">글 목록을 불러오는 데 실패했습니다.</p>';
                     return;
                 }
@@ -691,7 +715,14 @@
                     
                     let editorData = { blocks: [] };
                     if (post.refined_content) {
-                        try { editorData = JSON.parse(post.refined_content); }
+                        try { 
+                            const parsed = JSON.parse(post.refined_content);
+                            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.blocks)) {
+                                editorData = parsed;
+                            } else {
+                                console.warn("Writer: Parsed content is not valid. Starting fresh.");
+                            }
+                        }
                         catch(e) { console.warn("Failed to parse editor JSON, starting fresh.", e); }
                     }
 
@@ -725,8 +756,8 @@
                     });
 
                 } catch (libError) {
-                    console.error("Failed to load editor libraries:", libError); // [FIX] 오류 로깅 복원
-                    DOM.$('#editorjs-holder').innerHTML = `<p class="text-red-500">에디터를 불러오는 데 실패했습니다. 페이지를 새로고침해주세요.</p>`;
+                    console.error("Failed to load editor libraries:", libError);
+P                    DOM.$('#editorjs-holder').innerHTML = `<p class="text-red-500">에디터를 불러오는 데 실패했습니다. 페이지를 새로고침해주세요.</p>`;
                 }
 
                 ViewRenderer._bindWriterEvents(post);
@@ -884,7 +915,7 @@
                     try {
                         await callback(next); 
                     } catch (error) {
-                        console.error(`Error rendering ${viewId}:`, error); // [FIX] 오류 로깅 복원
+                        console.error(`Error rendering ${viewId}:`, error);
                         next.innerHTML = `<p class="text-center text-red-400 py-20">페이지를 표시하는 중 오류가 발생했습니다.</p>`;
                     }
                     window.scrollTo(0, 0);
@@ -973,7 +1004,7 @@
                     await Services.signOut(); 
                     DOM.showToast('로그아웃되었습니다.'); 
                 } catch (e) { 
-                    console.error('Logout error:', e); // [FIX] 오류 로깅 복원
+                    console.error('Logout error:', e);
                     DOM.showToast('로그아웃 실패.', true);
                 }
                 Router.navigateTo('/', true);
@@ -1013,7 +1044,7 @@
                     DOM.showToast(status === 'published' ? '발행되었습니다!' : '저장되었습니다.');
                     Router.navigateTo(status === 'published' ? `/post/${savedPost.slug}` : '/dashboard');
                 } catch (e) {
-                    console.error("Save error:", e); // [FIX] 오류 로깅 복원
+                    console.error("Save error:", e);
                     if (e.message !== 'Content is empty.') {
                         DOM.showToast(`저장 실패: ${e.message}`, true);
                     }
@@ -1042,7 +1073,7 @@
                     DOM.showToast('업로드 완료!', false);
                     return { success: 1, file: { url: url } };
                 } catch (e) {
-                    console.error('Editor image upload failed:', e); // [FIX] 오류 로깅 복원
+                    console.error('Editor image upload failed:', e);
                     DOM.showToast(`이미지 업로드 실패: ${e.message}`, true);
                     return { success: 0 };
                 }
@@ -1073,7 +1104,7 @@
                     img.onload = async () => {
                         const orient = await App.getOrientation(file);
                         const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
+                        const ctx = canvas.getContext('d');
                         let w = img.width, h = img.height;
                         if (orient >= 5 && orient <= 8) { [w, h] = [h, w]; }
                         canvas.width = w; canvas.height = h;
@@ -1106,4 +1137,5 @@
     </script>
 </body>
 </html>
+
 
