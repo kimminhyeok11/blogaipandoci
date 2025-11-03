@@ -1151,8 +1151,28 @@
                         placeholder: '여기에 이야기를 작성하세요...',
                         data: editorData,
                         tools: tools,
+                        // 모바일 최적화 설정
+                        minHeight: 300,
+                        defaultBlock: 'paragraph',
+                        sanitizer: {
+                            b: true,
+                            i: true,
+                            u: true,
+                            s: true,
+                            mark: true,
+                            code: true,
+                            kbd: true
+                        },
+                        // 인라인 툴바 설정 (모바일에서 중요)
+                        inlineToolbar: ['bold', 'italic', 'link'],
+                        // 툴박스 설정 (모바일에서 접근성 향상)
+                        toolbox: {
+                            display: ['paragraph', 'header', 'list', 'quote', 'delimiter', 'code', 'table', 'checklist', 'linkTool', 'marker', 'inlineCode']
+                        },
                         onReady: () => { 
                             console.log('Editor.js is ready with tools:', Object.keys(tools));
+                            // 모바일 환경 감지 및 최적화
+                            this.optimizeEditorForMobile();
                         },
                     });
 
@@ -1189,6 +1209,104 @@
                 if (!cat) { DOM.showToast('카테고리를 선택해주세요.', true); DOM.$('#category')?.focus(); return false; }
                 if (!this.state.editorInstance) { DOM.showToast('에디터가 아직 로드되지 않았습니다.', true); return false; }
                 return true;
+            }
+
+            // 모바일 에디터 최적화
+            optimizeEditorForMobile() {
+                const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
+                if (isMobile) {
+                    console.log('모바일 환경 감지됨 - 에디터 최적화 적용');
+                    
+                    // 에디터 컨테이너 스타일 조정
+                    const editorHolder = DOM.$('#editorjs-holder');
+                    if (editorHolder) {
+                        editorHolder.style.minHeight = '250px';
+                        editorHolder.style.fontSize = '16px'; // iOS 줌 방지
+                        editorHolder.style.lineHeight = '1.6';
+                    }
+                    
+                    // 툴박스 버튼 크기 조정
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @media (max-width: 768px) {
+                            .ce-toolbar__plus,
+                            .ce-toolbar__settings-btn {
+                                width: 44px !important;
+                                height: 44px !important;
+                                min-width: 44px !important;
+                                min-height: 44px !important;
+                            }
+                            
+                            .ce-toolbox {
+                                max-height: 300px !important;
+                                overflow-y: auto !important;
+                            }
+                            
+                            .ce-toolbox__button {
+                                padding: 12px !important;
+                                min-height: 44px !important;
+                                font-size: 14px !important;
+                            }
+                            
+                            .ce-inline-toolbar {
+                                transform: translateY(-50px) !important;
+                            }
+                            
+                            .ce-inline-tool {
+                                width: 44px !important;
+                                height: 44px !important;
+                                min-width: 44px !important;
+                            }
+                            
+                            .ce-popover {
+                                max-height: 250px !important;
+                                overflow-y: auto !important;
+                            }
+                            
+                            .cdx-input {
+                                font-size: 16px !important;
+                                padding: 12px !important;
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    
+                    // 터치 이벤트 최적화
+                    this.addMobileTouchHandlers();
+                }
+            }
+            
+            // 모바일 터치 이벤트 핸들러
+            addMobileTouchHandlers() {
+                const editorHolder = DOM.$('#editorjs-holder');
+                if (!editorHolder) return;
+                
+                let touchStartY = 0;
+                let touchStartTime = 0;
+                
+                editorHolder.addEventListener('touchstart', (e) => {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartTime = Date.now();
+                }, { passive: true });
+                
+                editorHolder.addEventListener('touchend', (e) => {
+                    const touchEndY = e.changedTouches[0].clientY;
+                    const touchDuration = Date.now() - touchStartTime;
+                    const touchDistance = Math.abs(touchEndY - touchStartY);
+                    
+                    // 짧은 탭으로 인식 (스크롤이 아닌)
+                    if (touchDuration < 300 && touchDistance < 10) {
+                        // 텍스트 선택 시 인라인 툴바 표시 지연
+                        setTimeout(() => {
+                            const selection = window.getSelection();
+                            if (selection && selection.toString().length > 0) {
+                                // 선택된 텍스트가 있으면 인라인 툴바가 표시되도록 함
+                                console.log('텍스트 선택됨 - 인라인 툴바 활성화');
+                            }
+                        }, 100);
+                    }
+                }, { passive: true });
             }
 
             // --- 모달 렌더링 ---
