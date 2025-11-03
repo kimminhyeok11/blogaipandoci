@@ -1089,38 +1089,71 @@
                         catch(e) { console.warn("Failed to parse editor JSON, starting fresh.", e); }
                     }
 
-                    // 전역 변수로 노출된 라이브러리 사용
-                    this.state.editorInstance = new EditorJS({
+                    // 전역 변수로 노출된 라이브러리 확인 및 사용
+                    console.log('Available editor tools:', {
+                        EditorJS: typeof window.EditorJS,
+                        Header: typeof window.Header,
+                        List: typeof window.List,
+                        Checklist: typeof window.Checklist,
+                        Quote: typeof window.Quote,
+                        Delimiter: typeof window.Delimiter,
+                        CodeTool: typeof window.CodeTool,
+                        Table: typeof window.Table,
+                        LinkTool: typeof window.LinkTool,
+                        Marker: typeof window.Marker,
+                        InlineCode: typeof window.InlineCode,
+                        ImageTool: typeof window.ImageTool
+                    });
+
+                    // 필수 도구들이 로드되었는지 확인
+                    if (!window.EditorJS) {
+                        throw new Error('EditorJS가 로드되지 않았습니다.');
+                    }
+
+                    const tools = {};
+                    
+                    // 기본 도구들 추가 (사용 가능한 것만)
+                    if (window.Header) tools.header = { class: window.Header, inlineToolbar: true };
+                    if (window.List) tools.list = { class: window.List, inlineToolbar: true };
+                    if (window.Checklist) tools.checklist = { class: window.Checklist, inlineToolbar: true };
+                    if (window.Quote) tools.quote = { class: window.Quote, inlineToolbar: true };
+                    if (window.Delimiter) tools.delimiter = window.Delimiter;
+                    if (window.CodeTool) tools.code = window.CodeTool;
+                    if (window.Table) tools.table = { class: window.Table, inlineToolbar: true };
+                    if (window.Marker) tools.marker = { class: window.Marker, shortcut: 'CMD+SHIFT+M' };
+                    if (window.InlineCode) tools.inlineCode = { class: window.InlineCode, shortcut: 'CMD+SHIFT+C' };
+                    
+                    // 링크 도구 (endpoint 없이 기본 설정)
+                    if (window.LinkTool) {
+                        tools.linkTool = { 
+                            class: window.LinkTool,
+                            config: {
+                                endpoint: false // 자동 링크 미리보기 비활성화
+                            }
+                        };
+                    }
+                    
+                    // 이미지 도구
+                    if (window.ImageTool) {
+                        tools.image = {
+                            class: window.ImageTool,
+                            config: {
+                                uploader: {
+                                    uploadByFile: (file) => this.uploadImageForEditor(file)
+                                }
+                            }
+                        };
+                    }
+
+                    this.state.editorInstance = new window.EditorJS({
                         holder: 'editorjs-holder',
                         autofocus: false,
                         placeholder: '여기에 이야기를 작성하세요...',
                         data: editorData,
-                        tools: {
-                            header: { class: Header, inlineToolbar: true },
-                            list: { class: List, inlineToolbar: true },
-                            checklist: { class: Checklist, inlineToolbar: true },
-                            quote: { class: Quote, inlineToolbar: true },
-                            delimiter: Delimiter,
-                            code: CodeTool,
-                            table: { class: Table, inlineToolbar: true },
-                            linkTool: { 
-                                class: LinkTool,
-                                config: {
-                                    endpoint: '/api/fetchUrl' // 실제 구현 시 필요
-                                }
-                            },
-                            marker: { class: Marker, shortcut: 'CMD+SHIFT+M' },
-                            inlineCode: { class: InlineCode, shortcut: 'CMD+SHIFT+C' },
-                            image: {
-                                class: ImageTool,
-                                config: {
-                                    uploader: {
-                                        uploadByFile: (file) => this.uploadImageForEditor(file)
-                                    }
-                                }
-                            }
+                        tools: tools,
+                        onReady: () => { 
+                            console.log('Editor.js is ready with tools:', Object.keys(tools));
                         },
-                        onReady: () => { /* console.log('Editor.js is ready!') */ },
                     });
 
                 } catch (libError) {
