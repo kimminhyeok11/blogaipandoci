@@ -13,7 +13,7 @@
     
     <!-- CSP (Content Security Policy) -->
     <!-- 참고: 'unsafe-eval'은 Editor.js 또는 기타 라이브러리에서 필요할 수 있으나, 가능하면 제거하는 것이 보안에 좋습니다. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google https://*.gemius.pl https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com https://*.googlesyndication.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -28,7 +28,7 @@
     <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
     
     <!-- Scripts & Stylesheets -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 
@@ -70,12 +70,17 @@
             -moz-osx-font-smoothing: grayscale;
             font-size: 15px;
             line-height: 1.7;
+            min-height: 100vh;
         }
         @media (min-width: 640px) {
             body { font-size: 16px; line-height: 1.75; }
         }
         main#app-container {
-            padding-left: 0.75rem; padding-right: 0.75rem; flex-grow: 1;
+            padding-left: 1rem; 
+            padding-right: 1rem; 
+            flex-grow: 1;
+            width: 100%;
+            max-width: 100%;
         }
         @media (min-width: 640px) {
             main#app-container { padding-left: 1rem; padding-right: 1rem; }
@@ -86,6 +91,11 @@
         .prose-custom h1 { font-size: 2.25rem; }
         .prose-custom h2 { font-size: 1.875rem; }
         .prose-custom h3 { font-size: 1.5rem; }
+        /* 추가: h4~h6 헤딩 스타일 */
+        .prose-custom h4, .prose-custom h5, .prose-custom h6 { color: var(--text-primary); font-weight: 700; margin-top: 1.5em; margin-bottom: 0.75em; }
+        .prose-custom h4 { font-size: 1.25rem; line-height: 1.75rem; }
+        .prose-custom h5 { font-size: 1.125rem; line-height: 1.5rem; }
+        .prose-custom h6 { font-size: 1rem; line-height: 1.5rem; }
         .prose-custom p { margin: 0 0 1.3em; color: var(--text-secondary); }
         .prose-custom div { margin-bottom: 1.3em; }
         .prose-custom p br { display: block; margin-bottom: 0.75em; }
@@ -96,6 +106,7 @@
         .prose-custom ol { list-style-type: decimal; margin-bottom: 1.3em; padding-left: 1.75em; }
         .prose-custom li { margin-bottom: 0.5em; }
         .prose-custom ul ul, .prose-custom ol ol, .prose-custom ul ol, .prose-custom ol ul { margin-top: 0.5em; margin-bottom: 0.5em; margin-left: 1.25em; }
+        .prose-custom code { font-family: var(--font-mono); font-size: 0.9em; background-color: #F3F4F6; padding: 0.2em 0.4em; border-radius: 6px; }
         .prose-custom pre { background-color: #282c34; color: #abb2bf; padding: 1.5em; border-radius: 12px; margin-bottom: 1.5em; overflow-x: auto; }
         .prose-custom img, .prose-custom figure { max-width: 90%; height: auto; border-radius: 12px; margin-top: 2em; margin-bottom: 2em; box-shadow: 0 10px 20px rgba(0,0,0,0.05); display: block; margin-left: auto; margin-right: auto; }
         .prose-custom figure { max-width: 100%; }
@@ -106,6 +117,56 @@
         .prose-custom th { background-color: var(--bg-content-secondary); font-weight: 700; color: var(--text-primary); }
         .prose-custom tr:nth-child(odd) { background-color: var(--bg-main); }
         .prose-custom tr:nth-child(even) { background-color: var(--bg-content-secondary); }
+        
+        /* 전역 헤딩 스타일 - prose-custom 클래스 없이도 적용 */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+            line-height: 1.2;
+        }
+        h1 { font-size: 2.25rem; font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
+        h2 { font-size: 1.875rem; font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
+        h3 { font-size: 1.5rem; font-weight: 900; margin-top: 2em; margin-bottom: 1em; }
+        h4 { font-size: 1.25rem; line-height: 1.75rem; }
+        h5 { font-size: 1.125rem; line-height: 1.5rem; }
+        h6 { font-size: 1rem; line-height: 1.5rem; }
+        
+        /* 단락 스타일 */
+        p {
+            margin: 0 0 1.3em;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        
+        /* 새로운 에디터 요소 스타일 */
+        .prose-custom mark { background-color: #FEF08A; padding: 0.1em 0.2em; border-radius: 3px; }
+        .prose-custom .cdx-checklist { margin-bottom: 1.3em; }
+        .prose-custom .cdx-checklist__item { display: flex; align-items: flex-start; margin-bottom: 0.5em; }
+        .prose-custom .cdx-checklist__item-checkbox { margin-right: 0.75em; margin-top: 0.2em; }
+        .prose-custom .cdx-checklist__item-text { flex: 1; }
+        .prose-custom .cdx-checklist__item--checked .cdx-checklist__item-text { text-decoration: line-through; opacity: 0.6; }
+        .prose-custom .cdx-link { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); }
+        .prose-custom .cdx-link:hover { background-color: var(--accent); color: white; }
+        
+        /* 마커 스타일 */
+        .cdx-marker {
+            background-color: #FEF08A !important;
+            padding: 0.1em 0.2em !important;
+            border-radius: 3px !important;
+        }
+        
+        /* 인라인 코드 스타일 */
+        .cdx-inline-code {
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace !important;
+            font-size: 0.9em !important;
+            background-color: #F3F4F6 !important;
+            padding: 0.2em 0.4em !important;
+            border-radius: 6px !important;
+            color: #374151 !important;
+        }
+        
         .category-btn { transition: all 0.2s ease-in-out; border-radius: 9999px; padding: 0.25rem 0.875rem; font-weight: 500; background-color: var(--bg-content-secondary); color: var(--text-primary); border: 1px solid transparent; }
         .category-btn:hover { background-color: #E5E7EB; }
         .category-btn.active { background-color: var(--accent); color: #FFFFFF; font-weight: 700; }
@@ -119,6 +180,8 @@
             border: 1px solid var(--border-color);
             background-color: var(--bg-main);
             color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
         }
         #editorjs-holder:focus-within {
             outline: none;
@@ -129,9 +192,9 @@
             padding-bottom: 100px !important;
         }
         .ce-block__content, .ce-toolbar__content {
-            max-width: 100%;
-            margin-left: 0;
-            margin-right: 0;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
         .ce-toolbar__actions {
             left: -12px !important;
@@ -142,6 +205,99 @@
         .image-tool__image-picture {
             border-radius: 12px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+        
+        /* Editor.js 블록 스타일 개선 */
+        .ce-block {
+            margin-bottom: 1.5em !important;
+        }
+        .ce-paragraph {
+            font-size: 16px !important;
+            line-height: 1.6 !important;
+            color: var(--text-primary) !important;
+        }
+        .ce-header {
+            font-weight: 700 !important;
+            margin-top: 1.5em !important;
+            margin-bottom: 0.75em !important;
+            color: var(--text-primary) !important;
+        }
+        .ce-header[data-level="1"] { font-size: 2rem !important; }
+        .ce-header[data-level="2"] { font-size: 1.75rem !important; }
+        .ce-header[data-level="3"] { font-size: 1.5rem !important; }
+        .ce-header[data-level="4"] { font-size: 1.25rem !important; }
+        .ce-header[data-level="5"] { font-size: 1.125rem !important; }
+        .ce-header[data-level="6"] { font-size: 1rem !important; }
+        
+        /* 리스트 스타일 */
+        .cdx-list {
+            margin-bottom: 1.3em !important;
+        }
+        .cdx-list__item {
+            margin-bottom: 0.5em !important;
+            line-height: 1.6 !important;
+        }
+        
+        /* 체크리스트 스타일 개선 */
+        .cdx-checklist {
+            margin-bottom: 1.3em !important;
+        }
+        .cdx-checklist__item {
+            display: flex !important;
+            align-items: flex-start !important;
+            margin-bottom: 0.5em !important;
+            line-height: 1.6 !important;
+        }
+        .cdx-checklist__item-checkbox {
+            margin-right: 0.75em !important;
+            margin-top: 0.2em !important;
+            flex-shrink: 0 !important;
+        }
+        .cdx-checklist__item-text {
+            flex: 1 !important;
+        }
+        .cdx-checklist__item--checked .cdx-checklist__item-text {
+            text-decoration: line-through !important;
+            opacity: 0.6 !important;
+        }
+        
+        /* 인용구 스타일 */
+        .cdx-quote {
+            border-left: 3px solid var(--accent) !important;
+            padding-left: 1.5em !important;
+            font-style: italic !important;
+            color: var(--text-primary) !important;
+            background-color: var(--bg-content-secondary) !important;
+            border-radius: 0 8px 8px 0 !important;
+            margin-bottom: 1.3em !important;
+        }
+        
+        /* 코드 블록 스타일 */
+        .cdx-code {
+            background-color: #282c34 !important;
+            color: #abb2bf !important;
+            padding: 1.5em !important;
+            border-radius: 12px !important;
+            margin-bottom: 1.5em !important;
+            overflow-x: auto !important;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace !important;
+        }
+        
+        /* 테이블 스타일 */
+        .tc-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-top: 2em !important;
+            margin-bottom: 2em !important;
+            font-size: 0.9em !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03) !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
+        }
+        .tc-table__cell {
+            border: 1px solid var(--border-color) !important;
+            padding: 0.75em 1em !important;
+            text-align: left !important;
         }
         @media (max-width: 639px) {
             .writer-controls-sticky { 
@@ -176,6 +332,41 @@
         }
         footer { margin-top: 16px; } 
         @media (min-width: 640px) { footer { margin-top: 24px; } }
+        
+        /* 로더 스피너 스타일 */
+        .loader-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #D946EF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 카테고리 버튼 스타일 */
+        .category-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            background-color: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .category-btn:hover {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .category-btn.active {
+            background-color: #D946EF;
+            color: white;
+            border-color: #D946EF;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -183,7 +374,7 @@
     <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center"><div class="loader-spinner"></div></div>
     
     <!-- 헤더 (네비게이션) -->
-    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-4"></header>
+    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-4 bg-white/80 backdrop-blur-sm"></header>
     
     <!-- 메인 콘텐츠 (뷰가 렌더링되는 곳) -->
     <main id="app-container" class="w-full">
@@ -223,6 +414,22 @@
             POSTS_PER_PAGE: 10,
             CATEGORIES: ["AI 트렌드", "보험 산업", "핀테크", "데이터 과학", "머신러닝", "개발 일지", "규제와 법률", "해외 동향", "고객 경험", "기타"]
         };
+
+        // [Accessibility] 광고/외부 스크립트가 body에 aria-hidden을 강제로 설정하는 경우 제거합니다.
+        try {
+            const removeBodyAriaHidden = () => {
+                if (document.body.getAttribute('aria-hidden') === 'true') {
+                    document.body.removeAttribute('aria-hidden');
+                }
+            };
+            document.addEventListener('DOMContentLoaded', removeBodyAriaHidden, { once: true });
+            const bodyObserver = new MutationObserver((mutations) => {
+                for (const m of mutations) {
+                    if (m.attributeName === 'aria-hidden') removeBodyAriaHidden();
+                }
+            });
+            bodyObserver.observe(document.body, { attributes: true });
+        } catch (_) { /* noop */ }
 
         /**
          * [Module: DOM]
@@ -302,8 +509,10 @@
             _sources: {
                 'hljs': 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
                 'dompurify': 'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js',
-                // [FIX] 404 오류 수정을 위해 'browser.js' -> 'editorjs-html.js'로 변경
-                'edjsHTML': 'https://cdn.jsdelivr.net/npm/editorjs-html@latest/dist/editorjs-html.js',
+                // [FIX] edjsHTML: jsDelivr의 브라우저 UMD 빌드로 교체 (v4)
+                'edjsHTML': 'https://cdn.jsdelivr.net/npm/editorjs-html@4.0.0/.build/edjsHTML.browser.js',
+                // [ADD] Markdown 렌더러 (UMD 글로벌: marked)
+                'marked': 'https://cdn.jsdelivr.net/npm/marked@12.0.2/lib/marked.umd.min.js',
                 'exif': 'https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js',
                 'editorjs': 'https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest',
                 'header': 'https://cdn.jsdelivr.net/npm/@editorjs/header@latest',
@@ -313,6 +522,10 @@
                 'code': 'https://cdn.jsdelivr.net/npm/@editorjs/code@latest',
                 'table': 'https://cdn.jsdelivr.net/npm/@editorjs/table@latest',
                 'delimiter': 'https://cdn.jsdelivr.net/npm/@editorjs/delimiter@latest',
+                'linkTool': 'https://cdn.jsdelivr.net/npm/@editorjs/link@latest',
+                'checklist': 'https://cdn.jsdelivr.net/npm/@editorjs/checklist@latest',
+                'marker': 'https://cdn.jsdelivr.net/npm/@editorjs/marker@latest',
+                'inlineCode': 'https://cdn.jsdelivr.net/npm/@editorjs/inline-code@latest',
             },
 
             setNonce: (nonce) => {
@@ -350,7 +563,8 @@
             loadRenderer: () => Promise.all([
                 ScriptLoader.load('edjsHTML'),
                 ScriptLoader.load('dompurify'),
-                ScriptLoader.load('hljs')
+                ScriptLoader.load('hljs'),
+                ScriptLoader.load('marked')
             ]),
             loadEditor: () => Promise.all([
                 ScriptLoader.load('editorjs'),
@@ -360,7 +574,11 @@
                 ScriptLoader.load('quote'),
                 ScriptLoader.load('code'),
                 ScriptLoader.load('table'),
-                ScriptLoader.load('delimiter')
+                ScriptLoader.load('delimiter'),
+                ScriptLoader.load('linkTool'),
+                ScriptLoader.load('checklist'),
+                ScriptLoader.load('marker'),
+                ScriptLoader.load('inlineCode')
             ]),
             loadExif: () => ScriptLoader.load('exif')
         };
@@ -571,10 +789,10 @@
             // --- 템플릿 헬퍼 ---
             _templates = {
                 nav: (user) => `
-                    <nav class="w-full flex items-center justify-between py-2 px-4 sm:py-3 sm:px-5 bg-white/50 backdrop-blur-xl border border-black/10 rounded-3xl shadow-lg" role="banner">
-                        <a href="/" data-route class="font-black text-xl text-gray-900 tracking-tighter" aria-label="InsureLog 홈으로 이동">InsureLog</a>
+                    <nav class="w-full max-w-4xl flex items-center justify-between py-3 px-6 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg" role="banner">
+                        <a href="/" data-route class="font-black text-xl text-gray-900 tracking-tighter hover:text-[#D946EF] transition-colors" aria-label="InsureLog 홈으로 이동">InsureLog</a>
                         <div class="flex items-center space-x-3">
-                            ${user ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="대시보드로 이동">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-bold rounded-full bg-black/5 text-gray-900 hover:bg-black/10 transition" aria-label="로그아웃">로그아웃</button>` : `<button data-action="auth" aria-label="로그인 또는 회원가입" class="px-4 py-2 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition">로그인 / 가입</button>`}
+                            ${user ? `<a href="/dashboard" data-route class="px-4 py-2 text-sm font-medium rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors" aria-label="대시보드로 이동">대시보드</a><button data-action="logout" class="px-4 py-2 text-sm font-medium rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors" aria-label="로그아웃">로그아웃</button>` : `<button data-action="auth" aria-label="로그인 또는 회원가입" class="px-4 py-2 text-sm font-bold rounded-full bg-[#D946EF] text-white hover:bg-[#C026D3] transition-colors">로그인 / 가입</button>`}
                         </div>
                     </nav>`,
                 categoryBtns: (category) => ['전체', ...Config.CATEGORIES].map(cat => `<button data-action="filter-category" data-category="${cat}" class="category-btn text-sm shrink-0 ${cat === category ? 'active' : ''}" aria-pressed="${cat === category}">${cat}</button>`).join(''),
@@ -657,7 +875,7 @@
                                 <div class="loader-spinner"></div>
                             </div>
                         </article>
-                        <div class="my-16"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"${adTestAttr}></ins></div>
+                        <div class="my-16" id="adsense-container" style="display: none;"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5239497835591112" data-ad-slot="2069100221" data-ad-format="auto" data-full-width-responsive="true"${adTestAttr}></ins></div>
                         ${popularHtml}${navHtml}
                     </div>`;
                 
@@ -667,28 +885,82 @@
                     // edjsHTML이 UMD 빌드로 로드되면 window.edjsHTML에 할당됩니다.
                     // (이전 버전에서는 edjsHTML이었으나, 새 UMD 빌드에서는 edjsHTML.default 또는 edjsHTML일 수 있습니다.
                     // 'editorjs-html.js'는 'edjsHTML'을 전역으로 노출합니다.)
-                    const parser = edjsHTML(); 
+                    const parser = edjsHTML({
+                        header: function(block) {
+                            const level = block.data.level || 1;
+                            const text = block.data.text || '';
+                            return `<h${level}>${text}</h${level}>`;
+                        },
+                        paragraph: function(block) {
+                            return `<p>${block.data.text || ''}</p>`;
+                        },
+                        list: function(block) {
+                            const style = block.data.style === 'ordered' ? 'ol' : 'ul';
+                            const items = block.data.items.map(item => `<li>${item}</li>`).join('');
+                            return `<${style}>${items}</${style}>`;
+                        },
+                        checklist: function(block) {
+                            const items = block.data.items.map(item => 
+                                `<div class="cdx-checklist__item ${item.checked ? 'cdx-checklist__item--checked' : ''}">
+                                    <input type="checkbox" class="cdx-checklist__item-checkbox" ${item.checked ? 'checked' : ''} disabled>
+                                    <span class="cdx-checklist__item-text">${item.text}</span>
+                                </div>`
+                            ).join('');
+                            return `<div class="cdx-checklist">${items}</div>`;
+                        },
+                        quote: function(block) {
+                            return `<blockquote>${block.data.text || ''}</blockquote>`;
+                        },
+                        code: function(block) {
+                            return `<pre><code>${block.data.code || ''}</code></pre>`;
+                        },
+                        delimiter: function(block) {
+                            return '<hr>';
+                        },
+                        table: function(block) {
+                            const rows = block.data.content.map((row, index) => {
+                                const cells = row.map(cell => 
+                                    index === 0 ? `<th>${cell}</th>` : `<td>${cell}</td>`
+                                ).join('');
+                                return `<tr>${cells}</tr>`;
+                            }).join('');
+                            return `<table><tbody>${rows}</tbody></table>`;
+                        }
+                    });
                     if (typeof parser?.parse !== 'function') {
-                         console.error('edjsHTML parser not found. Check library loading.');
-                         throw new Error('edjsHTML parser not found');
+                        console.error('edjsHTML parser not found. Check library loading.');
+                        throw new Error('edjsHTML parser not found');
                     }
-                    
+
                     let savedData = { blocks: [] };
-                    if(post.refined_content) {
+                    let rawHtml = '';
+
+                    if (post.refined_content) {
                         try {
                             const parsed = JSON.parse(post.refined_content);
-                            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.blocks)) {
+                            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.blocks) && parsed.blocks.length > 0) {
                                 savedData = parsed;
+                                const htmlBlocks = parser.parse(savedData);
+                                rawHtml = Array.isArray(htmlBlocks) ? htmlBlocks.join('') : String(htmlBlocks || '');
                             } else {
-                                console.warn("Parsed content is not valid Editor.js OutputData.");
+                                // Editor.js 데이터가 아니면 Markdown으로 가정
+                                if (typeof marked !== 'undefined' && marked.parse) {
+                                    rawHtml = marked.parse(post.refined_content);
+                                } else {
+                                    console.warn('Marked library not available; rendering raw text.');
+                                    rawHtml = String(post.refined_content);
+                                }
                             }
-                        } catch(e) { 
-                            console.warn("Could not parse post content JSON.", e); 
+                        } catch (e) {
+                            // JSON 파싱 실패 시 Markdown 폴백
+                            // Silently fall back to Markdown parsing
+                            if (typeof marked !== 'undefined' && marked.parse) {
+                                rawHtml = marked.parse(post.refined_content);
+                            } else {
+                                rawHtml = String(post.refined_content);
+                            }
                         }
                     }
-                    
-                    const htmlBlocks = parser.parse(savedData);
-                    const rawHtml = htmlBlocks.join('');
 
                     // DOMPurify 훅 설정 (중복 방지)
                     if (!window.__dompurifyHooked) {
@@ -710,8 +982,8 @@
                     }
                     
                     const safeContent = DOMPurify.sanitize(rawHtml, { 
-                        ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead", "tfoot", "col", "colgroup", "span", "figure", "figcaption"], 
-                        ADD_ATTR: ["rowspan","colspan","style","class","width","height","align", "frameborder", "allow", "allowfullscreen"] 
+                        ADD_TAGS: ["iframe", "table", "tr", "td", "th", "tbody", "thead", "tfoot", "col", "colgroup", "span", "figure", "figcaption", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "p", "div", "br", "strong", "em", "code", "pre", "blockquote", "a", "img", "hr", "mark", "input", "label"], 
+                        ADD_ATTR: ["rowspan", "colspan", "style", "class", "width", "height", "align", "frameborder", "allow", "allowfullscreen", "src", "href", "target", "rel", "alt", "title", "id", "type", "checked", "disabled", "for"]
                     });
                     
                     const contentEl = DOM.$('#post-content');
@@ -735,8 +1007,14 @@
                     DOM.$('#post-content').innerHTML = `<p class="text-red-500">콘텐츠를 렌더링하는 중 오류가 발생했습니다.</p>`;
                 }
                 
-                // 애드센스 로드
-                try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn("Adsense error:", e); }
+                // 애드센스 로드 (프로덕션 환경에서만)
+                if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                    const adsenseContainer = DOM.$('#adsense-container');
+                    if (adsenseContainer) {
+                        adsenseContainer.style.display = 'block';
+                    }
+                    try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { /* 애드센스 오류 무시 */ }
+                }
             }
 
             async renderDashboard(container) {
@@ -820,10 +1098,19 @@
                         tools: {
                             header: { class: Header, inlineToolbar: true },
                             list: { class: List, inlineToolbar: true },
+                            checklist: { class: Checklist, inlineToolbar: true },
                             quote: { class: Quote, inlineToolbar: true },
                             delimiter: Delimiter,
                             code: CodeTool,
                             table: { class: Table, inlineToolbar: true },
+                            linkTool: { 
+                                class: LinkTool,
+                                config: {
+                                    endpoint: '/api/fetchUrl' // 실제 구현 시 필요
+                                }
+                            },
+                            marker: { class: Marker, shortcut: 'CMD+SHIFT+M' },
+                            inlineCode: { class: InlineCode, shortcut: 'CMD+SHIFT+C' },
                             image: {
                                 class: ImageTool,
                                 config: {
@@ -1010,18 +1297,20 @@
             }
 
             getAdjacentPosts(createdAt) {
-                 const prev = this.supabase.from(Config.DB_TABLE_NAME)
+                const prev = this.supabase.from(Config.DB_TABLE_NAME)
                     .select('title, slug')
                     .lt('created_at', createdAt)
                     .eq('status', 'published')
                     .order('created_at', { ascending: false })
-                    .limit(1).single();
+                    .limit(1)
+                    .maybeSingle();
                 const next = this.supabase.from(Config.DB_TABLE_NAME)
                     .select('title, slug')
                     .gt('created_at', createdAt)
                     .eq('status', 'published')
                     .order('created_at', { ascending: true })
-                    .limit(1).single();
+                    .limit(1)
+                    .maybeSingle();
                 return Promise.all([prev, next]);
             }
 

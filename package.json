@@ -1,6 +1,15 @@
 {
-  "type": "module",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.44.4"
+  "name": "7878",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.18"
   }
 }
