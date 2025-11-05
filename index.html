@@ -20,12 +20,12 @@
     <meta property="og:url" content="https://blogaipandoci.vercel.app">
     <meta property="og:title" content="InsureLog - AI, 기술, 그리고 보험">
     <meta property="og:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
-    <meta property="og:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
+    <meta property="og:image" content="https://blogaipandoci.vercel.app/og-image.svg">
     <meta property="og:site_name" content="InsureLog">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="InsureLog - AI, 기술, 그리고 보험">
     <meta name="twitter:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
-    <meta name="twitter:image" content="https://ddehwkwzmmvcxltlplua.supabase.co/storage/v1/object/public/thought-images/cortexlog.webp">
+    <meta name="twitter:image" content="https://blogaipandoci.vercel.app/og-image.svg">
     
     <!-- Scripts & Stylesheets -->
     <link rel="stylesheet" href="./style.css">
@@ -41,7 +41,7 @@
         // 공개용(클라이언트) anon 키
         window.Config.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
         // 서비스 롤 키(민감정보) — 클라이언트에서는 사용하지 않습니다.
-        if (['localhost', '127.0.0.1'].includes(location.hostname)) { window.Config.SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjYyNzI1OCwiZXhwIjoyMDcyMjAzMjU4fQ.v6Qyag5_pcGNf_n_02pNsXQUVoeqamZPh8I-SO-Lu1Q'; }
+        
         // Provide legacy global identifier if any script refers directly to Config
         window.Config = window.Config;
     </script>
@@ -74,10 +74,11 @@
     
     <!-- 메인 콘텐츠 (뷰가 렌더링되는 곳) -->
     <main id="app-container" class="w-full">
-        <div id="view-library" class="app-view"></div>
-        <div id="view-post" class="app-view"></div>
-        <div id="view-dashboard" class="app-view"></div>
-        <div id="view-writer" class="app-view"></div>
+    <div id="view-library" class="app-view"></div>
+    <div id="view-post" class="app-view"></div>
+    <div id="view-dashboard" class="app-view"></div>
+    <div id="view-writer" class="app-view"></div>
+    <div id="view-archives" class="app-view"></div>
     </main>
 
     <!-- 푸터 -->
