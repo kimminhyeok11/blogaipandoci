@@ -1,0 +1,226 @@
+/* 메인 CSS 파일 - 모든 모듈 임포트 */
+
+/* 기본 스타일 및 변수 */
+@import './base.css';
+
+/* 레이아웃 */
+@import './layout.css';
+
+/* 컴포넌트 */
+@import './buttons.css';
+@import './forms.css';
+@import './modal.css';
+@import './toast.css';
+@import './loader.css';
+@import './skeleton.css';
+@import './error.css';
+
+/* Editor.js 관련 스타일 */
+.ce-block__content,
+.ce-toolbar__content {
+    max-width: none !important;
+}
+
+.codex-editor {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    background-color: white;
+}
+
+.codex-editor__redactor {
+    padding-bottom: 2rem !important;
+}
+
+.ce-block {
+    margin: 0.5rem 0;
+}
+
+.ce-paragraph {
+    line-height: 1.6;
+}
+
+.ce-header {
+    font-weight: 600;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.ce-list {
+    margin: 0.5rem 0;
+}
+
+.ce-list__item {
+    line-height: 1.5;
+    margin: 0.25rem 0;
+}
+
+.ce-quote {
+    border-left: 4px solid var(--primary-color);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: var(--gray-600);
+}
+
+.ce-code {
+    background-color: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    overflow-x: auto;
+}
+
+.ce-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+.ce-table td {
+    border: 1px solid var(--gray-200);
+    padding: 0.5rem;
+}
+
+/* 블로그 포스트 스타일 */
+.blog-post {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.blog-post-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.blog-post-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-600);
+    font-size: 0.875rem;
+}
+
+.blog-post-content {
+    line-height: 1.7;
+    color: var(--gray-800);
+}
+
+.blog-post-content h1,
+.blog-post-content h2,
+.blog-post-content h3,
+.blog-post-content h4,
+.blog-post-content h5,
+.blog-post-content h6 {
+    margin: 2rem 0 1rem 0;
+    color: var(--gray-900);
+}
+
+.blog-post-content p {
+    margin: 1rem 0;
+}
+
+.blog-post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--border-radius);
+    margin: 1.5rem 0;
+}
+
+/* 블로그 카드 */
+.blog-card {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.blog-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.blog-card-image {
+    width: 100%;
+    height: 12rem;
+    object-fit: cover;
+    background-color: var(--gray-100);
+}
+
+.blog-card-content {
+    padding: 1.5rem;
+}
+
+.blog-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.blog-card-excerpt {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.blog-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+    .blog-post {
+        padding: 1rem;
+        margin: 0 0.5rem;
+    }
+    
+    .blog-post-title {
+        font-size: 2rem;
+    }
+    
+    .blog-post-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .blog-card-content {
+        padding: 1rem;
+    }
+    
+    .blog-card-image {
+        height: 10rem;
+    }
+}
+/* 홈 목록 카드: 오프스크린 렌더 비용 절감 */
+#home-posts article {
+    content-visibility: auto;
+    contain-intrinsic-size: 360px;
+}
+
+/* 뷰 컨테이너: 오프스크린 렌더 지연으로 메인 스레드 여유 확보 */
+.app-view {
+    content-visibility: auto;
+    contain-intrinsic-size: 800px;
+}
