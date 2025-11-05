@@ -616,7 +616,7 @@ class BlogApp {
                 return;
             }
             list.innerHTML = data.map(p => {
-                const url = '/writer/' + (p.slug || p.id);
+            const url = '/writer/' + p.slug;
                 const date = this.formatDateKR(p.created_at);
                 const statusKor = this.statusToKor(p.status);
                 const badge = `<span class="badge">${statusKor}</span>`;
@@ -771,12 +771,22 @@ class BlogApp {
     async loadWriterData(slug) {
         if (!this.supabase) return;
         const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
-        const { data: post, error } = await this.supabase
+        // 기본은 슬러그로 조회, 실패 시 id로 재시도 (수정 링크가 id로 열리는 경우 대응)
+        let { data: post, error } = await this.supabase
             .from(table)
             .select('*')
             .eq('slug', slug)
             .maybeSingle();
         if (error) throw error;
+        if (!post) {
+            const byId = await this.supabase
+                .from(table)
+                .select('*')
+                .eq('id', slug)
+                .maybeSingle();
+            if (byId.error) throw byId.error;
+            post = byId.data || null;
+        }
         if (!post) return;
         DOM.$('#post-title').value = post.title || '';
         DOM.$('#post-summary').value = post.summary || '';
@@ -785,7 +795,7 @@ class BlogApp {
         const editor = DOM.$('#post-content-editor');
         if (editor) {
             // 기존 저장 포맷(JSON/Markdown/HTML)에 관계없이 미리보기 HTML로 변환해 편집기에 채웁니다.
-            const html = this.renderContentHTML(post.refined_content);
+            const html = this.renderContentHTML(post.refined_content ?? post.content ?? '');
             editor.innerHTML = html;
             // 저장된 태그 추출 후 입력창에 채우기
             const tags = this.extractTagsFromHTML(post.refined_content);
@@ -944,7 +954,7 @@ class BlogApp {
 
         const contentHTML = this.renderContentHTML(post.refined_content);
         // 로그인 사용자에게만 편집 버튼 제공
-        const editBtn = this.state.user ? `<a href="/writer/${post.slug || post.id}" data-route class="px-3 py-1 rounded-full border">수정</a>` : '';
+        const editBtn = this.state.user ? `<a href="/writer/${post.slug}" data-route class="px-3 py-1 rounded-full border">수정</a>` : '';
 
         container.innerHTML = '<article class="max-w-3xl mx-auto py-10 px-6">'
             + `<h1 class="text-3xl font-extrabold tracking-tight">${title}</h1>`
@@ -1451,7 +1461,7 @@ class BlogApp {
             const thumb = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>` : '';
             const date = this.formatDateKR(post.created_at);
             const categoryBadge = post.category ? `<span class="badge">${this.escapeHTML(post.category)}</span>` : '';
-            const editLink = this.state.user ? `<a href="/writer/${post.slug || post.id}" data-route class="btn-xs">편집</a>` : '';
+            const editLink = this.state.user ? `<a href="/writer/${post.slug}" data-route class="btn-xs">편집</a>` : '';
 
             return '<article class="post-card">'
                 + (thumb ? `<a href="${href}" data-route class="post-card-thumb">${thumb}</a>` : '')
