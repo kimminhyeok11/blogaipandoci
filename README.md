@@ -156,9 +156,9 @@ SITE_URL=https://your-site-url
 프런트엔드에서는 `index.html`의 `window.Config`를 통해 anon 키만 사용합니다. 서비스 롤 키는 프론트에 배포하지 않습니다.
 
 ### 배포 루트와 서버리스
-- 이 레포는 Vercel에서 프로젝트 루트를 루트 또는 `dist/`로 설정해 배포할 수 있습니다.
-- RSS/사이트맵 서버리스가 어느 루트에서도 동작하도록 `api/`가 루트와 `dist/` 모두에 포함되어 있고, `@supabase/supabase-js` 의존성이 두 위치(`package.json`, `dist/package.json`)에 선언되어 있습니다.
-- SPA 리라이트 설정(`vercel.json`)도 루트와 `dist/`에 동일하게 포함되어 있습니다.
+- 이 레포는 Vercel에서 프로젝트 루트(`/`)만 사용하도록 정리되었습니다.
+- RSS/사이트맵 서버리스 함수는 루트의 `api/`에서 제공되며, 의존성은 루트 `package.json`에만 선언되어 있습니다.
+- SPA 리라이트/캐시 설정은 루트의 `vercel.json` 하나를 사용합니다.
 
 ## 🎯 사용법
 

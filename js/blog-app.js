@@ -55,8 +55,7 @@ class BlogApp {
                 console.warn('Supabase 초기화를 건너뜁니다:', e);
             }
 
-            // 필수 스크립트 로드
-            await ScriptLoader.loadAll();
+            // 초기 스크립트 일괄 로드를 제거하고 라우트별로 필요시 로드합니다.
 
             // 전역 이벤트 리스너 바인딩
             this.bindGlobalListeners();
@@ -404,18 +403,62 @@ class BlogApp {
     renderNav() {
         const container = DOM.$('#main-nav-container');
         if (!container) return;
+        const isLoggedIn = !!this.state.user;
+        const writerLink = isLoggedIn ? '<a href="/writer" data-route class="text-sm text-gray-800 hover:text-black">글쓰기</a>' : '';
+        const dashLink = isLoggedIn ? '<a href="/dashboard" data-route class="text-sm text-gray-800 hover:text-black">대시보드</a>' : '';
+        const linksHtml = [
+            '<a href="/" data-route class="text-sm text-gray-800 hover:text-black">홈</a>',
+            '<a href="/archives" data-route class="text-sm text-gray-800 hover:text-black">아카이브</a>',
+            writerLink,
+            dashLink,
+            '<a href="/feed.xml" class="text-sm text-gray-800 hover:text-black" rel="alternate" type="application/rss+xml">RSS</a>',
+            '<a href="/sitemap.xml" class="text-sm text-gray-800 hover:text-black">Sitemap</a>',
+            '<a href="/login" data-route class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그인</a>'
+        ].filter(Boolean).join('');
+
         container.innerHTML = '<nav class="w-full max-w-4xl flex items-center justify-between py-3 px-6 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">'
             + '<a href="/" data-route class="font-extrabold text-xl tracking-tight">InsureLog</a>'
-            + '<div class="flex items-center gap-4">'
-            +   '<a href="/" data-route class="text-sm text-gray-800 hover:text-black">홈</a>'
-            +   '<a href="/archives" data-route class="text-sm text-gray-800 hover:text-black">아카이브</a>'
-            +   '<a href="/writer" data-route class="text-sm text-gray-800 hover:text-black">글쓰기</a>'
-            +   '<a href="/dashboard" data-route class="text-sm text-gray-800 hover:text-black">대시보드</a>'
-            +   '<a href="/feed.xml" class="text-sm text-gray-800 hover:text-black" rel="alternate" type="application/rss+xml">RSS</a>'
-            +   '<a href="/sitemap.xml" class="text-sm text-gray-800 hover:text-black">Sitemap</a>'
-            +   '<a href="/login" data-route class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그인</a>'
-            + '</div>'
-            + '</nav>';
+            + '<button id="nav-toggle" class="sm:hidden text-sm px-3 py-1 rounded-full border hover:bg-black/5" aria-expanded="false" aria-controls="nav-menu">메뉴</button>'
+            + '<div id="nav-links" class="hidden sm:flex items-center gap-4">' + linksHtml + '</div>'
+            + '</nav>'
+            + '<div id="nav-menu" class="hidden sm:hidden fixed inset-0 z-50 bg-black/30" aria-hidden="true">'
+            +   '<div class="absolute top-0 right-0 w-64 h-full bg-white shadow-xl p-4">'
+            +     '<div class="flex items-center justify-between mb-4">'
+            +       '<span class="font-bold">메뉴</span>'
+            +       '<button id="nav-close" class="text-sm px-2 py-1 rounded border hover:bg-black/5" aria-label="닫기">닫기</button>'
+            +     '</div>'
+            +     '<nav class="flex flex-col gap-3">' + linksHtml + '</nav>'
+            +   '</div>'
+            + '</div>';
+
+        // 햄버거 메뉴 바인딩
+        const toggleBtn = DOM.$('#nav-toggle');
+        const menu = DOM.$('#nav-menu');
+        const closeBtn = DOM.$('#nav-close');
+        if (toggleBtn && menu) {
+            toggleBtn.onclick = () => {
+                const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+                toggleBtn.setAttribute('aria-expanded', String(!expanded));
+                if (expanded) { menu.classList.add('hidden'); } else { menu.classList.remove('hidden'); }
+            };
+        }
+        if (closeBtn && menu && toggleBtn) {
+            closeBtn.onclick = () => { menu.classList.add('hidden'); toggleBtn.setAttribute('aria-expanded', 'false'); };
+        }
+        if (menu && toggleBtn) {
+            menu.addEventListener('click', (e) => {
+                if (e.target === menu) {
+                    menu.classList.add('hidden');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+            menu.querySelectorAll('a[data-route]').forEach(a => {
+                a.addEventListener('click', () => {
+                    menu.classList.add('hidden');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                });
+            });
+        }
     }
 
     /**
@@ -467,6 +510,8 @@ class BlogApp {
      * 글쓰기/수정 뷰를 렌더링합니다.
      */
     renderWriter(slug) {
+        // 로그인 사용자만 접근 가능하도록 가드
+        if (!this.checkAuth(true)) return;
         this.switchToView('view-writer');
         const container = DOM.$('#view-writer');
         if (!container) return;
@@ -807,6 +852,8 @@ class BlogApp {
     async submitWriterForm(editSlug = null) {
         try {
             if (!this.supabase) throw new Error('Supabase가 준비되지 않았습니다');
+            // 저장 전 보안/마크다운 유틸리티를 지연 로드
+            await ScriptLoader.loadUtilities();
             const title = DOM.$('#post-title').value.trim();
             const summary = DOM.$('#post-summary').value.trim();
             const category = DOM.$('#post-category').value.trim();
@@ -952,6 +999,8 @@ class BlogApp {
             thumbHtml = `<img src="${optimized}" alt="${title}" class="w-full h-auto rounded-2xl border"/>`;
         }
 
+        // 독자 상세 페이지에서만 콘텐츠 렌더 유틸리티 로드
+        await ScriptLoader.loadUtilities();
         const contentHTML = this.renderContentHTML(post.refined_content);
         // 로그인 사용자에게만 편집 버튼 제공
         const editBtn = this.state.user ? `<a href="/writer/${post.slug}" data-route class="px-3 py-1 rounded-full border">수정</a>` : '';
