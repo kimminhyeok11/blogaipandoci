@@ -26,4 +26,18 @@
       ]
     }
   ]
+  ,
+  "rewrites": [
+    { "source": "/post/(.*)", "destination": "/index.html" },
+    { "source": "/writer(.*)", "destination": "/index.html" },
+    { "source": "/dashboard(.*)", "destination": "/index.html" },
+    { "source": "/about(.*)", "destination": "/index.html" },
+    { "source": "/tags(.*)", "destination": "/index.html" },
+    { "source": "/categories(.*)", "destination": "/index.html" },
+    { "source": "/search(.*)", "destination": "/index.html" },
+    { "source": "/archives(.*)", "destination": "/index.html" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/feed.xml", "destination": "/api/feed" },
+    { "source": "/rss.xml", "destination": "/api/feed" }
+  ]
 }
