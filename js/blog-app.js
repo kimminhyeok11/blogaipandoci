@@ -19,6 +19,13 @@ class BlogApp {
         isAuthReady: false,
         currentCategory: '전체',
         editorInstance: null,
+        archives: {
+            category: '전체',
+            tag: '',
+            page: 1,
+            pageSize: 20,
+            total: 0,
+        }
     };
 
     // 서비스 인스턴스
@@ -48,8 +55,7 @@ class BlogApp {
                 console.warn('Supabase 초기화를 건너뜁니다:', e);
             }
 
-            // 필수 스크립트 로드
-            await ScriptLoader.loadAll();
+            // 초기 스크립트 일괄 로드를 제거하고 라우트별로 필요시 로드합니다.
 
             // 전역 이벤트 리스너 바인딩
             this.bindGlobalListeners();
@@ -74,22 +80,24 @@ class BlogApp {
                 DOM.hide(loader, { complete: () => loader.remove() });
             }
 
-            // 이후 인증 상태 변경에 대응
-            this.supabase.auth.onAuthStateChange((_, newSession) => {
-                const user = newSession?.user || null;
-                const authChanged = this.state.user?.id !== user?.id;
-                this.state.user = user;
+            // 이후 인증 상태 변경에 대응 (Supabase가 없을 때도 안전하게 건너뜀)
+            if (this.supabase && this.supabase.auth && typeof this.supabase.auth.onAuthStateChange === 'function') {
+                this.supabase.auth.onAuthStateChange((_, newSession) => {
+                    const user = newSession?.user || null;
+                    const authChanged = this.state.user?.id !== user?.id;
+                    this.state.user = user;
 
-                if (authChanged) {
-                    this.renderNav();
-                    if (user) {
-                        UIComponents.showToast(user.email + '님, 환영합니다!', 'success');
-                    } else {
-                        UIComponents.showToast('로그아웃되었습니다.', 'info');
-                        this.navigate('/');
+                    if (authChanged) {
+                        this.renderNav();
+                        if (user) {
+                            UIComponents.showToast(user.email + '님, 환영합니다!', 'success');
+                        } else {
+                            UIComponents.showToast('로그아웃되었습니다.', 'info');
+                            this.navigate('/');
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // 방문 로그 기록 (site_visits)
             try {
@@ -175,10 +183,13 @@ class BlogApp {
      * 페이지 네비게이션을 처리합니다.
      */
     navigate(path) {
-        if (window.location.pathname + window.location.search !== path) {
-            window.history.pushState(null, '', path);
+        const next = this.normalizePath(path);
+        if (window.location.pathname + window.location.search !== next) {
+            window.history.pushState(null, '', next);
         }
         this.handleRouting();
+        // 라우팅 후 현재 경로에 맞춰 네비 활성 하이라이트 갱신
+        this.renderNav();
     }
 
     /**
@@ -186,12 +197,29 @@ class BlogApp {
      * URL 라우팅을 처리합니다.
      */
     handleRouting() {
-        const path = window.location.pathname;
+        const path = this.normalizePath(window.location.pathname);
         const params = new URLSearchParams(window.location.search);
+        // [Fix] 동일 뷰 재전환 시 hide/show 애니메이션이 충돌해
+        // 최종 display 상태가 'none'으로 남는 레이스 조건을 방지합니다.
+        // 다음에 표시될 대상 뷰를 먼저 계산하고, 활성 뷰와 같으면 숨김을 건너뜁니다.
+        let targetViewId;
+        if (path === '/' || path === '/home') {
+            targetViewId = 'view-library';
+        } else if (path.startsWith('/post/')) {
+            targetViewId = 'view-post';
+        } else if (path === '/archives') {
+            targetViewId = 'view-archives';
+        } else if (path === '/writer' || path.startsWith('/writer/')) {
+            targetViewId = 'view-writer';
+        } else if (path === '/login') {
+            targetViewId = 'view-library';
+        } else {
+            targetViewId = 'view-library';
+        }
 
-        // 현재 활성화된 뷰 숨기기
+        // 활성 뷰가 대상 뷰와 다를 때만 숨김 처리 (애니메이션 경쟁 방지)
         const activeView = DOM.$('.app-view.active');
-        if (activeView) {
+        if (activeView && activeView.id !== targetViewId) {
             activeView.classList.remove('active');
             DOM.hide(activeView);
         }
@@ -200,10 +228,14 @@ class BlogApp {
         if (path === '/' || path === '/home') {
             this.renderHome(params);
         } else if (path.startsWith('/post/')) {
-            const slug = path.split('/post/')[1];
+            const raw = path.split('/post/')[1];
+            const slug = raw ? decodeURIComponent(raw) : '';
             this.renderPost(slug);
+        } else if (path === '/archives') {
+            this.renderArchives();
         } else if (path === '/writer' || path.startsWith('/writer/')) {
-            const slug = path.split('/writer/')[1] || null;
+            const raw = path.split('/writer/')[1] || null;
+            const slug = raw ? decodeURIComponent(raw) : null;
             this.renderWriter(slug);
         } else if (path === '/login') {
             this.renderLogin();
@@ -213,24 +245,192 @@ class BlogApp {
     }
 
     /**
+     * [Path Utils]
+     * 경로 정규화: '/index.html' → '/', '/archives/' → '/archives' 등
+     */
+    normalizePath(p) {
+        try {
+            const url = new URL(p, window.location.origin);
+            let path = url.pathname || '/';
+            // index.html을 루트로 매핑
+            if (path === '/index.html') path = '/';
+            // 트레일링 슬래시 제거(루트 제외)
+            if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+            // 중복 슬래시 축약
+            path = path.replace(/\/+/, '/');
+            return path + (url.search || '');
+        } catch (_) {
+            // 안전 폴백
+            if (p === '/index.html') return '/';
+            if (p.length > 1 && p.endsWith('/')) return p.slice(0, -1);
+            return p || '/';
+        }
+    }
+
+    /**
+     * [Render: Archives]
+     * 발행된 글을 월별로 그룹핑해 아카이브 리스트를 보여줍니다.
+     */
+    renderArchives() {
+        this.switchToView('view-archives');
+        const container = DOM.$('#view-archives');
+        if (!container) return;
+        const { category, tag } = this.state.archives;
+        container.innerHTML = '<section class="max-w-4xl mx-auto py-10 px-6">'
+            + '<div class="flex items-center justify-between">'
+            +   '<h1 class="text-2xl font-bold">아카이브</h1>'
+            +   '<div class="text-xs text-gray-500">페이지당 20개</div>'
+            + '</div>'
+            + '<div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">'
+            +   '<div><label class="block text-xs text-gray-600">카테고리</label><select id="archives-filter-category" class="mt-1 w-full border rounded-lg p-2"><option value="전체">전체</option></select></div>'
+            +   '<div><label class="block text-xs text-gray-600">태그</label><input id="archives-filter-tag" type="text" class="mt-1 w-full border rounded-lg p-2" placeholder="예: 보험"></div>'
+            +   '<div class="flex items-end"><button id="archives-filter-apply" class="w-full px-3 py-2 rounded-lg bg-black text-white">필터 적용</button></div>'
+            + '</div>'
+            + '<div id="archives-list" class="mt-6 space-y-6"></div>'
+            + '<div id="archives-pagination" class="mt-8 flex items-center justify-center gap-2"></div>'
+            + '</section>';
+
+        // SEO 메타 업데이트
+        this.updatePageMeta('아카이브 - InsureLog', '월별 아카이브와 카테고리/태그 필터', window.location.href, '/og-image.svg');
+
+        // 기존 값 채우기
+        const tagInput = DOM.$('#archives-filter-tag');
+        if (tagInput) tagInput.value = tag || '';
+
+        // 이벤트 바인딩
+        const applyBtn = DOM.$('#archives-filter-apply');
+        if (applyBtn) {
+            applyBtn.onclick = () => {
+                const catSel = DOM.$('#archives-filter-category');
+                const tagField = DOM.$('#archives-filter-tag');
+                this.state.archives.category = catSel ? catSel.value : '전체';
+                this.state.archives.tag = tagField ? tagField.value.trim() : '';
+                this.state.archives.page = 1;
+                this.loadArchives().catch(err => this.handleError(err, 'loadArchives'));
+            };
+        }
+
+        this.loadArchives().catch(err => this.handleError(err, 'loadArchives'));
+    }
+
+    async loadArchives() {
+        if (!this.supabase) return;
+        const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
+        const { category, tag, page, pageSize } = this.state.archives;
+
+        // 총 개수 계산 쿼리 (필터 반영)
+        let countQuery = this.supabase.from(table)
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'published');
+        if (category && category !== '전체') {
+            countQuery = countQuery.eq('category', category);
+        }
+        const { count } = await countQuery;
+        this.state.archives.total = count || 0;
+
+        // 데이터 쿼리 (페이지네이션, 필터 적용)
+        let dataQuery = this.supabase
+            .from(table)
+            .select('id, title, slug, created_at, category, refined_content, thumbnail_url')
+            .eq('status', 'published')
+            .order('created_at', { ascending: false });
+        if (category && category !== '전체') {
+            dataQuery = dataQuery.eq('category', category);
+        }
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+        dataQuery = dataQuery.range(from, to);
+
+        const { data, error } = await dataQuery;
+        if (error) throw error;
+
+        // 카테고리 셀렉트 옵션 구성 (최근 페이지 기준)
+        const catSet = new Set(['전체']);
+        (data || []).forEach(p => { if (p.category) catSet.add(p.category); });
+        const catSel = DOM.$('#archives-filter-category');
+        if (catSel && catSel.options.length <= 1) {
+            catSel.innerHTML = Array.from(catSet).map(c => `<option value="${this.escapeHTML(c)}">${this.escapeHTML(c)}</option>`).join('');
+            catSel.value = category || '전체';
+        }
+
+        // 태그 필터 클라이언트 적용
+        let filtered = data || [];
+        if (tag) {
+            filtered = filtered.filter(p => {
+                const tags = this.extractTagsFromHTML(p.refined_content || '') || [];
+                return tags.some(t => String(t).toLowerCase() === String(tag).toLowerCase());
+            });
+        }
+
+        const list = DOM.$('#archives-list');
+        if (!list) return;
+        if (!filtered || filtered.length === 0) {
+            list.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
+        } else {
+            const cards = this.renderPostsListHTML(filtered);
+            list.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">${cards}</div>`;
+        }
+
+        // 페이지네이션 렌더
+        this.renderArchivesPagination();
+    }
+
+    renderArchivesPagination() {
+        const { page, pageSize, total } = this.state.archives;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        const container = DOM.$('#archives-pagination');
+        if (!container) return;
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        const makeBtn = (p, label = null, active = false) => `<button data-page="${p}" class="px-3 py-1 rounded border ${active? 'bg-black text-white':'hover:bg-black/5'}">${label || p}</button>`;
+        const prev = page > 1 ? makeBtn(page - 1, '이전') : '<span class="px-3 py-1 text-gray-400">이전</span>';
+        const next = page < totalPages ? makeBtn(page + 1, '다음') : '<span class="px-3 py-1 text-gray-400">다음</span>';
+        const windowSize = 5;
+        const start = Math.max(1, page - Math.floor(windowSize/2));
+        const end = Math.min(totalPages, start + windowSize - 1);
+        const pages = [];
+        for (let p = start; p <= end; p++) pages.push(makeBtn(p, null, p === page));
+        container.innerHTML = prev + pages.join('') + next;
+        container.querySelectorAll('button[data-page]').forEach(btn => {
+            btn.onclick = () => {
+                const targetPage = Number(btn.getAttribute('data-page')) || 1;
+                this.state.archives.page = targetPage;
+                this.loadArchives().catch(err => this.handleError(err, 'loadArchives'));
+            };
+        });
+    }
+
+    /**
      * [View Switching]
      * 뷰를 전환합니다.
      */
     switchToView(viewId) {
-        // 모든 뷰 숨기기
+        // 대상 뷰 먼저 찾기
+        const targetView = DOM.$('#' + viewId);
+        
+        // 대상 외 모든 뷰 숨기기 (애니메이션 완료 시 display:none 처리)
         DOM.$$('.app-view').forEach(view => {
+            if (view === targetView) return; // 대상 뷰는 숨기지 않음
             view.classList.remove('active');
             DOM.hide(view);
         });
 
-        // 대상 뷰 표시
-        const targetView = DOM.$('#' + viewId);
+        // 대상 뷰 표시 (진행 중인 숨김 애니메이션과 경쟁하지 않도록 선별 표시)
         if (targetView) {
+            // 애니메이션 충돌 방지: 즉시 표시 상태로 전환
+            targetView.style.display = 'block';
             targetView.classList.add('active');
             DOM.show(targetView);
-            
+
             // 페이지 상단으로 스크롤
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 뷰 전환 후 레이아웃 가이드라인 적용 및 자동 검사 실행
+            if (window.LayoutManager && typeof window.LayoutManager.onViewRendered === 'function') {
+                window.LayoutManager.onViewRendered(targetView);
+            }
         }
     }
 
@@ -241,15 +441,155 @@ class BlogApp {
     renderNav() {
         const container = DOM.$('#main-nav-container');
         if (!container) return;
+        const isLoggedIn = !!this.state.user;
+        const writerLink = isLoggedIn ? '<a href="/writer" data-route class="text-sm font-medium text-gray-800 hover:text-black">글쓰기</a>' : '';
+        const dashLink = isLoggedIn ? '<a href="/dashboard" data-route class="text-sm font-medium text-gray-800 hover:text-black">대시보드</a>' : '';
+        const authLink = isLoggedIn
+            ? '<button id="logout-btn" class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그아웃</button>'
+            : '<a href="/login" data-route class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그인</a>';
+        const linksHtml = [
+            '<a href="/" data-route class="text-sm font-medium text-gray-800 hover:text-black">홈</a>',
+            '<a href="/archives" data-route class="text-sm font-medium text-gray-800 hover:text-black">아카이브</a>',
+            writerLink,
+            dashLink,
+            '<a href="/feed.xml" class="text-sm font-medium text-gray-800 hover:text-black" rel="alternate" type="application/rss+xml">RSS</a>',
+            '<a href="/sitemap.xml" class="text-sm font-medium text-gray-800 hover:text-black">Sitemap</a>',
+            authLink
+        ].filter(Boolean).join('');
+
         container.innerHTML = '<nav class="w-full max-w-4xl flex items-center justify-between py-3 px-6 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">'
             + '<a href="/" data-route class="font-extrabold text-xl tracking-tight">InsureLog</a>'
-            + '<div class="flex items-center gap-4">'
-            +   '<a href="/" data-route class="text-sm text-gray-800 hover:text-black">홈</a>'
-            +   '<a href="/writer" data-route class="text-sm text-gray-800 hover:text-black">글쓰기</a>'
-            +   '<a href="/dashboard" data-route class="text-sm text-gray-800 hover:text-black">대시보드</a>'
-            +   '<a href="/login" data-route class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그인</a>'
-            + '</div>'
-            + '</nav>';
+            + '<button id="nav-toggle" class="hamburger-btn sm:hidden" aria-expanded="false" aria-controls="nav-menu" aria-haspopup="menu" aria-label="메뉴">'
+            +   '<span class="hamburger-icon" aria-hidden="true">'
+            +     '<span class="bar bar-top"></span>'
+            +     '<span class="bar bar-middle"></span>'
+            +     '<span class="bar bar-bottom"></span>'
+            +   '</span>'
+            +   '<span class="sr-only">메뉴</span>'
+            + '</button>'
+            + '<div id="nav-links" class="hidden sm:flex items-center gap-5">' + linksHtml + '</div>'
+            + '</nav>'
+            // 모바일 팝오버 메뉴(버튼 근처에 고정 위치로 표시)
+            + '<div id="nav-menu" class="hidden sm:hidden fixed z-50 bg-white border rounded-2xl shadow-xl p-4 w-64" aria-hidden="true" role="menu" aria-label="모바일 네비게이션">'
+            +   '<div class="flex items-center justify-between mb-4">'
+            +     '<span class="font-bold">메뉴</span>'
+            +     '<button id="nav-close" class="text-sm px-2 py-1 rounded border hover:bg-black/5" aria-label="닫기">닫기</button>'
+            +   '</div>'
+            +   '<nav class="flex flex-col gap-3">' + linksHtml + '</nav>'
+            + '</div>';
+
+        // [Enhancement] 현재 경로 활성 상태 하이라이트 처리
+        // 접근성(aria-current)과 가시성(font-semibold)을 함께 적용합니다.
+        const currentPath = this.normalizePath(window.location.pathname);
+        const routeLinks = container.querySelectorAll('#nav-links a[data-route], #nav-menu a[data-route]');
+        routeLinks.forEach(a => {
+            const href = a.getAttribute('href') || '/';
+            // 절대경로화하여 비교 안전성 확보
+            const path = (() => { try { return this.normalizePath(new URL(href, window.location.origin).pathname); } catch (_) { return this.normalizePath(href); } })();
+            const isActive = path === currentPath || (path === '/' && (currentPath === '/home'));
+            a.classList.toggle('font-semibold', isActive);
+            a.setAttribute('aria-current', isActive ? 'page' : 'false');
+        });
+
+        // 햄버거 메뉴 바인딩
+        const toggleBtn = DOM.$('#nav-toggle');
+        const menu = DOM.$('#nav-menu');
+        const closeBtn = DOM.$('#nav-close');
+        const logoutBtn = DOM.$('#logout-btn');
+
+        // 로그아웃 버튼 동작
+        if (logoutBtn) {
+            logoutBtn.onclick = async () => {
+                try {
+                    if (this.supabase && this.supabase.auth) {
+                        await this.supabase.auth.signOut();
+                    }
+                    UIComponents.showToast('로그아웃되었습니다.', 'info');
+                    this.navigate('/');
+                } catch (_) {
+                    // 실패해도 UI 기준으로 홈 이동
+                    this.navigate('/');
+                }
+            };
+        }
+        if (toggleBtn && menu) {
+            // 외부 클릭 핸들러 중복 등록 방지
+            if (this._navOutsideHandler) {
+                document.removeEventListener('click', this._navOutsideHandler, true);
+                this._navOutsideHandler = null;
+            }
+
+            const positionMenuNearToggle = () => {
+                const rect = toggleBtn.getBoundingClientRect();
+                // 버튼 바로 아래, 약간의 여백을 두고 표시
+                // 메뉴는 position: fixed 이므로 viewport 좌표 사용 (scroll 오프셋 미포함)
+                const top = Math.round(rect.bottom + 8);
+                let left = Math.round(rect.left);
+                // 화면 우측을 넘지 않도록 조정
+                const maxLeft = window.innerWidth - menu.offsetWidth - 8;
+                left = Math.min(left, Math.max(8, maxLeft));
+                menu.style.top = top + 'px';
+                menu.style.left = left + 'px';
+            };
+
+            toggleBtn.onclick = () => {
+                const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+                toggleBtn.setAttribute('aria-expanded', String(!expanded));
+                if (expanded) {
+                    menu.classList.add('hidden');
+                    menu.setAttribute('aria-hidden', 'true');
+                } else {
+                    // 표시 전에 위치 계산
+                    menu.classList.remove('hidden');
+                    positionMenuNearToggle();
+                    menu.setAttribute('aria-hidden', 'false');
+                }
+            };
+
+            // 창 리사이즈/스크롤 시 팝오버 재배치
+            const relocate = () => {
+                if (!menu.classList.contains('hidden')) positionMenuNearToggle();
+            };
+            window.addEventListener('resize', relocate);
+            window.addEventListener('scroll', relocate, { passive: true });
+
+            // 외부 클릭 시 닫기
+            this._navOutsideHandler = (ev) => {
+                const t = ev.target;
+                if (!menu.classList.contains('hidden') && !menu.contains(t) && !toggleBtn.contains(t)) {
+                    menu.classList.add('hidden');
+                    menu.setAttribute('aria-hidden', 'true');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                }
+            };
+            document.addEventListener('click', this._navOutsideHandler, true);
+            // ESC 키로 닫기
+            document.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Escape') {
+                    menu.classList.add('hidden');
+                    menu.setAttribute('aria-hidden', 'true');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+        if (closeBtn && menu && toggleBtn) {
+            closeBtn.onclick = () => {
+                menu.classList.add('hidden');
+                menu.setAttribute('aria-hidden', 'true');
+                toggleBtn.setAttribute('aria-expanded', 'false');
+            };
+        }
+        if (menu && toggleBtn) {
+            menu.querySelectorAll('a[data-route]').forEach(a => {
+                a.addEventListener('click', () => {
+                    menu.classList.add('hidden');
+                    menu.setAttribute('aria-hidden', 'true');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                });
+            });
+        }
+
+        // 검색바 제거: 관련 마크업과 로직을 삭제하여 네비게이션을 간결화
     }
 
     /**
@@ -262,9 +602,11 @@ class BlogApp {
         if (container) {
             container.innerHTML = '<section class="max-w-4xl mx-auto py-10 px-6">'
                 + '<h1 class="text-2xl font-bold mb-2">최근 글</h1>'
-                + '<p class="text-sm text-gray-600">최신 게시글을 불러오는 중입니다...</p>'
                 + '<div id="home-posts" class="mt-6 grid grid-cols-1 gap-4"></div>'
                 + '</section>';
+
+            // SEO 메타 업데이트
+            this.updatePageMeta('InsureLog - 최근 글', '최신 게시글 목록', window.location.href, '/og-image.svg');
 
             // 비동기 데이터 로드 시작
             this.loadHomePosts(params).catch(err => this.handleError(err, 'loadHomePosts'));
@@ -280,7 +622,8 @@ class BlogApp {
         const container = DOM.$('#view-post');
         if (!container) return;
 
-        container.innerHTML = '<article class="max-w-3xl mx-auto py-10 px-6">'
+        // [Layout] 본문 폭을 네비게이션(max-w-4xl)과 맞춰 일관성을 유지합니다.
+        container.innerHTML = '<article class="max-w-4xl mx-auto py-10 px-6">'
             + '<div class="mb-6">'
             +   '<div class="h-8 w-2/3 bg-gray-200 animate-pulse rounded"></div>'
             + '</div>'
@@ -298,12 +641,17 @@ class BlogApp {
      * 글쓰기/수정 뷰를 렌더링합니다.
      */
     renderWriter(slug) {
+        // 로그인 사용자만 접근 가능하도록 가드
+        if (!this.checkAuth(true)) return;
         this.switchToView('view-writer');
         const container = DOM.$('#view-writer');
         if (!container) return;
         const isEdit = !!slug;
         container.innerHTML = '<section class="max-w-4xl mx-auto py-10 px-6">'
-            + `<h1 class="text-2xl font-bold">${isEdit ? '글 수정' : '글 작성'}</h1>`
+            + `<div class="flex items-center justify-between">`
+            +   `<h1 class="text-2xl font-bold">${isEdit ? '글 수정' : '글 작성'}</h1>`
+            +   `<button type="button" id="btn-open-post-picker" class="text-sm px-3 py-1 rounded-full border hover:bg-black/5">기존 글 불러오기</button>`
+            + `</div>`
             + '<form id="writer-form" class="mt-6 space-y-5">'
             +   '<div><label class="block text-sm font-medium">제목</label><input id="post-title" type="text" class="mt-1 w-full border rounded-lg p-2" placeholder="제목을 입력하세요" required></div>'
             +   '<div><label class="block text-sm font-medium">요약</label><textarea id="post-summary" class="mt-1 w-full border rounded-lg p-2 h-20" placeholder="요약을 입력하세요"></textarea></div>'
@@ -338,6 +686,17 @@ class BlogApp {
             + '</form>'
             + '</section>';
 
+        // SEO 메타 업데이트
+        this.updatePageMeta(
+            isEdit ? '글 수정 - InsureLog' : '글 작성 - InsureLog',
+            isEdit ? '기존 글을 수정합니다.' : '새 글을 작성합니다.',
+            window.location.href,
+            '/og-image.svg'
+        );
+
+        // 포스트 선택 모달 UI 초기화
+        this.renderPostPickerUI();
+
         // 편집 모드 데이터 로드
         if (isEdit) {
             this.loadWriterData(slug).catch(err => this.handleError(err, 'loadWriterData'));
@@ -352,6 +711,114 @@ class BlogApp {
         }
         // 에디터 확장 초기화
         this.setupContentEditor(isEdit ? slug : null);
+    }
+
+    // 포스트 선택 모달 UI 렌더 및 바인딩
+    renderPostPickerUI() {
+        const container = DOM.$('#view-writer');
+        if (!container) return;
+        if (!DOM.$('#post-picker-modal')) {
+            const modal = document.createElement('div');
+            modal.id = 'post-picker-modal';
+            modal.className = 'hidden';
+            modal.innerHTML = `
+                <div class="modal-overlay">
+                    <div class="modal-content modal-content-lg">
+                        <div class="modal-header">
+                            <h2 class="modal-title">기존 글 선택</h2>
+                            <button class="modal-close" id="post-picker-close" aria-label="닫기">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <input type="text" id="post-picker-query" class="w-full border rounded-lg p-2" placeholder="제목으로 검색..."/>
+                            </div>
+                            <div id="post-picker-list" class="space-y-2"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn px-4 py-2 rounded-lg border" id="post-picker-cancel">닫기</button>
+                        </div>
+                    </div>
+                </div>`;
+            container.appendChild(modal);
+        }
+
+        const openBtn = DOM.$('#btn-open-post-picker');
+        const closeBtn = DOM.$('#post-picker-close');
+        const cancelBtn = DOM.$('#post-picker-cancel');
+        const queryInput = DOM.$('#post-picker-query');
+
+        if (openBtn) {
+            openBtn.onclick = () => {
+                DOM.openModal('post-picker-modal');
+                this.loadPostsForPicker('');
+            };
+        }
+        const doClose = () => DOM.closeModal('post-picker-modal');
+        if (closeBtn) closeBtn.onclick = doClose;
+        if (cancelBtn) cancelBtn.onclick = doClose;
+        if (queryInput) {
+            queryInput.oninput = () => {
+                clearTimeout(this._postPickerTimer);
+                this._postPickerTimer = setTimeout(() => {
+                    this.loadPostsForPicker(queryInput.value.trim());
+                }, 200);
+            };
+        }
+    }
+
+    async loadPostsForPicker(query = '') {
+        try {
+            if (!this.supabase) return;
+            const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
+            let rq = this.supabase
+                .from(table)
+                .select('id, title, slug, status, created_at')
+                .order('created_at', { ascending: false })
+                .limit(50);
+            if (query) {
+                rq = this.supabase
+                    .from(table)
+                    .select('id, title, slug, status, created_at')
+                    .ilike('title', `%${query}%`)
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+            }
+            const { data, error } = await rq;
+            if (error) throw error;
+            const list = DOM.$('#post-picker-list');
+            if (!list) return;
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div class="text-sm text-gray-600">검색 결과가 없습니다.</div>';
+                return;
+            }
+            list.innerHTML = data.map(p => {
+            const url = '/writer/' + p.slug;
+                const date = this.formatDateKR(p.created_at);
+                const statusKor = this.statusToKor(p.status);
+                const badge = `<span class="badge">${statusKor}</span>`;
+                return `
+                    <div class="post-picker-item">
+                        <div class="post-picker-main">
+                            <a href="${url}" data-route class="post-picker-title">${this.escapeHTML(p.title || '제목 없음')}</a>
+                            <div class="post-picker-meta">작성일 ${date} · 상태 ${badge}</div>
+                        </div>
+                        <div class="post-picker-actions">
+                            <a href="${url}" data-route class="btn-xs">편집</a>
+                        </div>
+                    </div>`;
+            }).join('');
+        } catch (e) {
+            this.handleError(e, 'loadPostsForPicker');
+        }
+    }
+
+    statusToKor(s) {
+        switch (String(s || '').toLowerCase()) {
+            case 'published': return '공개';
+            case 'private': return '비공개';
+            case 'draft':
+            default: return '임시';
+        }
     }
 
     /**
@@ -369,6 +836,9 @@ class BlogApp {
                 +   '<a href="/" data-route class="px-4 py-2 rounded-full bg-black text-white">홈으로</a>'
                 + '</div>'
                 + '</section>';
+
+            // SEO 메타 업데이트
+            this.updatePageMeta('로그인 - InsureLog', '계정 로그인 페이지', window.location.href, '/og-image.svg');
         }
     }
 
@@ -387,6 +857,9 @@ class BlogApp {
                 +   '<a href="/" data-route class="px-4 py-2 rounded-full bg-black text-white">홈으로</a>'
                 + '</div>'
                 + '</section>';
+
+            // SEO 메타 업데이트
+            this.updatePageMeta('페이지를 찾을 수 없습니다 - InsureLog', '요청한 페이지가 존재하지 않습니다.', window.location.href, '/og-image.svg');
         }
     }
 
@@ -436,35 +909,60 @@ class BlogApp {
     }
 
     // 페이지 메타데이터 업데이트
-    updatePageMeta(title, description, url) {
+    updatePageMeta(title, description, url, image = null) {
         document.title = title;
-        
+
+        // 기본 메타 설명
+        const descMeta = DOM.$('meta[name="description"]');
+        if (descMeta) descMeta.content = description || '';
+
+        // URL/이미지 절대경로 변환
+        const finalUrl = url || window.location.href;
+        let finalImage = image || '/og-image.svg';
+        try { finalImage = new URL(finalImage, window.location.origin).href; } catch { /* ignore */ }
+
+        // Canonical 링크 업데이트
+        const canonical = DOM.$('link[rel="canonical"]');
+        if (canonical) canonical.href = finalUrl;
+
         // Open Graph 메타태그 업데이트
         const ogTitle = DOM.$('meta[property="og:title"]');
         const ogDesc = DOM.$('meta[property="og:description"]');
         const ogUrl = DOM.$('meta[property="og:url"]');
-        
+        const ogImage = DOM.$('meta[property="og:image"]');
         if (ogTitle) ogTitle.content = title;
-        if (ogDesc) ogDesc.content = description;
-        if (ogUrl) ogUrl.content = url;
-        
+        if (ogDesc) ogDesc.content = description || '';
+        if (ogUrl) ogUrl.content = finalUrl;
+        if (ogImage) ogImage.content = finalImage;
+
         // Twitter 메타태그 업데이트
         const twitterTitle = DOM.$('meta[name="twitter:title"]');
         const twitterDesc = DOM.$('meta[name="twitter:description"]');
-        
+        const twitterImage = DOM.$('meta[name="twitter:image"]');
         if (twitterTitle) twitterTitle.content = title;
-        if (twitterDesc) twitterDesc.content = description;
+        if (twitterDesc) twitterDesc.content = description || '';
+        if (twitterImage) twitterImage.content = finalImage;
     }
 
     async loadWriterData(slug) {
         if (!this.supabase) return;
         const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
-        const { data: post, error } = await this.supabase
+        // 기본은 슬러그로 조회, 실패 시 id로 재시도 (수정 링크가 id로 열리는 경우 대응)
+        let { data: post, error } = await this.supabase
             .from(table)
             .select('*')
             .eq('slug', slug)
             .maybeSingle();
         if (error) throw error;
+        if (!post) {
+            const byId = await this.supabase
+                .from(table)
+                .select('*')
+                .eq('id', slug)
+                .maybeSingle();
+            if (byId.error) throw byId.error;
+            post = byId.data || null;
+        }
         if (!post) return;
         DOM.$('#post-title').value = post.title || '';
         DOM.$('#post-summary').value = post.summary || '';
@@ -473,7 +971,7 @@ class BlogApp {
         const editor = DOM.$('#post-content-editor');
         if (editor) {
             // 기존 저장 포맷(JSON/Markdown/HTML)에 관계없이 미리보기 HTML로 변환해 편집기에 채웁니다.
-            const html = this.renderContentHTML(post.refined_content);
+            const html = this.renderContentHTML(post.refined_content ?? post.content ?? '');
             editor.innerHTML = html;
             // 저장된 태그 추출 후 입력창에 채우기
             const tags = this.extractTagsFromHTML(post.refined_content);
@@ -485,6 +983,8 @@ class BlogApp {
     async submitWriterForm(editSlug = null) {
         try {
             if (!this.supabase) throw new Error('Supabase가 준비되지 않았습니다');
+            // 저장 전 보안/마크다운 유틸리티를 지연 로드
+            await ScriptLoader.loadUtilities();
             const title = DOM.$('#post-title').value.trim();
             const summary = DOM.$('#post-summary').value.trim();
             const category = DOM.$('#post-category').value.trim();
@@ -554,7 +1054,7 @@ class BlogApp {
 
             UIComponents.showToast('글이 저장되었습니다.', 'success');
             if (status === 'published') {
-                this.navigate('/post/' + slug);
+                this.navigate('/post/' + encodeURIComponent(slug));
             } else {
                 this.navigate('/');
             }
@@ -564,12 +1064,19 @@ class BlogApp {
     }
 
     slugify(str) {
-        return String(str || '')
-            .toLowerCase()
-            .trim()
+        const base = String(str || '').toLowerCase().trim();
+        let s = base
+            .normalize('NFKD')
             .replace(/\s+/g, '-')
-            .replace(/[^a-z0-9\-]/g, '')
-            .replace(/-+/g, '-');
+            // 한글 포함 전 세계 문자/숫자 허용, 하이픈만 유지
+            .replace(/[^\p{L}\p{N}\-]+/gu, '')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        if (!s) {
+            const ts = Date.now().toString(36);
+            s = 'post-' + ts;
+        }
+        return s;
     }
 
     async ensureUniqueSlug(slug, originalSlug = null) {
@@ -623,31 +1130,38 @@ class BlogApp {
         const tags = this.extractTagsFromHTML(post.refined_content);
         const tagsHtml = tags && tags.length ? `<div class="mt-2 flex flex-wrap gap-2">${tags.map(t => `<span class=\"text-xs px-2 py-1 rounded-full bg-blue-50 border border-blue-200\">${this.escapeHTML(t)}</span>`).join('')}</div>` : '';
 
-        // 썸네일 (최적화 URL)
-        let thumbHtml = '';
-        if (post.thumbnail_url) {
-            const optimized = this.getTransformedPublicUrl(post.thumbnail_url, { width: 1200, height: 630, resize: 'cover', quality: 85, format: 'webp' });
-            thumbHtml = `<img src="${optimized}" alt="${title}" class="w-full h-auto rounded-2xl border"/>`;
-        }
+        // 상세 페이지에서는 본문 내 삽입 이미지만 노출합니다 (상단 히어로 제거).
 
+        // 독자 상세 페이지에서만 콘텐츠 렌더 유틸리티 로드
+        await ScriptLoader.loadUtilities();
         const contentHTML = this.renderContentHTML(post.refined_content);
+        // 로그인 사용자에게만 편집 버튼 제공
+        const editBtn = this.state.user ? `<a href="/writer/${encodeURIComponent(post.slug)}" data-route class="px-3 py-1 rounded-full border">수정</a>` : '';
 
-        container.innerHTML = '<article class="max-w-3xl mx-auto py-10 px-6">'
-            + `<h1 class="text-3xl font-extrabold tracking-tight">${title}</h1>`
-            + `<div class="mt-2 text-sm text-gray-500 flex items-center gap-3"><span>${date}</span>${category}</div>`
-            + `${tagsHtml}`
-            + (thumbHtml ? `<div class="mt-6">${thumbHtml}</div>` : '')
-            + `<div class="prose prose-neutral max-w-none mt-8">${contentHTML}</div>`
-            + '<div class="mt-8 flex items-center gap-3">'
-            +   '<button id="btn-like" class="px-3 py-1 rounded-full border">좋아요 <span id="like-count"></span></button>'
-            +   '<button id="btn-share" class="px-3 py-1 rounded-full border">공유</button>'
-            +   '<button id="btn-copy" class="px-3 py-1 rounded-full border">링크복사</button>'
+        container.innerHTML = '<article class="post-detail py-10">'
+            + '<div class="post-detail-inner px-6">'
+            + `<h1 class="post-title text-3xl font-extrabold tracking-tight">${title}</h1>`
+            + `<div class="post-meta flex items-center"><span class="post-date">${date}</span>${category ? category.replace('<span', '<span class=\"post-category\"') : ''}</div>`
+            + `${tagsHtml ? tagsHtml.replace('<div', '<div class=\"post-tags\"') : ''}`
+            + `<div class="blog-post-content prose-custom">${contentHTML}</div>`
             + '</div>'
+            + '<div class="post-detail-inner px-6">'
+            + '<div class="mt-8 flex items-center gap-3">'
+                +   '<button id="btn-like" class="px-3 py-1 rounded-full border">좋아요 <span id="like-count"></span></button>'
+                +   '<button id="btn-share" class="px-3 py-1 rounded-full border">공유</button>'
+                +   '<button id="btn-copy" class="px-3 py-1 rounded-full border">링크복사</button>'
+                +   `${editBtn}`
+                + '</div>'
             + '<div id="related-posts" class="mt-12"></div>'
+            + '<div id="popular-posts" class="mt-12"></div>'
+            + '</div>'
             + '</article>';
 
-        // 메타 업데이트
-        this.updatePageMeta(post.title, post.summary || '', window.location.href);
+        // 메타 업데이트 (OG/Twitter 이미지 포함)
+        const shareImage = post.thumbnail_url
+            ? this.getTransformedPublicUrl(post.thumbnail_url, { width: 1200, height: 630, resize: 'cover', quality: 85, format: 'webp' })
+            : '/og-image.svg';
+        this.updatePageMeta(post.title, post.summary || '', window.location.href, shareImage);
 
         // 공유/좋아요 초기화
         try {
@@ -681,8 +1195,9 @@ class BlogApp {
             });
         } catch (e) { /* non-critical */ }
 
-        // 관련 글 로드
+        // 관련 글 및 인기 글 로드
         this.loadRelatedPosts(post).catch(err => this.handleError(err, 'loadRelatedPosts'));
+        this.loadPopularPosts(post.id).catch(err => this.handleError(err, 'loadPopularPosts'));
     }
 
     renderContentHTML(refined) {
@@ -691,7 +1206,8 @@ class BlogApp {
         try {
             const obj = typeof refined === 'string' ? JSON.parse(refined) : refined;
             if (obj && Array.isArray(obj.blocks)) {
-                return obj.blocks.map(b => this.renderEditorBlock(b)).join('');
+                const html = obj.blocks.map(b => this.renderEditorBlock(b)).join('');
+                return this.dedupeConsecutiveImages(html);
             }
             // Quill Delta 호환 (향후 확장 대비)
             if (obj && obj.ops && Array.isArray(obj.ops)) {
@@ -705,20 +1221,49 @@ class BlogApp {
                     if (attrs.underline) s = `<u>${s}</u>`;
                     return s;
                 }).join('');
-                return window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+                const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+                const transformed = this.transformPlainImagesToOptimized(safe);
+                const ensuredAlt = this.ensureImageAltAttributes(transformed, '');
+                return this.dedupeConsecutiveImages(ensuredAlt);
             }
         } catch { /* not JSON */ }
 
+        // 문자열 내 Markdown 패턴이 섞여 있으면 우선 Markdown 파싱을 수행
+        const isString = typeof refined === 'string';
+        const hasMarkdown = isString && (
+            /!\[[^\]]*\]\([^)]+\)/.test(refined) || // 이미지
+            /\[[^\]]+\]\([^)]+\)/.test(refined) ||   // 링크
+            /(^|\n)\s{0,3}#{1,6}\s/.test(refined) ||  // 헤딩
+            /(^|\n)\s{0,3}[-*]\s+/.test(refined) ||  // 불릿 리스트
+            /(^|\n)\s{0,3}\d+\.\s+/.test(refined)   // 순서 리스트
+        );
+        if (hasMarkdown && window.marked) {
+            const dirty = isString ? refined : String(refined);
+            const pre = this.preprocessPlainTextToMarkdown(dirty);
+            const html = window.marked.parse(pre);
+            const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const transformed = this.transformPlainImagesToOptimized(safe);
+            const ensuredAlt = this.ensureImageAltAttributes(transformed, '');
+            return this.dedupeConsecutiveImages(ensuredAlt);
+        }
+
         // 직접 HTML 문자열인 경우 그대로 정제하여 반환
-        if (typeof refined === 'string' && /<\w+[^>]*>/i.test(refined)) {
+        if (isString && /<\w+[^>]*>/i.test(refined)) {
             const html = refined;
-            return window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const transformed = this.transformPlainImagesToOptimized(safe);
+            const ensuredAlt = this.ensureImageAltAttributes(transformed, '');
+            return this.dedupeConsecutiveImages(ensuredAlt);
         }
         // Markdown 처리
         if (window.marked) {
-            const dirty = typeof refined === 'string' ? refined : String(refined);
-            const html = window.marked.parse(dirty);
-            return window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const dirty = isString ? refined : String(refined);
+            const pre = this.preprocessPlainTextToMarkdown(dirty);
+            const html = window.marked.parse(pre);
+            const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const transformed = this.transformPlainImagesToOptimized(safe);
+            const ensuredAlt = this.ensureImageAltAttributes(transformed, '');
+            return this.dedupeConsecutiveImages(ensuredAlt);
         }
         return `<pre>${this.escapeHTML(typeof refined === 'string' ? refined : JSON.stringify(refined))}</pre>`;
     }
@@ -766,6 +1311,11 @@ class BlogApp {
         const editor = DOM.$('#post-content-editor');
         const toolbar = DOM.$('#editor-toolbar');
         if (!editor) return;
+        // 접근성 향상
+        editor.setAttribute('role', 'textbox');
+        editor.setAttribute('aria-label', '콘텐츠 편집기');
+        // 모바일에서 툴바 클릭 시 포커스/선택 손실을 방지하기 위해 최근 선택 범위를 저장합니다.
+        this._lastSelectionRange = null;
         // 기본 문단 처리
         editor.addEventListener('focus', () => document.execCommand('defaultParagraphSeparator', false, 'p'));
         // 선택 변경 시 툴바 상태 업데이트
@@ -786,16 +1336,40 @@ class BlogApp {
             } catch { /* 호환성 */ }
         };
         document.addEventListener('selectionchange', () => {
-            if (document.activeElement === editor) updateToolbarState();
+            if (document.activeElement === editor) {
+                // 최근 선택 범위 저장 (모바일 탭에서 버튼 터치로 포커스가 이동되는 문제 대응)
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount) {
+                    this._lastSelectionRange = sel.getRangeAt(0);
+                }
+                updateToolbarState();
+            }
         });
         // 툴바 명령
         if (toolbar) {
+            // 모바일 블러 방지: 터치/마우스/포인터 다운에서 기본 동작 취소하여 에디터 포커스 유지
+            const cancelIfCmd = (e) => {
+                const target = e.target.closest('[data-cmd]');
+                if (!target) return;
+                e.preventDefault();
+            };
+            toolbar.addEventListener('pointerdown', cancelIfCmd, { passive: false });
+            toolbar.addEventListener('mousedown', cancelIfCmd, { passive: false });
+            toolbar.addEventListener('touchstart', cancelIfCmd, { passive: false });
             toolbar.addEventListener('click', (e) => {
-                const btn = e.target.closest('button[data-cmd]');
+                const btn = e.target.closest('[data-cmd]');
                 if (!btn) return;
                 const cmd = btn.getAttribute('data-cmd');
-                this.execEditorCommand(cmd);
+                // 에디터 포커스 및 선택 범위 복원 (Android/One UI 포함)
                 editor.focus();
+                const sel = window.getSelection();
+                if (sel && this._lastSelectionRange) {
+                    try {
+                        sel.removeAllRanges();
+                        sel.addRange(this._lastSelectionRange);
+                    } catch { /* 브라우저 호환성 */ }
+                }
+                this.execEditorCommand(cmd);
                 updateToolbarState();
             });
         }
@@ -938,16 +1512,58 @@ class BlogApp {
         if (!container) return;
         if (!data || data.length === 0) { container.innerHTML = ''; return; }
         const cards = data.map(p => {
-            const url = '/post/' + (p.slug || p.id);
-            const thumb = p.thumbnail_url ? `<img src="${this.getTransformedPublicUrl(p.thumbnail_url, { width: 360, height: 200, resize: 'cover', quality: 80, format: 'webp' })}" class="w-full h-32 object-cover rounded-xl border"/>` : '';
-            return '<article class="p-4 border rounded-2xl bg-white">'
-                + (thumb ? `<a href="${url}" data-route>${thumb}</a>` : '')
-                + `<h3 class="mt-2 text-base font-semibold"><a href="${url}" data-route>${this.escapeHTML(p.title)}</a></h3>`
-                + `<p class="text-xs text-gray-600">${this.formatDate(p.created_at)}</p>`
-                + '</article>';
+            const url = '/post/' + encodeURIComponent(p.slug || p.id);
+            const hasImg = !!p.thumbnail_url;
+            const img = hasImg
+                ? `<img src="${this.getTransformedPublicUrl(p.thumbnail_url, { width: 160, height: 160, resize: 'cover', quality: 85, format: 'webp' })}"
+                         alt="${this.escapeHTML(p.title || '')}"
+                         class="post-card-thumb-img"
+                         decoding="async" loading="lazy"/>`
+                : `<span class="thumb-initial">${this.escapeHTML(String((p.title || 'N')).trim().charAt(0).toUpperCase())}</span>`;
+            return (
+                `<article class="post-card post-card-compact">`
+                + `<a href="${url}" data-route class="post-card-thumb${hasImg ? '' : ' placeholder'}">${img}</a>`
+                + `<div class="post-card-main">`
+                +   `<h3 class="post-card-title"><a href="${url}" data-route>${this.escapeHTML(p.title)}</a></h3>`
+                +   `<p class="post-card-meta">${this.formatDate(p.created_at)}</p>`
+                + `</div>`
+                + `</article>`
+            );
         }).join('');
         container.innerHTML = '<h2 class="text-lg font-bold mb-3">관련 글</h2>'
             + `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${cards}</div>`;
+    }
+
+    async loadPopularPosts(currentPostId = null) {
+        if (!this.supabase) return;
+        const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
+        const { data, error } = await this.supabase
+            .from(table)
+            .select('id, title, slug, view_count')
+            .eq('status', 'published')
+            .order('view_count', { ascending: false, nullsFirst: false })
+            .limit(6);
+        if (error) throw error;
+        const container = DOM.$('#popular-posts');
+        if (!container) return;
+        let list = (data || []).filter(p => p && p.id !== currentPostId);
+        if (!list || list.length === 0) { container.innerHTML = ''; return; }
+        const header = '<h2 class="text-lg font-bold mb-3">많이 본 글</h2>';
+        const items = list.map((p, idx) => {
+            const url = '/post/' + encodeURIComponent(p.slug || p.id);
+            const rank = idx + 1;
+            const views = Number(p.view_count || 0);
+            return (
+                `<li class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm text-gray-500">${rank}.</span>
+                        <a href="${url}" data-route class="text-sm font-medium hover:underline">${this.escapeHTML(p.title || '')}</a>
+                    </div>
+                    <span class="text-xs text-gray-500">${views}회</span>
+                </li>`
+            );
+        }).join('');
+        container.innerHTML = header + `<ol class="space-y-2">${items}</ol>`;
     }
 
     // 파일명으로부터 alt 텍스트 유도어 생성
@@ -990,6 +1606,112 @@ class BlogApp {
                 img.setAttribute('alt', altText || '이미지');
                 if (cap && !cap.textContent.trim()) cap.textContent = altText || '이미지';
             });
+            return div.innerHTML;
+        } catch {
+            return html;
+        }
+    }
+
+    // 순수 텍스트를 간단한 마크다운으로 전처리: hN 제목/이미지 URL 자동 치환
+    preprocessPlainTextToMarkdown(text = '') {
+        try {
+            let t = String(text || '');
+            // h1~h6 접두어를 마크다운 헤딩으로 변환
+            t = t.replace(/^\s*h([1-6])\s+(.+)$/gmi, (m, level, content) => {
+                const hashes = '#'.repeat(Number(level));
+                return `${hashes} ${content}`;
+            });
+            // 이미지 URL을 마크다운 이미지로 변환
+            t = t.replace(/(^|\s)(https?:\/\/[^\s]+\.(?:png|jpe?g|webp|gif|svg))(?!\S)/gmi, (m, space, url) => {
+                return `${space}![](${url})`;
+            });
+            return t;
+        } catch { return String(text || ''); }
+    }
+
+    // 마크다운/단순 HTML에서 생성된 단순 <img>를 반응형 최적화 이미지로 변환
+    transformPlainImagesToOptimized(html, title = '') {
+        try {
+            const div = document.createElement('div');
+            div.innerHTML = String(html || '');
+            const conn = (navigator && navigator.connection) ? navigator.connection : {};
+            const saveData = !!conn.saveData;
+            const et = conn.effectiveType || '';
+            const isSlow = saveData || /(^|[^a-z])(2g|3g)/.test(et);
+            const w = isSlow ? [360, 600] : [480, 768, 1200];
+            const mainW = isSlow ? 900 : 1200;
+            const mainQ = isSlow ? 75 : 85;
+            const setQ = isSlow ? 60 : 80;
+            const sizes = isSlow ? '(max-width: 600px) 100vw, 600px' : '(max-width: 768px) 100vw, 768px';
+
+            const imgs = Array.from(div.querySelectorAll('img'));
+            imgs.forEach(img => {
+                if (img.hasAttribute('srcset')) return; // 이미 최적화된 경우 스킵
+                const src = img.getAttribute('src') || '';
+                if (!src) return;
+                const altRaw = (img.getAttribute('alt') || '').trim();
+                const altText = altRaw || (() => {
+                    try {
+                        const u = new URL(src, window.location.origin);
+                        const file = (u.pathname.split('/').pop() || '').split('?')[0];
+                        return this.deriveAltFromFileName(file);
+                    } catch {
+                        const file = (src.split('/').pop() || '').split('?')[0];
+                        return this.deriveAltFromFileName(file);
+                    }
+                })() || (title || '이미지');
+                const optimized = this.getOptimizedPublicUrl(src, { width: mainW, quality: mainQ, format: 'webp' });
+                const srcset = w.map(x => `${this.getOptimizedPublicUrl(src, { width: x, quality: setQ, format: 'webp' })} ${x}w`).join(', ');
+
+                // figure로 감싸고 캡션 추가
+                const fig = document.createElement('figure');
+                const newImg = img.cloneNode(true);
+                newImg.setAttribute('src', optimized);
+                newImg.setAttribute('srcset', srcset);
+                newImg.setAttribute('sizes', sizes);
+                newImg.setAttribute('alt', altText);
+                newImg.setAttribute('loading', 'lazy');
+                newImg.setAttribute('decoding', 'async');
+                fig.appendChild(newImg);
+                const cap = document.createElement('figcaption');
+                cap.textContent = altText;
+                fig.appendChild(cap);
+
+                const parent = img.parentElement;
+                if (parent && parent.tagName.toLowerCase() === 'p') {
+                    parent.replaceWith(fig);
+                } else {
+                    img.replaceWith(fig);
+                }
+            });
+            return div.innerHTML;
+        } catch { return html; }
+    }
+
+    // 연속 중복 이미지(같은 src/srcset)를 제거해 본문 중복 렌더링을 방지
+    dedupeConsecutiveImages(html) {
+        try {
+            const div = document.createElement('div');
+            div.innerHTML = String(html || '');
+
+            const getKey = (img) => `${img.getAttribute('src') || ''}|${img.getAttribute('srcset') || ''}`;
+
+            const containers = Array.from(div.querySelectorAll('figure, img'))
+                .filter(el => !(el.tagName.toLowerCase() === 'img' && el.closest('figure')));
+
+            for (let i = 0; i < containers.length; i++) {
+                const cur = containers[i];
+                const curImg = cur.tagName.toLowerCase() === 'img' ? cur : cur.querySelector('img');
+                if (!curImg) continue;
+                const prevEl = cur.previousElementSibling;
+                if (!prevEl) continue;
+                const prevImg = prevEl.tagName.toLowerCase() === 'img' ? prevEl : prevEl.querySelector && prevEl.querySelector('img');
+                if (!prevImg) continue;
+                const same = getKey(curImg) === getKey(prevImg);
+                if (same) {
+                    cur.remove();
+                }
+            }
             return div.innerHTML;
         } catch {
             return html;
@@ -1056,7 +1778,10 @@ class BlogApp {
             + '</div>';
 
         if (!this.supabase) {
-            container.innerHTML = '<div class="text-gray-500">데이터 소스가 준비되지 않았습니다.</div>';
+            container.innerHTML = '<div class="text-gray-600">'
+                + '<p class="mb-2">데이터 소스가 준비되지 않았습니다.</p>'
+                + '<p class="text-sm">환경 변수 또는 Supabase 설정을 확인해 주세요.</p>'
+                + '</div>';
             return;
         }
 
@@ -1067,54 +1792,78 @@ class BlogApp {
 
         const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
 
-        const { data, error } = await this.supabase
-            .from(table)
-            .select('id, title, summary, slug, category, thumbnail_url, created_at, view_count, status')
-            .eq('status', 'published')
-            .order('created_at', { ascending: false })
-            .range(from, to);
+        try {
+            const { data, error } = await this.supabase
+                .from(table)
+                .select('id, title, summary, slug, category, thumbnail_url, created_at, view_count, status')
+                .eq('status', 'published')
+                .order('created_at', { ascending: false })
+                .range(from, to);
 
-        if (error) throw error;
+            if (error) throw error;
 
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
-            return;
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
+                return;
+            }
+
+            container.innerHTML = this.renderPostsListHTML(data);
+        } catch (err) {
+            // 사용자에게 명시적으로 안내하고, 토스트도 띄움
+            container.innerHTML = '<div class="text-red-600">'
+                + '<p class="font-semibold">게시글을 불러오지 못했습니다.</p>'
+                + '<p class="text-sm text-red-500">잠시 후 다시 시도해 주세요.</p>'
+                + '</div>';
+            this.handleError(err, 'loadHomePosts');
         }
-
-        container.innerHTML = this.renderPostsListHTML(data);
     }
 
     // 게시글 카드 리스트 HTML 생성
     renderPostsListHTML(posts) {
         return posts.map((post, idx) => {
-            const href = '/post/' + (post.slug || post.id);
+            const href = '/post/' + encodeURIComponent(post.slug || post.id);
             const conn = (navigator && navigator.connection) ? navigator.connection : {};
             const saveData = !!conn.saveData;
             const et = conn.effectiveType || '';
             const isSlow = saveData || /(^|[^a-z])(2g|3g)/.test(et);
-            const baseW = 640, baseH = 240;
+            // 홈 목록은 좌측 소형 썸네일(정사각형)로 표시
+            const baseW = 160, baseH = 160; // 1:1
             const q = isSlow ? 70 : 80;
-            const widths = isSlow ? [320, 480, 640] : [360, 480, 640];
-            const sizes = '(max-width: 640px) 100vw, 640px';
+            const widths = isSlow ? [96, 120, 160] : [120, 160, 192];
+            const sizes = '(max-width: 640px) 96px, 120px';
             const thumbUrl = post.thumbnail_url ? this.getTransformedPublicUrl(post.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', quality: q, format: 'webp' }) : null;
-            const srcset = post.thumbnail_url ? widths.map(x => `${this.getTransformedPublicUrl(post.thumbnail_url, { width: x, height: Math.round(x * (baseH/baseW)), resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ') : '';
+            const srcset = post.thumbnail_url ? widths.map(x => `${this.getTransformedPublicUrl(post.thumbnail_url, { width: x, height: x, resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ') : '';
             const eager = idx === 0; // 첫 번째 카드 LCP 개선
             const loading = eager ? '' : ' loading="lazy"';
             const fetchp = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
-            const thumb = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="w-full h-40 object-cover rounded-xl border" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>` : '';
-            const date = this.formatDate(post.created_at);
-            const category = post.category ? `<span class="text-xs px-2 py-1 rounded-full bg-black/5">${post.category}</span>` : '';
+            const imgTag = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>` : '';
+            const initial = this.escapeHTML(String((post.title || 'N')).trim().charAt(0).toUpperCase());
+            const thumbBlock = `<a href="${href}" data-route class="post-card-thumb${thumbUrl ? '' : ' placeholder'}">${thumbUrl ? imgTag : `<span class=\"thumb-initial\">${initial}</span>`}</a>`;
+            const date = this.formatDateKR(post.created_at);
+            const categoryBadge = post.category ? `<span class="badge">${this.escapeHTML(post.category)}</span>` : '';
+            const editLink = this.state.user ? `<a href="/writer/${encodeURIComponent(post.slug)}" data-route class="btn-xs">편집</a>` : '';
 
-            return '<article class="p-4 border rounded-2xl hover:shadow-sm transition bg-white">'
-                + (thumb ? `<a href="${href}" data-route>${thumb}</a>` : '')
-                + `<h2 class="mt-3 text-lg font-semibold"><a href="${href}" data-route>${this.escapeHTML(post.title || '제목 없음')}</a></h2>`
-                + `<p class="mt-1 text-sm text-gray-600">${this.escapeHTML(post.summary || '')}</p>`
-                + `<div class="mt-3 flex items-center justify-between text-xs text-gray-500">`
-                +   `<span>${date}</span>`
-                +   `${category}`
+            return '<article class="post-card post-card-compact">'
+                + thumbBlock
+                + `<div class="post-card-main">`
+                +   `<h2 class="post-card-title"><a href="${href}" data-route>${this.escapeHTML(post.title || '제목 없음')}</a></h2>`
+                +   (post.summary ? `<p class="post-card-summary">${this.escapeHTML(post.summary)}</p>` : '')
+                +   `<div class="post-card-meta">작성일 ${date}${post.category ? ` · 카테고리 ${categoryBadge}` : ''}</div>`
+                +   `<div class="post-card-actions">${editLink}</div>`
                 + `</div>`
                 + '</article>';
         }).join('');
+    }
+
+    // 한국형 날짜 포맷터 (YYYY.MM.DD)
+    formatDateKR(iso) {
+        try {
+            const d = new Date(iso);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}.${m}.${day}`;
+        } catch { return ''; }
     }
 
     // 날짜 포맷터
