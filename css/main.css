@@ -125,7 +125,15 @@
 .blog-post-content h6 {
     margin: 2rem 0 1rem 0;
     color: var(--gray-900);
+    font-weight: 700;
 }
+
+.blog-post-content h1 { font-size: 2.25rem; line-height: 2.75rem; font-weight: 900; }
+.blog-post-content h2 { font-size: 1.875rem; line-height: 2.25rem; font-weight: 800; }
+.blog-post-content h3 { font-size: 1.5rem; line-height: 2rem; font-weight: 700; }
+.blog-post-content h4 { font-size: 1.25rem; line-height: 1.75rem; font-weight: 700; }
+.blog-post-content h5 { font-size: 1.125rem; line-height: 1.5rem; font-weight: 600; }
+.blog-post-content h6 { font-size: 1rem; line-height: 1.5rem; font-weight: 600; }
 
 .blog-post-content p {
     margin: 1rem 0;
@@ -136,6 +144,92 @@
     height: auto;
     border-radius: var(--border-radius);
     margin: 1.5rem 0;
+}
+
+/* 인라인 텍스트 서식 및 링크 */
+.blog-post-content a {
+    color: var(--gray-900);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.blog-post-content a:hover {
+    color: #000;
+}
+.blog-post-content b,
+.blog-post-content strong { font-weight: 700; }
+.blog-post-content i,
+.blog-post-content em { font-style: italic; }
+.blog-post-content small { font-size: 0.875rem; color: var(--gray-600); }
+.blog-post-content hr { margin: 2rem 0; border: 0; border-top: 1px solid var(--gray-200); }
+
+/* 본문 내 figure/캡션/리스트/인용문 기본 서식 보강 */
+.blog-post-content figure {
+    margin: 1.5rem 0;
+}
+.blog-post-content figcaption {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    text-align: center;
+    margin-top: 0.5rem;
+}
+.blog-post-content ul,
+.blog-post-content ol {
+    margin: 1rem 0 1rem 1.25rem;
+    padding-left: 1.25rem;
+}
+.blog-post-content ul { list-style-type: disc; }
+.blog-post-content ol { list-style-type: decimal; }
+.blog-post-content li {
+    margin: 0.25rem 0;
+}
+.blog-post-content blockquote {
+    border-left: 4px solid var(--gray-300);
+    padding-left: 1rem;
+    color: var(--gray-600);
+    font-style: italic;
+    margin: 1rem 0;
+}
+.blog-post-content pre,
+.blog-post-content code {
+    font-family: 'Courier New', monospace;
+}
+.blog-post-content code {
+    background-color: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.25rem;
+    font-size: 0.875em; /* 문장 내 줄높이에 자연스럽게 맞춤 */
+}
+.blog-post-content pre {
+    background-color: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    overflow-x: auto;
+}
+.blog-post-content pre code {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font-size: 0.95em;
+}
+
+/* 표(table) 기본 서식 */
+.blog-post-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.25rem 0;
+}
+.blog-post-content th,
+.blog-post-content td {
+    border: 1px solid var(--gray-200);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+}
+.blog-post-content th {
+    background-color: var(--gray-50);
+    color: var(--gray-800);
+    font-weight: 600;
 }
 
 /* 블로그 카드 */
@@ -156,9 +250,11 @@
 
 .blog-card-image {
     width: 100%;
-    height: 12rem;
+    height: auto;
+    aspect-ratio: 16 / 9;
     object-fit: cover;
     background-color: var(--gray-100);
+    display: block;
 }
 
 .blog-card-content {
@@ -210,7 +306,8 @@
     }
     
     .blog-card-image {
-        height: 10rem;
+        aspect-ratio: 16 / 9;
+        height: auto;
     }
 }
 /* 홈 목록 카드: 오프스크린 렌더 비용 절감 */
@@ -224,3 +321,76 @@
     content-visibility: auto;
     contain-intrinsic-size: 800px;
 }
+
+/* 모바일 에디터 툴바 터치 최적화 (갤럭시 S21 등) */
+#editor-toolbar [data-cmd] {
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 한국형 UX: 포스트 카드 및 모달 결과 항목 */
+.post-card {
+    padding: 1rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 1rem;
+    background-color: #fff;
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast);
+}
+.post-card:hover { box-shadow: var(--shadow-sm); background-color: rgba(0,0,0,0.02); }
+.post-card-thumb { display: block; border-radius: 0.75rem; overflow: hidden; aspect-ratio: 16 / 9; }
+.post-card-thumb-img { width: 100%; height: auto; object-fit: cover; border: 1px solid var(--gray-200); display: block; }
+.post-card-title { margin-top: 0.75rem; font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.2px; color: var(--gray-900); }
+.post-card-title a { color: inherit; text-decoration: none; }
+.post-card-title a:hover, .post-card-title a:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: var(--primary-color);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+  outline: none;
+}
+.post-card-summary { margin-top: 0.25rem; font-size: 0.9375rem; color: var(--gray-700); line-height: 1.6; }
+.post-card-meta { margin-top: 0.5rem; font-size: 0.8125rem; color: var(--gray-600); }
+.post-card-actions { margin-top: 0.5rem; display: flex; gap: 0.5rem; }
+.btn-xs { font-size: 0.75rem; padding: 0.25rem 0.5rem; border: 1px solid var(--gray-300); border-radius: 9999px; background: transparent; }
+.btn-xs:hover { background-color: rgba(0,0,0,0.05); }
+
+/* 좌측 소형 썸네일 카드 레이아웃 */
+.post-card-compact { display: grid; grid-template-columns: 120px 1fr; gap: 0.75rem; align-items: start; padding: 0.75rem; }
+.post-card-compact .post-card-thumb { aspect-ratio: 1 / 1; border-radius: 0.875rem; overflow: hidden; box-shadow: var(--shadow-sm); }
+.post-card-compact .post-card-thumb-img { width: 100%; height: auto; object-fit: cover; display: block; border: none; border-radius: inherit; }
+.post-card-main { display: flex; flex-direction: column; }
+.post-card-compact .post-card-title { margin-top: 0; }
+@media (max-width: 640px) { .post-card-compact { grid-template-columns: 96px 1fr; } }
+
+/* 무썸네일 플레이스홀더 스타일 */
+.post-card-compact .post-card-thumb.placeholder { background: linear-gradient(135deg, var(--gray-100), var(--gray-200)); display: flex; align-items: center; justify-content: center; position: relative; }
+.post-card-compact .post-card-thumb.placeholder::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-300); }
+.post-card-compact .thumb-initial { font-size: 1.75rem; font-weight: 800; color: var(--gray-700); letter-spacing: -0.3px; }
+
+/* 배지 */
+.badge { display: inline-block; font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 9999px; border: 1px solid var(--gray-300); color: var(--gray-700); background-color: #fff; }
+
+/* 모달: 포스트 선택 항목 */
+.post-picker-item { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0.75rem; border: 1px solid var(--gray-200); border-radius: 0.75rem; background: #fff; }
+.post-picker-item:hover { background-color: rgba(0,0,0,0.03); }
+.post-picker-main { display: flex; flex-direction: column; gap: 0.125rem; }
+.post-picker-title { font-size: 0.9375rem; font-weight: 600; color: var(--gray-900); }
+.post-picker-meta { font-size: 0.8125rem; color: var(--gray-600); }
+
+/* 문서 레이아웃 가이드: 포스트 상세 */
+.post-detail { padding-left: 20px; padding-right: 20px; }
+@media (min-width: 1024px) { .post-detail { padding-left: 120px; padding-right: 120px; } }
+.post-detail-inner { max-width: 720px; margin-left: auto; margin-right: auto; }
+.post-title { margin-bottom: 12px; }
+.post-meta { gap: 8px; margin-bottom: 24px; color: var(--gray-600); }
+.post-meta .post-date { font-size: 14px; }
+.post-meta .post-category { font-size: 12px; color: var(--gray-500); display: inline-flex; align-items: center; }
+.post-tags { margin-top: -8px; margin-bottom: 16px; }
+.post-detail .blog-post-content { margin-top: 24px; }
+.prose-custom p { margin-bottom: 16px; }
+
+/* 인터랙션: 프리미엄 트랜지션 & 포커스 스케일 */
+.btn { transition: transform var(--transition-normal), background-color var(--transition-normal), color var(--transition-normal), box-shadow var(--transition-normal); will-change: transform; }
+.btn:hover, .btn:focus-visible { transform: scale(1.02); }

@@ -15,7 +15,7 @@
 .form-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), var(--ring-alpha));
 }
 
 .form-input:disabled {
@@ -50,7 +50,7 @@
 .form-textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), var(--ring-alpha));
 }
 
 /* 선택 박스 */
@@ -74,7 +74,7 @@
 .form-select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), var(--ring-alpha));
 }
 
 /* 체크박스 */
@@ -96,7 +96,7 @@
 
 .form-checkbox:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), var(--ring-alpha));
 }
 
 /* 라디오 버튼 */
@@ -118,7 +118,7 @@
 
 .form-radio:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), var(--ring-alpha));
 }
 
 /* 폼 그룹 */
@@ -196,24 +196,6 @@
     border-left: 0;
 }
 
-/* 검색 입력 */
-.search-input {
-    position: relative;
-}
-
-.search-input .form-input {
-    padding-left: 2.5rem;
-}
-
-.search-input-icon {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--gray-400);
-    width: 1rem;
-    height: 1rem;
-}
 
 /* 파일 입력 */
 .form-file {

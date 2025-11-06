@@ -216,3 +216,73 @@
     border-radius: var(--border-radius-full);
     animation: spin 1s linear infinite;
 }
+
+/* 햄버거 버튼 (접근성/터치 최적화) */
+.hamburger-btn {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius-full);
+    background-color: white;
+    color: var(--gray-800);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.hamburger-btn:hover {
+    background-color: var(--gray-100);
+    border-color: var(--gray-400);
+}
+
+.hamburger-btn:active {
+    transform: scale(0.98);
+}
+
+.hamburger-btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.hamburger-icon {
+    position: relative;
+    width: 22px;
+    height: 16px;
+}
+
+.hamburger-icon .bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--text-primary);
+    border-radius: 2px;
+    transition: transform 200ms ease, opacity 200ms ease, top 200ms ease;
+}
+
+.hamburger-icon .bar-top { top: 0; }
+.hamburger-icon .bar-middle { top: 7px; }
+.hamburger-icon .bar-bottom { top: 14px; }
+
+/* 메뉴 열림 시 애니메이션: 햄버거 → X */
+#nav-toggle[aria-expanded="true"] .bar-top {
+    top: 7px;
+    transform: rotate(45deg);
+}
+
+#nav-toggle[aria-expanded="true"] .bar-middle {
+    opacity: 0;
+}
+
+#nav-toggle[aria-expanded="true"] .bar-bottom {
+    top: 7px;
+    transform: rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hamburger-icon .bar { transition: none; }
+    .hamburger-btn { transition: none; }
+}
