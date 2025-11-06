@@ -206,6 +206,25 @@ SITE_URL=https://your-site-url
 }
 ```
 
+## ✅ 테스트 실행 (브라우저 스모크 테스트)
+
+라우팅/네비 동작을 간단히 확인하는 테스트 페이지가 포함되어 있습니다.
+
+1. 개발 서버 실행: `npx serve -l 5500 -s`
+2. 브라우저에서 `http://localhost:5500/tests/routing.spec.html` 접속
+3. 페이지에 표시되는 체크 결과(✅/❌)로 성공 여부 확인
+
+참고: 의존성 최소화를 위해 Supabase는 테스트 내에서 스텁으로 대체됩니다.
+
+## 📝 변경 이력 및 커밋 메시지
+
+상세 변경 이력은 루트의 `CHANGES.md`를 확인하세요. 권장 커밋 메시지 예:
+
+- `fix(router): prevent hide/show race when navigating to same view`
+- `feat(nav): highlight active route with aria-current and font-semibold`
+- `test: add browser smoke tests for routing and nav`
+
+
 ## 🎨 디자인 시스템
 
 ### 색상 가이드라인

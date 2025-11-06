@@ -28,8 +28,8 @@
     <meta name="twitter:image" content="https://blogaipandoci.vercel.app/og-image.svg">
     
     <!-- Scripts & Stylesheets -->
-    <link rel="stylesheet" href="./style.css">
-    <link rel="stylesheet" href="./css/main.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/css/main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 
@@ -89,7 +89,7 @@
 
     <!-- 모달 및 토스트 컨테이너 -->
     <div id="modal-container"></div>
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3"></div>
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3" aria-live="polite" aria-atomic="true"></div>
     
     <!-- [APP SCRIPT] -->
     <!-- Supabase ES 모듈 임포트 -->
@@ -125,16 +125,24 @@
         // 모듈들을 순차적으로 로드 (의존성 보장)
         (async () => {
             try {
-                await loadScript('./js/config.js');
-                await loadScript('./js/dom-utils.js');
-                await loadScript('./js/script-loader.js');
-                await loadScript('./js/ui-components.js');
-                await loadScript('./js/blog-app.js');
+                await loadScript('/js/config.js');
+                await loadScript('/js/dom-utils.js');
+                await loadScript('/js/script-loader.js');
+                await loadScript('/js/ui-components.js');
+                // 레이아웃 매니저는 가이드라인/검사를 제공하므로 앱 전에 로드
+                await loadScript('/js/layout-manager.js');
+                await loadScript('/js/blog-app.js');
+                // 성능 측정 모듈은 의존성이 없어 마지막에 로드합니다.
+                await loadScript('/js/perf-monitor.js');
                 
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', () => new BlogApp());
-                } else {
+                const boot = () => {
+                    if (window.LayoutManager) window.LayoutManager.init();
                     new BlogApp();
+                };
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', boot);
+                } else {
+                    boot();
                 }
             } catch (error) {
                 console.error('모듈 로드 실패:', error);
