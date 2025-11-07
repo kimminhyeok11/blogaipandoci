@@ -44,14 +44,20 @@ export default async function handler(req, res) {
       const desc = escapeXml(p.summary || '');
       const cats = [];
       if (p.category) cats.push(p.category);
-      const tags = extractTagsFromHTML(p.refined_content || '') || [];
-      tags.forEach(t => cats.push(t));
+      if (includeContent && p.refined_content) {
+        const tags = extractTagsFromHTML(p.refined_content || '') || [];
+        tags.forEach(t => cats.push(t));
+      }
       const catXml = cats.map(c => `<category>${escapeXml(c)}</category>`).join('');
-      const enclosure = resolveEnclosure(p.thumbnail_url, p.refined_content || '');
+      const enclosure = includeContent ? resolveEnclosure(p.thumbnail_url, p.refined_content || '') : (p.thumbnail_url ? { url: p.thumbnail_url, type: (p.thumbnail_url.endsWith('.png') ? 'image/png' : 'image/jpeg'), length: 0 } : null);
       const encXml = enclosure ? `<enclosure url="${escapeXml(enclosure.url)}" type="${escapeXml(enclosure.type)}" length="${enclosure.length}"/>` : '';
       return `<item><title>${title}</title><link>${escapeXml(url)}</link><guid>${escapeXml(url)}</guid><pubDate>${pubDate}</pubDate><description>${desc}</description>${catXml}${encXml}<lastBuildDate>${updated}</lastBuildDate></item>`;
     }).join('');
 
+    if (req.method === 'HEAD') {
+      res.status(200).end();
+      return;
+    }
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>InsureLog</title><link>${escapeXml(SITE_URL)}</link><description>AI, 기술, 보험 관련 글</description>${items}</channel></rss>`;
     res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8');
     res.status(200).send(xml);
