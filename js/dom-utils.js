@@ -117,12 +117,14 @@ const DOM = {
         const target = typeof container === 'string' ? this.$(container) : container;
         if (!target) return;
         
+        // 레이아웃 시프트 방지: 정상 흐름에서 제외되는 fixed 오버레이로 표시
         const spinner = this.create('div', {
             className: 'loading-spinner',
+            style: 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.6);backdrop-filter:saturate(120%) blur(2px);',
             innerHTML: `
                 <div class="flex items-center justify-center p-8">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                    <span class="ml-3 text-gray-600">로딩 중...</span>
+                    <span class="ml-3 text-gray-700">로딩 중...</span>
                 </div>
             `
         });

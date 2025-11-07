@@ -144,9 +144,16 @@
     // 1) 읽기 단계
     const navW = measureNavWidth();
     // 2) 쓰기 단계
-    if (navW && navW !== cachedNavWidth) {
-      cachedNavWidth = navW;
-      setContentMaxWidthVar(navW);
+    // 폭 재동기화 임계값: 미세한 변경(<=4px)은 무시해 레이아웃 셰이크 방지
+    const WIDTH_UPDATE_THRESHOLD = 4;
+    if (navW) {
+      if (cachedNavWidth === null) {
+        cachedNavWidth = navW;
+        setContentMaxWidthVar(navW);
+      } else if (Math.abs(navW - cachedNavWidth) > WIDTH_UPDATE_THRESHOLD) {
+        cachedNavWidth = navW;
+        setContentMaxWidthVar(navW);
+      }
     }
     const containers = collectContainers();
     containers.forEach(el => {
@@ -174,11 +181,11 @@
   }
 
   function init() {
-    // 폰트 준비 후 1차 동기화로 텍스트 메트릭 변동에 의한 재측정을 최소화
+    // 초기 페인트 전에 1차 동기화 실행해 큰 폭의 레이아웃 변경을 방지
+    scheduleSync();
+    // 폰트 준비 후 미세 보정만 수행
     if (document.fonts && typeof document.fonts.ready?.then === 'function') {
       document.fonts.ready.then(() => scheduleSync());
-    } else {
-      scheduleSync();
     }
     // DOM 변경을 감지해 자동 적용
     const app = q('#app-container');
