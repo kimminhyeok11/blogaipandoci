@@ -85,8 +85,13 @@
    ============================================================================= */
 
 /* HTML과 Body의 기본 설정 */
+/* 전역 박스모델 및 오버플로우 제어 */
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body { 
     height: 100%;  /* 전체 높이 설정 */
+    max-width: 100%;
+    overflow-x: hidden; /* 페이지 가로 스크롤 방지 */
 }
 
 body {
@@ -181,6 +186,21 @@ main#app-container {
 
 .prose-custom div { 
     margin-bottom: 1.3em; 
+}
+
+/* 본문 내 이미지가 컨테이너 폭을 넘지 않도록 제한 */
+.prose-custom img {
+    max-width: 96%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* 모바일에서 제목/본문 간격과 폰트 크기 최적화 */
+@media (max-width: 640px) {
+    .prose-custom h1 { font-size: 1.75rem; margin-top: 1.5em; margin-bottom: 0.75em; }
+    .prose-custom h2 { font-size: 1.5rem; margin-top: 1.25em; margin-bottom: 0.6em; }
+    .prose-custom h3 { font-size: 1.25rem; margin-top: 1.2em; margin-bottom: 0.6em; }
 }
 
 /* 기본 애니메이션 */

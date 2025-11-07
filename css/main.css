@@ -384,6 +384,7 @@
 /* 문서 레이아웃 가이드: 포스트 상세 */
 .post-detail { padding-left: 20px; padding-right: 20px; }
 @media (min-width: 1024px) { .post-detail { padding-left: 120px; padding-right: 120px; } }
+@media (max-width: 640px) { .post-detail { padding-left: 12px; padding-right: 12px; } }
 .post-detail-inner { max-width: 720px; margin-left: auto; margin-right: auto; }
 .post-title { margin-bottom: 12px; }
 .post-meta { gap: 8px; margin-bottom: 24px; color: var(--gray-600); }
@@ -392,6 +393,11 @@
 .post-tags { margin-top: -8px; margin-bottom: 16px; }
 .post-detail .blog-post-content { margin-top: 24px; }
 .prose-custom p { margin-bottom: 16px; }
+
+/* 모바일: 관련 글 카드 제목 크기 줄이기 */
+@media (max-width: 640px) {
+  .post-card-title { font-size: 0.9375rem; line-height: 1.4; }
+}
 
 /* 인터랙션: 프리미엄 트랜지션 & 포커스 스케일 */
 .btn { transition: transform var(--transition-normal), background-color var(--transition-normal), color var(--transition-normal), box-shadow var(--transition-normal); will-change: transform; }

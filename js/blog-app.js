@@ -457,7 +457,7 @@ class BlogApp {
             authLink
         ].filter(Boolean).join('');
 
-        container.innerHTML = '<nav class="w-full max-w-4xl flex items-center justify-between py-3 px-6 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">'
+        container.innerHTML = '<nav class="w-full max-w-4xl flex items-center justify-between py-2 px-6 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">'
             + '<a href="/" data-route class="font-extrabold text-xl tracking-tight">InsureLog</a>'
             + '<button id="nav-toggle" class="hamburger-btn sm:hidden" aria-expanded="false" aria-controls="nav-menu" aria-haspopup="menu" aria-label="메뉴">'
             +   '<span class="hamburger-icon" aria-hidden="true">'
@@ -623,7 +623,7 @@ class BlogApp {
         if (!container) return;
 
         // [Layout] 본문 폭을 네비게이션(max-w-4xl)과 맞춰 일관성을 유지합니다.
-        container.innerHTML = '<article class="max-w-4xl mx-auto py-10 px-6">'
+        container.innerHTML = '<article class="max-w-full mx-auto py-8 px-4">'
             + '<div class="mb-6">'
             +   '<div class="h-8 w-2/3 bg-gray-200 animate-pulse rounded"></div>'
             + '</div>'
@@ -1139,13 +1139,13 @@ class BlogApp {
         const editBtn = this.state.user ? `<a href="/writer/${encodeURIComponent(post.slug)}" data-route class="px-3 py-1 rounded-full border">수정</a>` : '';
 
         container.innerHTML = '<article class="post-detail py-10">'
-            + '<div class="post-detail-inner px-6">'
+            + '<div class="post-detail-inner px-4">'
             + `<h1 class="post-title text-3xl font-extrabold tracking-tight">${title}</h1>`
             + `<div class="post-meta flex items-center"><span class="post-date">${date}</span>${category ? category.replace('<span', '<span class=\"post-category\"') : ''}</div>`
             + `${tagsHtml ? tagsHtml.replace('<div', '<div class=\"post-tags\"') : ''}`
             + `<div class="blog-post-content prose-custom">${contentHTML}</div>`
             + '</div>'
-            + '<div class="post-detail-inner px-6">'
+            + '<div class="post-detail-inner px-4">'
             + '<div class="mt-8 flex items-center gap-3">'
                 +   '<button id="btn-like" class="px-3 py-1 rounded-full border">좋아요 <span id="like-count"></span></button>'
                 +   '<button id="btn-share" class="px-3 py-1 rounded-full border">공유</button>'
