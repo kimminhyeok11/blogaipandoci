@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- Meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsureLog</title>
+    <meta name="description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <link rel="canonical" href="https://blogaipandoci.vercel.app">
+    <meta name="robots" content="index,follow">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="nonce" content="r4nd0m">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
+    
+    <!-- CSP (Content Security Policy) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google https://*.gemius.pl https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com https://*.googlesyndication.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://blogaipandoci.vercel.app">
+    <meta property="og:title" content="InsureLog - AI, 기술, 그리고 보험">
+    <meta property="og:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <meta property="og:image" content="https://blogaipandoci.vercel.app/og-image.svg">
+    <meta property="og:site_name" content="InsureLog">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="InsureLog - AI, 기술, 그리고 보험">
+    <meta name="twitter:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
+    <meta name="twitter:image" content="https://blogaipandoci.vercel.app/og-image.svg">
+    
+    <!-- Scripts & Stylesheets -->
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+
+    <!-- Global Config: Supabase URL/KEYs injected from user-provided values -->
+    <script nonce="r4nd0m">
+        window.Config = window.Config || {};
+        // Supabase 프로젝트 URL
+        window.Config.SUPABASE_URL = 'https://ddehwkwzmmvcxltlplua.supabase.co';
+        // 공개용(클라이언트) anon 키
+        window.Config.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
+        // Provide legacy global identifier if any script refers directly to Config
+        window.Config = window.Config;
+    </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
+    <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="preconnect" href="https://ddehwkwzmmvcxltlplua.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="//unpkg.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- Google AdSense (프로덕션 환경에서만 로드) -->
+</head>
+<body class="antialiased">
+    <!-- 앱 로더 -->
+    <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center">
+        <div class="loader-spinner"></div>
+    </div>
+    
+    <!-- 헤더 (네비게이션) -->
+    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-4 bg-white/80 backdrop-blur-sm"></header>
+    
+    <!-- 메인 콘텐츠 (뷰가 렌더링되는 곳) -->
+    <main id="app-container" class="w-full">
+    <div id="view-library" class="app-view"></div>
+    <div id="view-post" class="app-view"></div>
+    <div id="view-dashboard" class="app-view"></div>
+    <div id="view-writer" class="app-view"></div>
+    <div id="view-archives" class="app-view"></div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="text-center py-8 px-4 border-t border-gray-200">
+        <p class="text-sm text-gray-600">
+            © 2025 InsureLog. 
+            개발 및 문의사항은 <a href="https://www.threads.net/@ilovemom_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-500 hover:text-black transition-colors underline">Threads</a>로 연락 주세요.
+        </p>
+    </footer>
+
+    <!-- 모달 및 토스트 컨테이너 -->
+    <div id="modal-container"></div>
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3" aria-live="polite" aria-atomic="true"></div>
+    
+    <!-- [APP SCRIPT] -->
+    <!-- Supabase ES 모듈 임포트 -->
+    <script type="module" nonce="r4nd0m">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        
+        // Supabase를 전역으로 설정
+        window.supabase = { createClient };
+        
+        // 개발 환경에서는 Google AdSense 로드를 건너뜁니다 (403 및 Quirks Mode 회피)
+        const isDevHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+        if (!isDevHost) {
+            const adsScript = document.createElement('script');
+            adsScript.async = true;
+            adsScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112';
+            adsScript.setAttribute('crossorigin', 'anonymous');
+            adsScript.nonce = 'r4nd0m';
+            document.head.appendChild(adsScript);
+        }
+
+        // 분리된 JavaScript 모듈들 로드
+        const loadScript = (src) => {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.nonce = 'r4nd0m';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        };
+        
+        // 모듈들을 순차적으로 로드 (의존성 보장)
+        (async () => {
+            try {
+                await loadScript('/js/config.js');
+                await loadScript('/js/dom-utils.js');
+                await loadScript('/js/script-loader.js');
+                await loadScript('/js/ui-components.js');
+                // 레이아웃 매니저는 가이드라인/검사를 제공하므로 앱 전에 로드
+                await loadScript('/js/layout-manager.js');
+                await loadScript('/js/blog-app.js');
+                // 성능 측정 모듈은 의존성이 없어 마지막에 로드합니다.
+                await loadScript('/js/perf-monitor.js');
+                
+                const boot = () => {
+                    if (window.LayoutManager) window.LayoutManager.init();
+                    new BlogApp();
+                };
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', boot);
+                } else {
+                    boot();
+                }
+            } catch (error) {
+                console.error('모듈 로드 실패:', error);
+                document.getElementById('app-loader').innerHTML = '<div class="text-red-600">앱 로드에 실패했습니다.</div>';
+            }
+        })();
+    </script>
+</body>
+</html>
