@@ -11,13 +11,30 @@ export default async function handler(req, res) {
     // CDN 캐시 및 SWR: 10분 캐시, 24시간 동안 배경 재검증 허용
     res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=600, stale-while-revalidate=86400');
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const includeContent = process.env.FEED_INCLUDE_CONTENT === '1';
+    const selectCols = includeContent
+      ? 'slug, title, summary, updated_at, created_at, status, category, thumbnail_url, refined_content'
+      : 'slug, title, summary, updated_at, created_at, status, category, thumbnail_url';
     const { data, error } = await supabase
       .from('posts')
-      .select('slug, title, summary, updated_at, created_at, status, category, thumbnail_url, refined_content')
+      .select(selectCols)
       .eq('status', 'published')
       .order('created_at', { ascending: false })
       .limit(50);
     if (error) throw error;
+    // 변경 감지용 ETag/Last-Modified 헤더로 304 응답 지원
+    const timestamps = (data || []).map(p => new Date(p.updated_at || p.created_at || Date.now()).getTime());
+    const lastTs = timestamps.length ? Math.max(...timestamps) : Date.now();
+    const lastMod = new Date(lastTs).toUTCString();
+    const etag = `W/"feed-${(data || []).length}-${lastTs}"`;
+    res.setHeader('ETag', etag);
+    res.setHeader('Last-Modified', lastMod);
+    const inm = req.headers['if-none-match'];
+    const ims = req.headers['if-modified-since'];
+    if ((inm && inm === etag) || (ims && new Date(ims).getTime() >= lastTs)) {
+      res.status(304).end();
+      return;
+    }
 
     const items = (data || []).map(p => {
       const url = `${SITE_URL}/post/${encodeURIComponent(p.slug)}`;

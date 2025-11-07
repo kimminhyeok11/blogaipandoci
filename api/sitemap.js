@@ -18,6 +18,19 @@ export default async function handler(req, res) {
       .order('updated_at', { ascending: false })
       .limit(5000);
     if (error) throw error;
+    // 변경 없음이면 304로 빠르게 응답 (ETag/Last-Modified)
+    const timestamps = (data || []).map(p => new Date(p.updated_at || Date.now()).getTime());
+    const lastTs = timestamps.length ? Math.max(...timestamps) : Date.now();
+    const lastMod = new Date(lastTs).toUTCString();
+    const etag = `W/"sitemap-${(data || []).length}-${lastTs}"`;
+    res.setHeader('ETag', etag);
+    res.setHeader('Last-Modified', lastMod);
+    const inm = req.headers['if-none-match'];
+    const ims = req.headers['if-modified-since'];
+    if ((inm && inm === etag) || (ims && new Date(ims).getTime() >= lastTs)) {
+      res.status(304).end();
+      return;
+    }
     const urls = (data || []).map(p => {
       const loc = `${SITE_URL}/post/${encodeURIComponent(p.slug)}`;
       const lastmod = new Date(p.updated_at || Date.now()).toISOString();
