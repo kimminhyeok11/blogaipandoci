@@ -362,7 +362,9 @@
 .post-card-compact .post-card-thumb-img { width: 100%; height: auto; object-fit: cover; display: block; border: none; border-radius: inherit; }
 .post-card-main { display: flex; flex-direction: column; }
 .post-card-compact .post-card-title { margin-top: 0; }
-@media (max-width: 640px) { .post-card-compact { grid-template-columns: 96px 1fr; } }
+@media (max-width: 640px) {
+  .post-card-compact { grid-template-columns: 120px 1fr; }
+}
 
 /* 무썸네일 플레이스홀더 스타일 */
 .post-card-compact .post-card-thumb.placeholder { background: linear-gradient(135deg, var(--gray-100), var(--gray-200)); display: flex; align-items: center; justify-content: center; position: relative; }

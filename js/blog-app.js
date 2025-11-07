@@ -600,9 +600,9 @@ class BlogApp {
         this.switchToView('view-library');
         const container = DOM.$('#view-library');
         if (container) {
-            container.innerHTML = '<section class="max-w-4xl mx-auto py-10 px-6">'
+            container.innerHTML = '<section class="mx-auto py-8 px-4 sm:px-6 max-w-full sm:max-w-4xl">'
                 + '<h1 class="text-2xl font-bold mb-2">최근 글</h1>'
-                + '<div id="home-posts" class="mt-6 grid grid-cols-1 gap-4"></div>'
+                + '<div id="home-posts" class="mt-6 grid grid-cols-1 gap-3 sm:gap-4"></div>'
                 + '</section>';
 
             // SEO 메타 업데이트
@@ -1843,7 +1843,7 @@ class BlogApp {
             const categoryBadge = post.category ? `<span class="badge">${this.escapeHTML(post.category)}</span>` : '';
             const editLink = this.state.user ? `<a href="/writer/${encodeURIComponent(post.slug)}" data-route class="btn-xs">편집</a>` : '';
 
-            return '<article class="post-card post-card-compact">'
+            return '<article class="post-card post-card-compact" data-route data-href="' + href + '" tabindex="0">'
                 + thumbBlock
                 + `<div class="post-card-main">`
                 +   `<h2 class="post-card-title"><a href="${href}" data-route>${this.escapeHTML(post.title || '제목 없음')}</a></h2>`
