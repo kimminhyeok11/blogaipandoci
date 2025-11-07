@@ -1,0 +1,243 @@
+/* 모달 스타일 */
+
+/* 모달 오버레이 */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+
+/* 모달 컨테이너 */
+.modal-content {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 0;
+    max-width: 28rem;
+    width: 100%;
+    margin: 0 auto;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.3s ease;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 모달 헤더 */
+.modal-header {
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.modal-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    color: var(--gray-400);
+    transition: all var(--transition-fast);
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    background-color: var(--gray-100);
+    color: var(--gray-600);
+}
+
+/* 모달 바디 */
+.modal-body {
+    padding: 1rem 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* 모달 푸터 */
+.modal-footer {
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+/* 모달 크기 변형 */
+.modal-content-sm {
+    max-width: 20rem;
+}
+
+.modal-content-md {
+    max-width: 32rem;
+}
+
+.modal-content-lg {
+    max-width: 48rem;
+}
+
+.modal-content-xl {
+    max-width: 64rem;
+}
+
+.modal-content-full {
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+/* 모달 타입별 스타일 */
+.modal-danger .modal-header {
+    background-color: #fef2f2;
+    border-bottom-color: #fecaca;
+}
+
+.modal-danger .modal-title {
+    color: var(--error-color);
+}
+
+.modal-success .modal-header {
+    background-color: #f0fdf4;
+    border-bottom-color: #bbf7d0;
+}
+
+.modal-success .modal-title {
+    color: var(--success-color);
+}
+
+.modal-warning .modal-header {
+    background-color: #fffbeb;
+    border-bottom-color: #fed7aa;
+}
+
+.modal-warning .modal-title {
+    color: var(--warning-color);
+}
+
+/* 확인 모달 */
+.confirm-modal .modal-body {
+    text-align: center;
+    padding: 2rem 1.5rem;
+}
+
+.confirm-modal .modal-icon {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1rem auto;
+    border-radius: var(--border-radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-modal.modal-danger .modal-icon {
+    background-color: #fef2f2;
+    color: var(--error-color);
+}
+
+.confirm-modal.modal-success .modal-icon {
+    background-color: #f0fdf4;
+    color: var(--success-color);
+}
+
+.confirm-modal .modal-message {
+    font-size: 1rem;
+    color: var(--gray-700);
+    margin-bottom: 1.5rem;
+}
+
+/* 모달 애니메이션 */
+.modal-enter .modal-overlay {
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-enter .modal-content {
+    animation: slideUp 0.3s ease;
+}
+
+.modal-exit .modal-overlay {
+    animation: fadeOut 0.3s ease;
+}
+
+.modal-exit .modal-content {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* 모바일 반응형 */
+@media (max-width: 640px) {
+    .modal-overlay {
+        padding: 0.5rem;
+        align-items: flex-end;
+    }
+    
+    .modal-content {
+        max-width: none;
+        width: 100%;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        animation: slideUp 0.3s ease;
+    }
+    
+    .modal-header {
+        padding: 1rem;
+    }
+    
+    .modal-body {
+        padding: 0.75rem 1rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem;
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* 드로어 스타일 모달 */
+.modal-drawer {
+    align-items: flex-start;
+    justify-content: flex-end;
+}
+
+.modal-drawer .modal-content {
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
