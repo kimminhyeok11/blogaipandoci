@@ -13,7 +13,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
     
     <!-- CSP (Content Security Policy) -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://www.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google https://*.gemius.pl https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com https://*.googlesyndication.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://pagead2.googlesyndication.com https://www.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google https://*.gemius.pl https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com https://*.googlesyndication.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -92,22 +92,49 @@
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3" aria-live="polite" aria-atomic="true"></div>
     
     <!-- [APP SCRIPT] -->
-    <!-- Supabase ES 모듈 임포트 -->
+    <!-- Supabase ES 모듈 임포트 (다중 CDN 폴백) -->
     <script type="module" nonce="r4nd0m">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-        
-        // Supabase를 전역으로 설정
-        window.supabase = { createClient };
+        async function loadSupabaseModule() {
+            const sources = [
+                'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm',
+                'https://unpkg.com/@supabase/supabase-js@2.45.5/+esm'
+            ];
+            for (const src of sources) {
+                try {
+                    const mod = await import(src);
+                    console.log('Supabase loaded from:', src);
+                    return mod;
+                } catch (e) {
+                    console.warn('Supabase import failed from', src, e);
+                }
+            }
+            throw new Error('Supabase import failed from all sources');
+        }
+
+        let createClient;
+        try {
+            ({ createClient } = await loadSupabaseModule());
+            // Supabase를 전역으로 설정
+            window.supabase = { createClient };
+        } catch (e) {
+            console.error('Supabase 모듈 로드 실패:', e);
+            // 폴백 없이도 앱은 동작하도록 전역을 최소한으로 정의
+            window.supabase = null;
+        }
         
         // 개발 환경에서는 Google AdSense 로드를 건너뜁니다 (403 및 Quirks Mode 회피)
-        const isDevHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-        if (!isDevHost) {
+        // 광고 스크립트는 프로덕션 도메인(HTTPS)에서만 로드
+        const isProdHost = window.location.protocol === 'https:'
+            && ['blogaipandoci.vercel.app'].includes(window.location.hostname);
+        if (isProdHost) {
             const adsScript = document.createElement('script');
             adsScript.async = true;
             adsScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112';
             adsScript.setAttribute('crossorigin', 'anonymous');
             adsScript.nonce = 'r4nd0m';
             document.head.appendChild(adsScript);
+        } else {
+            console.info('[Ads] 비프로덕션 호스트에서 광고 로드를 건너뜁니다:', window.location.hostname);
         }
 
         // 분리된 JavaScript 모듈들 로드
@@ -146,7 +173,8 @@
                 }
             } catch (error) {
                 console.error('모듈 로드 실패:', error);
-                document.getElementById('app-loader').innerHTML = '<div class="text-red-600">앱 로드에 실패했습니다.</div>';
+                const loaderEl = document.getElementById('app-loader');
+                if (loaderEl) loaderEl.innerHTML = '<div class="text-red-600">앱 로드에 실패했습니다.</div>';
             }
         })();
     </script>

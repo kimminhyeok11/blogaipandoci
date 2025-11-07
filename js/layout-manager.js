@@ -13,8 +13,12 @@
     marginY: 40,
     imageMargin: 16,
     // 허용 오차(px)
-    tolerance: 2,
+    tolerance: 4,
   };
+
+  // 개발 로깅 플래그: localhost에서는 기본 활성, 그 외는 Config로 제어
+  const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  const debugLayout = (window.Config && window.Config.DEBUG_LAYOUT === true) || isLocalHost;
 
   const q = (sel, root = document) => root.querySelector(sel);
   const qa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -58,7 +62,8 @@
     const post = q('#view-post > article'); if (post) list.push(post);
     const arc = q('#view-archives > section'); if (arc) list.push(arc);
     const writer = q('#view-writer > section'); if (writer) list.push(writer);
-    return list;
+    const isVisible = (el) => !!el && el.offsetParent !== null && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0;
+    return list.filter(isVisible);
   }
 
   function inspectLayout() {
@@ -74,6 +79,10 @@
       const marginBalanced = Math.abs(leftSpace - rightSpace) <= DesignGuide.tolerance;
       const widthMatches = navW ? Math.abs(Math.round(rect.width) - navW) <= DesignGuide.tolerance : true;
       const issues = [];
+      if (Math.round(rect.width) === 0) {
+        // 숨겨진 컨테이너는 검사 제외
+        return;
+      }
       if (!widthMatches) issues.push(`컨테이너 너비(${Math.round(rect.width)}px) != 네비 너비(${navW}px)`);
       if (!marginBalanced) issues.push(`양측 마진 불균형 left=${leftSpace}px, right=${rightSpace}px`);
       const imgNotCentered = qa('img', el).filter(img => {
@@ -84,21 +93,23 @@
       report.push({ element: el, widthMatches, marginBalanced, imgNotCentered, issues });
     });
 
-    if (report.some(r => r.issues.length)) {
-      console.group('%cLayout Inspector: 경고', 'color:#b45309;font-weight:bold');
-      report.forEach((r, i) => {
-        if (r.issues.length) {
-          console.warn(`#${i+1}`, r.issues.join(' | '), r.element);
-        }
-      });
-      console.info('제안:', [
-        '- 컨테이너에 maxWidth를 네비게이션 너비로 동기화(자동 적용됨).',
-        '- 양측 마진을 auto로 설정해 중앙 정렬 유지(자동 적용됨).',
-        '- 이미지에 display:block + margin:auto 지정(자동 적용됨).',
-      ].join('\n'));
-      console.groupEnd();
-    } else {
-      console.log('%cLayout Inspector: 일관성 OK', 'color:#16a34a;font-weight:bold');
+    if (debugLayout) {
+      if (report.some(r => r.issues.length)) {
+        console.group('%cLayout Inspector: 경고', 'color:#b45309;font-weight:bold');
+        report.forEach((r, i) => {
+          if (r.issues.length) {
+            console.warn(`#${i+1}`, r.issues.join(' | '), r.element);
+          }
+        });
+        console.info('제안:', [
+          '- 컨테이너에 maxWidth를 네비게이션 너비로 동기화(자동 적용됨).',
+          '- 양측 마진을 auto로 설정해 중앙 정렬 유지(자동 적용됨).',
+          '- 이미지에 display:block + margin:auto 지정(자동 적용됨).',
+        ].join('\n'));
+        console.groupEnd();
+      } else {
+        console.log('%cLayout Inspector: 일관성 OK', 'color:#16a34a;font-weight:bold');
+      }
     }
     return report;
   }
@@ -119,24 +130,34 @@
     inspectLayout();
   }
 
+  // 디바운스된 동기화 스케줄러 (강제 리플로우 완화)
+  let rafId = null;
+  function scheduleSync() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      syncAll();
+    });
+  }
+
   function onViewRendered(view) {
-    // 뷰가 표시될 때마다 동기화 및 검사 수행
-    syncAll();
+    // 뷰가 표시될 때마다 디바운스 동기화
+    scheduleSync();
   }
 
   function init() {
-    // 초기 동기화
-    syncAll();
+    // 초기 동기화 (디바운스)
+    scheduleSync();
     // DOM 변경을 감지해 자동 적용
     const app = q('#app-container');
     if (app) {
       const mo = new MutationObserver(() => {
-        syncAll();
+        scheduleSync();
       });
       mo.observe(app, { childList: true, subtree: true });
     }
     // 리사이즈 시 네비 너비 재측정 후 재적용
-    window.addEventListener('resize', () => syncAll());
+    window.addEventListener('resize', () => scheduleSync());
   }
 
   window.DesignGuide = DesignGuide;

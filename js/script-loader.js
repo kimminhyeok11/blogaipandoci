@@ -78,15 +78,36 @@ const ScriptLoader = {
     
     // 기타 유틸리티 라이브러리들
     async loadUtilities() {
-        const scripts = [
-            // 브라우저 호환을 위해 고정된 버전 사용
+        // 폴백 가능한 스크립트 소스들
+        const dompurifySources = [
             'https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js',
-            // UMD 빌드 사용 (window.marked 노출)
-            'https://cdn.jsdelivr.net/npm/marked@12.0.2/lib/marked.umd.min.js'
+            'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js',
+            'https://unpkg.com/dompurify@3.0.8/dist/purify.min.js'
         ];
-        
+        const markedSources = [
+            'https://cdn.jsdelivr.net/npm/marked@12.0.2/lib/marked.umd.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js',
+            'https://unpkg.com/marked@12.0.2/lib/marked.umd.min.js'
+        ];
+
+        const loadWithFallback = async (sources) => {
+            let lastErr;
+            for (const src of sources) {
+                try {
+                    await this.loadScript(src, { nonce: 'r4nd0m' });
+                    console.log('Loaded:', src);
+                    return true;
+                } catch (e) {
+                    lastErr = e;
+                    console.warn('Failed:', src, e);
+                }
+            }
+            throw lastErr || new Error('All sources failed');
+        };
+
         try {
-            await Promise.all(scripts.map(src => this.loadScript(src, { nonce: 'r4nd0m' })));
+            await loadWithFallback(dompurifySources);
+            await loadWithFallback(markedSources);
             console.log('Utility scripts loaded successfully');
         } catch (error) {
             console.error('Failed to load utility scripts:', error);
