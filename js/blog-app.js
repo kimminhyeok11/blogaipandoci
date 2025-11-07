@@ -82,6 +82,27 @@ class BlogApp {
             if (this.supabase && this.supabase.auth) {
                 const { data: { session } } = await this.supabase.auth.getSession();
                 this.state.user = session?.user || null;
+                // 매직 링크 콜백 토큰이 포함된 경우 즉시 처리 후 URL 정리
+                try {
+                    const href = window.location.href;
+                    const hash = window.location.hash || '';
+                    const hasToken = /access_token=|refresh_token=|type=recovery|code=/.test(hash) || /access_token=|refresh_token=/.test(href);
+                    if (hasToken) {
+                        // 로딩 표시 후 세션 재확인
+                        this.setLoading(true);
+                        const { data: { session: s2 } } = await this.supabase.auth.getSession();
+                        if (s2?.user) {
+                            this.state.user = s2.user;
+                            // URL에서 토큰 제거 (보안/미관)
+                            const cleanUrl = window.location.pathname + window.location.search;
+                            window.history.replaceState({}, document.title, cleanUrl);
+                            // 환영 토스트 및 홈으로 이동
+                            UIComponents.showToast(s2.user.email + '님, 로그인되었습니다.', 'success');
+                            this.renderNav();
+                            this.navigate('/');
+                        }
+                    }
+                } catch (_) { /* noop: 콜백 토큰 없거나 실패 */ }
             } else {
                 this.state.user = null;
             }
