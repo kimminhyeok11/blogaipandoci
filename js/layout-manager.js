@@ -55,14 +55,20 @@
     if (container.style.marginRight !== 'auto') container.style.marginRight = 'auto';
     // 모바일에서는 클래스 기반 패딩(px-0 등)을 존중하여 인라인 패딩 자동 적용을 생략
     if (!isMobile) {
-      if (!container.style.paddingLeft) container.style.paddingLeft = DesignGuide.paddingX + 'px';
-      if (!container.style.paddingRight) container.style.paddingRight = DesignGuide.paddingX + 'px';
+      // 이미 CSS에서 패딩이 설정되어 있으면 인라인으로 재설정하지 않아 레이아웃 셰이크 최소화
+      const cs = getComputedStyle(container);
+      const padL = parseInt(cs.paddingLeft, 10) || 0;
+      const padR = parseInt(cs.paddingRight, 10) || 0;
+      if (padL === 0 && !container.style.paddingLeft) container.style.paddingLeft = DesignGuide.paddingX + 'px';
+      if (padR === 0 && !container.style.paddingRight) container.style.paddingRight = DesignGuide.paddingX + 'px';
     }
   }
 
   function centerImages(scope) {
     const imgs = qa('img', scope || document);
     imgs.forEach(img => {
+      // 리스트/카드 썸네일은 자체 레이아웃 규칙을 따르므로 중앙정렬 주입 제외
+      if (img.closest('.post-card') || img.classList.contains('post-card-thumb-img')) return;
       if (img.dataset.centered === '1') return;
       img.style.display = 'block';
       img.style.margin = `${DesignGuide.imageMargin}px auto`;
@@ -92,7 +98,8 @@
 
     containers.forEach(el => {
       const rect = el.getBoundingClientRect();
-      const vW = window.innerWidth;
+      // 스크롤바 폭을 제외한 뷰포트 폭을 우선 사용해 좌/우 여백 불균형 오탐 줄이기
+      const vW = document.documentElement.clientWidth || window.innerWidth;
       const isMobile = vW <= MOBILE_BREAKPOINT;
       const leftSpace = Math.round(rect.left);
       const rightSpace = Math.round(vW - rect.right);
@@ -106,7 +113,9 @@
       }
       if (!widthMatches) issues.push(`컨테이너 너비(${Math.round(rect.width)}px) != 네비 너비(${navW}px)`);
       if (!marginBalanced) issues.push(`양측 마진 불균형 left=${leftSpace}px, right=${rightSpace}px`);
+      // 카드/썸네일 이미지는 자체 레이아웃 규칙을 따르므로 중앙정렬 검사에서 제외
       const imgNotCentered = qa('img', el).filter(img => {
+        if (img.closest('.post-card') || img.classList.contains('post-card-thumb-img')) return false;
         const cs = getComputedStyle(img);
         return !(cs.display === 'block' && cs.marginLeft === 'auto' && cs.marginRight === 'auto');
       }).length;
