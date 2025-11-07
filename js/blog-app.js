@@ -30,6 +30,9 @@ class BlogApp {
 
     // 서비스 인스턴스
     supabase = null;
+    // 네트워크 성능 최적화: 동일 키의 요청 중복 방지 및 레이스 가드
+    _inFlight = new Map();
+    _reqTokens = { home: 0, archives: 0, popular: 0 };
     
     constructor() {
         // 1. 이벤트 핸들러 'this' 컨텍스트 바인딩
@@ -38,6 +41,17 @@ class BlogApp {
 
         // 2. 앱 초기화 시작
         this.init();
+    }
+
+    // 동일 파라미터의 중복 요청을 하나로 합치고, 완료 후 정리
+    async withDedupe(key, exec) {
+        if (this._inFlight.has(key)) return this._inFlight.get(key);
+        const p = (async () => {
+            try { return await exec(); }
+            finally { this._inFlight.delete(key); }
+        })();
+        this._inFlight.set(key, p);
+        return p;
     }
 
     /**
@@ -49,7 +63,11 @@ class BlogApp {
             // Supabase 클라이언트 준비 (있으면 초기화, 없으면 건너뜀)
             try {
                 if (!this.supabase && window.supabase && window.Config?.SUPABASE_URL && window.Config?.SUPABASE_ANON_KEY) {
-                    this.supabase = window.supabase.createClient(window.Config.SUPABASE_URL, window.Config.SUPABASE_ANON_KEY);
+                    this.supabase = window.supabase.createClient(
+                        window.Config.SUPABASE_URL,
+                        window.Config.SUPABASE_ANON_KEY,
+                        { auth: { storageKey: 'sb-insurelog-auth-token' } }
+                    );
                 }
             } catch (e) {
                 console.warn('Supabase 초기화를 건너뜁니다:', e);
@@ -314,9 +332,43 @@ class BlogApp {
     }
 
     async loadArchives() {
-        if (!this.supabase) return;
-        const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
         const { category, tag, page, pageSize } = this.state.archives;
+        const list = DOM.$('#archives-list');
+        if (!list) return;
+
+        // SWR 캐시 즉시 렌더 (카테고리/페이지/페이지크기 별 캐시 키)
+        try {
+            const key = `archives:v1:${encodeURIComponent(category || '전체')}:${encodeURIComponent(tag || '')}:${page}:${pageSize}`;
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                const cache = JSON.parse(raw);
+                const valid = cache && typeof cache.ts === 'number' && typeof cache.ttl === 'number'
+                    ? (cache.ts + cache.ttl) > Date.now() : false;
+                if (valid && Array.isArray(cache.data)) {
+                    let filtered = cache.data || [];
+                    if (tag) {
+                        filtered = filtered.filter(p => {
+                            const tags = this.extractTagsFromHTML(p.refined_content || '') || [];
+                            return tags.some(t => String(t).toLowerCase() === String(tag).toLowerCase());
+                        });
+                    }
+                    if (!filtered || filtered.length === 0) {
+                        list.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
+                    } else {
+                        const cards = this.renderPostsListHTML(filtered);
+                        list.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">${cards}</div>`;
+                    }
+                    if (typeof cache.total === 'number') {
+                        this.state.archives.total = cache.total;
+                    }
+                    // 캐시 기반 페이지네이션 갱신
+                    this.renderArchivesPagination();
+                }
+            }
+        } catch (_) { /* noop */ }
+
+        if (!this.supabase) return; // 캐시 렌더 후 재검증 단계에서 Supabase 미준비 시 종료
+        const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
 
         // 총 개수 계산 쿼리 (필터 반영)
         let countQuery = this.supabase.from(table)
@@ -329,9 +381,12 @@ class BlogApp {
         this.state.archives.total = count || 0;
 
         // 데이터 쿼리 (페이지네이션, 필터 적용)
+        // 태그 필터가 없을 때는 refined_content를 조회하지 않아 페이로드와 메모리를 줄임
+        const selectCols = tag ? 'id, title, slug, created_at, category, refined_content, thumbnail_url'
+                               : 'id, title, slug, created_at, category, thumbnail_url';
         let dataQuery = this.supabase
             .from(table)
-            .select('id, title, slug, created_at, category, refined_content, thumbnail_url')
+            .select(selectCols)
             .eq('status', 'published')
             .order('created_at', { ascending: false });
         if (category && category !== '전체') {
@@ -341,7 +396,11 @@ class BlogApp {
         const to = from + pageSize - 1;
         dataQuery = dataQuery.range(from, to);
 
-        const { data, error } = await dataQuery;
+        // 레이스 가드 + 중복 요청 제거
+        const token = Date.now();
+        this._reqTokens.archives = token;
+        const inflightKey = `archives:${category}:${tag}:${from}-${to}`;
+        const { data, error } = await this.withDedupe(inflightKey, () => dataQuery);
         if (error) throw error;
 
         // 카테고리 셀렉트 옵션 구성 (최근 페이지 기준)
@@ -362,14 +421,21 @@ class BlogApp {
             });
         }
 
-        const list = DOM.$('#archives-list');
-        if (!list) return;
+        // 최신 요청이 아닌 경우 DOM 반영을 건너뜀
+        if (this._reqTokens.archives !== token) return;
         if (!filtered || filtered.length === 0) {
             list.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
         } else {
             const cards = this.renderPostsListHTML(filtered);
             list.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">${cards}</div>`;
         }
+
+        // 캐시 저장 (SWR: 10분 TTL) — 필터/페이지 기준으로 저장
+        try {
+            const key = `archives:v1:${encodeURIComponent(category || '전체')}:${encodeURIComponent(tag || '')}:${page}:${pageSize}`;
+            const cache = { ts: Date.now(), ttl: 10 * 60 * 1000, data, total: this.state.archives.total };
+            localStorage.setItem(key, JSON.stringify(cache));
+        } catch (_) { /* noop */ }
 
         // 페이지네이션 렌더
         this.renderArchivesPagination();
@@ -458,7 +524,7 @@ class BlogApp {
         ].filter(Boolean).join('');
 
         container.innerHTML = '<nav class="w-full max-w-4xl flex items-center justify-between py-2 px-6 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">'
-            + '<a href="/" data-route class="font-extrabold text-xl tracking-tight">InsureLog</a>'
+            + '<a href="/" data-route class="brand font-extrabold text-xl tracking-tight">InsureLog</a>'
             + '<button id="nav-toggle" class="hamburger-btn sm:hidden" aria-expanded="false" aria-controls="nav-menu" aria-haspopup="menu" aria-label="메뉴">'
             +   '<span class="hamburger-icon" aria-hidden="true">'
             +     '<span class="bar bar-top"></span>'
@@ -600,13 +666,68 @@ class BlogApp {
         this.switchToView('view-library');
         const container = DOM.$('#view-library');
         if (container) {
-            container.innerHTML = '<section class="mx-auto py-8 px-4 sm:px-6 max-w-full sm:max-w-4xl">'
+            container.innerHTML = '<section class="mx-auto py-6 px-4 sm:px-6 max-w-full sm:max-w-4xl">'
                 + '<h1 class="text-2xl font-bold mb-2">최근 글</h1>'
                 + '<div id="home-posts" class="mt-6 grid grid-cols-1 gap-3 sm:gap-4"></div>'
+                + '<div id="home-pagination" class="mt-4 flex justify-center"></div>'
                 + '</section>';
 
             // SEO 메타 업데이트
             this.updatePageMeta('InsureLog - 최근 글', '최신 게시글 목록', window.location.href, '/og-image.svg');
+
+            // 로컬 캐시가 유효하면 즉시 렌더하여 초기 응답 가속 (SWR 캐시)
+            try {
+                const raw = localStorage.getItem('homePosts:v1');
+                if (raw) {
+                    const cached = JSON.parse(raw);
+                    const valid = cached && typeof cached.ts === 'number' && typeof cached.ttl === 'number'
+                      ? (cached.ts + cached.ttl) > Date.now() : false;
+                    if (valid && Array.isArray(cached.data) && cached.data.length) {
+                        const listEl = DOM.$('#home-posts');
+                        if (listEl) listEl.innerHTML = this.renderPostsListHTML(cached.data);
+                    }
+                }
+            } catch (_) { /* noop */ }
+
+            // 프리패치 데이터가 있으면 즉시 렌더하여 LCP 개선
+            try {
+                const prefetched = (window.__homePrefetchData && Array.isArray(window.__homePrefetchData))
+                  ? window.__homePrefetchData : null;
+                if (prefetched && prefetched.length) {
+                    const listEl = DOM.$('#home-posts');
+                    if (listEl) {
+                        listEl.innerHTML = this.renderPostsListHTML(prefetched);
+                    }
+                    // Above-the-fold 첫 썸네일을 이미지 프리로드하여 LCP 단축
+                    try {
+                        const first = prefetched[0];
+                        const conn = (navigator && navigator.connection) ? navigator.connection : {};
+                        const saveData = !!conn.saveData;
+                        const et = conn.effectiveType || '';
+                        const isSlow = saveData || /(^|[^a-z])(2g|3g)/.test(et);
+                        const baseW = 160, baseH = 160; // 홈 컴팩트 카드 썸네일은 1:1
+                        const q = isSlow ? 70 : 80;
+                        const widths = isSlow ? [96, 120, 160] : [120, 160, 192];
+                        const sizes = '(max-width: 640px) 96px, 120px';
+                        const thumbUrl = first?.thumbnail_url
+                          ? this.getTransformedPublicUrl(first.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', quality: q, format: 'webp' })
+                          : null;
+                        const srcset = first?.thumbnail_url
+                          ? widths.map(x => `${this.getTransformedPublicUrl(first.thumbnail_url, { width: x, height: x, resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ')
+                          : '';
+                        if (thumbUrl) {
+                            const link = document.createElement('link');
+                            link.rel = 'preload';
+                            link.as = 'image';
+                            link.href = thumbUrl;
+                            if (srcset) link.setAttribute('imagesrcset', srcset);
+                            link.setAttribute('imagesizes', sizes);
+                            link.setAttribute('fetchpriority', 'high');
+                            document.head.appendChild(link);
+                        }
+                    } catch (_) { /* noop */ }
+                }
+            } catch (_) { /* noop */ }
 
             // 비동기 데이터 로드 시작
             this.loadHomePosts(params).catch(err => this.handleError(err, 'loadHomePosts'));
@@ -829,16 +950,82 @@ class BlogApp {
         this.switchToView('view-library');
         const container = DOM.$('#view-library');
         if (container) {
-            container.innerHTML = '<section class="max-w-sm mx-auto py-16 px-6 text-center">'
-                + '<h1 class="text-xl font-bold">로그인</h1>'
-                + '<p class="text-sm text-gray-600 mt-2">Supabase 인증 UI 연동 준비 중...</p>'
-                + '<div class="mt-6">'
-                +   '<a href="/" data-route class="px-4 py-2 rounded-full bg-black text-white">홈으로</a>'
-                + '</div>'
-                + '</section>';
+            const siteUrl = (window.Config && window.Config.SITE_URL) || window.location.origin;
+            container.innerHTML = `
+                <section class="max-w-md mx-auto py-10 px-6">
+                  <h1 class="text-2xl font-extrabold">로그인</h1>
+                  <p class="text-sm text-gray-600 mt-2">이메일로 매직링크를 받아 빠르게 로그인하세요.</p>
+                  <form id="magic-form" class="mt-6 space-y-3" novalidate>
+                    <label class="form-label" for="magic-email">이메일 주소</label>
+                    <div class="input-group" aria-live="polite">
+                      <span class="input-group-addon" aria-hidden="true" title="이메일">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                          <path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm0 2l8 5 8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </span>
+                      <input id="magic-email" type="email" class="form-input" placeholder="you@example.com" required autocomplete="email" inputmode="email" aria-describedby="magic-help">
+                    </div>
+                    <div id="magic-error" class="form-error" style="display:none;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.29 3.86l-8.23 14.25A2 2 0 0 0 4 21h16a2 2 0 0 0 1.94-2.89L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <span>올바른 이메일 형식을 입력해주세요.</span>
+                    </div>
+                    <button id="magic-send" type="submit" class="btn btn-primary btn-lg w-full">로그인 링크 보내기</button>
+                    <p id="magic-help" class="form-help">메일의 링크를 누르면 자동 로그인됩니다. 1분 내 도착하지 않으면 스팸함도 확인해주세요.</p>
+                  </form>
+                  <div id="magic-success" class="mt-4 p-3 border border-green-200 bg-green-50 text-green-700 rounded" style="display:none;">
+                    이메일로 로그인 링크를 보냈습니다. 메일함을 확인해주세요.
+                  </div>
+                  <div class="mt-8 text-center">
+                    <a href="/" data-route class="px-4 py-2 rounded-full bg-black text-white">홈으로</a>
+                  </div>
+                </section>`;
 
             // SEO 메타 업데이트
             this.updatePageMeta('로그인 - InsureLog', '계정 로그인 페이지', window.location.href, '/og-image.svg');
+
+            // 이벤트 바인딩: Magic Link
+            const magicForm = DOM.$('#magic-form');
+            if (magicForm) {
+                const emailInput = DOM.$('#magic-email');
+                const errorBox = DOM.$('#magic-error');
+                const successBox = DOM.$('#magic-success');
+                const sendBtn = DOM.$('#magic-send');
+
+                const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
+                const showError = (show) => {
+                    if (!errorBox) return;
+                    errorBox.style.display = show ? 'flex' : 'none';
+                    if (emailInput) emailInput.classList.toggle('error', !!show);
+                };
+
+                emailInput?.addEventListener('input', () => showError(false));
+
+                magicForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = String(emailInput?.value || '').trim();
+                    if (!isValidEmail(email)) { showError(true); emailInput?.focus(); return; }
+                    if (!this.supabase?.auth) return UIComponents.showToast('인증 모듈을 초기화하지 못했습니다.', 'error');
+                    try {
+                        sendBtn?.setAttribute('disabled', 'true');
+                        if (sendBtn) { sendBtn.textContent = '보내는 중…'; sendBtn.setAttribute('aria-busy', 'true'); }
+                        const { error } = await this.supabase.auth.signInWithOtp({
+                            email,
+                            options: { shouldCreateUser: true, emailRedirectTo: siteUrl }
+                        });
+                        if (error) throw error;
+                        UIComponents.showToast('로그인 링크를 이메일로 보냈습니다.', 'success');
+                        if (successBox) successBox.style.display = 'block';
+                    } catch (err) {
+                        this._logAuthEvent('login_magic_failed', { email });
+                        UIComponents.showToast('메일 발송에 실패했습니다.', 'error');
+                    } finally {
+                        setTimeout(() => {
+                            sendBtn?.removeAttribute('disabled');
+                            if (sendBtn) { sendBtn.textContent = '로그인 링크 보내기'; sendBtn.removeAttribute('aria-busy'); }
+                        }, 1200);
+                    }
+                });
+            }
         }
     }
 
@@ -881,6 +1068,23 @@ class BlogApp {
         }
         
         UIComponents.showToast(message, 'error');
+    }
+
+    // 인증 실패/이벤트 로깅 (베이직)
+    async _logAuthEvent(type, payload = {}) {
+        try {
+            const safe = {
+                type,
+                email_hint: (payload.email || '').replace(/(^.).+(@.+$)/, '$1***$2'),
+                provider: payload.provider || null,
+                user_agent: (navigator && navigator.userAgent) || null,
+                at: new Date().toISOString(),
+                success: false
+            };
+            if (this.supabase) {
+                await this.supabase.from('auth_events').insert(safe);
+            }
+        } catch (_) { /* ignore */ }
     }
 
     /**
@@ -1516,10 +1720,15 @@ class BlogApp {
             const url = '/post/' + encodeURIComponent(p.slug || p.id);
             const hasImg = !!p.thumbnail_url;
             const img = hasImg
-                ? `<img src="${this.getTransformedPublicUrl(p.thumbnail_url, { width: 160, height: 160, resize: 'cover', quality: 85, format: 'webp' })}"
-                         alt="${this.escapeHTML(p.title || '')}"
-                         class="post-card-thumb-img"
-                         decoding="async" loading="lazy"/>`
+                ? (() => {
+                    const q = 80;
+                    const baseW = 120, baseH = 120; // 더 미니멀한 컴팩트 썸네일
+                    const widths = [96, 120, 144, 160];
+                    const sizes = '(max-width: 640px) 96px, 120px';
+                    const src = this.getTransformedPublicUrl(p.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', quality: q, format: 'webp' });
+                    const srcset = widths.map(x => `${this.getTransformedPublicUrl(p.thumbnail_url, { width: x, height: x, resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ');
+                    return `<img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${this.escapeHTML(p.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async" loading="lazy"/>`;
+                  })()
                 : `<span class="thumb-initial">${this.escapeHTML(String((p.title || 'N')).trim().charAt(0).toUpperCase())}</span>`;
             return (
                 `<article class="post-card post-card-compact">`
@@ -1536,35 +1745,106 @@ class BlogApp {
     }
 
     async loadPopularPosts(currentPostId = null) {
-        if (!this.supabase) return;
-        const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
-        const { data, error } = await this.supabase
-            .from(table)
-            .select('id, title, slug, view_count')
-            .eq('status', 'published')
-            .order('view_count', { ascending: false, nullsFirst: false })
-            .limit(6);
-        if (error) throw error;
         const container = DOM.$('#popular-posts');
         if (!container) return;
+
+        // 캐시가 있으면 즉시 렌더 (SWR: 15분 TTL)
+        try {
+            const raw = localStorage.getItem('popularPosts:v1');
+            if (raw) {
+                const cache = JSON.parse(raw);
+                if (cache && Array.isArray(cache.data) && (Date.now() - (cache.ts || 0)) < (cache.ttl || 0)) {
+                    const initList = (cache.data || []).filter(p => p && p.id !== currentPostId);
+                    if (initList && initList.length > 0) {
+                        const header = '<h2 class="text-lg font-bold mb-3">많이 본 글</h2>';
+                        const initCards = initList.map((p, idx) => {
+                            const url = '/post/' + encodeURIComponent(p.slug || p.id);
+                            const hasImg = !!p.thumbnail_url;
+                            const rankBadge = `<span class="badge">${idx + 1}위</span>`;
+                            const viewsText = `<span class="text-xs text-gray-500">${Number(p.view_count || 0)}회</span>`;
+                            const img = hasImg
+                                ? (() => {
+                                    const q = 80;
+                                    const baseW = 120, baseH = 120; // 더 미니멀한 컴팩트 썸네일
+                                    const widths = [96, 120, 144, 160];
+                                    const sizes = '(max-width: 640px) 96px, 120px';
+                                    const src = this.getTransformedPublicUrl(p.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', format: 'webp', quality: q });
+                                    const srcset = widths.map(x => `${this.getTransformedPublicUrl(p.thumbnail_url, { width: x, height: x, resize: 'cover', format: 'webp', quality: q })} ${x}w`).join(', ');
+                                    const eager = idx === 0;
+                                    const loading = eager ? '' : ' loading="lazy"';
+                                    const fetchp = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
+                                    return `<img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${this.escapeHTML(p.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>`;
+                                  })()
+                                : `<span class="thumb-initial">${this.escapeHTML(String((p.title || 'N')).trim().charAt(0).toUpperCase())}</span>`;
+                            return (
+                                `<article class="post-card post-card-compact">`
+                                + `<a href="${url}" data-route class="post-card-thumb${hasImg ? '' : ' placeholder'}">${img}</a>`
+                                + `<div class="post-card-main">`
+                                +   `<h3 class="post-card-title"><a href="${url}" data-route>${this.escapeHTML(p.title || '')}</a></h3>`
+                                +   `<p class="post-card-meta">${rankBadge} · ${viewsText}</p>`
+                                + `</div>`
+                                + `</article>`
+                            );
+                        }).join('');
+                        container.innerHTML = header + `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${initCards}</div>`;
+                    }
+                }
+            }
+        } catch (_) { /* noop */ }
+
+        if (!this.supabase) return; // 캐시 렌더 후 Supabase 준비되지 않으면 종료
+        const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
+        const token = Date.now();
+        this._reqTokens.popular = token;
+        const inflightKey = `popular:${currentPostId || ''}`;
+        const { data, error } = await this.withDedupe(inflightKey, () => this.supabase
+            .from(table)
+            .select('id, title, slug, thumbnail_url, created_at, view_count, status')
+            .eq('status', 'published')
+            .order('view_count', { ascending: false, nullsFirst: false })
+            .limit(6));
+        if (error) throw error;
         let list = (data || []).filter(p => p && p.id !== currentPostId);
         if (!list || list.length === 0) { container.innerHTML = ''; return; }
+        // 최신 요청이 아닌 경우 DOM 반영을 건너뜀
+        if (this._reqTokens.popular !== token) return;
         const header = '<h2 class="text-lg font-bold mb-3">많이 본 글</h2>';
-        const items = list.map((p, idx) => {
+        const cards = list.map((p, idx) => {
             const url = '/post/' + encodeURIComponent(p.slug || p.id);
-            const rank = idx + 1;
-            const views = Number(p.view_count || 0);
+            const hasImg = !!p.thumbnail_url;
+            const rankBadge = `<span class="badge">${idx + 1}위</span>`;
+            const viewsText = `<span class="text-xs text-gray-500">${Number(p.view_count || 0)}회</span>`;
+            const img = hasImg
+                ? (() => {
+                    const q = 80;
+                    const baseW = 160, baseH = 160; // 컴팩트 카드 썸네일(정사각형)
+                    const widths = [120, 160, 192, 240];
+                    const sizes = '(max-width: 640px) 120px, 160px';
+                    const src = this.getTransformedPublicUrl(p.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', quality: q, format: 'webp' });
+                    const srcset = widths.map(x => `${this.getTransformedPublicUrl(p.thumbnail_url, { width: x, height: x, resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ');
+                    const eager = idx === 0;
+                    const loading = eager ? '' : ' loading="lazy"';
+                    const fetchp = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
+                    return `<img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${this.escapeHTML(p.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>`;
+                  })()
+                : `<span class="thumb-initial">${this.escapeHTML(String((p.title || 'N')).trim().charAt(0).toUpperCase())}</span>`;
             return (
-                `<li class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="text-sm text-gray-500">${rank}.</span>
-                        <a href="${url}" data-route class="text-sm font-medium hover:underline">${this.escapeHTML(p.title || '')}</a>
-                    </div>
-                    <span class="text-xs text-gray-500">${views}회</span>
-                </li>`
+                `<article class="post-card post-card-compact">`
+                + `<a href="${url}" data-route class="post-card-thumb${hasImg ? '' : ' placeholder'}">${img}</a>`
+                + `<div class="post-card-main">`
+                +   `<h3 class="post-card-title"><a href="${url}" data-route>${this.escapeHTML(p.title || '')}</a></h3>`
+                +   `<p class="post-card-meta">${rankBadge} · ${viewsText}</p>`
+                + `</div>`
+                + `</article>`
             );
         }).join('');
-        container.innerHTML = header + `<ol class="space-y-2">${items}</ol>`;
+        container.innerHTML = header + `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${cards}</div>`;
+
+        // 최신 데이터로 캐시 갱신
+        try {
+            const cache = { ts: Date.now(), ttl: 15 * 60 * 1000, data };
+            localStorage.setItem('popularPosts:v1', JSON.stringify(cache));
+        } catch (_) { /* noop */ }
     }
 
     // 파일명으로부터 alt 텍스트 유도어 생성
@@ -1646,7 +1926,7 @@ class BlogApp {
             const sizes = isSlow ? '(max-width: 600px) 100vw, 600px' : '(max-width: 768px) 100vw, 768px';
 
             const imgs = Array.from(div.querySelectorAll('img'));
-            imgs.forEach(img => {
+            imgs.forEach((img, i) => {
                 if (img.hasAttribute('srcset')) return; // 이미 최적화된 경우 스킵
                 const src = img.getAttribute('src') || '';
                 if (!src) return;
@@ -1671,7 +1951,14 @@ class BlogApp {
                 newImg.setAttribute('srcset', srcset);
                 newImg.setAttribute('sizes', sizes);
                 newImg.setAttribute('alt', altText);
-                newImg.setAttribute('loading', 'lazy');
+                const eager = i === 0;
+                if (eager) {
+                    newImg.removeAttribute('loading');
+                    newImg.setAttribute('fetchpriority', 'high');
+                } else {
+                    newImg.setAttribute('loading', 'lazy');
+                    newImg.setAttribute('fetchpriority', 'low');
+                }
                 newImg.setAttribute('decoding', 'async');
                 fig.appendChild(newImg);
                 const cap = document.createElement('figcaption');
@@ -1770,21 +2057,38 @@ class BlogApp {
     async loadHomePosts(params = new URLSearchParams()) {
         const container = DOM.$('#home-posts');
         if (!container) return;
-        // 인덱스에서 병렬 프리패치된 데이터가 있으면 즉시 사용하여 초기 렌더 가속
+        const page = Number(params.get('page') || '1');
+        // 초기 렌더 가속: 프리패치/캐시를 페이지 1에서만 사용하고, 이후에는 항상 서버 데이터로 갱신합니다.
+        let initialRendered = false;
         try {
             const pre = window.__homePrefetchData;
-            if (Array.isArray(pre) && pre.length > 0) {
+            if (page === 1 && Array.isArray(pre) && pre.length > 0) {
                 container.innerHTML = this.renderPostsListHTML(pre);
-                return;
+                initialRendered = true;
             }
         } catch (_) { /* noop */ }
 
-        // 로딩 스켈레톤 표시
-        container.innerHTML = '<div class="animate-pulse space-y-3">'
-            + '<div class="h-6 bg-gray-200 rounded"></div>'
-            + '<div class="h-24 bg-gray-200 rounded"></div>'
-            + '<div class="h-24 bg-gray-200 rounded"></div>'
-            + '</div>';
+        // 로컬 캐시(SWR) 존재 시 즉시 렌더 후 재검증 (페이지 1에서만)
+        try {
+            const raw = localStorage.getItem('homePosts:v1');
+            if (page === 1 && raw) {
+                const cache = JSON.parse(raw);
+                const valid = cache && Array.isArray(cache.data) && (Date.now() - (cache.ts || 0)) < (cache.ttl || 0);
+                if (valid) {
+                    container.innerHTML = this.renderPostsListHTML(cache.data);
+                    initialRendered = true;
+                }
+            }
+        } catch (_) { /* noop */ }
+
+        // 초기 렌더가 없으면 스켈레톤 표시
+        if (!initialRendered) {
+            container.innerHTML = '<div class="animate-pulse space-y-3">'
+                + '<div class="h-6 bg-gray-200 rounded"></div>'
+                + '<div class="h-24 bg-gray-200 rounded"></div>'
+                + '<div class="h-24 bg-gray-200 rounded"></div>'
+                + '</div>';
+        }
 
         // 테스트/진단용 시나리오 파라미터 처리
         const scenario = params.get('scenario');
@@ -1826,36 +2130,74 @@ class BlogApp {
             return;
         }
 
-        if (!this.supabase) {
-            container.innerHTML = '<div class="text-gray-600">'
-                + '<p class="mb-2">데이터 소스가 준비되지 않았습니다.</p>'
-                + '<p class="text-sm">환경 변수 또는 Supabase 설정을 확인해 주세요.</p>'
-                + '</div>';
-            return;
-        }
+        // Supabase가 아직 준비되지 않은 초기 렌더에서는 프리패치/캐시 렌더를 유지하고 조용히 건너뜁니다.
+        if (!this.supabase) return;
 
-        const page = Number(params.get('page') || '1');
+        // 페이지네이션 계산
         const perPage = (window.Config && window.Config.POSTS_PER_PAGE) || 10;
         const from = (page - 1) * perPage;
         const to = from + perPage - 1;
 
         const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
 
+        // 레이스 가드: 최신 요청만 렌더에 반영
+        const token = Date.now();
+        this._reqTokens.home = token;
+        const key = `home:${from}-${to}`;
         try {
-            const { data, error } = await this.supabase
-                .from(table)
-                .select('id, title, summary, slug, category, thumbnail_url, created_at, view_count, status')
-                .eq('status', 'published')
-                .order('created_at', { ascending: false })
-                .range(from, to);
+            const { data, count, error } = await this.withDedupe(key, () =>
+                this.supabase
+                    .from(table)
+                    .select('id, title, summary, slug, category, thumbnail_url, created_at, view_count, status', { count: 'exact' })
+                    .eq('status', 'published')
+                    .order('created_at', { ascending: false })
+                    .range(from, to)
+            );
 
             if (error) throw error;
 
             if (!data || data.length === 0) {
                 container.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
+                const pagEl = DOM.$('#home-pagination');
+                if (pagEl) pagEl.innerHTML = '';
                 return;
             }
 
+            // 캐시 저장 (SWR: 10분 TTL)
+            try {
+                const cache = { ts: Date.now(), ttl: 10 * 60 * 1000, data };
+                localStorage.setItem('homePosts:v1', JSON.stringify(cache));
+            } catch (_) { /* noop */ }
+            
+            // 페이지네이션 갱신
+            try {
+                const pagEl = DOM.$('#home-pagination');
+                if (pagEl) {
+                    const totalPages = Math.max(1, Math.ceil((count || 0) / perPage));
+                    if (totalPages <= 1) {
+                        pagEl.innerHTML = '';
+                    } else {
+                        const makeBtn = (p, label = null, active = false) => `<button data-page="${p}" class="px-3 py-1 rounded border ${active? 'bg-black text-white':'hover:bg-black/5'}">${label || p}</button>`;
+                        const prev = page > 1 ? makeBtn(page - 1, '이전') : '<span class="px-3 py-1 text-gray-400">이전</span>';
+                        const next = page < totalPages ? makeBtn(page + 1, '다음') : '<span class="px-3 py-1 text-gray-400">다음</span>';
+                        const windowSize = 5;
+                        const start = Math.max(1, page - Math.floor(windowSize/2));
+                        const end = Math.min(totalPages, start + windowSize - 1);
+                        const pages = [];
+                        for (let p = start; p <= end; p++) pages.push(makeBtn(p, null, p === page));
+                        pagEl.innerHTML = prev + pages.join('') + next;
+                        pagEl.querySelectorAll('button[data-page]').forEach(btn => {
+                            btn.onclick = () => {
+                                const targetPage = Number(btn.getAttribute('data-page')) || 1;
+                                this.navigate(`/?page=${targetPage}`);
+                            };
+                        });
+                    }
+                }
+            } catch (_) { /* noop */ }
+
+            // 최신 요청이 아닌 경우 DOM 반영을 건너뜀
+            if (this._reqTokens.home !== token) return;
             container.innerHTML = this.renderPostsListHTML(data);
         } catch (err) {
             // 사용자에게 명시적으로 안내하고, 토스트도 띄움
