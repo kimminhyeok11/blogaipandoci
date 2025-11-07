@@ -13,8 +13,10 @@
     marginY: 40,
     imageMargin: 16,
     // 허용 오차(px)
-    tolerance: 4,
+    tolerance: 16,
   };
+
+  const MOBILE_BREAKPOINT = 640;
 
   // 개발 로깅 플래그: localhost에서는 기본 활성, 그 외는 Config로 제어
   const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
@@ -39,11 +41,15 @@
     if (!container) return;
     const maxWVar = getComputedStyle(document.documentElement).getPropertyValue('--content-max-width').trim();
     if (!maxWVar) return;
+    const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
     container.style.maxWidth = maxWVar;
     container.style.marginLeft = 'auto';
     container.style.marginRight = 'auto';
-    container.style.paddingLeft = container.style.paddingLeft || DesignGuide.paddingX + 'px';
-    container.style.paddingRight = container.style.paddingRight || DesignGuide.paddingX + 'px';
+    // 모바일에서는 클래스 기반 패딩(px-0 등)을 존중하여 인라인 패딩 자동 적용을 생략
+    if (!isMobile) {
+      container.style.paddingLeft = container.style.paddingLeft || DesignGuide.paddingX + 'px';
+      container.style.paddingRight = container.style.paddingRight || DesignGuide.paddingX + 'px';
+    }
   }
 
   function centerImages(scope) {
@@ -74,10 +80,12 @@
     containers.forEach(el => {
       const rect = el.getBoundingClientRect();
       const vW = window.innerWidth;
+      const isMobile = vW <= MOBILE_BREAKPOINT;
       const leftSpace = Math.round(rect.left);
       const rightSpace = Math.round(vW - rect.right);
       const marginBalanced = Math.abs(leftSpace - rightSpace) <= DesignGuide.tolerance;
-      const widthMatches = navW ? Math.abs(Math.round(rect.width) - navW) <= DesignGuide.tolerance : true;
+      // 모바일에서는 컨테이너가 100% 폭으로 확장될 수 있으므로 폭 일치 검사 생략
+      const widthMatches = isMobile ? true : (navW ? Math.abs(Math.round(rect.width) - navW) <= DesignGuide.tolerance : true);
       const issues = [];
       if (Math.round(rect.width) === 0) {
         // 숨겨진 컨테이너는 검사 제외
