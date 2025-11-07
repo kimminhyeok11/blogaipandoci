@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     if (error) throw error;
 
     const items = (data || []).map(p => {
-      const url = `${SITE_URL}/post/${p.slug}`;
+      const url = `${SITE_URL}/post/${encodeURIComponent(p.slug)}`;
       const pubDate = new Date(p.created_at || Date.now()).toUTCString();
       const updated = new Date(p.updated_at || p.created_at || Date.now()).toUTCString();
       const title = escapeXml(p.title || '제목 없음');

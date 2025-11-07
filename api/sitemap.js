@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       .limit(5000);
     if (error) throw error;
     const urls = (data || []).map(p => {
-      const loc = `${SITE_URL}/post/${p.slug}`;
+      const loc = `${SITE_URL}/post/${encodeURIComponent(p.slug)}`;
       const lastmod = new Date(p.updated_at || Date.now()).toISOString();
       return `<url><loc>${escapeXml(loc)}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>`;
     }).join('');

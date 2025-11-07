@@ -147,18 +147,21 @@
 
 /* 헤더 */
 .header {
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.85);
     border-bottom: 1px solid var(--gray-200);
     position: sticky;
     top: 0;
     z-index: 40;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .header-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 0;
+    min-height: 60px;
+    padding: 0;
 }
 
 .header-brand {
@@ -171,22 +174,65 @@
 .header-nav {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem; /* 16px */
 }
 
 .header-nav-link {
     color: var(--gray-600);
     text-decoration: none;
     font-weight: 500;
-    transition: color var(--transition-fast);
+    transition: color var(--transition-normal), transform var(--transition-normal);
 }
 
 .header-nav-link:hover {
     color: var(--primary-color);
+    transform: scale(1.02);
 }
 
 .header-nav-link.active {
     color: var(--primary-color);
+}
+
+/* 현재 앱 헤더 컨테이너(ID)에도 동일한 높이/섀도우 적용 */
+#main-nav-container {
+    min-height: 60px;
+    box-shadow: none; /* 네이버풍 라이트 헤더: 과한 그림자 제거 */
+    border-bottom: 1px solid var(--gray-200); /* 얇은 바닥선으로 구분 */
+    backdrop-filter: blur(6px);
+}
+
+/* 네비게이션 바를 심플한 플랫 스타일로 보정 */
+#main-nav-container nav {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0.75rem 0; /* 위아래 여백만 유지 */
+}
+
+/* 네비 링크: 기본/호버/활성 상태를 네이버 그린 밑줄로 표현 */
+#main-nav-container nav a[data-route] {
+  color: var(--gray-800);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+#main-nav-container nav a[data-route]:hover,
+#main-nav-container nav a[data-route]:focus-visible {
+  color: var(--gray-900);
+  text-decoration: underline;
+  text-decoration-color: var(--primary-color);
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
+  outline: none;
+}
+
+#main-nav-container nav a[data-route][aria-current="page"] {
+  color: var(--gray-900);
+  text-decoration: underline;
+  text-decoration-color: var(--primary-color);
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
 }
 
 /* 사이드바 */
@@ -495,4 +541,33 @@
         flex: 1;
         overflow-y: auto;
     }
+}
+/* 디자인 가이드라인 변수 및 기본 규칙 */
+:root {
+  --content-max-width: 64rem; /* 초기값, 런타임에 네비 너비로 동기화 */
+  --content-padding-x: 24px;
+  --content-gap: 16px;
+}
+
+/* 컨테이너 중앙 정렬 기본 */
+#view-library > section,
+#view-post > article,
+#view-archives > section,
+#view-writer > section {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: var(--content-max-width);
+  padding-left: var(--content-padding-x);
+  padding-right: var(--content-padding-x);
+}
+
+/* 이미지 자동 중앙 정렬 & 반응형 */
+#view-post article img,
+#view-library section img,
+#view-archives section img,
+#view-writer section img {
+  display: block;
+  margin: 16px auto;
+  max-width: 100%;
+  height: auto;
 }

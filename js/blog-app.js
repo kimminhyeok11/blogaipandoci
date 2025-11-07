@@ -80,22 +80,24 @@ class BlogApp {
                 DOM.hide(loader, { complete: () => loader.remove() });
             }
 
-            // 이후 인증 상태 변경에 대응
-            this.supabase.auth.onAuthStateChange((_, newSession) => {
-                const user = newSession?.user || null;
-                const authChanged = this.state.user?.id !== user?.id;
-                this.state.user = user;
+            // 이후 인증 상태 변경에 대응 (Supabase가 없을 때도 안전하게 건너뜀)
+            if (this.supabase && this.supabase.auth && typeof this.supabase.auth.onAuthStateChange === 'function') {
+                this.supabase.auth.onAuthStateChange((_, newSession) => {
+                    const user = newSession?.user || null;
+                    const authChanged = this.state.user?.id !== user?.id;
+                    this.state.user = user;
 
-                if (authChanged) {
-                    this.renderNav();
-                    if (user) {
-                        UIComponents.showToast(user.email + '님, 환영합니다!', 'success');
-                    } else {
-                        UIComponents.showToast('로그아웃되었습니다.', 'info');
-                        this.navigate('/');
+                    if (authChanged) {
+                        this.renderNav();
+                        if (user) {
+                            UIComponents.showToast(user.email + '님, 환영합니다!', 'success');
+                        } else {
+                            UIComponents.showToast('로그아웃되었습니다.', 'info');
+                            this.navigate('/');
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // 방문 로그 기록 (site_visits)
             try {
@@ -181,10 +183,13 @@ class BlogApp {
      * 페이지 네비게이션을 처리합니다.
      */
     navigate(path) {
-        if (window.location.pathname + window.location.search !== path) {
-            window.history.pushState(null, '', path);
+        const next = this.normalizePath(path);
+        if (window.location.pathname + window.location.search !== next) {
+            window.history.pushState(null, '', next);
         }
         this.handleRouting();
+        // 라우팅 후 현재 경로에 맞춰 네비 활성 하이라이트 갱신
+        this.renderNav();
     }
 
     /**
@@ -192,12 +197,29 @@ class BlogApp {
      * URL 라우팅을 처리합니다.
      */
     handleRouting() {
-        const path = window.location.pathname;
+        const path = this.normalizePath(window.location.pathname);
         const params = new URLSearchParams(window.location.search);
+        // [Fix] 동일 뷰 재전환 시 hide/show 애니메이션이 충돌해
+        // 최종 display 상태가 'none'으로 남는 레이스 조건을 방지합니다.
+        // 다음에 표시될 대상 뷰를 먼저 계산하고, 활성 뷰와 같으면 숨김을 건너뜁니다.
+        let targetViewId;
+        if (path === '/' || path === '/home') {
+            targetViewId = 'view-library';
+        } else if (path.startsWith('/post/')) {
+            targetViewId = 'view-post';
+        } else if (path === '/archives') {
+            targetViewId = 'view-archives';
+        } else if (path === '/writer' || path.startsWith('/writer/')) {
+            targetViewId = 'view-writer';
+        } else if (path === '/login') {
+            targetViewId = 'view-library';
+        } else {
+            targetViewId = 'view-library';
+        }
 
-        // 현재 활성화된 뷰 숨기기
+        // 활성 뷰가 대상 뷰와 다를 때만 숨김 처리 (애니메이션 경쟁 방지)
         const activeView = DOM.$('.app-view.active');
-        if (activeView) {
+        if (activeView && activeView.id !== targetViewId) {
             activeView.classList.remove('active');
             DOM.hide(activeView);
         }
@@ -206,17 +228,42 @@ class BlogApp {
         if (path === '/' || path === '/home') {
             this.renderHome(params);
         } else if (path.startsWith('/post/')) {
-            const slug = path.split('/post/')[1];
+            const raw = path.split('/post/')[1];
+            const slug = raw ? decodeURIComponent(raw) : '';
             this.renderPost(slug);
         } else if (path === '/archives') {
             this.renderArchives();
         } else if (path === '/writer' || path.startsWith('/writer/')) {
-            const slug = path.split('/writer/')[1] || null;
+            const raw = path.split('/writer/')[1] || null;
+            const slug = raw ? decodeURIComponent(raw) : null;
             this.renderWriter(slug);
         } else if (path === '/login') {
             this.renderLogin();
         } else {
             this.render404();
+        }
+    }
+
+    /**
+     * [Path Utils]
+     * 경로 정규화: '/index.html' → '/', '/archives/' → '/archives' 등
+     */
+    normalizePath(p) {
+        try {
+            const url = new URL(p, window.location.origin);
+            let path = url.pathname || '/';
+            // index.html을 루트로 매핑
+            if (path === '/index.html') path = '/';
+            // 트레일링 슬래시 제거(루트 제외)
+            if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+            // 중복 슬래시 축약
+            path = path.replace(/\/+/, '/');
+            return path + (url.search || '');
+        } catch (_) {
+            // 안전 폴백
+            if (p === '/index.html') return '/';
+            if (p.length > 1 && p.endsWith('/')) return p.slice(0, -1);
+            return p || '/';
         }
     }
 
@@ -284,7 +331,7 @@ class BlogApp {
         // 데이터 쿼리 (페이지네이션, 필터 적용)
         let dataQuery = this.supabase
             .from(table)
-            .select('id, title, slug, created_at, category, refined_content')
+            .select('id, title, slug, created_at, category, refined_content, thumbnail_url')
             .eq('status', 'published')
             .order('created_at', { ascending: false });
         if (category && category !== '전체') {
@@ -320,27 +367,8 @@ class BlogApp {
         if (!filtered || filtered.length === 0) {
             list.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
         } else {
-            const groups = {};
-            filtered.forEach(p => {
-                const d = new Date(p.created_at);
-                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-                if (!groups[key]) groups[key] = [];
-                groups[key].push(p);
-            });
-            const html = Object.entries(groups).map(([ym, posts]) => {
-                const [y, m] = ym.split('-');
-                const items = posts.map(p => {
-                    const dateStr = this.formatDateKR(p.created_at);
-                    const tags = this.extractTagsFromHTML(p.refined_content || '') || [];
-                    const tagHtml = tags.length ? ` · <span class="text-xs text-gray-500">${tags.map(this.escapeHTML).join(', ')}</span>` : '';
-                    return `<li class="py-1"><a href="/post/${p.slug}" data-route class="hover:underline">${this.escapeHTML(p.title)}</a> <span class="text-xs text-gray-500">${dateStr}${p.category? ' · '+this.escapeHTML(p.category): ''}${tagHtml}</span></li>`;
-                }).join('');
-                return '<section>'
-                    + `<h2 class="text-xl font-semibold">${y}년 ${m}월 <span class="text-sm text-gray-500">(${posts.length}건)</span></h2>`
-                    + `<ul class="mt-2">${items}</ul>`
-                    + '</section>';
-            }).join('');
-            list.innerHTML = html;
+            const cards = this.renderPostsListHTML(filtered);
+            list.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">${cards}</div>`;
         }
 
         // 페이지네이션 렌더
@@ -379,20 +407,30 @@ class BlogApp {
      * 뷰를 전환합니다.
      */
     switchToView(viewId) {
-        // 모든 뷰 숨기기
+        // 대상 뷰 먼저 찾기
+        const targetView = DOM.$('#' + viewId);
+        
+        // 대상 외 모든 뷰 숨기기 (애니메이션 완료 시 display:none 처리)
         DOM.$$('.app-view').forEach(view => {
+            if (view === targetView) return; // 대상 뷰는 숨기지 않음
             view.classList.remove('active');
             DOM.hide(view);
         });
 
-        // 대상 뷰 표시
-        const targetView = DOM.$('#' + viewId);
+        // 대상 뷰 표시 (진행 중인 숨김 애니메이션과 경쟁하지 않도록 선별 표시)
         if (targetView) {
+            // 애니메이션 충돌 방지: 즉시 표시 상태로 전환
+            targetView.style.display = 'block';
             targetView.classList.add('active');
             DOM.show(targetView);
-            
+
             // 페이지 상단으로 스크롤
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 뷰 전환 후 레이아웃 가이드라인 적용 및 자동 검사 실행
+            if (window.LayoutManager && typeof window.LayoutManager.onViewRendered === 'function') {
+                window.LayoutManager.onViewRendered(targetView);
+            }
         }
     }
 
@@ -404,61 +442,154 @@ class BlogApp {
         const container = DOM.$('#main-nav-container');
         if (!container) return;
         const isLoggedIn = !!this.state.user;
-        const writerLink = isLoggedIn ? '<a href="/writer" data-route class="text-sm text-gray-800 hover:text-black">글쓰기</a>' : '';
-        const dashLink = isLoggedIn ? '<a href="/dashboard" data-route class="text-sm text-gray-800 hover:text-black">대시보드</a>' : '';
+        const writerLink = isLoggedIn ? '<a href="/writer" data-route class="text-sm font-medium text-gray-800 hover:text-black">글쓰기</a>' : '';
+        const dashLink = isLoggedIn ? '<a href="/dashboard" data-route class="text-sm font-medium text-gray-800 hover:text-black">대시보드</a>' : '';
+        const authLink = isLoggedIn
+            ? '<button id="logout-btn" class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그아웃</button>'
+            : '<a href="/login" data-route class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그인</a>';
         const linksHtml = [
-            '<a href="/" data-route class="text-sm text-gray-800 hover:text-black">홈</a>',
-            '<a href="/archives" data-route class="text-sm text-gray-800 hover:text-black">아카이브</a>',
+            '<a href="/" data-route class="text-sm font-medium text-gray-800 hover:text-black">홈</a>',
+            '<a href="/archives" data-route class="text-sm font-medium text-gray-800 hover:text-black">아카이브</a>',
             writerLink,
             dashLink,
-            '<a href="/feed.xml" class="text-sm text-gray-800 hover:text-black" rel="alternate" type="application/rss+xml">RSS</a>',
-            '<a href="/sitemap.xml" class="text-sm text-gray-800 hover:text-black">Sitemap</a>',
-            '<a href="/login" data-route class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그인</a>'
+            '<a href="/feed.xml" class="text-sm font-medium text-gray-800 hover:text-black" rel="alternate" type="application/rss+xml">RSS</a>',
+            '<a href="/sitemap.xml" class="text-sm font-medium text-gray-800 hover:text-black">Sitemap</a>',
+            authLink
         ].filter(Boolean).join('');
 
         container.innerHTML = '<nav class="w-full max-w-4xl flex items-center justify-between py-3 px-6 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">'
             + '<a href="/" data-route class="font-extrabold text-xl tracking-tight">InsureLog</a>'
-            + '<button id="nav-toggle" class="sm:hidden text-sm px-3 py-1 rounded-full border hover:bg-black/5" aria-expanded="false" aria-controls="nav-menu">메뉴</button>'
-            + '<div id="nav-links" class="hidden sm:flex items-center gap-4">' + linksHtml + '</div>'
+            + '<button id="nav-toggle" class="hamburger-btn sm:hidden" aria-expanded="false" aria-controls="nav-menu" aria-haspopup="menu" aria-label="메뉴">'
+            +   '<span class="hamburger-icon" aria-hidden="true">'
+            +     '<span class="bar bar-top"></span>'
+            +     '<span class="bar bar-middle"></span>'
+            +     '<span class="bar bar-bottom"></span>'
+            +   '</span>'
+            +   '<span class="sr-only">메뉴</span>'
+            + '</button>'
+            + '<div id="nav-links" class="hidden sm:flex items-center gap-5">' + linksHtml + '</div>'
             + '</nav>'
-            + '<div id="nav-menu" class="hidden sm:hidden fixed inset-0 z-50 bg-black/30" aria-hidden="true">'
-            +   '<div class="absolute top-0 right-0 w-64 h-full bg-white shadow-xl p-4">'
-            +     '<div class="flex items-center justify-between mb-4">'
-            +       '<span class="font-bold">메뉴</span>'
-            +       '<button id="nav-close" class="text-sm px-2 py-1 rounded border hover:bg-black/5" aria-label="닫기">닫기</button>'
-            +     '</div>'
-            +     '<nav class="flex flex-col gap-3">' + linksHtml + '</nav>'
+            // 모바일 팝오버 메뉴(버튼 근처에 고정 위치로 표시)
+            + '<div id="nav-menu" class="hidden sm:hidden fixed z-50 bg-white border rounded-2xl shadow-xl p-4 w-64" aria-hidden="true" role="menu" aria-label="모바일 네비게이션">'
+            +   '<div class="flex items-center justify-between mb-4">'
+            +     '<span class="font-bold">메뉴</span>'
+            +     '<button id="nav-close" class="text-sm px-2 py-1 rounded border hover:bg-black/5" aria-label="닫기">닫기</button>'
             +   '</div>'
+            +   '<nav class="flex flex-col gap-3">' + linksHtml + '</nav>'
             + '</div>';
+
+        // [Enhancement] 현재 경로 활성 상태 하이라이트 처리
+        // 접근성(aria-current)과 가시성(font-semibold)을 함께 적용합니다.
+        const currentPath = this.normalizePath(window.location.pathname);
+        const routeLinks = container.querySelectorAll('#nav-links a[data-route], #nav-menu a[data-route]');
+        routeLinks.forEach(a => {
+            const href = a.getAttribute('href') || '/';
+            // 절대경로화하여 비교 안전성 확보
+            const path = (() => { try { return this.normalizePath(new URL(href, window.location.origin).pathname); } catch (_) { return this.normalizePath(href); } })();
+            const isActive = path === currentPath || (path === '/' && (currentPath === '/home'));
+            a.classList.toggle('font-semibold', isActive);
+            a.setAttribute('aria-current', isActive ? 'page' : 'false');
+        });
 
         // 햄버거 메뉴 바인딩
         const toggleBtn = DOM.$('#nav-toggle');
         const menu = DOM.$('#nav-menu');
         const closeBtn = DOM.$('#nav-close');
+        const logoutBtn = DOM.$('#logout-btn');
+
+        // 로그아웃 버튼 동작
+        if (logoutBtn) {
+            logoutBtn.onclick = async () => {
+                try {
+                    if (this.supabase && this.supabase.auth) {
+                        await this.supabase.auth.signOut();
+                    }
+                    UIComponents.showToast('로그아웃되었습니다.', 'info');
+                    this.navigate('/');
+                } catch (_) {
+                    // 실패해도 UI 기준으로 홈 이동
+                    this.navigate('/');
+                }
+            };
+        }
         if (toggleBtn && menu) {
+            // 외부 클릭 핸들러 중복 등록 방지
+            if (this._navOutsideHandler) {
+                document.removeEventListener('click', this._navOutsideHandler, true);
+                this._navOutsideHandler = null;
+            }
+
+            const positionMenuNearToggle = () => {
+                const rect = toggleBtn.getBoundingClientRect();
+                // 버튼 바로 아래, 약간의 여백을 두고 표시
+                // 메뉴는 position: fixed 이므로 viewport 좌표 사용 (scroll 오프셋 미포함)
+                const top = Math.round(rect.bottom + 8);
+                let left = Math.round(rect.left);
+                // 화면 우측을 넘지 않도록 조정
+                const maxLeft = window.innerWidth - menu.offsetWidth - 8;
+                left = Math.min(left, Math.max(8, maxLeft));
+                menu.style.top = top + 'px';
+                menu.style.left = left + 'px';
+            };
+
             toggleBtn.onclick = () => {
                 const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
                 toggleBtn.setAttribute('aria-expanded', String(!expanded));
-                if (expanded) { menu.classList.add('hidden'); } else { menu.classList.remove('hidden'); }
-            };
-        }
-        if (closeBtn && menu && toggleBtn) {
-            closeBtn.onclick = () => { menu.classList.add('hidden'); toggleBtn.setAttribute('aria-expanded', 'false'); };
-        }
-        if (menu && toggleBtn) {
-            menu.addEventListener('click', (e) => {
-                if (e.target === menu) {
+                if (expanded) {
                     menu.classList.add('hidden');
+                    menu.setAttribute('aria-hidden', 'true');
+                } else {
+                    // 표시 전에 위치 계산
+                    menu.classList.remove('hidden');
+                    positionMenuNearToggle();
+                    menu.setAttribute('aria-hidden', 'false');
+                }
+            };
+
+            // 창 리사이즈/스크롤 시 팝오버 재배치
+            const relocate = () => {
+                if (!menu.classList.contains('hidden')) positionMenuNearToggle();
+            };
+            window.addEventListener('resize', relocate);
+            window.addEventListener('scroll', relocate, { passive: true });
+
+            // 외부 클릭 시 닫기
+            this._navOutsideHandler = (ev) => {
+                const t = ev.target;
+                if (!menu.classList.contains('hidden') && !menu.contains(t) && !toggleBtn.contains(t)) {
+                    menu.classList.add('hidden');
+                    menu.setAttribute('aria-hidden', 'true');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                }
+            };
+            document.addEventListener('click', this._navOutsideHandler, true);
+            // ESC 키로 닫기
+            document.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Escape') {
+                    menu.classList.add('hidden');
+                    menu.setAttribute('aria-hidden', 'true');
                     toggleBtn.setAttribute('aria-expanded', 'false');
                 }
             });
+        }
+        if (closeBtn && menu && toggleBtn) {
+            closeBtn.onclick = () => {
+                menu.classList.add('hidden');
+                menu.setAttribute('aria-hidden', 'true');
+                toggleBtn.setAttribute('aria-expanded', 'false');
+            };
+        }
+        if (menu && toggleBtn) {
             menu.querySelectorAll('a[data-route]').forEach(a => {
                 a.addEventListener('click', () => {
                     menu.classList.add('hidden');
+                    menu.setAttribute('aria-hidden', 'true');
                     toggleBtn.setAttribute('aria-expanded', 'false');
                 });
             });
         }
+
+        // 검색바 제거: 관련 마크업과 로직을 삭제하여 네비게이션을 간결화
     }
 
     /**
@@ -471,7 +602,6 @@ class BlogApp {
         if (container) {
             container.innerHTML = '<section class="max-w-4xl mx-auto py-10 px-6">'
                 + '<h1 class="text-2xl font-bold mb-2">최근 글</h1>'
-                + '<p class="text-sm text-gray-600">최신 게시글을 불러오는 중입니다...</p>'
                 + '<div id="home-posts" class="mt-6 grid grid-cols-1 gap-4"></div>'
                 + '</section>';
 
@@ -492,7 +622,8 @@ class BlogApp {
         const container = DOM.$('#view-post');
         if (!container) return;
 
-        container.innerHTML = '<article class="max-w-3xl mx-auto py-10 px-6">'
+        // [Layout] 본문 폭을 네비게이션(max-w-4xl)과 맞춰 일관성을 유지합니다.
+        container.innerHTML = '<article class="max-w-4xl mx-auto py-10 px-6">'
             + '<div class="mb-6">'
             +   '<div class="h-8 w-2/3 bg-gray-200 animate-pulse rounded"></div>'
             + '</div>'
@@ -923,7 +1054,7 @@ class BlogApp {
 
             UIComponents.showToast('글이 저장되었습니다.', 'success');
             if (status === 'published') {
-                this.navigate('/post/' + slug);
+                this.navigate('/post/' + encodeURIComponent(slug));
             } else {
                 this.navigate('/');
             }
@@ -933,12 +1064,19 @@ class BlogApp {
     }
 
     slugify(str) {
-        return String(str || '')
-            .toLowerCase()
-            .trim()
+        const base = String(str || '').toLowerCase().trim();
+        let s = base
+            .normalize('NFKD')
             .replace(/\s+/g, '-')
-            .replace(/[^a-z0-9\-]/g, '')
-            .replace(/-+/g, '-');
+            // 한글 포함 전 세계 문자/숫자 허용, 하이픈만 유지
+            .replace(/[^\p{L}\p{N}\-]+/gu, '')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        if (!s) {
+            const ts = Date.now().toString(36);
+            s = 'post-' + ts;
+        }
+        return s;
     }
 
     async ensureUniqueSlug(slug, originalSlug = null) {
@@ -992,32 +1130,31 @@ class BlogApp {
         const tags = this.extractTagsFromHTML(post.refined_content);
         const tagsHtml = tags && tags.length ? `<div class="mt-2 flex flex-wrap gap-2">${tags.map(t => `<span class=\"text-xs px-2 py-1 rounded-full bg-blue-50 border border-blue-200\">${this.escapeHTML(t)}</span>`).join('')}</div>` : '';
 
-        // 썸네일 (최적화 URL)
-        let thumbHtml = '';
-        if (post.thumbnail_url) {
-            const optimized = this.getTransformedPublicUrl(post.thumbnail_url, { width: 1200, height: 630, resize: 'cover', quality: 85, format: 'webp' });
-            thumbHtml = `<img src="${optimized}" alt="${title}" class="w-full h-auto rounded-2xl border"/>`;
-        }
+        // 상세 페이지에서는 본문 내 삽입 이미지만 노출합니다 (상단 히어로 제거).
 
         // 독자 상세 페이지에서만 콘텐츠 렌더 유틸리티 로드
         await ScriptLoader.loadUtilities();
         const contentHTML = this.renderContentHTML(post.refined_content);
         // 로그인 사용자에게만 편집 버튼 제공
-        const editBtn = this.state.user ? `<a href="/writer/${post.slug}" data-route class="px-3 py-1 rounded-full border">수정</a>` : '';
+        const editBtn = this.state.user ? `<a href="/writer/${encodeURIComponent(post.slug)}" data-route class="px-3 py-1 rounded-full border">수정</a>` : '';
 
-        container.innerHTML = '<article class="max-w-3xl mx-auto py-10 px-6">'
-            + `<h1 class="text-3xl font-extrabold tracking-tight">${title}</h1>`
-            + `<div class="mt-2 text-sm text-gray-500 flex items-center gap-3"><span>${date}</span>${category}</div>`
-            + `${tagsHtml}`
-            + (thumbHtml ? `<div class="mt-6">${thumbHtml}</div>` : '')
-            + `<div class="prose prose-neutral max-w-none mt-8">${contentHTML}</div>`
-            + '<div class="mt-8 flex items-center gap-3">'
-            +   '<button id="btn-like" class="px-3 py-1 rounded-full border">좋아요 <span id="like-count"></span></button>'
-            +   '<button id="btn-share" class="px-3 py-1 rounded-full border">공유</button>'
-            +   '<button id="btn-copy" class="px-3 py-1 rounded-full border">링크복사</button>'
-            +   `${editBtn}`
+        container.innerHTML = '<article class="post-detail py-10">'
+            + '<div class="post-detail-inner px-6">'
+            + `<h1 class="post-title text-3xl font-extrabold tracking-tight">${title}</h1>`
+            + `<div class="post-meta flex items-center"><span class="post-date">${date}</span>${category ? category.replace('<span', '<span class=\"post-category\"') : ''}</div>`
+            + `${tagsHtml ? tagsHtml.replace('<div', '<div class=\"post-tags\"') : ''}`
+            + `<div class="blog-post-content prose-custom">${contentHTML}</div>`
             + '</div>'
+            + '<div class="post-detail-inner px-6">'
+            + '<div class="mt-8 flex items-center gap-3">'
+                +   '<button id="btn-like" class="px-3 py-1 rounded-full border">좋아요 <span id="like-count"></span></button>'
+                +   '<button id="btn-share" class="px-3 py-1 rounded-full border">공유</button>'
+                +   '<button id="btn-copy" class="px-3 py-1 rounded-full border">링크복사</button>'
+                +   `${editBtn}`
+                + '</div>'
             + '<div id="related-posts" class="mt-12"></div>'
+            + '<div id="popular-posts" class="mt-12"></div>'
+            + '</div>'
             + '</article>';
 
         // 메타 업데이트 (OG/Twitter 이미지 포함)
@@ -1058,8 +1195,9 @@ class BlogApp {
             });
         } catch (e) { /* non-critical */ }
 
-        // 관련 글 로드
+        // 관련 글 및 인기 글 로드
         this.loadRelatedPosts(post).catch(err => this.handleError(err, 'loadRelatedPosts'));
+        this.loadPopularPosts(post.id).catch(err => this.handleError(err, 'loadPopularPosts'));
     }
 
     renderContentHTML(refined) {
@@ -1068,7 +1206,8 @@ class BlogApp {
         try {
             const obj = typeof refined === 'string' ? JSON.parse(refined) : refined;
             if (obj && Array.isArray(obj.blocks)) {
-                return obj.blocks.map(b => this.renderEditorBlock(b)).join('');
+                const html = obj.blocks.map(b => this.renderEditorBlock(b)).join('');
+                return this.dedupeConsecutiveImages(html);
             }
             // Quill Delta 호환 (향후 확장 대비)
             if (obj && obj.ops && Array.isArray(obj.ops)) {
@@ -1082,20 +1221,49 @@ class BlogApp {
                     if (attrs.underline) s = `<u>${s}</u>`;
                     return s;
                 }).join('');
-                return window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+                const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+                const transformed = this.transformPlainImagesToOptimized(safe);
+                const ensuredAlt = this.ensureImageAltAttributes(transformed, '');
+                return this.dedupeConsecutiveImages(ensuredAlt);
             }
         } catch { /* not JSON */ }
 
+        // 문자열 내 Markdown 패턴이 섞여 있으면 우선 Markdown 파싱을 수행
+        const isString = typeof refined === 'string';
+        const hasMarkdown = isString && (
+            /!\[[^\]]*\]\([^)]+\)/.test(refined) || // 이미지
+            /\[[^\]]+\]\([^)]+\)/.test(refined) ||   // 링크
+            /(^|\n)\s{0,3}#{1,6}\s/.test(refined) ||  // 헤딩
+            /(^|\n)\s{0,3}[-*]\s+/.test(refined) ||  // 불릿 리스트
+            /(^|\n)\s{0,3}\d+\.\s+/.test(refined)   // 순서 리스트
+        );
+        if (hasMarkdown && window.marked) {
+            const dirty = isString ? refined : String(refined);
+            const pre = this.preprocessPlainTextToMarkdown(dirty);
+            const html = window.marked.parse(pre);
+            const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const transformed = this.transformPlainImagesToOptimized(safe);
+            const ensuredAlt = this.ensureImageAltAttributes(transformed, '');
+            return this.dedupeConsecutiveImages(ensuredAlt);
+        }
+
         // 직접 HTML 문자열인 경우 그대로 정제하여 반환
-        if (typeof refined === 'string' && /<\w+[^>]*>/i.test(refined)) {
+        if (isString && /<\w+[^>]*>/i.test(refined)) {
             const html = refined;
-            return window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const transformed = this.transformPlainImagesToOptimized(safe);
+            const ensuredAlt = this.ensureImageAltAttributes(transformed, '');
+            return this.dedupeConsecutiveImages(ensuredAlt);
         }
         // Markdown 처리
         if (window.marked) {
-            const dirty = typeof refined === 'string' ? refined : String(refined);
-            const html = window.marked.parse(dirty);
-            return window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const dirty = isString ? refined : String(refined);
+            const pre = this.preprocessPlainTextToMarkdown(dirty);
+            const html = window.marked.parse(pre);
+            const safe = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+            const transformed = this.transformPlainImagesToOptimized(safe);
+            const ensuredAlt = this.ensureImageAltAttributes(transformed, '');
+            return this.dedupeConsecutiveImages(ensuredAlt);
         }
         return `<pre>${this.escapeHTML(typeof refined === 'string' ? refined : JSON.stringify(refined))}</pre>`;
     }
@@ -1344,16 +1512,58 @@ class BlogApp {
         if (!container) return;
         if (!data || data.length === 0) { container.innerHTML = ''; return; }
         const cards = data.map(p => {
-            const url = '/post/' + (p.slug || p.id);
-            const thumb = p.thumbnail_url ? `<img src="${this.getTransformedPublicUrl(p.thumbnail_url, { width: 360, height: 200, resize: 'cover', quality: 80, format: 'webp' })}" class="w-full h-32 object-cover rounded-xl border"/>` : '';
-            return '<article class="p-4 border rounded-2xl bg-white">'
-                + (thumb ? `<a href="${url}" data-route>${thumb}</a>` : '')
-                + `<h3 class="mt-2 text-base font-semibold"><a href="${url}" data-route>${this.escapeHTML(p.title)}</a></h3>`
-                + `<p class="text-xs text-gray-600">${this.formatDate(p.created_at)}</p>`
-                + '</article>';
+            const url = '/post/' + encodeURIComponent(p.slug || p.id);
+            const hasImg = !!p.thumbnail_url;
+            const img = hasImg
+                ? `<img src="${this.getTransformedPublicUrl(p.thumbnail_url, { width: 160, height: 160, resize: 'cover', quality: 85, format: 'webp' })}"
+                         alt="${this.escapeHTML(p.title || '')}"
+                         class="post-card-thumb-img"
+                         decoding="async" loading="lazy"/>`
+                : `<span class="thumb-initial">${this.escapeHTML(String((p.title || 'N')).trim().charAt(0).toUpperCase())}</span>`;
+            return (
+                `<article class="post-card post-card-compact">`
+                + `<a href="${url}" data-route class="post-card-thumb${hasImg ? '' : ' placeholder'}">${img}</a>`
+                + `<div class="post-card-main">`
+                +   `<h3 class="post-card-title"><a href="${url}" data-route>${this.escapeHTML(p.title)}</a></h3>`
+                +   `<p class="post-card-meta">${this.formatDate(p.created_at)}</p>`
+                + `</div>`
+                + `</article>`
+            );
         }).join('');
         container.innerHTML = '<h2 class="text-lg font-bold mb-3">관련 글</h2>'
             + `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${cards}</div>`;
+    }
+
+    async loadPopularPosts(currentPostId = null) {
+        if (!this.supabase) return;
+        const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
+        const { data, error } = await this.supabase
+            .from(table)
+            .select('id, title, slug, view_count')
+            .eq('status', 'published')
+            .order('view_count', { ascending: false, nullsFirst: false })
+            .limit(6);
+        if (error) throw error;
+        const container = DOM.$('#popular-posts');
+        if (!container) return;
+        let list = (data || []).filter(p => p && p.id !== currentPostId);
+        if (!list || list.length === 0) { container.innerHTML = ''; return; }
+        const header = '<h2 class="text-lg font-bold mb-3">많이 본 글</h2>';
+        const items = list.map((p, idx) => {
+            const url = '/post/' + encodeURIComponent(p.slug || p.id);
+            const rank = idx + 1;
+            const views = Number(p.view_count || 0);
+            return (
+                `<li class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm text-gray-500">${rank}.</span>
+                        <a href="${url}" data-route class="text-sm font-medium hover:underline">${this.escapeHTML(p.title || '')}</a>
+                    </div>
+                    <span class="text-xs text-gray-500">${views}회</span>
+                </li>`
+            );
+        }).join('');
+        container.innerHTML = header + `<ol class="space-y-2">${items}</ol>`;
     }
 
     // 파일명으로부터 alt 텍스트 유도어 생성
@@ -1396,6 +1606,112 @@ class BlogApp {
                 img.setAttribute('alt', altText || '이미지');
                 if (cap && !cap.textContent.trim()) cap.textContent = altText || '이미지';
             });
+            return div.innerHTML;
+        } catch {
+            return html;
+        }
+    }
+
+    // 순수 텍스트를 간단한 마크다운으로 전처리: hN 제목/이미지 URL 자동 치환
+    preprocessPlainTextToMarkdown(text = '') {
+        try {
+            let t = String(text || '');
+            // h1~h6 접두어를 마크다운 헤딩으로 변환
+            t = t.replace(/^\s*h([1-6])\s+(.+)$/gmi, (m, level, content) => {
+                const hashes = '#'.repeat(Number(level));
+                return `${hashes} ${content}`;
+            });
+            // 이미지 URL을 마크다운 이미지로 변환
+            t = t.replace(/(^|\s)(https?:\/\/[^\s]+\.(?:png|jpe?g|webp|gif|svg))(?!\S)/gmi, (m, space, url) => {
+                return `${space}![](${url})`;
+            });
+            return t;
+        } catch { return String(text || ''); }
+    }
+
+    // 마크다운/단순 HTML에서 생성된 단순 <img>를 반응형 최적화 이미지로 변환
+    transformPlainImagesToOptimized(html, title = '') {
+        try {
+            const div = document.createElement('div');
+            div.innerHTML = String(html || '');
+            const conn = (navigator && navigator.connection) ? navigator.connection : {};
+            const saveData = !!conn.saveData;
+            const et = conn.effectiveType || '';
+            const isSlow = saveData || /(^|[^a-z])(2g|3g)/.test(et);
+            const w = isSlow ? [360, 600] : [480, 768, 1200];
+            const mainW = isSlow ? 900 : 1200;
+            const mainQ = isSlow ? 75 : 85;
+            const setQ = isSlow ? 60 : 80;
+            const sizes = isSlow ? '(max-width: 600px) 100vw, 600px' : '(max-width: 768px) 100vw, 768px';
+
+            const imgs = Array.from(div.querySelectorAll('img'));
+            imgs.forEach(img => {
+                if (img.hasAttribute('srcset')) return; // 이미 최적화된 경우 스킵
+                const src = img.getAttribute('src') || '';
+                if (!src) return;
+                const altRaw = (img.getAttribute('alt') || '').trim();
+                const altText = altRaw || (() => {
+                    try {
+                        const u = new URL(src, window.location.origin);
+                        const file = (u.pathname.split('/').pop() || '').split('?')[0];
+                        return this.deriveAltFromFileName(file);
+                    } catch {
+                        const file = (src.split('/').pop() || '').split('?')[0];
+                        return this.deriveAltFromFileName(file);
+                    }
+                })() || (title || '이미지');
+                const optimized = this.getOptimizedPublicUrl(src, { width: mainW, quality: mainQ, format: 'webp' });
+                const srcset = w.map(x => `${this.getOptimizedPublicUrl(src, { width: x, quality: setQ, format: 'webp' })} ${x}w`).join(', ');
+
+                // figure로 감싸고 캡션 추가
+                const fig = document.createElement('figure');
+                const newImg = img.cloneNode(true);
+                newImg.setAttribute('src', optimized);
+                newImg.setAttribute('srcset', srcset);
+                newImg.setAttribute('sizes', sizes);
+                newImg.setAttribute('alt', altText);
+                newImg.setAttribute('loading', 'lazy');
+                newImg.setAttribute('decoding', 'async');
+                fig.appendChild(newImg);
+                const cap = document.createElement('figcaption');
+                cap.textContent = altText;
+                fig.appendChild(cap);
+
+                const parent = img.parentElement;
+                if (parent && parent.tagName.toLowerCase() === 'p') {
+                    parent.replaceWith(fig);
+                } else {
+                    img.replaceWith(fig);
+                }
+            });
+            return div.innerHTML;
+        } catch { return html; }
+    }
+
+    // 연속 중복 이미지(같은 src/srcset)를 제거해 본문 중복 렌더링을 방지
+    dedupeConsecutiveImages(html) {
+        try {
+            const div = document.createElement('div');
+            div.innerHTML = String(html || '');
+
+            const getKey = (img) => `${img.getAttribute('src') || ''}|${img.getAttribute('srcset') || ''}`;
+
+            const containers = Array.from(div.querySelectorAll('figure, img'))
+                .filter(el => !(el.tagName.toLowerCase() === 'img' && el.closest('figure')));
+
+            for (let i = 0; i < containers.length; i++) {
+                const cur = containers[i];
+                const curImg = cur.tagName.toLowerCase() === 'img' ? cur : cur.querySelector('img');
+                if (!curImg) continue;
+                const prevEl = cur.previousElementSibling;
+                if (!prevEl) continue;
+                const prevImg = prevEl.tagName.toLowerCase() === 'img' ? prevEl : prevEl.querySelector && prevEl.querySelector('img');
+                if (!prevImg) continue;
+                const same = getKey(curImg) === getKey(prevImg);
+                if (same) {
+                    cur.remove();
+                }
+            }
             return div.innerHTML;
         } catch {
             return html;
@@ -1462,7 +1778,10 @@ class BlogApp {
             + '</div>';
 
         if (!this.supabase) {
-            container.innerHTML = '<div class="text-gray-500">데이터 소스가 준비되지 않았습니다.</div>';
+            container.innerHTML = '<div class="text-gray-600">'
+                + '<p class="mb-2">데이터 소스가 준비되지 않았습니다.</p>'
+                + '<p class="text-sm">환경 변수 또는 Supabase 설정을 확인해 주세요.</p>'
+                + '</div>';
             return;
         }
 
@@ -1473,51 +1792,65 @@ class BlogApp {
 
         const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
 
-        const { data, error } = await this.supabase
-            .from(table)
-            .select('id, title, summary, slug, category, thumbnail_url, created_at, view_count, status')
-            .eq('status', 'published')
-            .order('created_at', { ascending: false })
-            .range(from, to);
+        try {
+            const { data, error } = await this.supabase
+                .from(table)
+                .select('id, title, summary, slug, category, thumbnail_url, created_at, view_count, status')
+                .eq('status', 'published')
+                .order('created_at', { ascending: false })
+                .range(from, to);
 
-        if (error) throw error;
+            if (error) throw error;
 
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
-            return;
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
+                return;
+            }
+
+            container.innerHTML = this.renderPostsListHTML(data);
+        } catch (err) {
+            // 사용자에게 명시적으로 안내하고, 토스트도 띄움
+            container.innerHTML = '<div class="text-red-600">'
+                + '<p class="font-semibold">게시글을 불러오지 못했습니다.</p>'
+                + '<p class="text-sm text-red-500">잠시 후 다시 시도해 주세요.</p>'
+                + '</div>';
+            this.handleError(err, 'loadHomePosts');
         }
-
-        container.innerHTML = this.renderPostsListHTML(data);
     }
 
     // 게시글 카드 리스트 HTML 생성
     renderPostsListHTML(posts) {
         return posts.map((post, idx) => {
-            const href = '/post/' + (post.slug || post.id);
+            const href = '/post/' + encodeURIComponent(post.slug || post.id);
             const conn = (navigator && navigator.connection) ? navigator.connection : {};
             const saveData = !!conn.saveData;
             const et = conn.effectiveType || '';
             const isSlow = saveData || /(^|[^a-z])(2g|3g)/.test(et);
-            const baseW = 640, baseH = 240;
+            // 홈 목록은 좌측 소형 썸네일(정사각형)로 표시
+            const baseW = 160, baseH = 160; // 1:1
             const q = isSlow ? 70 : 80;
-            const widths = isSlow ? [320, 480, 640] : [360, 480, 640];
-            const sizes = '(max-width: 640px) 100vw, 640px';
+            const widths = isSlow ? [96, 120, 160] : [120, 160, 192];
+            const sizes = '(max-width: 640px) 96px, 120px';
             const thumbUrl = post.thumbnail_url ? this.getTransformedPublicUrl(post.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', quality: q, format: 'webp' }) : null;
-            const srcset = post.thumbnail_url ? widths.map(x => `${this.getTransformedPublicUrl(post.thumbnail_url, { width: x, height: Math.round(x * (baseH/baseW)), resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ') : '';
+            const srcset = post.thumbnail_url ? widths.map(x => `${this.getTransformedPublicUrl(post.thumbnail_url, { width: x, height: x, resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ') : '';
             const eager = idx === 0; // 첫 번째 카드 LCP 개선
             const loading = eager ? '' : ' loading="lazy"';
             const fetchp = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
-            const thumb = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>` : '';
+            const imgTag = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>` : '';
+            const initial = this.escapeHTML(String((post.title || 'N')).trim().charAt(0).toUpperCase());
+            const thumbBlock = `<a href="${href}" data-route class="post-card-thumb${thumbUrl ? '' : ' placeholder'}">${thumbUrl ? imgTag : `<span class=\"thumb-initial\">${initial}</span>`}</a>`;
             const date = this.formatDateKR(post.created_at);
             const categoryBadge = post.category ? `<span class="badge">${this.escapeHTML(post.category)}</span>` : '';
-            const editLink = this.state.user ? `<a href="/writer/${post.slug}" data-route class="btn-xs">편집</a>` : '';
+            const editLink = this.state.user ? `<a href="/writer/${encodeURIComponent(post.slug)}" data-route class="btn-xs">편집</a>` : '';
 
-            return '<article class="post-card">'
-                + (thumb ? `<a href="${href}" data-route class="post-card-thumb">${thumb}</a>` : '')
-                + `<h2 class="post-card-title"><a href="${href}" data-route>${this.escapeHTML(post.title || '제목 없음')}</a></h2>`
-                + (post.summary ? `<p class="post-card-summary">${this.escapeHTML(post.summary)}</p>` : '')
-                + `<div class="post-card-meta">작성일 ${date}${post.category ? ` · 카테고리 ${categoryBadge}` : ''}</div>`
-                + `<div class="post-card-actions">${editLink}</div>`
+            return '<article class="post-card post-card-compact">'
+                + thumbBlock
+                + `<div class="post-card-main">`
+                +   `<h2 class="post-card-title"><a href="${href}" data-route>${this.escapeHTML(post.title || '제목 없음')}</a></h2>`
+                +   (post.summary ? `<p class="post-card-summary">${this.escapeHTML(post.summary)}</p>` : '')
+                +   `<div class="post-card-meta">작성일 ${date}${post.category ? ` · 카테고리 ${categoryBadge}` : ''}</div>`
+                +   `<div class="post-card-actions">${editLink}</div>`
+                + `</div>`
                 + '</article>';
         }).join('');
     }
