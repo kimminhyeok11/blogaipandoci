@@ -386,6 +386,7 @@
 @media (min-width: 1024px) { .post-detail { padding-left: 120px; padding-right: 120px; } }
 @media (max-width: 640px) { .post-detail { padding-left: 12px; padding-right: 12px; } }
 .post-detail-inner { max-width: 720px; margin-left: auto; margin-right: auto; }
+@media (max-width: 640px) { .post-detail-inner { max-width: 100%; } }
 .post-title { margin-bottom: 12px; }
 .post-meta { gap: 8px; margin-bottom: 24px; color: var(--gray-600); }
 .post-meta .post-date { font-size: 14px; }

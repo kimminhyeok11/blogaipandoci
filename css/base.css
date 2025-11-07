@@ -130,6 +130,14 @@ main#app-container {
     }
 }
 
+/* 모바일에서 앱 컨테이너 좌우 패딩 제거로 실제 화면 가용폭 100% 활용 */
+@media (max-width: 640px) {
+    main#app-container {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
 /* 앱 뷰 */
 .app-view { 
     display: none; 
