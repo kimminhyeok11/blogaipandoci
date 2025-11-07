@@ -450,3 +450,29 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
 /* 데이터 절약 모드에서 추가로 인터랙션 약화 */
 .reduced-data .blog-card:hover,
 .reduced-data .post-card:hover { transform: none !important; box-shadow: none !important; }
+
+/* 한국어 타이포그래피 보강: 단어 줄바꿈/줄간격/헤더 줄나눔 */
+.blog-post-content,
+.blog-post-content p,
+.blog-post-content li,
+.blog-card-excerpt,
+.post-card-summary {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+/* 긴 URL/이메일 등은 자연스러운 줄바꿈 허용 */
+.blog-post-content a { word-break: break-word; }
+/* 머리말은 균형 잡힌 줄나눔으로 가독성 향상 */
+.blog-post-content h1,
+.blog-post-content h2,
+.blog-post-content h3,
+.blog-post-content h4,
+.blog-post-content h5,
+.blog-post-content h6 { text-wrap: balance; }
+/* 모바일에서 줄간격 소폭 확대 및 문단 간격 세밀 조정 */
+@media (max-width: 640px) {
+  .blog-post-content { line-height: 1.8; }
+  .blog-post-content p { margin: 0.9rem 0; }
+}
+/* 에디터 문단도 한국어 줄바꿈 규칙 적용 */
+.ce-paragraph { word-break: keep-all; }
