@@ -32,13 +32,14 @@
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/layout.css">
-    <link rel="stylesheet" href="/css/buttons.css">
-    <link rel="stylesheet" href="/css/forms.css">
-    <link rel="stylesheet" href="/css/modal.css">
-    <link rel="stylesheet" href="/css/toast.css">
+    <!-- 비임계 CSS는 preload 후 onload 적용으로 렌더 차단 최소화 -->
+    <link rel="preload" as="style" href="/css/buttons.css" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="/css/forms.css" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="/css/modal.css" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="/css/toast.css" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="stylesheet" href="/css/loader.css">
     <link rel="stylesheet" href="/css/skeleton.css">
-    <link rel="stylesheet" href="/css/error.css">
+    <link rel="preload" as="style" href="/css/error.css" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="stylesheet" href="/css/main.css">
     <!-- 코드 하이라이트 CSS는 초기 렌더 후 지연 로드하여 차단을 줄입니다 -->
     <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" crossorigin onload="this.onload=null;this.rel='stylesheet'">
@@ -107,7 +108,8 @@
         try {
             const fontLink = document.createElement('link');
             fontLink.rel = 'stylesheet';
-            fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap';
+            // CLS 감소를 위해 display=optional로 폰트 스왑을 회피
+            fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=optional';
             const appendFont = () => document.head.appendChild(fontLink);
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', appendFont);
@@ -138,6 +140,25 @@
             ({ createClient } = await loadSupabaseModule());
             // Supabase를 전역으로 설정
             window.supabase = { createClient };
+            // 홈 데이터 프리패치 (병렬 요청)로 초기 렌더 가속
+            try {
+                const client = createClient(window.Config.SUPABASE_URL, window.Config.SUPABASE_ANON_KEY);
+                window.__homePrefetchData = null;
+                (async () => {
+                    const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
+                    const { data, error } = await client
+                        .from(table)
+                        .select('id, title, summary, slug, category, thumbnail_url, created_at, status')
+                        .eq('status', 'published')
+                        .order('created_at', { ascending: false })
+                        .limit(10);
+                    if (!error && Array.isArray(data)) {
+                        window.__homePrefetchData = data;
+                    }
+                })().catch(() => {});
+            } catch (e) {
+                console.warn('홈 프리패치를 건너뜁니다:', e);
+            }
         } catch (e) {
             console.error('Supabase 모듈 로드 실패:', e);
             // 폴백 없이도 앱은 동작하도록 전역을 최소한으로 정의

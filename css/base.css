@@ -40,7 +40,8 @@
     --text-secondary: #374151;       /* 보조 텍스트 색상 (중간 회색) */
     
     /* 폰트 패밀리 (영문 Sans-serif + 한글 고딕 조합) */
-    --font-body: 'Inter', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;  /* 본문 폰트 */
+    /* 시스템 폰트 우선으로 CLS 최소화, 웹폰트는 선택적 */
+    --font-body: system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;  /* 본문 폰트 */
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 모노스페이스 폰트 */
     
     /* 그레이 스케일 팔레트 (Tailwind CSS 기반) */

@@ -1770,6 +1770,14 @@ class BlogApp {
     async loadHomePosts(params = new URLSearchParams()) {
         const container = DOM.$('#home-posts');
         if (!container) return;
+        // 인덱스에서 병렬 프리패치된 데이터가 있으면 즉시 사용하여 초기 렌더 가속
+        try {
+            const pre = window.__homePrefetchData;
+            if (Array.isArray(pre) && pre.length > 0) {
+                container.innerHTML = this.renderPostsListHTML(pre);
+                return;
+            }
+        } catch (_) { /* noop */ }
 
         // 로딩 스켈레톤 표시
         container.innerHTML = '<div class="animate-pulse space-y-3">'
