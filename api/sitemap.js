@@ -31,6 +31,10 @@ export default async function handler(req, res) {
       res.status(304).end();
       return;
     }
+    if (req.method === 'HEAD') {
+      res.status(200).end();
+      return;
+    }
     const urls = (data || []).map(p => {
       const loc = `${SITE_URL}/post/${encodeURIComponent(p.slug)}`;
       const lastmod = new Date(p.updated_at || Date.now()).toISOString();
