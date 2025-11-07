@@ -152,7 +152,7 @@
     position: sticky;
     top: 0;
     z-index: 40;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(3px);
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
@@ -195,10 +195,10 @@
 
 /* 현재 앱 헤더 컨테이너(ID)에도 동일한 높이/섀도우 적용 */
 #main-nav-container {
-    min-height: 60px;
+    min-height: 52px;
     box-shadow: none; /* 네이버풍 라이트 헤더: 과한 그림자 제거 */
     border-bottom: 1px solid var(--gray-200); /* 얇은 바닥선으로 구분 */
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(2px);
 }
 
 /* 네비게이션 바를 심플한 플랫 스타일로 보정 */
@@ -207,7 +207,10 @@
   border: 0;
   box-shadow: none;
   border-radius: 0;
-  padding: 0.75rem 0; /* 위아래 여백만 유지 */
+  padding: 0.5rem 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 
 /* 네비 링크: 기본/호버/활성 상태를 네이버 그린 밑줄로 표현 */
@@ -215,6 +218,9 @@
   color: var(--gray-800);
   font-weight: 600;
   text-decoration: none;
+  font-size: 14px; /* 폰트 로드 전후 높이 일관성 */
+  line-height: 20px; /* 링크 줄높이 고정으로 CLS 축소 */
+  display: inline-block; /* 고정 라인박스 확보 */
 }
 
 #main-nav-container nav a[data-route]:hover,
@@ -234,6 +240,17 @@
   text-underline-offset: 6px;
   text-decoration-thickness: 2px;
 }
+
+/* 브랜드 로고 텍스트: 고정 크기/줄높이로 초기 레이아웃 안정화 */
+#main-nav-container nav > a.brand {
+  font-size: 20px; /* text-xl 대응 ≈ 1.25rem */
+  line-height: 28px; /* 고정 줄높이 */
+  display: inline-block;
+}
+
+/* 햄버거 버튼/아이콘: 이미 유틸로 고정되지만 재확인 */
+#main-nav-container .hamburger-btn { inline-size: 36px; block-size: 36px; }
+#main-nav-container .hamburger-icon { inline-size: 20px; block-size: 16px; }
 
 /* 사이드바 */
 .sidebar {
@@ -570,4 +587,19 @@
   margin: 16px auto;
   max-width: 100%;
   height: auto;
+}
+
+/* 모바일 미니멀 네비게이션 오버라이드 */
+@media (max-width: 640px) {
+  #main-nav-container nav {
+    padding: 0.375rem 0;
+    min-height: 40px;
+  }
+  #main-nav-container nav a[data-route] {
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .header-content { gap: 0.5rem; }
+  .header-nav { gap: 0.75rem; }
+  .grid { gap: 0.5rem; }
 }
