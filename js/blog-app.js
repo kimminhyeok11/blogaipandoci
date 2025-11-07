@@ -78,31 +78,74 @@ class BlogApp {
             // 전역 이벤트 리스너 바인딩
             this.bindGlobalListeners();
 
-            // 초기 세션 조회로 첫 렌더링을 보장
+            // 초기 세션 조회로 첫 렌더링을 보장 + 콜백 처리
             if (this.supabase && this.supabase.auth) {
                 const { data: { session } } = await this.supabase.auth.getSession();
                 this.state.user = session?.user || null;
-                // 매직 링크 콜백 토큰이 포함된 경우 즉시 처리 후 URL 정리
+
+                // 인증 콜백 처리: token_hash(type), OAuth code, 해시 토큰(암시적)
                 try {
-                    const href = window.location.href;
+                    const url = new URL(window.location.href);
+                    const params = url.searchParams;
                     const hash = window.location.hash || '';
-                    const hasToken = /access_token=|refresh_token=|type=recovery|code=/.test(hash) || /access_token=|refresh_token=/.test(href);
-                    if (hasToken) {
-                        // 로딩 표시 후 세션 재확인
+
+                    const tokenHash = params.get('token_hash');
+                    const typeParam = params.get('type'); // 'magiclink' | 'email' | 'signup' 등
+                    const oauthCode = params.get('code');
+                    const hasFragmentTokens = /access_token=|refresh_token=|type=recovery/.test(hash);
+
+                    // 1) PKCE/이메일 템플릿 기반: token_hash + type
+                    if (tokenHash && typeParam) {
+                        this.setLoading(true);
+                        try {
+                            const { data, error } = await this.supabase.auth.verifyOtp({ token_hash: tokenHash, type: typeParam });
+                            if (!error && data?.session?.user) {
+                                this.state.user = data.session.user;
+                                // 토큰 파라미터 제거
+                                params.delete('token_hash');
+                                params.delete('type');
+                                const cleanUrl = url.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                                window.history.replaceState({}, document.title, cleanUrl);
+                                UIComponents.showToast(this.state.user.email + '님, 로그인되었습니다.', 'success');
+                                this.renderNav();
+                                this.navigate('/');
+                            }
+                        } catch (e) {
+                            console.warn('verifyOtp 실패:', e);
+                        }
+                    }
+                    // 2) OAuth PKCE: code 교환
+                    else if (oauthCode) {
+                        this.setLoading(true);
+                        try {
+                            const { data, error } = await this.supabase.auth.exchangeCodeForSession({ code: oauthCode });
+                            if (!error && data?.session?.user) {
+                                this.state.user = data.session.user;
+                                params.delete('code');
+                                const cleanUrl = url.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                                window.history.replaceState({}, document.title, cleanUrl);
+                                UIComponents.showToast(this.state.user.email + '님, 로그인되었습니다.', 'success');
+                                this.renderNav();
+                                this.navigate('/');
+                            }
+                        } catch (e) {
+                            console.warn('exchangeCodeForSession 실패:', e);
+                        }
+                    }
+                    // 3) 암시적(해시) 토큰: getSession 재확인 후 정리
+                    else if (hasFragmentTokens) {
                         this.setLoading(true);
                         const { data: { session: s2 } } = await this.supabase.auth.getSession();
                         if (s2?.user) {
                             this.state.user = s2.user;
-                            // URL에서 토큰 제거 (보안/미관)
-                            const cleanUrl = window.location.pathname + window.location.search;
+                            const cleanUrl = url.pathname + (params.toString() ? ('?' + params.toString()) : '');
                             window.history.replaceState({}, document.title, cleanUrl);
-                            // 환영 토스트 및 홈으로 이동
                             UIComponents.showToast(s2.user.email + '님, 로그인되었습니다.', 'success');
                             this.renderNav();
                             this.navigate('/');
                         }
                     }
-                } catch (_) { /* noop: 콜백 토큰 없거나 실패 */ }
+                } catch (_) { /* 콜백 토큰 없거나 실패 */ }
             } else {
                 this.state.user = null;
             }
