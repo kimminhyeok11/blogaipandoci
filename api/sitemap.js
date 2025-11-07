@@ -8,6 +8,8 @@ export default async function handler(req, res) {
       res.status(500).send('Missing SUPABASE_URL or SUPABASE_ANON_KEY');
       return;
     }
+    // CDN 캐시 및 SWR: 10분 캐시, 24시간 동안 배경 재검증 허용
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=600, stale-while-revalidate=86400');
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const { data, error } = await supabase
       .from('posts')

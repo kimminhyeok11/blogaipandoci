@@ -1,19 +1,7 @@
 /* 메인 CSS 파일 - 모든 모듈 임포트 */
 
-/* 기본 스타일 및 변수 */
-@import './base.css';
-
-/* 레이아웃 */
-@import './layout.css';
-
-/* 컴포넌트 */
-@import './buttons.css';
-@import './forms.css';
-@import './modal.css';
-@import './toast.css';
-@import './loader.css';
-@import './skeleton.css';
-@import './error.css';
+/* 기본 스타일 및 변수/레이아웃/컴포넌트는 개별 링크로 병렬 로드합니다 (index.html).
+   @import는 직렬 요청을 유발해 렌더링을 지연시키므로 제거했습니다. */
 
 /* Editor.js 관련 스타일 */
 .ce-block__content,
@@ -145,6 +133,9 @@
     border-radius: var(--border-radius);
     margin: 1.5rem 0;
 }
+
+/* 기본 비율 클래스: 크기 정보 미지정 이미지의 시프트 완화 */
+img.aspect-16-9 { aspect-ratio: 16/9; }
 
 /* 인라인 텍스트 서식 및 링크 */
 .blog-post-content a {

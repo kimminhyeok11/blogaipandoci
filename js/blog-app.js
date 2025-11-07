@@ -1296,7 +1296,8 @@ class BlogApp {
                     const src = this.getOptimizedPublicUrl(data.file.url, { width: mainW, quality: mainQ, format: 'webp' });
                     const srcset = w.map(x => `${this.getOptimizedPublicUrl(data.file.url, { width: x, quality: setQ, format: 'webp' })} ${x}w`).join(', ');
                     const sizeAttrs = (data.width && data.height) ? ` width="${data.width}" height="${data.height}"` : '';
-                    return `<figure><img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${baseAlt}" loading="lazy" decoding="async"${sizeAttrs}/><figcaption>${baseAlt}</figcaption></figure>`;
+                    const arClass = (!data.width || !data.height) ? ' class="aspect-16-9"' : '';
+                    return `<figure><img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${baseAlt}" loading="lazy" decoding="async"${sizeAttrs}${arClass}/><figcaption>${baseAlt}</figcaption></figure>`;
                 }
                 return '';
             case 'code':
@@ -1777,6 +1778,46 @@ class BlogApp {
             + '<div class="h-24 bg-gray-200 rounded"></div>'
             + '</div>';
 
+        // 테스트/진단용 시나리오 파라미터 처리
+        const scenario = params.get('scenario');
+        if (scenario === 'offline') {
+            container.innerHTML = '<div class="error-banner network-error">'
+                + '<div class="error-banner-content">'
+                +   '<svg class="error-banner-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v2h2v-2zm0-8H9v6h2V5z"/></svg>'
+                +   '<div class="error-banner-text">'
+                +     '<div class="error-banner-title">오프라인 상태입니다</div>'
+                +     '<div class="error-banner-message">네트워크 연결을 확인한 뒤 새로고침해 주세요.</div>'
+                +   '</div>'
+                + '</div>'
+                + '</div>';
+            return;
+        }
+        if (scenario === 'empty') {
+            container.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
+            return;
+        }
+        if (scenario === 'error') {
+            container.innerHTML = '<div class="text-red-600">'
+                + '<p class="font-semibold">게시글을 불러오지 못했습니다.</p>'
+                + '<p class="text-sm text-red-500">진단 시나리오에 의해 오류가 강제되었습니다.</p>'
+                + '</div>';
+            return;
+        }
+
+        // 실제 오프라인 감지 후 사용자 안내
+        if (navigator && typeof navigator.onLine === 'boolean' && !navigator.onLine) {
+            container.innerHTML = '<div class="error-banner network-error">'
+                + '<div class="error-banner-content">'
+                +   '<svg class="error-banner-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v2h2v-2zm0-8H9v6h2V5z"/></svg>'
+                +   '<div class="error-banner-text">'
+                +     '<div class="error-banner-title">오프라인 상태입니다</div>'
+                +     '<div class="error-banner-message">네트워크 연결을 확인한 뒤 새로고침해 주세요.</div>'
+                +   '</div>'
+                + '</div>'
+                + '</div>';
+            return;
+        }
+
         if (!this.supabase) {
             container.innerHTML = '<div class="text-gray-600">'
                 + '<p class="mb-2">데이터 소스가 준비되지 않았습니다.</p>'
@@ -1810,9 +1851,17 @@ class BlogApp {
             container.innerHTML = this.renderPostsListHTML(data);
         } catch (err) {
             // 사용자에게 명시적으로 안내하고, 토스트도 띄움
-            container.innerHTML = '<div class="text-red-600">'
-                + '<p class="font-semibold">게시글을 불러오지 못했습니다.</p>'
-                + '<p class="text-sm text-red-500">잠시 후 다시 시도해 주세요.</p>'
+            const msg = (err && (err.message || err.msg)) ? String(err.message || err.msg) : '알 수 없는 오류';
+            const status = (err && (err.status || err.code)) ? String(err.status || err.code) : '';
+            container.innerHTML = '<div class="error-banner">'
+                + '<div class="error-banner-content">'
+                +   '<svg class="error-banner-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v2h2v-2zm0-8H9v6h2V5z"/></svg>'
+                +   '<div class="error-banner-text">'
+                +     '<div class="error-banner-title">게시글을 불러오지 못했습니다.</div>'
+                +     '<div class="error-banner-message">잠시 후 다시 시도해 주세요.' + (status ? ' (' + this.escapeHTML(status) + ')' : '') + '</div>'
+                +     '<div class="error-details">' + this.escapeHTML(msg) + '</div>'
+                +   '</div>'
+                + '</div>'
                 + '</div>';
             this.handleError(err, 'loadHomePosts');
         }

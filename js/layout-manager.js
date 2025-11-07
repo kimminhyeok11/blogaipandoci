@@ -25,6 +25,10 @@
   const q = (sel, root = document) => root.querySelector(sel);
   const qa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+  // 캐시 및 옵저버
+  let cachedNavWidth = null;
+  let navResizeObserver = null;
+
   function measureNavWidth() {
     const nav = q('#main-nav-container nav');
     if (!nav) return null;
@@ -34,7 +38,11 @@
 
   function setContentMaxWidthVar(px) {
     if (!px || !Number.isFinite(px)) return;
-    document.documentElement.style.setProperty('--content-max-width', px + 'px');
+    const current = getComputedStyle(document.documentElement).getPropertyValue('--content-max-width').trim();
+    const next = px + 'px';
+    if (current !== next) {
+      document.documentElement.style.setProperty('--content-max-width', next);
+    }
   }
 
   function applyContentWidth(container) {
@@ -42,23 +50,25 @@
     const maxWVar = getComputedStyle(document.documentElement).getPropertyValue('--content-max-width').trim();
     if (!maxWVar) return;
     const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
-    container.style.maxWidth = maxWVar;
-    container.style.marginLeft = 'auto';
-    container.style.marginRight = 'auto';
+    if (container.style.maxWidth !== maxWVar) container.style.maxWidth = maxWVar;
+    if (container.style.marginLeft !== 'auto') container.style.marginLeft = 'auto';
+    if (container.style.marginRight !== 'auto') container.style.marginRight = 'auto';
     // 모바일에서는 클래스 기반 패딩(px-0 등)을 존중하여 인라인 패딩 자동 적용을 생략
     if (!isMobile) {
-      container.style.paddingLeft = container.style.paddingLeft || DesignGuide.paddingX + 'px';
-      container.style.paddingRight = container.style.paddingRight || DesignGuide.paddingX + 'px';
+      if (!container.style.paddingLeft) container.style.paddingLeft = DesignGuide.paddingX + 'px';
+      if (!container.style.paddingRight) container.style.paddingRight = DesignGuide.paddingX + 'px';
     }
   }
 
   function centerImages(scope) {
     const imgs = qa('img', scope || document);
     imgs.forEach(img => {
+      if (img.dataset.centered === '1') return;
       img.style.display = 'block';
       img.style.margin = `${DesignGuide.imageMargin}px auto`;
       img.style.maxWidth = '100%';
       img.style.height = 'auto';
+      img.dataset.centered = '1';
     });
   }
 
@@ -76,6 +86,9 @@
     const navW = measureNavWidth();
     const containers = collectContainers();
     const report = [];
+
+    // 프로덕션/비디버그 환경에서는 무거운 검사 자체를 생략
+    if (!debugLayout) return report;
 
     containers.forEach(el => {
       const rect = el.getBoundingClientRect();
@@ -128,13 +141,20 @@
   }
 
   function syncAll() {
+    // 1) 읽기 단계
     const navW = measureNavWidth();
-    if (navW) setContentMaxWidthVar(navW);
-    collectContainers().forEach(el => {
+    // 2) 쓰기 단계
+    if (navW && navW !== cachedNavWidth) {
+      cachedNavWidth = navW;
+      setContentMaxWidthVar(navW);
+    }
+    const containers = collectContainers();
+    containers.forEach(el => {
       applyContentWidth(el);
       applyGuidelinesTo(el);
       centerImages(el);
     });
+    // 3) (디버그 전용) 검사 단계 — 읽기 비용이 커서 필요시에만
     inspectLayout();
   }
 
@@ -154,8 +174,12 @@
   }
 
   function init() {
-    // 초기 동기화 (디바운스)
-    scheduleSync();
+    // 폰트 준비 후 1차 동기화로 텍스트 메트릭 변동에 의한 재측정을 최소화
+    if (document.fonts && typeof document.fonts.ready?.then === 'function') {
+      document.fonts.ready.then(() => scheduleSync());
+    } else {
+      scheduleSync();
+    }
     // DOM 변경을 감지해 자동 적용
     const app = q('#app-container');
     if (app) {
@@ -163,6 +187,12 @@
         scheduleSync();
       });
       mo.observe(app, { childList: true, subtree: true });
+    }
+    // 네비게이션 폭 변경만을 정확히 감지하여 불필요한 재측정을 줄임
+    const nav = q('#main-nav-container nav');
+    if (nav && 'ResizeObserver' in window) {
+      navResizeObserver = new ResizeObserver(() => scheduleSync());
+      navResizeObserver.observe(nav);
     }
     // 리사이즈 시 네비 너비 재측정 후 재적용
     window.addEventListener('resize', () => scheduleSync());

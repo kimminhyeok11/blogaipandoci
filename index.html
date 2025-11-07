@@ -28,10 +28,20 @@
     <meta name="twitter:image" content="https://blogaipandoci.vercel.app/og-image.svg">
     
     <!-- Scripts & Stylesheets -->
+    <!-- 스타일 유틸리티(style.css)는 유지하고, 모듈 CSS는 개별 링크로 병렬 로드 -->
     <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/buttons.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <link rel="stylesheet" href="/css/modal.css">
+    <link rel="stylesheet" href="/css/toast.css">
+    <link rel="stylesheet" href="/css/loader.css">
+    <link rel="stylesheet" href="/css/skeleton.css">
+    <link rel="stylesheet" href="/css/error.css">
     <link rel="stylesheet" href="/css/main.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer nonce="r4nd0m"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <!-- 코드 하이라이트 CSS는 초기 렌더 후 지연 로드하여 차단을 줄입니다 -->
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" crossorigin onload="this.onload=null;this.rel='stylesheet'">
 
     <!-- Global Config: Supabase URL/KEYs injected from user-provided values -->
     <script nonce="r4nd0m">
@@ -47,8 +57,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
-    <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>
+    <!-- 광고 도메인 프리커넥트는 실제 필요 시에만 동적으로 추가하여 초기 연결 비용을 줄입니다 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://unpkg.com" crossorigin>
     <link rel="preconnect" href="https://ddehwkwzmmvcxltlplua.supabase.co" crossorigin>
@@ -57,7 +66,7 @@
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="//unpkg.com">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- 폰트 스타일시트는 초기 페인트 후 비동기 로드로 전환 -->
 
     <!-- Google AdSense (프로덕션 환경에서만 로드) -->
 </head>
@@ -94,6 +103,19 @@
     <!-- [APP SCRIPT] -->
     <!-- Supabase ES 모듈 임포트 (다중 CDN 폴백) -->
     <script type="module" nonce="r4nd0m">
+        // Google Fonts를 비동기로 로드하여 초기 렌더링 차단을 줄입니다.
+        try {
+            const fontLink = document.createElement('link');
+            fontLink.rel = 'stylesheet';
+            fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap';
+            const appendFont = () => document.head.appendChild(fontLink);
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', appendFont);
+            } else {
+                // 초기 페인트 이후에 로드되도록 약간의 지연
+                (window.requestIdleCallback ? requestIdleCallback : setTimeout)(appendFont);
+            }
+        } catch (e) { /* noop */ }
         async function loadSupabaseModule() {
             const sources = [
                 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm',
@@ -126,13 +148,76 @@
         // 광고 스크립트는 프로덕션 도메인(HTTPS)에서만 로드
         const isProdHost = window.location.protocol === 'https:'
             && ['blogaipandoci.vercel.app'].includes(window.location.hostname);
-        if (isProdHost) {
-            const adsScript = document.createElement('script');
-            adsScript.async = true;
-            adsScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112';
-            adsScript.setAttribute('crossorigin', 'anonymous');
-            adsScript.nonce = 'r4nd0m';
-            document.head.appendChild(adsScript);
+        const adsEnabled = isProdHost && (window.Config?.ADS_ENABLED !== false);
+        if (adsEnabled) {
+            const loadAdsScript = () => {
+                if (window.__adsScriptLoaded) return;
+                // 필요 시점에만 프리커넥트 추가
+                const addPreconnect = (href) => {
+                    if (document.querySelector(`link[rel=preconnect][href="${href}"]`)) return;
+                    const l = document.createElement('link');
+                    l.rel = 'preconnect';
+                    l.href = href;
+                    l.crossOrigin = 'anonymous';
+                    document.head.appendChild(l);
+                };
+                addPreconnect('https://pagead2.googlesyndication.com');
+                addPreconnect('https://googleads.g.doubleclick.net');
+
+                const adsScript = document.createElement('script');
+                adsScript.async = true;
+                adsScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112';
+                adsScript.setAttribute('crossorigin', 'anonymous');
+                adsScript.nonce = 'r4nd0m';
+                adsScript.dataset.loaded = '1';
+                window.__adsScriptLoaded = true;
+                document.head.appendChild(adsScript);
+            };
+            // 실제 광고 슬롯이 존재하고, 가시 영역에 들어올 때만 로드
+            const slots = () => Array.from(document.querySelectorAll('.adsbygoogle'));
+            const beginGate = () => {
+                const els = slots();
+                if (!els.length || window.__adsScriptLoaded) return; // 슬롯이 없으면 스크립트 로드 생략
+                if ('IntersectionObserver' in window) {
+                    const io = new IntersectionObserver((entries, obs) => {
+                        for (const e of entries) {
+                            if (e.isIntersecting) {
+                                obs.disconnect();
+                                loadAdsScript();
+                                break;
+                            }
+                        }
+                    }, { rootMargin: '0px' }); // 가시 영역에 들어올 때만 로드
+                    els.forEach(el => io.observe(el));
+                } else {
+                    // 폴백: 사용자 상호작용 후 로드
+                    window.addEventListener('scroll', () => {
+                        loadAdsScript();
+                    }, { once: true, passive: true });
+                }
+            };
+            // 슬롯이 나중에 동적으로 추가되는 경우를 대비해 감시
+            const observeSlotsLater = () => {
+                if (!('MutationObserver' in window)) return;
+                const mo = new MutationObserver(() => {
+                    if (window.__adsScriptLoaded) { mo.disconnect(); return; }
+                    beginGate();
+                });
+                mo.observe(document.body, { childList: true, subtree: true });
+            };
+            const startGate = () => {
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => { beginGate(); observeSlotsLater(); });
+                } else {
+                    beginGate();
+                    observeSlotsLater();
+                }
+            };
+            if (document.fonts && typeof document.fonts.ready?.then === 'function') {
+                document.fonts.ready.then(startGate);
+            } else {
+                startGate();
+            }
         } else {
             console.info('[Ads] 비프로덕션 호스트에서 광고 로드를 건너뜁니다:', window.location.hostname);
         }

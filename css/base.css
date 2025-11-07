@@ -149,6 +149,13 @@ main#app-container {
     opacity: 1; 
 }
 
+/* 본문 이미지의 기본 크기 예약: 원본 메타가 없을 때 레이아웃 안정성 확보 */
+.post-content img,
+.blog-post-content img,
+#view-post article img {
+  aspect-ratio: 16/9; /* 합리적 기본값, 실제 width/height가 있으면 브라우저가 우선 적용 */
+}
+
 /* 프로즈 스타일 */
 .prose-custom h1, 
 .prose-custom h2, 
