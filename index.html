@@ -37,7 +37,7 @@
     <link rel="preload" as="style" href="/css/forms.css" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" as="style" href="/css/modal.css" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" as="style" href="/css/toast.css" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="stylesheet" href="/css/loader.css">
+    <link rel="preload" as="style" href="/css/loader.css" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="stylesheet" href="/css/skeleton.css">
     <link rel="preload" as="style" href="/css/error.css" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="stylesheet" href="/css/main.css">
@@ -51,34 +51,26 @@
         window.Config.SUPABASE_URL = 'https://ddehwkwzmmvcxltlplua.supabase.co';
         // 공개용(클라이언트) anon 키
         window.Config.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
+        // 프로덕션 사이트 URL (매직링크 리디렉션 기준)
+        window.Config.SITE_URL = 'https://blogaipandoci.vercel.app';
         // Provide legacy global identifier if any script refers directly to Config
         window.Config = window.Config;
     </script>
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- 광고 도메인 프리커넥트는 실제 필요 시에만 동적으로 추가하여 초기 연결 비용을 줄입니다 -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="preconnect" href="https://unpkg.com" crossorigin>
-    <link rel="preconnect" href="https://ddehwkwzmmvcxltlplua.supabase.co" crossorigin>
-    <link rel="dns-prefetch" href="//fonts.googleapis.com">
-    <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="//unpkg.com">
+    <!-- 외부 도메인 프리커넥트/프리페치는 리소스 절약을 위해 제거 -->
     <!-- 폰트 스타일시트는 초기 페인트 후 비동기 로드로 전환 -->
 
     <!-- Google AdSense (프로덕션 환경에서만 로드) -->
 </head>
 <body class="antialiased">
     <!-- 앱 로더 -->
-    <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center">
+    <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center" hidden>
         <div class="loader-spinner"></div>
     </div>
     
     <!-- 헤더 (네비게이션) -->
-    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-2 sm:p-4 bg-white/80 backdrop-blur-sm"></header>
+    <header id="main-nav-container" class="sticky top-0 z-40 w-full flex justify-center p-1 sm:p-2 bg-white/80 backdrop-blur-sm"></header>
     
     <!-- 메인 콘텐츠 (뷰가 렌더링되는 곳) -->
     <main id="app-container" class="w-full">
@@ -97,6 +89,16 @@
         </p>
     </footer>
 
+    <!-- 오프라인 배너 -->
+    <style>
+      .offline-banner{position:fixed;left:50%;transform:translateX(-50%);top:56px;z-index:50;background:#111;color:#fff;padding:8px 12px;border-radius:9999px;box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:12px;line-height:1;display:flex;align-items:center;gap:8px}
+      .offline-banner .dot{width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block}
+    </style>
+    <div id="offline-banner" class="offline-banner" hidden>
+      <span class="dot" aria-hidden="true"></span>
+      <span>오프라인 상태입니다. 캐시로 표시 중</span>
+    </div>
+
     <!-- 모달 및 토스트 컨테이너 -->
     <div id="modal-container"></div>
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3" aria-live="polite" aria-atomic="true"></div>
@@ -104,20 +106,101 @@
     <!-- [APP SCRIPT] -->
     <!-- Supabase ES 모듈 임포트 (다중 CDN 폴백) -->
     <script type="module" nonce="r4nd0m">
-        // Google Fonts를 비동기로 로드하여 초기 렌더링 차단을 줄입니다.
+        // 네트워크 성능: 필요 시점에만 빠르게 연결 준비 (Just-In-Time preconnect)
+        function addPreconnect(origin) {
+            try {
+                if (!origin) return;
+                const u = new URL(origin, window.location.origin).origin;
+                const existed = document.querySelector(`link[rel="preconnect"][href="${u}"]`);
+                if (existed) return;
+                const l = document.createElement('link');
+                l.rel = 'preconnect';
+                l.href = u;
+                l.crossOrigin = 'anonymous';
+                document.head.appendChild(l);
+            } catch { /* noop */ }
+        }
+        // 간단한 Supabase 이미지 최적화 URL 생성 유틸 (public URL 대상)
+        function createOptimizedThumb(url) {
+            try {
+                const u = new URL(url, window.location.origin);
+                if (!/supabase\.co\/.+\/object\/public\//.test(u.href)) return url;
+                const params = new URLSearchParams({ width: '160', height: '160', resize: 'cover', format: 'webp', quality: '80' });
+                const q = params.toString();
+                return u.search && u.search.length > 1 ? `${u.href}&${q}` : `${u.href}?${q}`;
+            } catch { return url; }
+        }
+
+        // [Prefetch] 초기 LCP 개선을 위해 Supabase REST로 최근 글을 즉시 프리패치합니다.
         try {
-            const fontLink = document.createElement('link');
-            fontLink.rel = 'stylesheet';
-            // CLS 감소를 위해 display=optional로 폰트 스왑을 회피
-            fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=optional';
-            const appendFont = () => document.head.appendChild(fontLink);
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', appendFont);
-            } else {
-                // 초기 페인트 이후에 로드되도록 약간의 지연
-                (window.requestIdleCallback ? requestIdleCallback : setTimeout)(appendFont);
-            }
-        } catch (e) { /* noop */ }
+            window.__homePrefetchData = window.__homePrefetchData || null;
+            (async () => {
+                const base = window.Config?.SUPABASE_URL || '';
+                const key = window.Config?.SUPABASE_ANON_KEY || '';
+                const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
+                if (!base || !key) return;
+                // Supabase REST 연결을 미리 준비해 초기 응답 지연을 줄입니다.
+                try { addPreconnect(new URL(base).origin); } catch { /* noop */ }
+                const url = `${base.replace(/\/$/, '')}/rest/v1/${table}`
+                    + `?select=id,title,summary,slug,category,thumbnail_url,created_at,status`
+                    + `&status=eq.published&order=created_at.desc&limit=8`;
+                const res = await fetch(url, {
+                    headers: {
+                        'apikey': key,
+                        'Authorization': `Bearer ${key}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        window.__homePrefetchData = data;
+                        // 첫/두 번째 썸네일을 네트워크 상태에 따라 조건부 preload하여 LCP 개선
+                        try {
+                            const conn = navigator.connection || {};
+                            const isSlow = !!conn.saveData || /(^|[^a-z])(2g|3g)/.test(String(conn.effectiveType || ''));
+                            const preloadCount = isSlow ? 1 : 2;
+                            // LCP 후보 이미지의 도메인에 대해 JIT preconnect로 핸드셰이크를 앞당깁니다.
+                            try {
+                                const firstSrc = data[0]?.thumbnail_url ? createOptimizedThumb(String(data[0].thumbnail_url)) : '';
+                                if (firstSrc) addPreconnect(new URL(firstSrc).origin);
+                            } catch { /* noop */ }
+                            for (let i = 0; i < Math.min(preloadCount, data.length); i++) {
+                                const src = data[i]?.thumbnail_url ? createOptimizedThumb(String(data[i].thumbnail_url)) : '';
+                                if (!src) continue;
+                                const pl = document.createElement('link');
+                                pl.rel = 'preload';
+                                pl.as = 'image';
+                                pl.href = src;
+                                if (i === 0) pl.fetchPriority = 'high';
+                                document.head.appendChild(pl);
+                            }
+                        } catch (_) { /* noop */ }
+                    }
+                }
+            })().catch(() => {});
+            // 네트워크 상태가 느리거나 데이터 절약 모드인 경우 애니메이션/데이터 비용을 줄입니다.
+            try {
+              const conn = navigator.connection || {};
+              const saveData = !!conn.saveData;
+              const et = String(conn.effectiveType || '');
+              const isSlow = saveData || /(^|[^a-z])(2g|3g)/.test(et);
+              if (isSlow) document.documentElement.classList.add('reduced-data');
+            } catch (_) { /* noop */ }
+        } catch (_) { /* noop */ }
+        // Google Fonts 비동기 로더 제거: 네트워크 리소스 절약
+        // 온라인/오프라인 상태 감지 및 배너 표시
+        try {
+            const banner = document.getElementById('offline-banner');
+            const setState = () => {
+                const online = navigator.onLine;
+                if (!banner) return;
+                if (online) banner.setAttribute('hidden',''); else banner.removeAttribute('hidden');
+            };
+            window.addEventListener('online', setState);
+            window.addEventListener('offline', setState);
+            setState();
+        } catch (_) { /* noop */ }
         async function loadSupabaseModule() {
             const sources = [
                 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm',
@@ -125,6 +208,8 @@
             ];
             for (const src of sources) {
                 try {
+                    // 모듈 임포트 직전에 해당 CDN으로 preconnect하여 로드 지연을 줄입니다.
+                    try { addPreconnect(new URL(src).origin); } catch { /* noop */ }
                     const mod = await import(src);
                     console.log('Supabase loaded from:', src);
                     return mod;
@@ -135,35 +220,23 @@
             throw new Error('Supabase import failed from all sources');
         }
 
-        let createClient;
+        // Supabase ES 모듈은 초기 페인트 이후 유휴 시간에 로드하여 초기 차단을 줄입니다.
         try {
-            ({ createClient } = await loadSupabaseModule());
-            // Supabase를 전역으로 설정
-            window.supabase = { createClient };
-            // 홈 데이터 프리패치 (병렬 요청)로 초기 렌더 가속
-            try {
-                const client = createClient(window.Config.SUPABASE_URL, window.Config.SUPABASE_ANON_KEY);
-                window.__homePrefetchData = null;
-                (async () => {
-                    const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
-                    const { data, error } = await client
-                        .from(table)
-                        .select('id, title, summary, slug, category, thumbnail_url, created_at, status')
-                        .eq('status', 'published')
-                        .order('created_at', { ascending: false })
-                        .limit(10);
-                    if (!error && Array.isArray(data)) {
-                        window.__homePrefetchData = data;
-                    }
-                })().catch(() => {});
-            } catch (e) {
-                console.warn('홈 프리패치를 건너뜁니다:', e);
+            const lazyLoadSupabase = () => (async () => {
+                try {
+                    const { createClient } = await loadSupabaseModule();
+                    window.supabase = { createClient };
+                    console.log('Supabase ready (lazy)');
+                } catch (e) {
+                    console.warn('Supabase lazy load failed:', e);
+                }
+            })();
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(lazyLoadSupabase);
+            } else {
+                setTimeout(lazyLoadSupabase, 1200);
             }
-        } catch (e) {
-            console.error('Supabase 모듈 로드 실패:', e);
-            // 폴백 없이도 앱은 동작하도록 전역을 최소한으로 정의
-            window.supabase = null;
-        }
+        } catch (_) { /* noop */ }
         
         // 개발 환경에서는 Google AdSense 로드를 건너뜁니다 (403 및 Quirks Mode 회피)
         // 광고 스크립트는 프로덕션 도메인(HTTPS)에서만 로드
@@ -258,19 +331,33 @@
         // 모듈들을 순차적으로 로드 (의존성 보장)
         (async () => {
             try {
+                // Config와 DOM 유틸을 먼저 로드해 기본 전역을 준비
                 await loadScript('/js/config.js');
                 await loadScript('/js/dom-utils.js');
-                await loadScript('/js/script-loader.js');
+                // 초기 화면 구성 요소를 빠르게 파싱
                 await loadScript('/js/ui-components.js');
-                // 레이아웃 매니저는 가이드라인/검사를 제공하므로 앱 전에 로드
-                await loadScript('/js/layout-manager.js');
                 await loadScript('/js/blog-app.js');
-                // 성능 측정 모듈은 의존성이 없어 마지막에 로드합니다.
-                await loadScript('/js/perf-monitor.js');
+                // 레이아웃 매니저 및 부가 모듈은 초기 페인트 이후 유휴 시간에 로드
+                const deferScript = (src) => {
+                  if ('requestIdleCallback' in window) {
+                    requestIdleCallback(() => loadScript(src));
+                  } else {
+                    setTimeout(() => loadScript(src), 1000);
+                  }
+                };
+                deferScript('/js/layout-manager.js');
+                deferScript('/js/script-loader.js');
+                deferScript('/js/perf-monitor.js');
                 
                 const boot = () => {
-                    if (window.LayoutManager) window.LayoutManager.init();
                     new BlogApp();
+                    // 레이아웃 매니저가 나중에 로드되는 경우 초기화 예약
+                    const tryInitLayout = () => { if (window.LayoutManager) window.LayoutManager.init(); };
+                    if ('requestIdleCallback' in window) {
+                        requestIdleCallback(tryInitLayout);
+                    } else {
+                        setTimeout(tryInitLayout, 1200);
+                    }
                 };
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', boot);

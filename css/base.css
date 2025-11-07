@@ -41,7 +41,7 @@
     
     /* 폰트 패밀리 (영문 Sans-serif + 한글 고딕 조합) */
     /* 시스템 폰트 우선으로 CLS 최소화, 웹폰트는 선택적 */
-    --font-body: system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;  /* 본문 폰트 */
+    --font-body: system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;  /* 본문 폰트 */
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 모노스페이스 폰트 */
     
     /* 그레이 스케일 팔레트 (Tailwind CSS 기반) */
@@ -150,11 +150,13 @@ main#app-container {
     opacity: 1; 
 }
 
-/* 본문 이미지의 기본 크기 예약: 원본 메타가 없을 때 레이아웃 안정성 확보 */
+/* 본문 이미지: 원본 비율을 유지하고 컨테이너를 넘지 않도록 제한 */
 .post-content img,
 .blog-post-content img,
 #view-post article img {
-  aspect-ratio: 16/9; /* 합리적 기본값, 실제 width/height가 있으면 브라우저가 우선 적용 */
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 
 /* 프로즈 스타일 */

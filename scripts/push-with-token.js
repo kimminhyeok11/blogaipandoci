@@ -45,7 +45,10 @@ const fs = require('fs');
       'api/sitemap.js',
       'api/metrics.js',
       'supabase/config.toml',
-      'vercel.json'
+      'vercel.json',
+      // 추가: 최근 성능 작업으로 수정된 파일들
+      'index.html',
+      'css/base.css'
     ];
     for (const f of baseFiles) {
       const p = path.join(dir, f);
