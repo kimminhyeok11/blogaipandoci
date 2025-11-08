@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://blogaipandoci.vercel.app/api/sitemap
+
+# Crawl-delay (optional for politeness; many crawlers ignore)
+# Crawl-delay: 2
