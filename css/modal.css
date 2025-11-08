@@ -5,12 +5,13 @@
     position: fixed;
     inset: 0;
     z-index: 50;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: saturate(120%) blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.25s ease;
 }
 
 /* 모달 컨테이너 */
@@ -22,7 +23,7 @@
     width: 100%;
     margin: 0 auto;
     box-shadow: var(--shadow-lg);
-    animation: slideUp 0.3s ease;
+    animation: slideUp 0.25s ease;
     max-height: 90vh;
     overflow: hidden;
     display: flex;
@@ -59,6 +60,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* 터치 타깃 최소 크기 확보 */
+.modal-close {
+    min-width: 44px;
+    min-height: 44px;
 }
 
 .modal-close:hover {
@@ -241,3 +248,21 @@
         transform: translateX(0);
     }
 }
+
+/* 접근성: 모션 감소 사용자 설정 반영 */
+@media (prefers-reduced-motion: reduce) {
+    .modal-overlay { animation: none; backdrop-filter: none; }
+    .modal-content { animation: none; }
+    .modal-enter .modal-overlay,
+    .modal-enter .modal-content,
+    .modal-exit .modal-overlay,
+    .modal-exit .modal-content { animation: none; }
+}
+
+/* 모바일에서 닫기 버튼 터치 타깃 확대 */
+@media (max-width: 640px) {
+    .modal-close { width: 44px; height: 44px; }
+}
+
+/* 모달 열림 시 바디 스크롤 잠금 (JS가 body.modal-open 토글 시 적용) */
+body.modal-open { overflow: hidden; }

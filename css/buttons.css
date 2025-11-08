@@ -5,15 +5,22 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1rem; /* 8px 그리드 정렬 */
+    min-height: 48px; /* 권장 터치 타깃 높이 */
     border-radius: var(--border-radius);
-    font-weight: 500;
+    font-weight: 600;
     font-size: 0.875rem;
     line-height: 1.25rem;
-    transition: all var(--transition-fast);
+    transition: background-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
     cursor: pointer;
-    border: 1px solid transparent;
+    border: 1px solid rgba(0,0,0,0.06);
     text-decoration: none;
+    backdrop-filter: saturate(120%);
+}
+
+.btn:focus-visible {
+    outline: 2px solid rgba(var(--primary-color-rgb), var(--ring-alpha, 0.35));
+    outline-offset: 2px;
 }
 
 .btn:disabled {
@@ -26,6 +33,7 @@
     background-color: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
+    box-shadow: 0 1px 2px rgba(10,132,255,0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -47,7 +55,7 @@
 .btn-outline {
     background-color: transparent;
     color: var(--primary-color);
-    border-color: var(--primary-color);
+    border-color: rgba(10,132,255,0.3);
 }
 
 .btn-outline:hover:not(:disabled) {
@@ -57,7 +65,7 @@
 
 .btn-ghost {
     background-color: transparent;
-    color: var(--gray-600);
+    color: var(--gray-900);
     border-color: transparent;
 }
 
@@ -79,15 +87,15 @@
 
 /* 버튼 크기 */
 .btn-sm {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    line-height: 1rem;
+    padding: 0.2rem 0.5rem; /* 축소 */
+    font-size: 0.6875rem; /* ≈ 11px */
+    line-height: 0.95rem;
 }
 
 .btn-lg {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    line-height: 1.5rem;
+    padding: 0.625rem 1.25rem; /* 축소 */
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
 }
 
 .btn-xl {
@@ -107,14 +115,14 @@
 
 /* 카테고리 버튼 */
 .category-btn {
-    padding: 0.5rem 1rem;
+    padding: 0.375rem 0.75rem; /* 축소 */
     border-radius: var(--border-radius-full);
     background-color: var(--gray-100);
     color: var(--gray-500);
     border: 1px solid var(--gray-200);
     transition: all var(--transition-fast);
     font-weight: 500;
-    font-size: 0.875rem;
+    font-size: 0.8125rem; /* 축소 */
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
@@ -135,9 +143,9 @@
 
 /* 아이콘 버튼 */
 .btn-icon {
-    padding: 0.5rem;
-    width: 2.5rem;
-    height: 2.5rem;
+    padding: 0.5rem; /* 8px 그리드 정렬 */
+    width: 3rem; /* 48px */
+    height: 3rem; /* 48px */
     border-radius: var(--border-radius);
 }
 
@@ -217,72 +225,35 @@
     animation: spin 1s linear infinite;
 }
 
-/* 햄버거 버튼 (접근성/터치 최적화) */
-.hamburger-btn {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    min-height: 48px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--gray-300);
-    border-radius: var(--border-radius-full);
-    background-color: white;
-    color: var(--gray-800);
-    transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+/* (삭제) 햄버거 버튼/아이콘 및 관련 애니메이션 스타일 제거됨 */
+
+/* ===== 추가 보강: 버튼 접근성/상태/터치 타깃 일관화 ===== */
+/* 기본 버튼: 터치 타깃 표준화 및 조작 최적화 */
+.btn {
+  min-height: 40px; /* 최소 40px 확보 (이미 48px이면 상위 규칙 유지) */
+  touch-action: manipulation;
 }
 
-.hamburger-btn:hover {
-    background-color: var(--gray-100);
-    border-color: var(--gray-400);
+/* 포커스 가시성 향상 */
+.btn:focus { outline: none; }
+.btn:focus-visible {
+  outline: 2px solid rgba(var(--primary-color-rgb, 0, 153, 0), var(--ring-alpha, 0.35));
+  outline-offset: 2px;
 }
 
-.hamburger-btn:active {
-    transform: scale(0.98);
+/* 로딩/비활성 상태 일관화 */
+.btn[aria-busy="true"], .btn-loading {
+  pointer-events: none;
+  opacity: 0.7;
 }
 
-.hamburger-btn:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+/* 아이콘 버튼 최소 크기 보정 */
+.btn-icon {
+  min-inline-size: 40px;
+  min-block-size: 40px;
 }
 
-.hamburger-icon {
-    position: relative;
-    width: 22px;
-    height: 16px;
-}
-
-.hamburger-icon .bar {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background-color: var(--text-primary);
-    border-radius: 2px;
-    transition: transform 200ms ease, opacity 200ms ease, top 200ms ease;
-}
-
-.hamburger-icon .bar-top { top: 0; }
-.hamburger-icon .bar-middle { top: 7px; }
-.hamburger-icon .bar-bottom { top: 14px; }
-
-/* 메뉴 열림 시 애니메이션: 햄버거 → X */
-#nav-toggle[aria-expanded="true"] .bar-top {
-    top: 7px;
-    transform: rotate(45deg);
-}
-
-#nav-toggle[aria-expanded="true"] .bar-middle {
-    opacity: 0;
-}
-
-#nav-toggle[aria-expanded="true"] .bar-bottom {
-    top: 7px;
-    transform: rotate(-45deg);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .hamburger-icon .bar { transition: none; }
-    .hamburger-btn { transition: none; }
+/* 강제 대비 모드 대응 */
+@media (forced-colors: active) {
+  .btn:focus-visible { outline: 2px solid CanvasText; }
 }

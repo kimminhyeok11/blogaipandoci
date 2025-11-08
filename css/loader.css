@@ -253,6 +253,27 @@
     80%, 100% { content: '...'; }
 }
 
+/* 접근성: 모션 감소 사용자 설정 반영 */
+@media (prefers-reduced-motion: reduce) {
+    .loader-spinner,
+    .loader-spinner-sm,
+    .loader-spinner-lg,
+    .skeleton,
+    .skeleton-text,
+    .skeleton-title,
+    .skeleton-avatar,
+    .skeleton-card,
+    .dots-loader-dot,
+    .pulse-loader,
+    .bars-loader-bar,
+    .btn-loading::after,
+    .loading-text-dots::after {
+        animation: none !important;
+        transition: none !important;
+    }
+    .progress-bar-fill { transition: none !important; }
+}
+
 /* 카드 로딩 상태 */
 .card-loading {
     position: relative;
