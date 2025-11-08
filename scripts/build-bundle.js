@@ -6,7 +6,7 @@ const path = require('path');
 
 async function run() {
   const root = path.resolve(__dirname, '..');
-  const outDir = root; // emit to project root for simple absolute path '/app.bundle.js'
+  const outDir = path.resolve(root, 'dist'); // emit to project root for simple absolute path '/app.bundle.js'
   let esbuild;
   try {
     esbuild = require('esbuild');
