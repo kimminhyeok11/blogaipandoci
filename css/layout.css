@@ -213,7 +213,8 @@
   align-items: center;
 }
 
-/* 네비 링크: 기본/호버/활성 상태를 네이버 그린 밑줄로 표현 */
+/* 네비 링크: 공통 규칙(nav-link 또는 SPA data-route) */
+#main-nav-container nav a.nav-link,
 #main-nav-container nav a[data-route] {
   color: var(--gray-900);
   font-weight: 600;
@@ -225,6 +226,8 @@
   display: inline-block;
 }
 
+#main-nav-container nav a.nav-link:hover,
+#main-nav-container nav a.nav-link:focus-visible,
 #main-nav-container nav a[data-route]:hover,
 #main-nav-container nav a[data-route]:focus-visible {
   color: var(--primary-color);
@@ -233,6 +236,7 @@
   outline-offset: 2px;
 }
 
+#main-nav-container nav a.nav-link[aria-current="page"],
 #main-nav-container nav a[data-route][aria-current="page"] {
   color: var(--primary-color);
 }
@@ -251,6 +255,7 @@
 #main-nav-container .hamburger-icon { inline-size: 20px; block-size: 16px; }
 
 /* 네비 링크 방문 상태 가독성 보정 */
+#main-nav-container nav a.nav-link:visited,
 #main-nav-container nav a[data-route]:visited {
   color: var(--gray-800);
 }
@@ -607,6 +612,14 @@
   padding-left: var(--content-padding-x);
   padding-right: var(--content-padding-x);
 }
+
+/* 섹션 헤더: 작은 제목으로 근접 배치해 그룹화 강화 */
+.section-header { margin-top: 8px; margin-bottom: 8px; }
+.section-title { font-size: 1rem; line-height: 1.4; font-weight: 700; color: var(--gray-900); }
+
+/* 홈 리스트는 헤더 바로 아래에 근접 배치 */
+#home-posts { margin-top: 8px; }
+#home-pagination { margin-top: 8px; }
 
 /* 이미지 자동 중앙 정렬 & 반응형 */
 #view-post article img,
