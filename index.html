@@ -12,6 +12,14 @@
     <meta name="nonce" content="r4nd0m">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='%23D946EF'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' font-family='Arial' font-size='140' fill='white'%3EI%3C/text%3E%3C/svg%3E">
     
+    <!-- 외부 CDN 및 API에 대한 초기 연결 준비로 체인 대기 단축 -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://ddehwkwzmmvcxltlplua.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="//ddehwkwzmmvcxltlplua.supabase.co">
+    
     <!-- CSP (Content Security Policy) -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://pagead2.googlesyndication.com https://www.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google https://*.gemius.pl https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com https://*.googlesyndication.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
     
@@ -26,6 +34,8 @@
     <meta name="twitter:title" content="InsureLog - AI, 기술, 그리고 보험">
     <meta name="twitter:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
     <meta name="twitter:image" content="https://blogaipandoci.vercel.app/og-image.svg">
+    <!-- 번들 프리로드 (존재할 경우만 브라우저가 가져옴; 없으면 무시) -->
+    <link rel="preload" as="script" href="/app.bundle.min.js" crossorigin>
     
     <!-- Scripts & Stylesheets -->
     <!-- 스타일 유틸리티(style.css)는 유지하고, 모듈 CSS는 개별 링크로 병렬 로드 -->
@@ -34,16 +44,9 @@
     <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/layout.css">
     <!-- 비임계 CSS: CSP 준수를 위해 인라인 onload 제거, 일반 스타일 링크로 전환 -->
-    <link rel="stylesheet" href="/css/buttons.css">
-    <link rel="stylesheet" href="/css/forms.css">
-    <link rel="stylesheet" href="/css/modal.css">
-    <link rel="stylesheet" href="/css/toast.css">
-    <link rel="stylesheet" href="/css/loader.css">
-    <link rel="stylesheet" href="/css/skeleton.css">
-    <link rel="stylesheet" href="/css/error.css">
+    <!-- 비임계 CSS는 초기 페인트 후 지연 로드 (렌더링 차단 최소화) -->
     <link rel="stylesheet" href="/css/main.css">
-    <!-- 코드 하이라이트 CSS: CSP 준수를 위해 인라인 onload 제거 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" crossorigin>
+    <!-- 코드 하이라이트 CSS는 초기 페인트 이후 지연 로드로 전환 -->
 
     <!-- Structured Data (JSON-LD): WebSite & Organization -->
     <script type="application/ld+json">
@@ -74,6 +77,8 @@
         window.Config.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
         // 프로덕션 사이트 URL (매직링크 리디렉션 기준)
         window.Config.SITE_URL = 'https://blogaipandoci.vercel.app';
+        // Storage 이미지 버킷명 (LCP 이미지/썸네일 변환에 사용)
+        window.Config.IMAGE_BUCKET_NAME = 'thought-images';
     </script>
 
     <!-- Fonts -->
@@ -118,6 +123,36 @@
     <!-- [APP SCRIPT] -->
     <!-- Supabase ES 모듈 임포트 (다중 CDN 폴백) -->
     <script type="module" nonce="r4nd0m">
+        // 비임계 CSS 지연 로드: 초기 컨텐츠가 그려진 뒤에 로드하여 렌더링 차단을 줄임
+        const loadStyle = (href) => new Promise((resolve, reject) => {
+            if (document.querySelector(`link[rel="stylesheet"][href="${href}"]`)) return resolve();
+            const l = document.createElement('link');
+            l.rel = 'stylesheet';
+            l.href = href;
+            l.onload = () => resolve();
+            l.onerror = () => reject(new Error(`Failed to load CSS: ${href}`));
+            document.head.appendChild(l);
+        });
+        const nonCriticalCSS = [
+            '/css/buttons.css',
+            '/css/forms.css',
+            '/css/modal.css',
+            '/css/toast.css',
+            '/css/loader.css',
+            '/css/skeleton.css',
+            '/css/error.css',
+            'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css'
+        ];
+        const loadNonCriticalCSS = () => {
+            nonCriticalCSS.forEach(href => {
+                loadStyle(href).catch(() => {});
+            });
+        };
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(loadNonCriticalCSS, { timeout: 1500 });
+        } else {
+            setTimeout(loadNonCriticalCSS, 800);
+        }
         // 네트워크 성능: 필요 시점에만 빠르게 연결 준비 (Just-In-Time preconnect)
         function addPreconnect(origin) {
             try {
@@ -239,14 +274,26 @@
         }
 
         // 분리된 JavaScript 모듈들 로드
+        // .min.js가 존재하면 우선 로드, 실패 시 원본으로 폴백
+        const resolveMinPath = (src) => src.replace(/\.js$/, '.min.js');
         const loadScript = (src) => {
             return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.nonce = 'r4nd0m';
-                script.onload = resolve;
-                script.onerror = reject;
-                document.head.appendChild(script);
+                const tryLoad = (candidate, fallback) => {
+                    const s = document.createElement('script');
+                    s.src = candidate;
+                    s.nonce = 'r4nd0m';
+                    s.onload = resolve;
+                    s.onerror = () => {
+                        if (fallback && candidate !== fallback) {
+                            tryLoad(fallback, null);
+                        } else {
+                            reject(new Error('Script load failed: ' + candidate));
+                        }
+                    };
+                    document.head.appendChild(s);
+                };
+                // 최소화된 파일 우선 시도
+                tryLoad(resolveMinPath(src), src);
             });
         };
         
@@ -262,9 +309,49 @@
             return !!(window.supabase && typeof window.supabase.createClient === 'function');
         };
 
+        // 번들이 존재하면 우선 로드하여 네트워크 왕복을 줄입니다.
+        async function tryLoadBundleAndBoot() {
+            const candidates = ['/app.bundle.min.js', '/app.bundle.js'];
+            for (const url of candidates) {
+                try {
+                    const res = await fetch(url, { method: 'HEAD' });
+                    if (!res.ok) continue;
+                    await new Promise((resolve, reject) => {
+                        const s = document.createElement('script');
+                        s.src = url;
+                        s.defer = true;
+                        s.nonce = 'r4nd0m';
+                        s.onload = resolve;
+                        s.onerror = () => reject(new Error('Bundle load failed'));
+                        document.head.appendChild(s);
+                    });
+                    // 번들에는 BlogApp/DOM/UIComponents 등이 포함됨
+                    const boot = () => {
+                        new BlogApp();
+                        const tryInitLayout = () => { if (window.LayoutManager) window.LayoutManager.init(); };
+                        if ('requestIdleCallback' in window) {
+                            requestIdleCallback(tryInitLayout);
+                        } else {
+                            setTimeout(tryInitLayout, 1200);
+                        }
+                    };
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', boot);
+                    } else {
+                        boot();
+                    }
+                    return true;
+                } catch (_) { /* 다음 후보 시도 */ }
+            }
+            return false;
+        }
+
         // 모듈들을 순차적으로 로드 (의존성 보장)
         (async () => {
             try {
+                // 번들 우선 시도
+                const bundled = await tryLoadBundleAndBoot();
+                if (bundled) return;
                 // Config와 DOM 유틸을 먼저 로드해 기본 전역을 준비
                 await loadScript('/js/config.js');
                 await loadScript('/js/dom-utils.js');
