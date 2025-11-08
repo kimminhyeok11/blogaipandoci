@@ -7,6 +7,31 @@
 const path = require('path');
 const fs = require('fs');
 
+// .env.local 로더: 프로젝트 루트의 .env.local을 읽어 환경변수에 주입
+(() => {
+  try {
+    const envPath = path.join(__dirname, '..', '.env.local');
+    if (fs.existsSync(envPath)) {
+      const raw = fs.readFileSync(envPath, 'utf8');
+      raw.split(/\r?\n/).forEach(line => {
+        const t = line.trim();
+        if (!t || t.startsWith('#')) return;
+        const m = t.match(/^([A-Za-z0-9_]+)\s*=\s*(.*)$/);
+        if (!m) return;
+        const key = m[1];
+        let val = m[2];
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith('\'') && val.endsWith('\''))) {
+          val = val.slice(1, -1);
+        }
+        if (process.env[key] == null) process.env[key] = val;
+      });
+      console.log('[env] .env.local 로드 완료');
+    }
+  } catch (e) {
+    console.warn('[env] .env.local 로드 실패:', e.message || e);
+  }
+})();
+
 (async () => {
   const dir = path.resolve(__dirname, '..');
   const token = process.env.GITHUB_TOKEN;
@@ -15,7 +40,7 @@ const fs = require('fs');
     process.exit(1);
   }
 
-  const username = process.env.GITHUB_USERNAME || 'github';
+  const username = process.env.GITHUB_USERNAME || 'x-access-token';
   const authorName = process.env.GIT_AUTHOR_NAME || 'InsureLog';
   const authorEmail = process.env.GIT_AUTHOR_EMAIL || 'dev@insurelog.local';
   const message = process.env.COMMIT_MESSAGE || [
@@ -46,9 +71,18 @@ const fs = require('fs');
       'api/metrics.js',
       'supabase/config.toml',
       'vercel.json',
-      // 추가: 최근 성능 작업으로 수정된 파일들
+      // 사이트 주요 파일
       'index.html',
-      'css/base.css'
+      'css/base.css',
+      // 현재 작업 변경 사항 포함
+      'css/layout.css',
+      'js/blog-app.js',
+      // 최근 UI 축소 변경 사항 포함
+      'css/main.css',
+      'css/skeleton.css',
+      'style.css',
+      // 로컬 개발 서버 스크립트 추가
+      'scripts/dev-server.js'
     ];
     for (const f of baseFiles) {
       const p = path.join(dir, f);
@@ -101,6 +135,10 @@ const fs = require('fs');
       }
       await git.addRemote({ fs, dir, remote: 'origin', url: remoteUrl });
       console.log(`[push] origin 원격을 추가했습니다: ${remoteUrl}`);
+    } else if (remoteUrl && origin.url !== remoteUrl) {
+      await git.deleteRemote({ fs, dir, remote: 'origin' });
+      await git.addRemote({ fs, dir, remote: 'origin', url: remoteUrl });
+      console.log(`[push] origin 원격을 업데이트했습니다: ${remoteUrl}`);
     }
 
     // Fetch & pull to avoid non-fast-forward
