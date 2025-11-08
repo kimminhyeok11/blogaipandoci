@@ -30,6 +30,7 @@
     <!-- Scripts & Stylesheets -->
     <!-- 스타일 유틸리티(style.css)는 유지하고, 모듈 CSS는 개별 링크로 병렬 로드 -->
     <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/css/design-system.css">
     <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/layout.css">
     <!-- 비임계 CSS: CSP 준수를 위해 인라인 onload 제거, 일반 스타일 링크로 전환 -->
@@ -43,6 +44,26 @@
     <link rel="stylesheet" href="/css/main.css">
     <!-- 코드 하이라이트 CSS: CSP 준수를 위해 인라인 onload 제거 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" crossorigin>
+
+    <!-- Structured Data (JSON-LD): WebSite & Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "InsureLog",
+      "url": "https://blogaipandoci.vercel.app",
+      "inLanguage": "ko-KR"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "InsureLog",
+      "url": "https://blogaipandoci.vercel.app",
+      "logo": "https://blogaipandoci.vercel.app/og-image.svg"
+    }
+    </script>
 
     <!-- Global Config: Supabase URL/KEYs injected from user-provided values -->
     <script nonce="r4nd0m">
@@ -62,6 +83,7 @@
     <!-- Google AdSense (프로덕션 환경에서만 로드) -->
 </head>
 <body class="antialiased">
+    <a href="#app-container" class="skip-link">본문 바로가기</a>
     <!-- 앱 로더 -->
     <div id="app-loader" class="fixed inset-0 z-50 bg-white flex items-center justify-center" hidden>
         <div class="loader-spinner"></div>

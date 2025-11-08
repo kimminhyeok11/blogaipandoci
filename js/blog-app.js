@@ -279,10 +279,10 @@ class BlogApp {
         
         // 접근성 개선을 위한 키보드 이벤트
         document.addEventListener('keydown', (e) => {
-            // ESC 키로 모달 닫기
+            // ESC 키로 모달 닫기 (새 구조 호환)
             if (e.key === 'Escape') {
-                const openModal = DOM.$('.modal:not(.hidden)');
-                if (openModal) {
+                const openModal = document.querySelector('[id*="modal"]:not(.hidden)');
+                if (openModal && openModal.id) {
                     DOM.closeModal(openModal.id);
                 }
             }
@@ -305,11 +305,11 @@ class BlogApp {
             }
         }
 
-        // 모달 외부 클릭 시 닫기
-        if (e.target.classList.contains('modal-backdrop')) {
-            const modal = e.target.closest('.modal');
-            if (modal) {
-                DOM.closeModal(modal.id);
+        // 모달 오버레이 클릭 시 닫기 (새 구조 호환)
+        if (e.target.classList && e.target.classList.contains('modal-overlay')) {
+            const host = e.target.closest('[id*="modal"]');
+            if (host && host.id) {
+                DOM.closeModal(host.id);
             }
         }
     }
@@ -614,7 +614,7 @@ class BlogApp {
             authLink
         ].filter(Boolean).join('');
 
-        container.innerHTML = '<nav class="w-full max-w-4xl flex items-center justify-between py-2 px-6 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">'
+        container.innerHTML = '<nav class="w-full nav-inner flex items-center justify-between py-2 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">'
             + '<a href="/" data-route class="brand font-extrabold text-xl tracking-tight">InsureLog</a>'
             + '<button id="nav-toggle" class="hamburger-btn sm:hidden" aria-expanded="false" aria-controls="nav-menu" aria-haspopup="menu" aria-label="메뉴">'
             +   '<span class="hamburger-icon" aria-hidden="true">'
@@ -695,11 +695,66 @@ class BlogApp {
                 if (expanded) {
                     menu.classList.add('hidden');
                     menu.setAttribute('aria-hidden', 'true');
+                    // 배경 복원 및 포커스 트랩 해제
+                    try {
+                        const app = document.querySelector('#app-container');
+                        app?.removeAttribute('inert');
+                        app?.removeAttribute('aria-hidden');
+                    } catch (_) {}
+                    if (menu.__onKeydown) {
+                        menu.removeEventListener('keydown', menu.__onKeydown, true);
+                        menu.__onKeydown = null;
+                    }
+                    // 토글 버튼 포커스 복원
+                    toggleBtn.focus({ preventScroll: true });
                 } else {
                     // 표시 전에 위치 계산
                     menu.classList.remove('hidden');
                     positionMenuNearToggle();
                     menu.setAttribute('aria-hidden', 'false');
+
+                    // 배경 inert 처리로 키보드 포커스 배경 이동 차단
+                    try {
+                        const app = document.querySelector('#app-container');
+                        if (app && !menu.contains(app)) {
+                            app.setAttribute('inert', '');
+                            app.setAttribute('aria-hidden', 'true');
+                        }
+                    } catch (_) {}
+
+                    // 초기 포커스 및 포커스 트랩
+                    const focusables = Array.from(menu.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
+                    const first = focusables[0] || menu;
+                    if (first && !first.hasAttribute('tabindex')) first.setAttribute('tabindex', '-1');
+                    first?.focus({ preventScroll: true });
+                    const onKeydown = (ev) => {
+                        if (ev.key === 'Tab') {
+                            const list = Array.from(menu.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
+                            if (list.length === 0) return;
+                            const firstEl = list[0];
+                            const lastEl = list[list.length - 1];
+                            const active = document.activeElement;
+                            if (ev.shiftKey) {
+                                if (active === firstEl || !menu.contains(active)) { ev.preventDefault(); lastEl.focus(); }
+                            } else {
+                                if (active === lastEl) { ev.preventDefault(); firstEl.focus(); }
+                            }
+                        } else if (ev.key === 'Escape') {
+                            // 메뉴 내부 ESC로 닫기
+                            menu.classList.add('hidden');
+                            menu.setAttribute('aria-hidden', 'true');
+                            toggleBtn.setAttribute('aria-expanded', 'false');
+                            try {
+                                const app = document.querySelector('#app-container');
+                                app?.removeAttribute('inert');
+                                app?.removeAttribute('aria-hidden');
+                            } catch (_) {}
+                            menu.removeEventListener('keydown', onKeydown, true);
+                            toggleBtn.focus({ preventScroll: true });
+                        }
+                    };
+                    menu.__onKeydown = onKeydown;
+                    menu.addEventListener('keydown', onKeydown, true);
                 }
             };
 
@@ -717,6 +772,15 @@ class BlogApp {
                     menu.classList.add('hidden');
                     menu.setAttribute('aria-hidden', 'true');
                     toggleBtn.setAttribute('aria-expanded', 'false');
+                    try {
+                        const app = document.querySelector('#app-container');
+                        app?.removeAttribute('inert');
+                        app?.removeAttribute('aria-hidden');
+                    } catch (_) {}
+                    if (menu.__onKeydown) {
+                        menu.removeEventListener('keydown', menu.__onKeydown, true);
+                        menu.__onKeydown = null;
+                    }
                 }
             };
             document.addEventListener('click', this._navOutsideHandler, true);
@@ -726,6 +790,16 @@ class BlogApp {
                     menu.classList.add('hidden');
                     menu.setAttribute('aria-hidden', 'true');
                     toggleBtn.setAttribute('aria-expanded', 'false');
+                    try {
+                        const app = document.querySelector('#app-container');
+                        app?.removeAttribute('inert');
+                        app?.removeAttribute('aria-hidden');
+                    } catch (_) {}
+                    if (menu.__onKeydown) {
+                        menu.removeEventListener('keydown', menu.__onKeydown, true);
+                        menu.__onKeydown = null;
+                    }
+                    toggleBtn.focus({ preventScroll: true });
                 }
             });
         }
@@ -759,7 +833,7 @@ class BlogApp {
         if (container) {
             container.innerHTML = '<section class="mx-auto py-6 px-4 sm:px-6 max-w-full sm:max-w-4xl">'
                 + '<h1 class="text-2xl font-bold mb-2">최근 글</h1>'
-                + '<div id="home-posts" class="mt-6 grid grid-cols-1 gap-3 sm:gap-4"></div>'
+                + '<div id="home-posts" class="mt-6 grid grid-cols-1 gap-2"></div>'
                 + '<div id="home-pagination" class="mt-4 flex justify-center"></div>'
                 + '</section>';
 
@@ -807,41 +881,41 @@ class BlogApp {
         const container = DOM.$('#view-writer');
         if (!container) return;
         const isEdit = !!slug;
-        container.innerHTML = '<section class="max-w-4xl mx-auto py-10 px-6">'
+        container.innerHTML = '<section class="nav-inner py-10">'
             + `<div class="flex items-center justify-between">`
             +   `<h1 class="text-2xl font-bold">${isEdit ? '글 수정' : '글 작성'}</h1>`
-            +   `<button type="button" id="btn-open-post-picker" class="text-sm px-3 py-1 rounded-full border hover:bg-black/5">기존 글 불러오기</button>`
+            +   `<button type="button" id="btn-open-post-picker" class="btn btn-outline btn-sm">기존 글 불러오기</button>`
             + `</div>`
-            + '<form id="writer-form" class="mt-6 space-y-5">'
-            +   '<div><label class="block text-sm font-medium">제목</label><input id="post-title" type="text" class="mt-1 w-full border rounded-lg p-2" placeholder="제목을 입력하세요" required></div>'
-            +   '<div><label class="block text-sm font-medium">요약</label><textarea id="post-summary" class="mt-1 w-full border rounded-lg p-2 h-20" placeholder="요약을 입력하세요"></textarea></div>'
+            + '<form id="writer-form" class="mt-6 space-y-5 editor-shell">'
+            +   '<div id="writer-errors" class="sr-only" role="alert" aria-live="assertive"></div>'
+            +   '<div><label class="block text-sm font-medium">제목</label><input id="post-title" type="text" class="form-input" placeholder="제목을 입력하세요" required aria-errormessage="writer-errors" aria-invalid="false"></div>'
+            +   '<div><label class="block text-sm font-medium">요약</label><textarea id="post-summary" class="form-textarea" placeholder="요약을 입력하세요"></textarea></div>'
             +   '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">'
-            +     '<div><label class="block text-sm font-medium">카테고리</label><input id="post-category" type="text" class="mt-1 w-full border rounded-lg p-2" placeholder="예: 기술"></div>'
-            +     '<div><label class="block text-sm font-medium">상태</label><select id="post-status" class="mt-1 w-full border rounded-lg p-2"><option value="draft">초안</option><option value="published">발행</option></select></div>'
+            +     '<div><label class="block text-sm font-medium">카테고리</label><input id="post-category" type="text" class="form-input" placeholder="예: 기술"></div>'
+            +     '<div><label class="block text-sm font-medium">상태</label><select id="post-status" class="form-select"><option value="draft">초안</option><option value="published">발행</option></select></div>'
             +   '</div>'
-            +   '<div><label class="block text-sm font-medium">태그</label><input id="post-tags" type="text" class="mt-1 w-full border rounded-lg p-2" placeholder="태그를 쉼표로 구분해 입력 (예: 보험,자동차,가이드)"></div>'
-            +   '<div><label class="block text-sm font-medium">썸네일 이미지</label><input id="post-thumb" type="file" accept="image/*" class="mt-1 w-full"/></div>'
+            +   '<div><label class="block text-sm font-medium">태그</label><input id="post-tags" type="text" class="form-input" placeholder="태그를 쉼표로 구분해 입력 (예: 보험,자동차,가이드)"></div>'
+            +   '<div><label class="block text-sm font-medium">썸네일 이미지</label><input id="post-thumb" type="file" accept="image/*" class="form-input"/></div>'
             +   '<div><label class="block text-sm font-medium">콘텐츠 (복사/붙여넣기 지원)</label>'
-            +   '<div id="editor-toolbar" class="mt-2 flex flex-wrap gap-2">'
-            +     '<button type="button" data-cmd="bold" class="px-2 py-1 text-xs rounded border">굵게</button>'
-            +     '<button type="button" data-cmd="italic" class="px-2 py-1 text-xs rounded border">기울임</button>'
-            +     '<button type="button" data-cmd="underline" class="px-2 py-1 text-xs rounded border">밑줄</button>'
-            +     '<button type="button" data-cmd="h1" class="px-2 py-1 text-xs rounded border">H1</button>'
-            +     '<button type="button" data-cmd="h2" class="px-2 py-1 text-xs rounded border">H2</button>'
-            +     '<button type="button" data-cmd="p" class="px-2 py-1 text-xs rounded border">본문</button>'
-            +     '<button type="button" data-cmd="ul" class="px-2 py-1 text-xs rounded border">목록</button>'
-            +     '<button type="button" data-cmd="ol" class="px-2 py-1 text-xs rounded border">번호목록</button>'
-            +     '<button type="button" data-cmd="quote" class="px-2 py-1 text-xs rounded border">인용</button>'
-            +     '<button type="button" data-cmd="code" class="px-2 py-1 text-xs rounded border">코드</button>'
-            +     '<button type="button" data-cmd="link" class="px-2 py-1 text-xs rounded border">링크</button>'
-            +     '<button type="button" data-cmd="clear" class="px-2 py-1 text-xs rounded border">서식해제</button>'
+            +   '<div id="editor-toolbar" class="editor-toolbar btn-group mt-2">'
+            +     '<button type="button" data-cmd="bold" class="btn btn-outline btn-sm">굵게</button>'
+            +     '<button type="button" data-cmd="italic" class="btn btn-outline btn-sm">기울임</button>'
+            +     '<button type="button" data-cmd="underline" class="btn btn-outline btn-sm">밑줄</button>'
+            +     '<button type="button" data-cmd="h2" class="btn btn-outline btn-sm">H2</button>'
+            +     '<button type="button" data-cmd="p" class="btn btn-outline btn-sm">본문</button>'
+            +     '<button type="button" data-cmd="ul" class="btn btn-outline btn-sm">목록</button>'
+            +     '<button type="button" data-cmd="ol" class="btn btn-outline btn-sm">번호목록</button>'
+            +     '<button type="button" data-cmd="quote" class="btn btn-outline btn-sm">인용</button>'
+            +     '<button type="button" data-cmd="code" class="btn btn-outline btn-sm">코드</button>'
+            +     '<button type="button" data-cmd="link" class="btn btn-outline btn-sm">링크</button>'
+            +     '<button type="button" data-cmd="clear" class="btn btn-outline btn-sm">서식해제</button>'
             +   '</div>'
-            +   '<div id="post-content-editor" contenteditable="true" class="mt-2 w-full border rounded-lg p-3 h-64 overflow-auto prose prose-sm focus:outline-none" placeholder="다른 글을 복사해 붙여넣으면 형식이 유지됩니다."></div>'
+            +   '<div id="post-content-editor" contenteditable="true" class="editor-surface prose-custom" placeholder="다른 글을 복사해 붙여넣으면 형식이 유지됩니다."></div>'
             +   '<p class="text-xs text-gray-500 mt-1">붙여넣기 시 기본 서식(굵게, 제목, 목록 등)이 유지됩니다. 저장 시 안전하게 정제된 HTML로 저장합니다.</p>'
             +   '</div>'
-            +   '<div class="flex items-center gap-3">'
-            +     '<button type="submit" class="px-4 py-2 rounded-full bg-black text-white">저장</button>'
-            +     '<a href="/" data-route class="px-4 py-2 rounded-full bg-black/5">취소</a>'
+            +   '<div class="flex items-center gap-2">'
+            +     '<button type="submit" class="btn btn-primary">저장</button>'
+            +     '<a href="/" data-route class="btn btn-secondary">취소</a>'
             +   '</div>'
             + '</form>'
             + '</section>';
@@ -995,6 +1069,7 @@ class BlogApp {
                   <h1 class="text-2xl font-extrabold">로그인</h1>
                   <p class="text-sm text-gray-600 mt-2">이메일로 매직링크를 받아 빠르게 로그인하세요.</p>
                   <form id="magic-form" class="mt-6 space-y-3" novalidate>
+                    <div id="login-errors" class="sr-only" role="alert" aria-live="assertive"></div>
                     <label class="form-label" for="magic-email">이메일 주소</label>
                     <div class="input-group" aria-live="polite">
                       <span class="input-group-addon" aria-hidden="true" title="이메일">
@@ -1002,7 +1077,7 @@ class BlogApp {
                           <path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm0 2l8 5 8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                       </span>
-                      <input id="magic-email" type="email" class="form-input" placeholder="you@example.com" required autocomplete="email" inputmode="email" aria-describedby="magic-help">
+                      <input id="magic-email" type="email" class="form-input" placeholder="you@example.com" required autocomplete="email" inputmode="email" aria-describedby="magic-help" aria-errormessage="magic-error">
                     </div>
                     <div id="magic-error" class="form-error" style="display:none;">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.29 3.86l-8.23 14.25A2 2 0 0 0 4 21h16a2 2 0 0 0 1.94-2.89L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1034,7 +1109,12 @@ class BlogApp {
                 const showError = (show) => {
                     if (!errorBox) return;
                     errorBox.style.display = show ? 'flex' : 'none';
-                    if (emailInput) emailInput.classList.toggle('error', !!show);
+                    if (emailInput) {
+                        emailInput.classList.toggle('error', !!show);
+                        emailInput.setAttribute('aria-invalid', show ? 'true' : 'false');
+                    }
+                    const summary = DOM.$('#login-errors');
+                    if (summary) summary.textContent = show ? '올바른 이메일 형식을 입력해주세요.' : '';
                 };
 
                 emailInput?.addEventListener('input', () => showError(false));
@@ -1057,6 +1137,8 @@ class BlogApp {
                     } catch (err) {
                         this._logAuthEvent('login_magic_failed', { email });
                         UIComponents.showToast('메일 발송에 실패했습니다.', 'error');
+                        const summary = DOM.$('#login-errors');
+                        if (summary) summary.textContent = '메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.';
                     } finally {
                         setTimeout(() => {
                             sendBtn?.removeAttribute('disabled');
@@ -1226,9 +1308,47 @@ class BlogApp {
     async submitWriterForm(editSlug = null) {
         try {
             if (!this.supabase) throw new Error('Supabase가 준비되지 않았습니다');
+            // 폼/버튼/에러 영역 참조
+            const form = DOM.$('#writer-form');
+            const submitBtn = form?.querySelector('button[type="submit"]');
+            const errBox = DOM.$('#writer-errors');
+            const titleInput = DOM.$('#post-title');
+            const titleRaw = titleInput?.value?.trim() || '';
+            // 간단한 유효성 검사: 제목 필수/최소 2자
+            const errors = [];
+            if (!titleRaw) errors.push('제목을 입력하세요.');
+            else if (titleRaw.length < 2) errors.push('제목은 최소 2자 이상이어야 합니다.');
+            if (errors.length) {
+                if (errBox) {
+                    errBox.textContent = errors.join(' ');
+                    errBox.classList.remove('sr-only');
+                }
+                if (titleInput) {
+                    titleInput.setAttribute('aria-invalid', 'true');
+                    titleInput.setAttribute('aria-errormessage', 'writer-errors');
+                    titleInput.focus();
+                }
+                return;
+            } else {
+                // 에러 초기화
+                if (errBox) {
+                    errBox.textContent = '';
+                    errBox.classList.add('sr-only');
+                }
+                if (titleInput) titleInput.setAttribute('aria-invalid', 'false');
+            }
+            // UI 잠금 및 접근성 표시
+            if (form) form.setAttribute('aria-busy', 'true');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.setAttribute('aria-disabled', 'true');
+                submitBtn.dataset._origText = submitBtn.textContent || '';
+                submitBtn.textContent = '저장 중…';
+            }
+            this.setLoading(true, '#view-writer');
             // 저장 전 보안/마크다운 유틸리티를 지연 로드
             await ScriptLoader.loadUtilities();
-            const title = DOM.$('#post-title').value.trim();
+            const title = titleRaw;
             const summary = DOM.$('#post-summary').value.trim();
             const category = DOM.$('#post-category').value.trim();
             const status = DOM.$('#post-status').value;
@@ -1239,6 +1359,10 @@ class BlogApp {
             if (editor) {
                 const rawHTML = editor.innerHTML || '';
                 refined_content = window.DOMPurify ? window.DOMPurify.sanitize(rawHTML) : rawHTML;
+                // SEO 정책: 본문 내 H1 금지. 저장 시 모든 H1을 H2로 강등합니다.
+                refined_content = refined_content
+                    .replace(/<h1([^>]*)>/gi, '<h2$1>')
+                    .replace(/<\/h1>/gi, '</h2>');
                 // 태그 입력을 숨은 data-tags로 콘텐츠 상단에 주입
                 const tagInput = DOM.$('#post-tags');
                 const tagsStr = (tagInput?.value || '').trim();
@@ -1302,7 +1426,24 @@ class BlogApp {
                 this.navigate('/');
             }
         } catch (e) {
+            // 에러 라이브 영역 갱신
+            const errBox = DOM.$('#writer-errors');
+            if (errBox) {
+                errBox.textContent = `저장 중 오류가 발생했습니다: ${e.message || e}`;
+                errBox.classList.remove('sr-only');
+            }
             this.handleError(e, 'submitWriterForm');
+        } finally {
+            // UI 잠금 해제
+            const form = DOM.$('#writer-form');
+            const submitBtn = form?.querySelector('button[type="submit"]');
+            if (form) form.setAttribute('aria-busy', 'false');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.removeAttribute('aria-disabled');
+                if (submitBtn.dataset._origText) submitBtn.textContent = submitBtn.dataset._origText;
+            }
+            this.setLoading(false, '#view-writer');
         }
     }
 
@@ -1384,13 +1525,13 @@ class BlogApp {
         const editBtn = this.state.user ? `<a href="/writer/${encodeURIComponent(post.slug)}" data-route class="px-3 py-1 rounded-full border">수정</a>` : '';
 
         container.innerHTML = '<article class="post-detail py-10">'
-            + '<div class="post-detail-inner px-0 sm:px-6">'
+            + '<div class="post-detail-inner">'
             + `<h1 class="post-title text-3xl font-extrabold tracking-tight">${title}</h1>`
             + `<div class="post-meta flex items-center"><span class="post-date">${date}</span>${category ? category.replace('<span', '<span class=\"post-category\"') : ''}</div>`
             + `${tagsHtml ? tagsHtml.replace('<div', '<div class=\"post-tags\"') : ''}`
             + `<div class="blog-post-content prose-custom">${contentHTML}</div>`
             + '</div>'
-            + '<div class="post-detail-inner px-0 sm:px-6">'
+            + '<div class="post-detail-inner">'
             + '<div class="mt-8 flex items-center gap-3">'
                 +   '<button id="btn-like" class="px-3 py-1 rounded-full border">좋아요 <span id="like-count"></span></button>'
                 +   '<button id="btn-share" class="px-3 py-1 rounded-full border">공유</button>'
@@ -1626,7 +1767,8 @@ class BlogApp {
                 if (e.key.toLowerCase() === 'b') { e.preventDefault(); this.execEditorCommand('bold'); updateToolbarState(); }
                 if (e.key.toLowerCase() === 'i') { e.preventDefault(); this.execEditorCommand('italic'); updateToolbarState(); }
                 if (e.key.toLowerCase() === 'u') { e.preventDefault(); this.execEditorCommand('underline'); updateToolbarState(); }
-                if (e.shiftKey && e.key === '1') { e.preventDefault(); this.execEditorCommand('h1'); updateToolbarState(); }
+                // H1 금지: Ctrl+Shift+1은 H2로 매핑
+                if (e.shiftKey && e.key === '1') { e.preventDefault(); this.execEditorCommand('h2'); updateToolbarState(); }
                 if (e.shiftKey && e.key === '2') { e.preventDefault(); this.execEditorCommand('h2'); updateToolbarState(); }
             }
         });
@@ -1639,7 +1781,7 @@ class BlogApp {
                 await this.handleEditorFiles(files, currentSlug);
             }
         });
-        // 이미지 붙여넣기
+        // 이미지 붙여넣기 및 일반 텍스트 붙여넣기 (URL 자동 링크화)
         editor.addEventListener('paste', async (e) => {
             const items = e.clipboardData?.items || [];
             const files = [];
@@ -1652,6 +1794,11 @@ class BlogApp {
             if (files.length) {
                 e.preventDefault();
                 await this.handleEditorFiles(files, currentSlug);
+            } else {
+                // 이미지가 아닌 경우에는 붙여넣기 후 URL을 자동으로 링크로 변환
+                setTimeout(() => {
+                    this.linkifyElementContent(editor);
+                }, 0);
             }
         });
         // 캡션 편집 UX 및 alt 동기화
@@ -1669,6 +1816,11 @@ class BlogApp {
                     img.setAttribute('alt', text || img.getAttribute('alt') || '');
                 }
             }
+            // 일반 입력 시에도 URL 자동 링크화(디바운스)
+            clearTimeout(this._linkifyTimer);
+            this._linkifyTimer = setTimeout(() => {
+                this.linkifyElementContent(editor);
+            }, 200);
         });
         editor.addEventListener('blur', (e) => {
             if (e.target && e.target.matches('figcaption')) e.target.removeAttribute('contenteditable');
@@ -1680,7 +1832,8 @@ class BlogApp {
             case 'bold': document.execCommand('bold'); break;
             case 'italic': document.execCommand('italic'); break;
             case 'underline': document.execCommand('underline'); break;
-            case 'h1': document.execCommand('formatBlock', false, 'h1'); break;
+            // H1 금지: 내부 콘텐츠에서는 H1을 생성하지 않습니다. 필요 시 H2로 대체.
+            case 'h1': document.execCommand('formatBlock', false, 'h2'); break;
             case 'h2': document.execCommand('formatBlock', false, 'h2'); break;
             case 'p': document.execCommand('formatBlock', false, 'p'); break;
             case 'ul': document.execCommand('insertUnorderedList'); break;
@@ -1699,6 +1852,57 @@ class BlogApp {
 
     insertHTMLAtCursor(html) {
         document.execCommand('insertHTML', false, html);
+    }
+
+    // 에디터 콘텐츠 내 일반 텍스트를 순회하여 URL을 자동으로 링크로 변환
+    // 이미 앵커 내부에 있는 텍스트는 건너뜁니다.
+    linkifyElementContent(root) {
+        try {
+            if (!root) return;
+            const urlRegex = /(?:https?:\/\/[^\s<]+|www\.[^\s<]+)$/g;
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+            const targets = [];
+            let node;
+            while ((node = walker.nextNode())) {
+                const parent = node.parentElement;
+                if (!parent) continue;
+                if (parent.closest('a')) continue; // 이미 링크 내부
+                const text = node.nodeValue || '';
+                if (/(https?:\/\/|www\.)/.test(text)) targets.push(node);
+            }
+            targets.forEach(n => {
+                const text = n.nodeValue || '';
+                const parts = [];
+                const matches = [];
+                let lastIndex = 0;
+                text.replace(/(?:https?:\/\/[^\s<]+|www\.[^\s<]+)/g, (m, offset) => {
+                    parts.push(text.slice(lastIndex, offset));
+                    matches.push(m);
+                    lastIndex = offset + m.length;
+                    return m;
+                });
+                parts.push(text.slice(lastIndex));
+                if (matches.length === 0) return;
+                const frag = document.createDocumentFragment();
+                for (let i = 0; i < parts.length; i++) {
+                    const pre = parts[i];
+                    if (pre) frag.appendChild(document.createTextNode(pre));
+                    const m = matches[i];
+                    if (m) {
+                        const href = m.startsWith('www.') ? 'https://' + m : m;
+                        const a = document.createElement('a');
+                        a.href = href;
+                        a.textContent = m;
+                        a.rel = 'noopener noreferrer';
+                        a.target = '_blank';
+                        frag.appendChild(a);
+                    }
+                }
+                n.parentNode.replaceChild(frag, n);
+            });
+        } catch (err) {
+            console.warn('linkifyElementContent error', err);
+        }
     }
 
     async handleEditorFiles(files, currentSlug) {
@@ -1752,7 +1956,7 @@ class BlogApp {
             .neq('id', post.id)
             .eq('category', post.category)
             .order('created_at', { ascending: false })
-            .limit(4);
+            .limit(3);
         if (error) throw error;
         const container = DOM.$('#related-posts');
         if (!container) return;
@@ -1800,43 +2004,26 @@ class BlogApp {
             .select('id, title, slug, thumbnail_url, created_at, view_count, status')
             .eq('status', 'published')
             .order('view_count', { ascending: false, nullsFirst: false })
-            .limit(6));
+            .limit(5));
         if (error) throw error;
         let list = (data || []).filter(p => p && p.id !== currentPostId);
         if (!list || list.length === 0) { container.innerHTML = ''; return; }
         // 최신 요청이 아닌 경우 DOM 반영을 건너뜀
         if (this._reqTokens.popular !== token) return;
         const header = '<h2 class="text-lg font-bold mb-3">많이 본 글</h2>';
-        const cards = list.map((p, idx) => {
+        const items = list.map((p, idx) => {
             const url = '/post/' + encodeURIComponent(p.slug || p.id);
-            const hasImg = !!p.thumbnail_url;
-            const rankBadge = `<span class="badge">${idx + 1}위</span>`;
-            const viewsText = `<span class="text-xs text-gray-500">${Number(p.view_count || 0)}회</span>`;
-            const img = hasImg
-                ? (() => {
-                    const q = 80;
-                    const baseW = 160, baseH = 160; // 컴팩트 카드 썸네일(정사각형)
-                    const widths = [120, 160, 192, 240];
-                    const sizes = '(max-width: 640px) 120px, 160px';
-                    const src = this.getTransformedPublicUrl(p.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', quality: q, format: 'webp' });
-                    const srcset = widths.map(x => `${this.getTransformedPublicUrl(p.thumbnail_url, { width: x, height: x, resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ');
-                    const eager = idx === 0;
-                    const loading = eager ? '' : ' loading="lazy"';
-                    const fetchp = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
-                    return `<img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${this.escapeHTML(p.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>`;
-                  })()
-                : `<span class="thumb-initial">${this.escapeHTML(String((p.title || 'N')).trim().charAt(0).toUpperCase())}</span>`;
+            const views = Number(p.view_count || 0);
+            const date = this.formatDate(p.created_at);
             return (
-                `<article class="post-card post-card-compact">`
-                + `<a href="${url}" data-route class="post-card-thumb${hasImg ? '' : ' placeholder'}">${img}</a>`
-                + `<div class="post-card-main">`
-                +   `<h3 class="post-card-title"><a href="${url}" data-route>${this.escapeHTML(p.title || '')}</a></h3>`
-                +   `<p class="post-card-meta">${rankBadge} · ${viewsText}</p>`
-                + `</div>`
-                + `</article>`
+              `<li class="popular-item">`
+              + `<span class="popular-rank">${idx + 1}</span>`
+              + `<a class="popular-link" href="${url}" data-route>${this.escapeHTML(p.title || '')}</a>`
+              + `<span class="popular-meta">${date} · ${views}회</span>`
+              + `</li>`
             );
         }).join('');
-        container.innerHTML = header + `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${cards}</div>`;
+        container.innerHTML = header + `<ul class="popular-list">${items}</ul>`;
 
         // 캐시 저장 제거됨
     }
@@ -2166,13 +2353,15 @@ class BlogApp {
             const saveData = !!conn.saveData;
             const et = conn.effectiveType || '';
             const isSlow = saveData || /(^|[^a-z])(2g|3g)/.test(et);
-            // 홈 목록은 좌측 소형 썸네일(정사각형)로 표시
-            const baseW = 160, baseH = 160; // 1:1
+            // 메인 목록: 제목 전체 너비, 요약/이미지 2열
+            // CSS 슬롯 너비(데스크톱)와 일치: .post-card-content-grid { grid-template-columns: 1fr 280px; }
+            const slotW = 280;
+            const slotH = Math.round(slotW * (9 / 16)); // 16:9 비율에 맞춤 (≈158px)
             const q = isSlow ? 70 : 80;
-            const widths = isSlow ? [96, 120, 160] : [120, 160, 192];
-            const sizes = '(max-width: 640px) 96px, 120px';
-            const thumbUrl = post.thumbnail_url ? this.getTransformedPublicUrl(post.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', quality: q, format: 'webp' }) : null;
-            const srcset = post.thumbnail_url ? widths.map(x => `${this.getTransformedPublicUrl(post.thumbnail_url, { width: x, height: x, resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ') : '';
+            const widths = isSlow ? [slotW] : [slotW, slotW * 2]; // 1x/2x 후보군 (280/560)
+            const sizes = '(max-width: 640px) 100vw, 280px';
+            const thumbUrl = post.thumbnail_url ? this.getTransformedPublicUrl(post.thumbnail_url, { width: slotW, height: slotH, resize: 'cover', quality: q, format: 'webp' }) : null;
+            const srcset = post.thumbnail_url ? widths.map(x => `${this.getTransformedPublicUrl(post.thumbnail_url, { width: x, height: Math.round(x * (slotH / slotW)), resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ') : '';
             const eager = idx === 0; // 첫 번째 카드 LCP 개선
             const loading = eager ? '' : ' loading="lazy"';
             const fetchp = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
@@ -2192,20 +2381,22 @@ class BlogApp {
                     }
                 } catch (_) { /* noop */ }
             }
-            const imgTag = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>` : '';
+            const imgTag = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="post-card-thumb-img" width="${slotW}" height="${slotH}" decoding="async"${loading}${fetchp}/>` : '';
             const initial = this.escapeHTML(String((post.title || 'N')).trim().charAt(0).toUpperCase());
             const thumbBlock = `<a href="${href}" data-route class="post-card-thumb${thumbUrl ? '' : ' placeholder'}">${thumbUrl ? imgTag : `<span class=\"thumb-initial\">${initial}</span>`}</a>`;
             const date = this.formatDateKR(post.created_at);
             const categoryBadge = post.category ? `<span class="badge">${this.escapeHTML(post.category)}</span>` : '';
             const editLink = this.state.user ? `<a href="/writer/${encodeURIComponent(post.slug)}" data-route class="btn-xs">편집</a>` : '';
 
-            return '<article class="post-card post-card-compact" data-route data-href="' + href + '" tabindex="0">'
-                + thumbBlock
-                + `<div class="post-card-main">`
-                +   `<h2 class="post-card-title"><a href="${href}" data-route>${this.escapeHTML(post.title || '제목 없음')}</a></h2>`
-                +   (post.summary ? `<p class="post-card-summary">${this.escapeHTML(post.summary)}</p>` : '')
-                +   `<div class="post-card-meta">작성일 ${date}${post.category ? ` · 카테고리 ${categoryBadge}` : ''}</div>`
-                +   `<div class="post-card-actions">${editLink}</div>`
+            return '<article class="post-card post-card-wide" data-route data-href="' + href + '" tabindex="0">'
+                + `<h2 class="post-card-title"><a href="${href}" data-route>${this.escapeHTML(post.title || '제목 없음')}</a></h2>`
+                + `<div class="post-card-content-grid">`
+                +   `<div class="post-card-summary-block">`
+                +       (post.summary ? `<p class="post-card-summary">${this.escapeHTML(post.summary)}</p>` : '')
+                +       `<div class="post-card-meta">작성일 ${date}${post.category ? ` · 카테고리 ${categoryBadge}` : ''}</div>`
+                +       `<div class="post-card-actions">${editLink}</div>`
+                +   `</div>`
+                +   thumbBlock
                 + `</div>`
                 + '</article>';
         }).join('');

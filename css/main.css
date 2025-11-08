@@ -73,7 +73,7 @@
 
 /* 블로그 포스트 스타일 */
 .blog-post {
-    max-width: 760px; /* 축소 */
+    max-width: 68ch; /* 본문 폭을 타이포 기준으로 통일 */
     margin: 0 auto;
     padding: 1rem; /* 축소 */
     background-color: white;
@@ -132,6 +132,7 @@
     height: auto;
     border-radius: var(--border-radius);
     margin: 1.5rem 0;
+    display: block; /* 인라인 갭 제거로 레이아웃 안정화 */
 }
 
 /* 기본 비율 클래스: 크기 정보 미지정 이미지의 시프트 완화 */
@@ -139,13 +140,10 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
 
 /* 인라인 텍스트 서식 및 링크 */
 .blog-post-content a {
-    color: var(--gray-900);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    color: var(--primary-color);
+    text-decoration: none;
 }
-.blog-post-content a:hover {
-    color: #000;
-}
+.blog-post-content a:hover { color: var(--primary-hover); text-decoration: underline; }
 .blog-post-content b,
 .blog-post-content strong { font-weight: 700; }
 .blog-post-content i,
@@ -211,6 +209,15 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
     border-collapse: collapse;
     margin: 1.25rem 0;
 }
+
+/* 많이 본 글 리스트 스타일 */
+.popular-list { list-style: none; padding: 0; margin: 0; }
+.popular-item { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.25rem 0; border-bottom: 1px dashed var(--gray-200); }
+.popular-item:last-child { border-bottom: none; }
+.popular-rank { font-weight: 600; color: var(--gray-600); min-width: 2ch; }
+.popular-link { color: var(--primary-color); }
+.popular-link:hover { color: var(--primary-hover); text-decoration: underline; }
+.popular-meta { margin-left: auto; font-size: 0.75rem; color: var(--gray-500); }
 .blog-post-content th,
 .blog-post-content td {
     border: 1px solid var(--gray-200);
@@ -230,7 +237,7 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--gray-200);
     overflow: hidden;
-    transition: all var(--transition-fast);
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
     cursor: pointer;
 }
 
@@ -287,7 +294,7 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
     }
     
     .blog-post-title {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
     
     .blog-post-meta {
@@ -300,10 +307,7 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
         padding: 1rem;
     }
     
-    .blog-card-image {
-        aspect-ratio: 16 / 9;
-        height: auto;
-    }
+    /* 중복 규칙 제거: 기본과 동일한 blog-card-image 속성 */
 }
 /* 홈 목록 카드: 오프스크린 렌더 비용 절감 */
 #home-posts article {
@@ -325,9 +329,53 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
     -webkit-tap-highlight-color: transparent;
 }
 
+/* 에디터 전문가형 UI */
+.editor-shell {
+  background: var(--ds-bg);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-2);
+  box-shadow: var(--ds-shadow-1);
+  padding: var(--ds-space-4);
+}
+.editor-toolbar {
+  position: sticky;
+  top: 0;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: saturate(120%) blur(4px);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-2);
+}
+.editor-surface {
+  margin-top: var(--ds-space-3);
+  width: 100%;
+  min-height: 20rem;
+  padding: var(--ds-space-4);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-2);
+  background: var(--ds-surface);
+  overflow: auto;
+  font-size: var(--ds-font-size-2);
+  line-height: 1.7;
+}
+.editor-surface:focus { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), var(--ring-alpha, 0.18)); }
+#post-content-editor:empty::before {
+  content: attr(placeholder);
+  color: var(--gray-500);
+}
+
+/* 에디터/본문 공통 타이포 스케일 */
+.prose-custom h2 { font-size: clamp(1.375rem, 2.2vw, 1.625rem); line-height: 1.35; margin: var(--ds-space-4) 0 var(--ds-space-2); font-weight: 700; }
+.prose-custom h3 { font-size: clamp(1.125rem, 1.8vw, 1.375rem); line-height: 1.4; margin: var(--ds-space-3) 0 var(--ds-space-2); font-weight: 700; }
+.prose-custom p { margin: var(--ds-space-2) 0; }
+.prose-custom ul, .prose-custom ol { margin: var(--ds-space-2) 0 var(--ds-space-3); padding-left: 1.25rem; }
+.prose-custom blockquote { border-left: 3px solid var(--ds-border); padding-left: var(--ds-space-3); color: var(--gray-700); }
+
+/* 카드 최소 호버 효과 (미니멀 유지) */
+.post-card:hover { box-shadow: var(--ds-shadow-1); background-color: rgba(0,0,0,0.02); }
+
 /* 한국형 UX: 포스트 카드 및 모달 결과 항목 */
 .post-card {
-    padding: 0.5rem;
+    padding: 1rem; /* 16px 리듬으로 통일 */
     border: 1px solid var(--gray-200);
     border-radius: 0.5rem;
     background-color: #fff;
@@ -338,27 +386,53 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
 .post-card-thumb-img { width: 100%; height: auto; object-fit: cover; border: 1px solid var(--gray-200); display: block; }
 .post-card-title { margin-top: 0.5rem; font-size: 0.95rem; font-weight: 700; letter-spacing: -0.2px; color: var(--gray-900); }
 .post-card-title a { color: inherit; text-decoration: none; }
-.post-card-title a:hover, .post-card-title a:focus-visible {
+.post-card-title a:hover {
   text-decoration: underline;
   text-decoration-color: var(--primary-color);
   text-underline-offset: 3px;
   text-decoration-thickness: 2px;
-  outline: none;
+}
+.post-card-title a:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: var(--primary-color);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 .post-card-summary { margin-top: 0.25rem; font-size: 0.85rem; color: var(--gray-700); line-height: 1.5; }
 .post-card-meta { margin-top: 0.375rem; font-size: 0.75rem; color: var(--gray-600); }
-.post-card-actions { margin-top: 0.375rem; display: flex; gap: 0.375rem; }
+.post-card-actions { margin-top: 0.5rem; display: flex; gap: 0.5rem; }
 .btn-xs { font-size: 0.6875rem; padding: 0.125rem 0.375rem; border: 1px solid var(--gray-300); border-radius: 9999px; background: transparent; }
 .btn-xs:hover { background-color: rgba(0,0,0,0.05); }
 
 /* 좌측 소형 썸네일 카드 레이아웃 */
-.post-card-compact { display: grid; grid-template-columns: 96px 1fr; gap: 0.5rem; align-items: start; padding: 0.5rem; }
-.post-card-compact .post-card-thumb { aspect-ratio: 1 / 1; border-radius: 0.625rem; overflow: hidden; box-shadow: var(--shadow-sm); }
+.post-card-compact { display: grid; grid-template-columns: 80px 1fr; gap: 0.4rem; align-items: start; padding: 0.5rem; }
+.post-card-compact .post-card-thumb { aspect-ratio: 1 / 1; border-radius: 0.75rem; overflow: hidden; box-shadow: var(--shadow-sm); }
 .post-card-compact .post-card-thumb-img { width: 100%; height: auto; object-fit: cover; display: block; border: none; border-radius: inherit; }
 .post-card-main { display: flex; flex-direction: column; }
 .post-card-compact .post-card-title { margin-top: 0; }
+/* (중복 제거) .post-card-compact 그리드 구성은 기본과 동일하므로 별도 미디어쿼리 불필요 */
+
+/* 와이드 썸네일 카드 레이아웃: 제목 전체 너비, 요약/이미지 컬럼 매칭 */
+.post-card-wide { padding: 1rem; }
+.post-card-wide .post-card-title { font-size: 1.125rem; line-height: 1.5; margin-top: 0; margin-bottom: 0.5rem; letter-spacing: -0.2px; }
+.post-card-wide .post-card-title a { display: inline-flex; align-items: center; width: 100%; min-height: 48px; }
+.post-card-content-grid { display: grid; grid-template-columns: 1fr 280px; gap: 8px; align-items: stretch; }
+.post-card-summary-block { display: flex; flex-direction: column; gap: 8px; }
+.post-card-wide .post-card-summary { font-size: 0.9375rem; line-height: 1.6; color: var(--gray-800); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.post-card-wide .post-card-meta { margin-top: 8px; font-size: 0.8125rem; color: var(--gray-600); }
+.post-card-wide .post-card-actions { margin-top: 8px; }
+.post-card-wide .post-card-thumb { height: 100%; min-height: 160px; border-radius: 0.75rem; overflow: hidden; box-shadow: var(--shadow-sm); }
+.post-card-wide .post-card-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; border: none; }
+.post-card-wide .post-card-thumb.placeholder { background: linear-gradient(135deg, var(--gray-100), var(--gray-200)); display: flex; align-items: center; justify-content: center; position: relative; }
+.post-card-wide .post-card-thumb.placeholder::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-300); }
+.post-card-wide .thumb-initial { font-size: 1.5rem; font-weight: 800; color: var(--gray-700); letter-spacing: -0.3px; }
 @media (max-width: 640px) {
-  .post-card-compact { grid-template-columns: 96px 1fr; }
+  .post-card-content-grid { grid-template-columns: 1fr; }
+  .post-card-wide .post-card-thumb { height: auto; min-height: 140px; }
+  .post-card-wide .post-card-summary { -webkit-line-clamp: 2; }
 }
 
 /* 무썸네일 플레이스홀더 스타일 */
@@ -380,9 +454,12 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
 .post-detail { padding-left: 20px; padding-right: 20px; }
 @media (min-width: 1024px) { .post-detail { padding-left: 120px; padding-right: 120px; } }
 @media (max-width: 640px) { .post-detail { padding-left: 12px; padding-right: 12px; } }
-.post-detail-inner { max-width: 720px; margin-left: auto; margin-right: auto; }
+.post-detail-inner { margin-left: auto; margin-right: auto; }
+/* 본문 가독성: 68ch 폭, 넉넉한 행간 */
+.blog-post-content { font-size: var(--ds-font-size-2); line-height: 1.7; }
+.post-detail-inner { max-width: 68ch; }
 @media (max-width: 640px) { .post-detail-inner { max-width: 100%; } }
-.post-title { margin-bottom: 12px; }
+.post-title { margin-bottom: 0.75rem; }
 .post-meta { gap: 8px; margin-bottom: 24px; color: var(--gray-600); }
 .post-meta .post-date { font-size: 14px; }
 .post-meta .post-category { font-size: 12px; color: var(--gray-500); display: inline-flex; align-items: center; }
@@ -414,9 +491,9 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
   margin-bottom: 0.5rem;
   letter-spacing: -0.2px;
 }
-#related-posts .grid, #popular-posts .grid { gap: 0.5rem; }
-#related-posts .post-card, #popular-posts .post-card { padding: 0.5rem; }
-#related-posts .post-card-title, #popular-posts .post-card-title { font-size: 0.9rem; }
+#related-posts .grid, #popular-posts .grid { gap: 0.375rem; }
+#related-posts .post-card, #popular-posts .post-card { padding: 0.375rem; }
+#related-posts .post-card-title, #popular-posts .post-card-title { font-size: 0.85rem; }
 
 /* 모바일 미니멀 디자인 오버라이드 */
 @media (max-width: 640px) {
@@ -431,6 +508,7 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
   /* 호버/포커스 시 스케일 업 제거로 배터리/시각 소음 감소 */
   .btn:hover, .btn:focus-visible { transform: none; }
   .post-card:hover { transform: none; box-shadow: none; }
+  .blog-card:hover { transform: none; box-shadow: none; }
 
   /* 타이포/간격 압축 */
   .post-card-title { font-size: 0.95rem; line-height: 1.4; }
@@ -452,6 +530,9 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
   word-break: keep-all;
   overflow-wrap: break-word;
 }
+/* 한국어 자간 보강: 본문 단락/목록에 소폭 음수 자간 */
+.blog-post-content p,
+.blog-post-content li { letter-spacing: -0.005em; }
 /* 긴 URL/이메일 등은 자연스러운 줄바꿈 허용 */
 .blog-post-content a { word-break: break-word; }
 /* 머리말은 균형 잡힌 줄나눔으로 가독성 향상 */
@@ -465,6 +546,16 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
 @media (max-width: 640px) {
   .blog-post-content { line-height: 1.8; }
   .blog-post-content p { margin: 0.9rem 0; }
+}
+/* 모션 민감 사용자 대응: 전반적 모션 축소 */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .post-card,
+  .blog-card { transition: none !important; }
+  .btn:hover,
+  .btn:focus-visible,
+  .post-card:hover,
+  .blog-card:hover { transform: none !important; }
 }
 /* 에디터 문단도 한국어 줄바꿈 규칙 적용 */
 .ce-paragraph { word-break: keep-all; }
