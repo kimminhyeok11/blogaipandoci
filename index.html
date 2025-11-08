@@ -228,6 +228,18 @@
             });
         };
         
+        // Supabase 준비 대기 유틸리티 (동적 모듈 로딩과 경합 방지)
+        const waitForSupabaseReady = async (maxWaitMs = 3000) => {
+            const start = Date.now();
+            while ((Date.now() - start) < maxWaitMs) {
+                try {
+                    if (window.supabase && typeof window.supabase.createClient === 'function') return true;
+                } catch (_) { /* noop */ }
+                await new Promise(r => setTimeout(r, 50));
+            }
+            return !!(window.supabase && typeof window.supabase.createClient === 'function');
+        };
+
         // 모듈들을 순차적으로 로드 (의존성 보장)
         (async () => {
             try {
@@ -236,6 +248,8 @@
                 await loadScript('/js/dom-utils.js');
                 // 초기 화면 구성 요소를 빠르게 파싱
                 await loadScript('/js/ui-components.js');
+                // Supabase 동적 임포트가 선행되도록 대기 (초기화 경합 방지)
+                await waitForSupabaseReady(3500);
                 await loadScript('/js/blog-app.js');
                 // 레이아웃 매니저 및 부가 모듈은 초기 페인트 이후 유휴 시간에 로드
                 const deferScript = (src) => {
