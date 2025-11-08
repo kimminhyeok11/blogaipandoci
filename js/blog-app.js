@@ -11,7 +11,7 @@ catch (e) { /* noop */ }
 // 전역 Config는 config.js에서 정의되며, 여기서는 재정의하지 않습니다.
 
 // 메인 블로그 애플리케이션 클래스
-class BlogApp {
+  class BlogApp {
     
     // 앱 상태 (State)
   state = {
@@ -31,9 +31,13 @@ class BlogApp {
 
     // 서비스 인스턴스
     supabase = null;
+    authService = null;
     // 네트워크 성능 최적화: 동일 키의 요청 중복 방지 및 레이스 가드
     _inFlight = new Map();
     _reqTokens = { home: 0, archives: 0, popular: 0 };
+    // 히스토리 이동 시 스크롤 상태 복원을 위한 저장소 및 플래그
+    _scrollStore = new Map();
+    _isPopNavigating = false;
     
     constructor() {
         // 1. 이벤트 핸들러 'this' 컨텍스트 바인딩
@@ -64,14 +68,27 @@ class BlogApp {
             // Supabase 클라이언트 준비: 동적 모듈 로딩 지연을 고려해 대기 후 초기화
             await this.ensureSupabaseReady(1200);
 
+            // 인증 서비스 초기화 및 구독
+            if (window.AuthService && this.supabase) {
+                this.authService = new window.AuthService(this.supabase);
+                // 상태 변화 이벤트 브로드캐스트 수신
+                this.authService.subscribe((event, session) => {
+                    this.state.user = session?.user || null;
+                    try { this._logAuthEvent('auth_state_change', { event }); } catch (_) {}
+                    this.renderNav();
+                });
+                // Supabase 내부 이벤트 구독 연결
+                try { this.authService.onAuthStateChange(); } catch (_) {}
+            }
+
             // 초기 스크립트 일괄 로드를 제거하고 라우트별로 필요시 로드합니다.
 
             // 전역 이벤트 리스너 바인딩
             this.bindGlobalListeners();
 
             // 초기 세션 조회로 첫 렌더링을 보장 + 콜백 처리
-            if (this.supabase && this.supabase.auth) {
-                const { data: { session } } = await this.supabase.auth.getSession();
+            if (this.authService) {
+                const session = await this.authService.getSession();
                 this.state.user = session?.user || null;
 
                 // 인증 콜백 처리: token_hash(type), OAuth code, 해시 토큰(암시적)
@@ -287,6 +304,18 @@ class BlogApp {
                     DOM.closeModal(openModal.id);
                 }
             }
+            // 글로벌 네비게이션 단축키: g+a(아카이브), g+d(대시보드), g+l(로그인)
+            try {
+                this._keySeq = this._keySeq || [];
+                const k = (e.key || '').toLowerCase();
+                if (k === 'g') { this._keySeq = ['g']; return; }
+                if (this._keySeq[0] === 'g') {
+                    if (k === 'a') { e.preventDefault(); this.navigate('/archives'); }
+                    else if (k === 'd') { e.preventDefault(); this.navigate('/dashboard'); }
+                    else if (k === 'l') { e.preventDefault(); this.navigate('/login'); }
+                    this._keySeq = [];
+                }
+            } catch (_) { /* noop */ }
         });
         
         // 온라인/오프라인 토스트 기능 제거됨
@@ -299,6 +328,11 @@ class BlogApp {
     handleGlobalClick(e) {
         const target = e.target.closest('[data-route]');
         if (target) {
+            // 새창/중클릭/수정키 조합은 네이티브 동작 유지
+            const isModified = !!(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || (e.button !== undefined && e.button !== 0));
+            const anchor = target.tagName === 'A' ? target : target.closest('a');
+            const opensNew = anchor && (anchor.getAttribute('target') === '_blank' || anchor.hasAttribute('download'));
+            if (isModified || opensNew) return;
             e.preventDefault();
             const href = target.getAttribute('href') || target.getAttribute('data-href');
             if (href && href !== '#') {
@@ -320,7 +354,16 @@ class BlogApp {
      * 브라우저 뒤로가기/앞으로가기를 처리합니다.
      */
     handlePopState() {
+        // 뒤/앞으로가기 이동 플래그 설정
+        this._isPopNavigating = true;
+        // 라우팅 처리
         this.handleRouting();
+        // 네비 활성 상태 동기화
+        this.renderNav();
+        // 스크롤 복원 (저장된 경우에만)
+        try { this.restoreScrollForCurrentPath(); } catch (_) { /* noop */ }
+        // 플래그 해제
+        this._isPopNavigating = false;
     }
 
     /**
@@ -329,12 +372,17 @@ class BlogApp {
      */
     navigate(path) {
         const next = this.normalizePath(path);
-        if (window.location.pathname + window.location.search !== next) {
+        const current = window.location.pathname + window.location.search;
+        const changed = current !== next;
+        if (changed) {
+            // 현재 경로 스크롤 저장
+            try { this.saveScrollForCurrentPath(); } catch (_) { /* noop */ }
             window.history.pushState(null, '', next);
+            this.handleRouting();
+            // 라우팅 후 현재 경로에 맞춰 네비 활성 하이라이트 갱신
+            this.renderNav();
+            // 일반 내비게이션에서는 상단 스크롤로 전환 (switchToView에서 수행)
         }
-        this.handleRouting();
-        // 라우팅 후 현재 경로에 맞춰 네비 활성 하이라이트 갱신
-        this.renderNav();
     }
 
     /**
@@ -344,19 +392,21 @@ class BlogApp {
     handleRouting() {
         const path = this.normalizePath(window.location.pathname);
         const params = new URLSearchParams(window.location.search);
-        // [Fix] 동일 뷰 재전환 시 hide/show 애니메이션이 충돌해
-        // 최종 display 상태가 'none'으로 남는 레이스 조건을 방지합니다.
         // 다음에 표시될 대상 뷰를 먼저 계산하고, 활성 뷰와 같으면 숨김을 건너뜁니다.
+        // 로그인은 모달로, 나머지는 페이지 뷰로 전환합니다.
         let targetViewId;
-        if (path === '/' || path === '/home') {
+        if (path === '/' || path === '/home' || path === '/library') {
             targetViewId = 'view-library';
+        } else if (path === '/archives' || path === '/archive' || path === '/post') {
+            targetViewId = 'view-archives';
         } else if (path.startsWith('/post/')) {
             targetViewId = 'view-post';
-        } else if (path === '/archives') {
-            targetViewId = 'view-archives';
+        } else if (path === '/dashboard') {
+            targetViewId = 'view-dashboard';
         } else if (path === '/writer' || path.startsWith('/writer/')) {
             targetViewId = 'view-writer';
         } else if (path === '/login') {
+            // 로그인은 모달로 처리하므로 배경은 라이브러리 유지
             targetViewId = 'view-library';
         } else {
             targetViewId = 'view-library';
@@ -369,23 +419,110 @@ class BlogApp {
             DOM.hide(activeView);
         }
 
-        // 라우팅 처리
-        if (path === '/' || path === '/home') {
-            this.renderHome(params);
-        } else if (path.startsWith('/post/')) {
-            const raw = path.split('/post/')[1];
-            const slug = raw ? decodeURIComponent(raw) : '';
-            this.renderPost(slug);
-        } else if (path === '/archives') {
-            this.renderArchives();
-        } else if (path === '/writer' || path.startsWith('/writer/')) {
-            const raw = path.split('/writer/')[1] || null;
-            const slug = raw ? decodeURIComponent(raw) : null;
-            this.renderWriter(slug);
-        } else if (path === '/login') {
-            this.renderLogin();
-        } else {
+        // 라우팅 처리: 선언형 Router로 위임
+        try {
+            const route = window.Router && typeof window.Router.resolve === 'function'
+                ? window.Router.resolve(path)
+                : null;
+            if (route && typeof route.exec === 'function') {
+                if (route.requiresAuth) {
+                    const ok = this.checkAuth(true);
+                    if (!ok) return; // 로그인 모달로 전환됨
+                }
+                route.exec(this, params);
+            } else {
+                this.render404();
+            }
+        } catch (e) {
+            console.warn('Router 처리 중 오류:', e);
             this.render404();
+        }
+    }
+
+    /**
+     * [Helper] 모달 닫기 바인딩 공통 처리
+     * - 닫기 버튼/취소 버튼/오버레이 클릭으로 닫기
+     * - 필요 시 추가 후처리(onClose) 실행
+     */
+    bindModalCloseHandlers(modalId, opts = {}) {
+        try {
+            const modal = DOM.$(`#${modalId}`);
+            if (!modal) return;
+            const { closeSelector = '.modal-close', cancelSelector = '.cancel-btn', onClose = null } = opts;
+            const doClose = () => {
+                DOM.closeModal(modalId);
+                if (typeof onClose === 'function') {
+                    try { onClose(); } catch (_) { /* noop */ }
+                }
+            };
+            const closeBtn = modal.querySelector(closeSelector);
+            const cancelBtn = modal.querySelector(cancelSelector);
+            closeBtn && closeBtn.addEventListener('click', doClose);
+            cancelBtn && cancelBtn.addEventListener('click', doClose);
+            // 오버레이 클릭 닫기는 DOM.openModal에서 처리하므로 이중 바인딩을 제거합니다.
+        } catch (_) { /* noop */ }
+    }
+
+    /**
+     * [Render: Dashboard]
+     * 사용자 대시보드를 렌더링합니다. 인증 필요.
+     */
+    renderDashboard(containerSelector = '#view-dashboard') {
+        if (!this.checkAuth(true)) return; // 가드 중복 안전망
+        this.switchToView('view-dashboard');
+        const container = DOM.$(containerSelector);
+        if (!container) return;
+
+        const userEmail = this.state.user?.email || '알 수 없음';
+        container.innerHTML = `
+          <section class="max-w-4xl mx-auto py-10 px-6">
+            <div class="flex items-center justify-between mb-4">
+              <h1 class="text-2xl font-bold">대시보드</h1>
+              <a href="/writer" data-route class="px-3 py-2 rounded-lg bg-black text-white">새 글 쓰기</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="p-4 border rounded-lg">
+                <h2 class="text-lg font-semibold mb-2">계정</h2>
+                <p class="text-sm text-gray-600">이메일: ${this.escapeHTML(userEmail)}</p>
+              </div>
+              <div class="p-4 border rounded-lg">
+                <h2 class="text-lg font-semibold mb-2">최근 활동</h2>
+                <div id="dashboard-recent" class="text-sm text-gray-600">불러오는 중…</div>
+              </div>
+            </div>
+          </section>`;
+
+        this.updatePageMeta('대시보드 - InsureLog', '내 계정 및 최근 활동', window.location.href, '/og-image.svg');
+
+        this.loadRecentActivities().catch(e => this.handleError(e, 'loadRecentActivities'));
+    }
+
+    async loadRecentActivities() {
+        try {
+            if (!this.supabase) return;
+            const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
+            const { data, error } = await this.supabase
+                .from(table)
+                .select('id, title, slug, status, updated_at')
+                .order('updated_at', { ascending: false })
+                .limit(5);
+            if (error) throw error;
+            const box = DOM.$('#dashboard-recent');
+            if (!box) return;
+            if (!data || data.length === 0) {
+                box.textContent = '최근 편집 항목이 없습니다.';
+                return;
+            }
+            box.innerHTML = '<ul class="space-y-2">' + data.map(p => {
+                const url = '/writer/' + p.slug;
+                const date = this.formatDateKR(p.updated_at);
+                return `<li class="flex items-center justify-between">
+                    <a href="${url}" data-route class="text-sm font-medium">${this.escapeHTML(p.title || '제목 없음')}</a>
+                    <span class="text-xs text-gray-500">${date}</span>
+                </li>`;
+            }).join('') + '</ul>';
+        } catch (e) {
+            this.handleError(e, 'loadRecentActivities');
         }
     }
 
@@ -397,12 +534,14 @@ class BlogApp {
         try {
             const url = new URL(p, window.location.origin);
             let path = url.pathname || '/';
+            // 퍼센트 인코딩된 경로 안전 디코드(예약문자 제외)
+            try { path = decodeURI(path); } catch (_) { /* noop */ }
             // index.html을 루트로 매핑
             if (path === '/index.html') path = '/';
             // 트레일링 슬래시 제거(루트 제외)
             if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
             // 중복 슬래시 축약
-            path = path.replace(/\/+/, '/');
+            path = path.replace(/\/+/g, '/');
             return path + (url.search || '');
         } catch (_) {
             // 안전 폴백
@@ -411,14 +550,97 @@ class BlogApp {
             return p || '/';
         }
     }
+    
+    /**
+     * [Utils] 현재 경로 기준 쿼리 파라미터 객체 반환
+     */
+    getQueryParams() {
+        const params = new URLSearchParams(window.location.search);
+        const obj = {};
+        params.forEach((v, k) => { obj[k] = v; });
+        return obj;
+    }
+
+    /**
+     * [SEO] robots 메타 업데이트
+     */
+    updateRobotsMeta(content = 'index,follow') {
+        const robots = DOM.$('meta[name="robots"]');
+        if (robots) robots.content = content;
+    }
+
+    /**
+     * [SEO] 아카이브 페이지 prev/next 링크 업데이트
+     */
+    updatePrevNextLinks(totalPages = 1, currentPage = 1) {
+        const head = document.head;
+        if (!head) return;
+        const ensureLink = (rel) => {
+            let el = head.querySelector(`link[rel="${rel}"]`);
+            if (!el) {
+                el = document.createElement('link');
+                el.setAttribute('rel', rel);
+                head.appendChild(el);
+            }
+            return el;
+        };
+        const base = new URL(window.location.href);
+        const setPageOnUrl = (p) => {
+            const u = new URL(base.href);
+            u.searchParams.set('page', String(p));
+            return u.toString();
+        };
+        // prev
+        const prevLink = ensureLink('prev');
+        if (currentPage > 1) {
+            prevLink.setAttribute('href', setPageOnUrl(currentPage - 1));
+        } else {
+            prevLink.removeAttribute('href');
+        }
+        // next
+        const nextLink = ensureLink('next');
+        if (currentPage < totalPages) {
+            nextLink.setAttribute('href', setPageOnUrl(currentPage + 1));
+        } else {
+            nextLink.removeAttribute('href');
+        }
+    }
+
+    /**
+     * [A11y] 대상 뷰로 키보드 포커스 이동
+     */
+    focusFirstInView(viewId) {
+        try {
+            const target = DOM.$('#' + viewId);
+            if (!target) return;
+            // 포커스 가능하도록 tabindex 부여
+            if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+            target.focus({ preventScroll: true });
+        } catch (_) { /* noop */ }
+    }
+
+    /**
+     * [Scroll] 현재 경로의 스크롤 저장/복원
+     */
+    saveScrollForCurrentPath() {
+        const key = window.location.pathname + window.location.search;
+        this._scrollStore.set(key, { x: window.scrollX, y: window.scrollY });
+    }
+    restoreScrollForCurrentPath() {
+        const key = window.location.pathname + window.location.search;
+        const pos = this._scrollStore.get(key);
+        if (pos && typeof pos.y === 'number') {
+            window.scrollTo({ left: pos.x || 0, top: pos.y || 0, behavior: 'auto' });
+        }
+    }
 
     /**
      * [Render: Archives]
      * 발행된 글을 월별로 그룹핑해 아카이브 리스트를 보여줍니다.
      */
-    renderArchives() {
-        this.switchToView('view-archives');
-        const container = DOM.$('#view-archives');
+    renderArchives(containerSelector = '#view-archives') {
+        if (containerSelector === '#view-archives') this.switchToView('view-archives');
+        const container = DOM.$(containerSelector);
         if (!container) return;
         // URL 쿼리에서 상태 동기화
         try {
@@ -438,7 +660,7 @@ class BlogApp {
         container.innerHTML = '<section class="max-w-4xl mx-auto py-10 px-6">'
             + '<div class="flex items-center justify-between">'
             +   '<h1 class="text-2xl font-bold">아카이브</h1>'
-            +   `<div class="text-xs text-gray-500">페이지당 ${ps}개</div>`
+            +   `<div id="archives-header-info" class="text-xs text-gray-500">페이지당 ${ps}개</div>`
             + '</div>'
             + '<div class="mt-4 grid grid-cols-1 sm:grid-cols-4 gap-3">'
             +   '<div><label class="block text-xs text-gray-600">카테고리</label><select id="archives-filter-category" class="mt-1 w-full border rounded-lg p-2"><option value="전체">전체</option></select></div>'
@@ -451,8 +673,10 @@ class BlogApp {
             + '<div id="archives-pagination" class="mt-8 flex items-center justify-center gap-2"></div>'
             + '</section>';
 
-        // SEO 메타 업데이트
-        this.updatePageMeta('아카이브 - InsureLog', '월별 아카이브와 카테고리/태그 필터', window.location.href, '/og-image.svg');
+        // SEO 메타 업데이트 (페이지 번호 반영)
+        const pageNum = this.state.archives.page || 1;
+        const titleForArchives = pageNum > 1 ? `아카이브 - 페이지 ${pageNum} - InsureLog` : '아카이브 - InsureLog';
+        this.updatePageMeta(titleForArchives, '월별 아카이브와 카테고리/태그 필터', window.location.href, '/og-image.svg');
 
         // 기존 값 채우기
         const tagInput = DOM.$('#archives-filter-tag');
@@ -571,6 +795,15 @@ class BlogApp {
         // 페이지네이션 렌더
         this.renderArchivesPagination();
 
+        // prev/next 링크 및 robots 메타 갱신
+        try {
+            const totalPages = Math.max(1, Math.ceil((this.state.archives.total || 0) / (this.state.archives.pageSize || 20)));
+            this.updatePrevNextLinks(totalPages, this.state.archives.page || 1);
+            // 페이지 2 이상 또는 태그 필터 적용 시 noindex 처리
+            const shouldNoIndex = (this.state.archives.page || 1) > 1 || !!(this.state.archives.tag);
+            this.updateRobotsMeta(shouldNoIndex ? 'noindex,follow' : 'index,follow');
+        } catch (_) { /* noop */ }
+
         // 총 개수 및 범위 안내
         try {
             const fromIdx = (page - 1) * pageSize + 1;
@@ -591,9 +824,9 @@ class BlogApp {
             container.innerHTML = '';
             return;
         }
-        const makeBtn = (p, label = null, active = false) => `<button data-page="${p}" class="px-3 py-1 rounded border ${active? 'bg-black text-white':'hover:bg-black/5'}">${label || p}</button>`;
-        const prev = page > 1 ? makeBtn(page - 1, '이전') : '<span class="px-3 py-1 text-gray-400">이전</span>';
-        const next = page < totalPages ? makeBtn(page + 1, '다음') : '<span class="px-3 py-1 text-gray-400">다음</span>';
+        const makeBtn = (p, label = null, active = false) => `<button data-page="${p}" ${active ? 'aria-current="page"' : ''} aria-label="${label ? label : `페이지 ${p}`}" class="px-3 py-1 rounded border ${active? 'bg-black text-white':'hover:bg-black/5'}">${label || p}</button>`;
+        const prev = page > 1 ? makeBtn(page - 1, '이전') : '<span class="px-3 py-1 text-gray-400" aria-hidden="true">이전</span>';
+        const next = page < totalPages ? makeBtn(page + 1, '다음') : '<span class="px-3 py-1 text-gray-400" aria-hidden="true">다음</span>';
         const windowSize = 5;
         const start = Math.max(1, page - Math.floor(windowSize/2));
         const end = Math.min(totalPages, start + windowSize - 1);
@@ -639,8 +872,13 @@ class BlogApp {
             targetView.classList.add('active');
             DOM.show(targetView);
 
-            // 페이지 상단으로 스크롤
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // 일반 내비게이션에서 상단으로 스크롤, 히스토리 이동(popstate) 시에는 복원으로 대체
+            if (!this._isPopNavigating) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            // 키보드 포커스 이동으로 접근성 강화
+            this.focusFirstInView(viewId);
 
             // 뷰 전환 후 레이아웃 가이드라인 적용 및 자동 검사 실행
             if (window.LayoutManager && typeof window.LayoutManager.onViewRendered === 'function') {
@@ -660,10 +898,19 @@ class BlogApp {
         // 이미 렌더된 경우: 로그인 상태가 동일하면 재구성 대신 활성 링크만 업데이트
         const existingLinks = container.querySelector('#nav-links');
         if (existingLinks && this._navLogged === isLoggedIn) {
-            const currentPath = window.location.pathname;
+            let currentPath = this.normalizePath(window.location.pathname);
+            // 라우트 별칭을 정규화하여 활성 상태 계산 일관화
+            if (currentPath === '/archive') currentPath = '/archives';
+            if (currentPath === '/post') currentPath = '/archives';
+            if (currentPath === '/home' || currentPath === '/library') currentPath = '/';
             existingLinks.querySelectorAll('a[data-route]').forEach(a => {
                 const href = a.getAttribute('href');
-                const isCurrent = href === currentPath;
+                let path = '/';
+                try { path = this.normalizePath(new URL(href, window.location.origin).pathname); } catch (_) { path = this.normalizePath(href || '/'); }
+                // 별칭 정규화
+                if (path === '/archive') path = '/archives';
+                if (path === '/home' || path === '/library') path = '/';
+                const isCurrent = path === currentPath;
                 if (isCurrent) {
                     a.setAttribute('aria-current', 'page');
                 } else {
@@ -678,7 +925,6 @@ class BlogApp {
             ? '<a id="logout-btn" href="#" class="nav-link">로그아웃</a>'
             : '<a id="login-link" href="/login" data-route class="nav-link">로그인</a>';
         const linksHtml = [
-            '<a href="/" data-route class="nav-link">홈</a>',
             '<a href="/archives" data-route class="nav-link">아카이브</a>',
             writerLink,
             dashLink,
@@ -688,8 +934,8 @@ class BlogApp {
         ].filter(Boolean).join('');
 
         // 네비게이션 마크업: 모바일에서 항상 보이는 상단 네비로 전환(햄버거 제거)
-        container.innerHTML = '<nav class="w-full nav-inner" aria-label="주요">'
-            + '<a href="/" data-route class="brand font-extrabold text-xl tracking-tight">InsureLog</a>'
+        container.innerHTML = '<nav class="w-full nav-inner" role="navigation" aria-label="주요">'
+            + '<a href="/" data-route class="brand font-extrabold text-xl tracking-tight" aria-label="홈">InsureLog</a>'
             + '<div id="nav-links" class="header-nav mobile-nav-actions">' + linksHtml + '</div>'
             + '</nav>'
         // 현재 로그인 상태 캐시 (메모이즈 키)
@@ -697,15 +943,22 @@ class BlogApp {
 
         // [Enhancement] 현재 경로 활성 상태 하이라이트 처리
         // 접근성(aria-current)과 가시성(font-semibold)을 함께 적용합니다.
-        const currentPath = this.normalizePath(window.location.pathname);
+        let currentPath = this.normalizePath(window.location.pathname);
+        // 라우트 별칭을 정규화하여 활성 상태 계산 일관화
+        if (currentPath === '/archive') currentPath = '/archives';
+        if (currentPath === '/post') currentPath = '/archives';
+        if (currentPath === '/home' || currentPath === '/library') currentPath = '/';
         const routeLinks = container.querySelectorAll('#nav-links a[data-route]');
         routeLinks.forEach(a => {
             const href = a.getAttribute('href') || '/';
             // 절대경로화하여 비교 안전성 확보
-            const path = (() => { try { return this.normalizePath(new URL(href, window.location.origin).pathname); } catch (_) { return this.normalizePath(href); } })();
-            const isActive = path === currentPath || (path === '/' && (currentPath === '/home'));
-            a.classList.toggle('font-semibold', isActive);
-            a.setAttribute('aria-current', isActive ? 'page' : 'false');
+            let path = (() => { try { return this.normalizePath(new URL(href, window.location.origin).pathname); } catch (_) { return this.normalizePath(href); } })();
+            // 별칭 정규화
+            if (path === '/archive') path = '/archives';
+            if (path === '/home' || path === '/library') path = '/';
+            const isActive = path === currentPath;
+            // aria-current는 활성일 때만 설정하고, 비활성일 때는 제거
+            if (isActive) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
         });
 
         // 햄버거 메뉴 바인딩
@@ -716,7 +969,9 @@ class BlogApp {
             logoutBtn.onclick = async (ev) => {
                 try { ev?.preventDefault?.(); } catch (_) {}
                 try {
-                    if (this.supabase && this.supabase.auth) {
+                    if (this.authService) {
+                        await this.authService.signOut();
+                    } else if (this.supabase?.auth) {
                         await this.supabase.auth.signOut();
                     }
                     UIComponents.showToast('로그아웃되었습니다.', 'info');
@@ -748,8 +1003,13 @@ class BlogApp {
                 + '<div id="home-pagination" class="flex justify-center"></div>'
                 + '</section>';
 
-            // SEO 메타 업데이트
-            this.updatePageMeta('InsureLog - 최근 글', '최신 게시글 목록', window.location.href, '/og-image.svg');
+            // SEO 메타 업데이트 (페이지 번호 반영)
+            const page = Number(params.get('page') || '1');
+            const title = page > 1 ? `최근 글 - 페이지 ${page} - InsureLog` : 'InsureLog - 최근 글';
+            const desc = page > 1 ? `최신 게시글 목록 · 페이지 ${page}` : '최신 게시글 목록';
+            this.updatePageMeta(title, desc, window.location.href, '/og-image.svg');
+            // 기본 robots: 1페이지 index, 나머지 noindex
+            this.updateRobotsMeta(page === 1 ? 'index,follow' : 'noindex,follow');
 
             // 캐시/프리패치 기반 초기 렌더 제거됨
 
@@ -762,9 +1022,9 @@ class BlogApp {
      * [Render: Post]
      * 포스트 상세를 렌더링합니다.
      */
-    renderPost(slug) {
-        this.switchToView('view-post');
-        const container = DOM.$('#view-post');
+    renderPost(slug, containerSelector = '#view-post') {
+        if (containerSelector === '#view-post') this.switchToView('view-post');
+        const container = DOM.$(containerSelector);
         if (!container) return;
 
         // [Layout] 본문 폭을 네비게이션(max-w-4xl)과 맞춰 일관성을 유지합니다.
@@ -778,18 +1038,40 @@ class BlogApp {
             + '</div>'
             + '</article>';
 
-        this.loadPostDetail(slug).catch(err => this.handleError(err, 'loadPostDetail'));
+        this.loadPostDetail(slug, containerSelector).catch(err => this.handleError(err, 'loadPostDetail'));
+    }
+
+    // 모달: 포스트 상세
+    renderPostModal(slug) {
+        // 페이지 라우팅으로 통일: 잘못된 호출에도 정상 라우트로 이동
+        const safeSlug = encodeURIComponent(String(slug || '').trim());
+        this.navigate(safeSlug ? `/post/${safeSlug}` : '/archives');
+    }
+
+    // 모달: 아카이브
+    renderArchivesModal() {
+        // 페이지 라우팅으로 통일
+        this.navigate('/archives');
+    }
+
+    // 모달: 글쓰기/수정
+    renderWriterModal(slug) {
+        // 페이지 라우팅으로 통일
+        if (!this.checkAuth(true)) return;
+        const safeSlug = String(slug || '').trim();
+        const path = safeSlug ? `/writer/${encodeURIComponent(safeSlug)}` : '/writer';
+        this.navigate(path);
     }
 
     /**
      * [Render: Writer]
      * 글쓰기/수정 뷰를 렌더링합니다.
      */
-    renderWriter(slug) {
+    renderWriter(slug, containerSelector = '#view-writer') {
         // 로그인 사용자만 접근 가능하도록 가드
         if (!this.checkAuth(true)) return;
-        this.switchToView('view-writer');
-        const container = DOM.$('#view-writer');
+        if (containerSelector === '#view-writer') this.switchToView('view-writer');
+        const container = DOM.$(containerSelector);
         if (!container) return;
         const isEdit = !!slug;
         container.innerHTML = '<section class="nav-inner py-10">'
@@ -841,7 +1123,7 @@ class BlogApp {
         );
 
         // 포스트 선택 모달 UI 초기화
-        this.renderPostPickerUI();
+        this.renderPostPickerUI(containerSelector);
 
         // 편집 모드 데이터 로드
         if (isEdit) {
@@ -853,16 +1135,16 @@ class BlogApp {
         if (form) {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                await this.submitWriterForm(isEdit ? slug : null);
+                await this.submitWriterForm(isEdit ? slug : null, containerSelector);
             }, { once: true });
         }
         // 에디터 확장 초기화
         this.setupContentEditor(isEdit ? slug : null);
     }
 
-    // 포스트 선택 모달 UI 렌더 및 바인딩
-    renderPostPickerUI() {
-        const container = DOM.$('#view-writer');
+    // 포스트 선택 모달 UI 렌더 및 바인딩 (컨테이너 선택자 인자 지원)
+    renderPostPickerUI(containerSelector = '#view-writer') {
+        const container = DOM.$(containerSelector) || DOM.$('#writer-modal') || DOM.$('#view-writer');
         if (!container) return;
         if (!DOM.$('#post-picker-modal')) {
             const modal = document.createElement('div');
@@ -972,95 +1254,114 @@ class BlogApp {
      * [Render: Login]
      * 로그인 뷰를 렌더링합니다.
      */
-    renderLogin() {
-        this.switchToView('view-library');
-        const container = DOM.$('#view-library');
-        if (container) {
-            const siteUrl = (window.Config && window.Config.SITE_URL) || window.location.origin;
-            container.innerHTML = `
-                <section class="max-w-md mx-auto py-10 px-6">
-                  <h1 class="text-2xl font-extrabold">로그인</h1>
-                  <p class="text-sm text-gray-600 mt-2">이메일로 매직링크를 받아 빠르게 로그인하세요.</p>
-                  <form id="magic-form" class="mt-6 space-y-3" novalidate>
-                    <div id="login-errors" class="sr-only" role="alert" aria-live="assertive"></div>
-                    <label class="form-label" for="magic-email">이메일 주소</label>
-                    <div class="input-group" aria-live="polite">
-                      <span class="input-group-addon" aria-hidden="true" title="이메일">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                          <path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm0 2l8 5 8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                      </span>
-                      <input id="magic-email" type="email" class="form-input" placeholder="you@example.com" required autocomplete="email" inputmode="email" aria-describedby="magic-help" aria-errormessage="magic-error">
+    // [Dead Code Cleanup] 전체 페이지 로그인 뷰는 모달로 대체되어 제거되었습니다.
+
+    /**
+     * [Render: Login Modal]
+     * 전체 페이지 대신 모달로 매직 링크 로그인 UI를 표시합니다.
+     */
+    renderLoginModal() {
+        // 기존 뷰는 유지하고 위에 모달을 띄움
+        const host = document.getElementById('modal-container') || document.body;
+        const siteUrl = (window.Config && window.Config.SITE_URL) || window.location.origin;
+        if (!document.getElementById('login-modal')) {
+            const modal = document.createElement('div');
+            modal.id = 'login-modal';
+            modal.className = 'hidden';
+            modal.innerHTML = `
+                <div class="modal-overlay">
+                    <div class="modal-content modal-content-md">
+                        <div class="modal-header">
+                            <h3 class="modal-title">로그인</h3>
+                            <button class="modal-close" aria-label="닫기">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="magic-form" class="login-form" novalidate>
+                                <div id="login-errors" class="sr-only" role="alert" aria-live="assertive"></div>
+                                <div class="form-field">
+                                  <label class="block text-sm font-medium" for="magic-email">이메일 주소</label>
+                                  <input id="magic-email" type="email" class="form-input w-full" placeholder="you@example.com" required autocomplete="email" inputmode="email" aria-describedby="magic-help login-errors" aria-errormessage="magic-error">
+                                </div>
+                                <div id="magic-error" class="form-error hidden" role="alert" aria-live="assertive">
+                                  <span>올바른 이메일 형식을 입력해주세요.</span>
+                                </div>
+                                <button id="magic-send" type="submit" class="btn btn-primary w-full">로그인 링크 보내기</button>
+                                <p id="magic-help" class="text-xs text-gray-500">메일의 링크를 누르면 자동 로그인됩니다. 1분 내 도착하지 않으면 스팸함도 확인해주세요.</p>
+                                <div id="magic-success" class="text-sm text-green-700 hidden" role="status" aria-live="polite">이메일로 로그인 링크를 보냈습니다. 메일함을 확인해주세요.</div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn px-4 py-2 rounded-lg border cancel-btn">닫기</button>
+                        </div>
                     </div>
-                    <div id="magic-error" class="form-error" style="display:none;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.29 3.86l-8.23 14.25A2 2 0 0 0 4 21h16a2 2 0 0 0 1.94-2.89L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                      <span>올바른 이메일 형식을 입력해주세요.</span>
-                    </div>
-                    <button id="magic-send" type="submit" class="btn btn-primary btn-lg w-full">로그인 링크 보내기</button>
-                    <p id="magic-help" class="form-help">메일의 링크를 누르면 자동 로그인됩니다. 1분 내 도착하지 않으면 스팸함도 확인해주세요.</p>
-                  </form>
-                  <div id="magic-success" class="mt-4 p-3 border border-green-200 bg-green-50 text-green-700 rounded" style="display:none;">
-                    이메일로 로그인 링크를 보냈습니다. 메일함을 확인해주세요.
-                  </div>
-                  <div class="mt-8 text-center">
-                    <a href="/" data-route class="px-4 py-2 rounded-full bg-black text-white">홈으로</a>
-                  </div>
-                </section>`;
+                </div>`;
+            host.appendChild(modal);
+            // 공통 닫기 핸들러 바인딩 + 오버레이 클릭 닫기
+            this.bindModalCloseHandlers('login-modal', {
+                onClose: () => this.navigate('/')
+            });
+        }
 
-            // SEO 메타 업데이트
-            this.updatePageMeta('로그인 - InsureLog', '계정 로그인 페이지', window.location.href, '/og-image.svg');
-
-            // 이벤트 바인딩: Magic Link
-            const magicForm = DOM.$('#magic-form');
-            if (magicForm) {
-                const emailInput = DOM.$('#magic-email');
-                const errorBox = DOM.$('#magic-error');
-                const successBox = DOM.$('#magic-success');
-                const sendBtn = DOM.$('#magic-send');
-
-                const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
-                const showError = (show) => {
-                    if (!errorBox) return;
-                    errorBox.style.display = show ? 'flex' : 'none';
-                    if (emailInput) {
-                        emailInput.classList.toggle('error', !!show);
-                        emailInput.setAttribute('aria-invalid', show ? 'true' : 'false');
-                    }
-                    const summary = DOM.$('#login-errors');
-                    if (summary) summary.textContent = show ? '올바른 이메일 형식을 입력해주세요.' : '';
-                };
-
-                emailInput?.addEventListener('input', () => showError(false));
-
-                magicForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const email = String(emailInput?.value || '').trim();
-                    if (!isValidEmail(email)) { showError(true); emailInput?.focus(); return; }
-                    if (!this.supabase?.auth) return UIComponents.showToast('인증 모듈을 초기화하지 못했습니다.', 'error');
-                    try {
-                        sendBtn?.setAttribute('disabled', 'true');
-                        if (sendBtn) { sendBtn.textContent = '보내는 중…'; sendBtn.setAttribute('aria-busy', 'true'); }
+        // 이벤트 바인딩: Magic Link (모달 내부)
+        const magicForm = DOM.$('#magic-form');
+        if (magicForm) {
+            if (magicForm.dataset.bound === 'true') {
+                // 이미 바인딩된 경우 중복 이벤트 바인딩을 피합니다.
+                DOM.openModal('login-modal');
+                return;
+            }
+            const emailInput = DOM.$('#magic-email');
+            const errorBox = DOM.$('#magic-error');
+            const successBox = DOM.$('#magic-success');
+            const sendBtn = DOM.$('#magic-send');
+            const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
+            const showError = (show) => {
+                if (!errorBox) return;
+                errorBox.classList.toggle('hidden', !show);
+                if (emailInput) {
+                    emailInput.classList.toggle('error', !!show);
+                    emailInput.setAttribute('aria-invalid', show ? 'true' : 'false');
+                }
+                const summary = DOM.$('#login-errors');
+                if (summary) summary.textContent = show ? '올바른 이메일 형식을 입력해주세요.' : '';
+            };
+            emailInput?.addEventListener('input', () => showError(false));
+            magicForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = String(emailInput?.value || '').trim();
+                if (!isValidEmail(email)) { showError(true); emailInput?.focus(); return; }
+                if (!this.authService && !this.supabase?.auth) return UIComponents.showToast('인증 모듈을 초기화하지 못했습니다.', 'error');
+                try {
+                    sendBtn?.setAttribute('disabled', 'true');
+                    if (sendBtn) { sendBtn.textContent = '보내는 중…'; sendBtn.setAttribute('aria-busy', 'true'); }
+                    if (this.authService) {
+                        await this.authService.signInWithOtp(email, siteUrl);
+                    } else {
                         const { error } = await this.supabase.auth.signInWithOtp({
                             email,
                             options: { shouldCreateUser: true, emailRedirectTo: siteUrl }
                         });
                         if (error) throw error;
-                        UIComponents.showToast('로그인 링크를 이메일로 보냈습니다.', 'success');
-                        if (successBox) successBox.style.display = 'block';
-                    } catch (err) {
-                        this._logAuthEvent('login_magic_failed', { email });
-                        UIComponents.showToast('메일 발송에 실패했습니다.', 'error');
-                        const summary = DOM.$('#login-errors');
-                        if (summary) summary.textContent = '메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.';
-                    } finally {
-                        setTimeout(() => {
-                            sendBtn?.removeAttribute('disabled');
-                            if (sendBtn) { sendBtn.textContent = '로그인 링크 보내기'; sendBtn.removeAttribute('aria-busy'); }
-                        }, 1200);
                     }
-                });
-            }
+                    UIComponents.showToast('로그인 링크를 이메일로 보냈습니다.', 'success');
+                    if (successBox) successBox.classList.remove('hidden');
+                } catch (err) {
+                    try { this._logAuthEvent('login_magic_failed', { email }); } catch (_) {}
+                    UIComponents.showToast('메일 발송에 실패했습니다.', 'error');
+                    const summary = DOM.$('#login-errors');
+                    if (summary) summary.textContent = '메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.';
+                } finally {
+                    setTimeout(() => {
+                        sendBtn?.removeAttribute('disabled');
+                        if (sendBtn) { sendBtn.textContent = '로그인 링크 보내기'; sendBtn.removeAttribute('aria-busy'); }
+                    }, 1200);
+                }
+            });
+            magicForm.dataset.bound = 'true';
         }
+
+        // 모달 오픈 및 포커스 트랩 활성화
+        DOM.openModal('login-modal');
     }
 
     /**
@@ -1107,6 +1408,10 @@ class BlogApp {
     // 인증 실패/이벤트 로깅 (베이직)
     async _logAuthEvent(type, payload = {}) {
         try {
+            if (this.authService) {
+                await this.authService.logAuthEvent(type, payload);
+                return;
+            }
             const safe = {
                 type,
                 email_hint: (payload.email || '').replace(/(^.).+(@.+$)/, '$1***$2'),
@@ -1127,10 +1432,12 @@ class BlogApp {
     
     // 로딩 상태 관리
     setLoading(isLoading, container = '#app-container') {
+        const resolved = DOM.$(container) ? container
+            : (DOM.$('#modal-container') ? '#modal-container' : '#app-container');
         if (isLoading) {
-            DOM.showLoading(container);
+            DOM.showLoading(resolved);
         } else {
-            DOM.hideLoading(container);
+            DOM.hideLoading(resolved);
         }
     }
 
@@ -1177,9 +1484,11 @@ class BlogApp {
         const twitterTitle = DOM.$('meta[name="twitter:title"]');
         const twitterDesc = DOM.$('meta[name="twitter:description"]');
         const twitterImage = DOM.$('meta[name="twitter:image"]');
+        const twitterCard = DOM.$('meta[name="twitter:card"]');
         if (twitterTitle) twitterTitle.content = title;
         if (twitterDesc) twitterDesc.content = description || '';
         if (twitterImage) twitterImage.content = finalImage;
+        if (twitterCard) twitterCard.content = 'summary_large_image';
     }
 
     async loadWriterData(slug) {
@@ -1256,7 +1565,10 @@ class BlogApp {
         }
     }
 
-    async submitWriterForm(editSlug = null) {
+    async submitWriterForm(editSlug = null, containerSelector = '#view-writer') {
+        const effectiveContainer = DOM.$(containerSelector)
+            ? containerSelector
+            : (DOM.$('#modal-container') ? '#modal-container' : '#view-writer');
         try {
             if (!this.supabase) throw new Error('Supabase가 준비되지 않았습니다');
             // 폼/버튼/에러 영역 참조
@@ -1296,7 +1608,7 @@ class BlogApp {
                 submitBtn.dataset._origText = submitBtn.textContent || '';
                 submitBtn.textContent = '저장 중…';
             }
-            this.setLoading(true, '#view-writer');
+        this.setLoading(true, effectiveContainer);
             // 저장 전 보안/마크다운 유틸리티를 지연 로드
             await ScriptLoader.loadUtilities();
             const title = titleRaw;
@@ -1430,8 +1742,8 @@ class BlogApp {
     /**
      * [Detail] 포스트 상세 로드 및 렌더링
      */
-    async loadPostDetail(slug) {
-        const container = DOM.$('#view-post');
+    async loadPostDetail(slug, targetSelector = '#view-post') {
+        const container = DOM.$(targetSelector);
         // 동적 모듈 로딩 지연 시 초기화 시도
         await this.ensureSupabaseReady(1200);
         if (!this.supabase) {
@@ -2311,17 +2623,22 @@ class BlogApp {
 
             // 캐시 저장 제거됨
             
-            // 페이지네이션 갱신
+            // 페이지네이션 갱신 및 메타(prev/next, robots) 동기화
             try {
                 const pagEl = DOM.$('#home-pagination');
                 if (pagEl) {
                     const totalPages = Math.max(1, Math.ceil((count || 0) / perPage));
                     if (totalPages <= 1) {
                         pagEl.innerHTML = '';
+                        // prev/next 링크/robots 초기화
+                        this.updatePrevNextLinks(1, 1);
+                        this.updateRobotsMeta('index,follow');
+                        // 타이틀/설명 재동기화 (페이지 번호 제거)
+                        this.updatePageMeta('InsureLog - 최근 글', '최신 게시글 목록', window.location.href, '/og-image.svg');
                     } else {
-                        const makeBtn = (p, label = null, active = false) => `<button data-page="${p}" class="px-3 py-1 rounded border ${active? 'bg-black text-white':'hover:bg-black/5'}">${label || p}</button>`;
-                        const prev = page > 1 ? makeBtn(page - 1, '이전') : '<span class="px-3 py-1 text-gray-400">이전</span>';
-                        const next = page < totalPages ? makeBtn(page + 1, '다음') : '<span class="px-3 py-1 text-gray-400">다음</span>';
+                        const makeBtn = (p, label = null, active = false) => `<button data-page="${p}" ${active ? 'aria-current="page"' : ''} aria-label="${label ? label : `페이지 ${p}`}" class="px-3 py-1 rounded border ${active? 'bg-black text-white':'hover:bg-black/5'}">${label || p}</button>`;
+                        const prev = page > 1 ? makeBtn(page - 1, '이전') : '<span class="px-3 py-1 text-gray-400" aria-hidden="true">이전</span>';
+                        const next = page < totalPages ? makeBtn(page + 1, '다음') : '<span class="px-3 py-1 text-gray-400" aria-hidden="true">다음</span>';
                         const windowSize = 5;
                         const start = Math.max(1, page - Math.floor(windowSize/2));
                         const end = Math.min(totalPages, start + windowSize - 1);
@@ -2334,6 +2651,13 @@ class BlogApp {
                                 this.navigate(`/?page=${targetPage}`);
                             };
                         });
+                        // prev/next 링크, robots 동기화
+                        this.updatePrevNextLinks(totalPages, page);
+                        this.updateRobotsMeta(page === 1 ? 'index,follow' : 'noindex,follow');
+                        // 타이틀/설명에 페이지 번호 반영
+                        const t = page > 1 ? `최근 글 - 페이지 ${page} - InsureLog` : 'InsureLog - 최근 글';
+                        const d = page > 1 ? `최신 게시글 목록 · 페이지 ${page}` : '최신 게시글 목록';
+                        this.updatePageMeta(t, d, window.location.href, '/og-image.svg');
                     }
                 }
             } catch (_) { /* noop */ }
