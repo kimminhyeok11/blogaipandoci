@@ -7,6 +7,10 @@ const path = require('path');
 async function run() {
   const root = path.resolve(__dirname, '..');
   const jsDir = path.join(root, 'js');
+  const outDir = path.join(root, 'dist', 'js');
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true });
+  }
   let esbuild;
   try {
     esbuild = require('esbuild');
@@ -26,7 +30,7 @@ async function run() {
   console.log(`[build-minify] Minifying ${files.length} files...`);
   for (const f of files) {
     const src = path.join(jsDir, f);
-    const out = path.join(jsDir, f.replace(/\.js$/, '.min.js'));
+    const out = path.join(root, 'dist', 'js', f.replace(/\.js$/, '.min.js'));
     try {
       await esbuild.build({
         entryPoints: [src],
