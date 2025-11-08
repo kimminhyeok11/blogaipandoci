@@ -80,7 +80,8 @@ class BlogApp {
                     const hash = window.location.hash || '';
 
                     const tokenHash = params.get('token_hash');
-                    const typeParam = params.get('type'); // 'magiclink' | 'email' | 'signup' 등
+                    const rawType = (params.get('type') || '').toLowerCase();
+                    const typeParam = this._normalizeOtpType(rawType); // 'magiclink' | 'signup' | 'recovery' 등
                     const oauthCode = params.get('code');
                     const hasFragmentTokens = /access_token=|refresh_token=|type=recovery/.test(hash);
 
@@ -99,9 +100,33 @@ class BlogApp {
                                 UIComponents.showToast(this.state.user.email + '님, 로그인되었습니다.', 'success');
                                 this.renderNav();
                                 this.navigate('/');
+                            } else if (error) {
+                                console.warn('verifyOtp 오류:', error);
+                                UIComponents.showToast('로그인 토큰 확인에 실패했습니다. 링크를 다시 요청해주세요.', 'error');
                             }
                         } catch (e) {
                             console.warn('verifyOtp 실패:', e);
+                        }
+                    }
+                    // 1-보강) type 파라미터 없이 token_hash만 온 경우: magiclink로 시도
+                    else if (tokenHash && !typeParam) {
+                        this.setLoading(true);
+                        try {
+                            const { data, error } = await this.supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'magiclink' });
+                            if (!error && data?.session?.user) {
+                                this.state.user = data.session.user;
+                                params.delete('token_hash');
+                                const cleanUrl = url.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                                window.history.replaceState({}, document.title, cleanUrl);
+                                UIComponents.showToast(this.state.user.email + '님, 로그인되었습니다.', 'success');
+                                this.renderNav();
+                                this.navigate('/');
+                            } else if (error) {
+                                console.warn('verifyOtp(magiclink, fallback) 오류:', error);
+                                UIComponents.showToast('로그인 링크 확인 실패. 다시 시도해주세요.', 'error');
+                            }
+                        } catch (e) {
+                            console.warn('verifyOtp(magiclink, fallback) 실패:', e);
                         }
                     }
                     // 2) OAuth PKCE: code 교환
@@ -188,6 +213,27 @@ class BlogApp {
             if (loader) {
                 loader.innerHTML = '<div class="text-red-600">앱 로드에 실패했습니다.</div>';
             }
+        }
+    }
+
+    // OTP type 정규화: 일부 템플릿/메일 클라이언트에서 비표준 값을 반환하는 경우 대응
+    _normalizeOtpType(t = '') {
+        switch (String(t || '').toLowerCase()) {
+            case 'login':
+            case 'signin':
+            case 'email':
+                return 'magiclink';
+            case 'register':
+                return 'signup';
+            case 'recover':
+                return 'recovery';
+            case 'magiclink':
+            case 'signup':
+            case 'recovery':
+            case 'invite':
+                return t;
+            default:
+                return t || 'magiclink';
         }
     }
 
@@ -2130,6 +2176,22 @@ class BlogApp {
             const eager = idx === 0; // 첫 번째 카드 LCP 개선
             const loading = eager ? '' : ' loading="lazy"';
             const fetchp = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
+            // 첫 번째 썸네일은 프리로드 링크를 추가해 재사용률을 높임
+            if (eager && thumbUrl) {
+                try {
+                    const existed = document.querySelector(`link[rel="preload"][as="image"][href="${thumbUrl}"]`);
+                    if (!existed) {
+                        const l = document.createElement('link');
+                        l.rel = 'preload';
+                        l.as = 'image';
+                        l.href = thumbUrl;
+                        if (srcset) l.setAttribute('imagesrcset', srcset);
+                        l.setAttribute('imagesizes', sizes);
+                        l.crossOrigin = 'anonymous';
+                        document.head.appendChild(l);
+                    }
+                } catch (_) { /* noop */ }
+            }
             const imgTag = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>` : '';
             const initial = this.escapeHTML(String((post.title || 'N')).trim().charAt(0).toUpperCase());
             const thumbBlock = `<a href="${href}" data-route class="post-card-thumb${thumbUrl ? '' : ' placeholder'}">${thumbUrl ? imgTag : `<span class=\"thumb-initial\">${initial}</span>`}</a>`;
