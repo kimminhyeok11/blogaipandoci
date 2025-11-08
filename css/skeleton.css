@@ -314,3 +314,29 @@
         background: #f0f0f0;
     }
 }
+
+/* 추가 접근성: 모션 감소 시 모든 스켈레톤 변형 애니메이션 중단 */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-text,
+  .skeleton-title,
+  .skeleton-subtitle,
+  .skeleton-paragraph,
+  .skeleton-image,
+  .skeleton-avatar,
+  .skeleton-button,
+  .skeleton-card,
+  .skeleton-list,
+  .skeleton-list-item,
+  .skeleton-table,
+  .skeleton-table-cell,
+  .skeleton-input,
+  .skeleton-textarea,
+  .skeleton-nav,
+  .skeleton-breadcrumb,
+  .skeleton-breadcrumb-item,
+  .skeleton-chart,
+  .skeleton-chart-placeholder {
+    animation: none !important;
+    transition: none !important;
+  }
+}
