@@ -1,73 +1,64 @@
-// Minimal static file server for local preview
-// Usage: node scripts/dev-server.js [port]
-// Defaults to 8094
-
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = Number(process.argv[2] || 8094);
-const ROOT = path.resolve(__dirname, '..');
+const PORT = process.env.PORT ? Number(process.env.PORT) : 5173;
+const ROOT = path.resolve(process.cwd());
 
-const mime = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
+const MIME = {
+  '.html': 'text/html; charset=UTF-8',
+  '.css': 'text/css; charset=UTF-8',
+  '.js': 'application/javascript; charset=UTF-8',
+  '.mjs': 'application/javascript; charset=UTF-8',
+  '.json': 'application/json; charset=UTF-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
-  '.ico': 'image/x-icon'
+  '.ico': 'image/x-icon',
 };
 
-function send(res, status, headers, body) {
-  res.writeHead(status, headers);
-  res.end(body);
+function safeFsPath(urlPath) {
+  // strip query and hash
+  const clean = urlPath.split('?')[0].split('#')[0];
+  // prevent path traversal
+  const p = path.normalize(clean).replace(/^\.\//, '');
+  return path.join(ROOT, p);
 }
 
-function safePath(urlPath) {
-  try {
-    const decoded = decodeURIComponent(urlPath.split('?')[0]);
-    const p = path.normalize(decoded).replace(/^\/+/, '');
-    const full = path.join(ROOT, p || 'index.html');
-    if (!full.startsWith(ROOT)) return null; // path traversal guard
-    return full;
-  } catch {
-    return null;
-  }
+function sendFile(res, filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const type = MIME[ext] || 'application/octet-stream';
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=UTF-8' });
+      res.end('Not Found');
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': type });
+    res.end(data);
+  });
 }
 
 const server = http.createServer((req, res) => {
-  const filePath = safePath(req.url || '/');
-  if (!filePath) return send(res, 400, { 'Content-Type': 'text/plain' }, 'Bad Request');
-  let target = filePath;
-  try {
-    const stat = fs.existsSync(target) && fs.statSync(target);
-    if (stat && stat.isDirectory()) {
-      const indexPath = path.join(target, 'index.html');
-      if (fs.existsSync(indexPath)) {
-        target = indexPath;
-      } else {
-        const listing = fs.readdirSync(target).map(n => `<li><a href="${path.join(req.url, n)}">${n}</a></li>`).join('');
-        const html = `<!doctype html><meta charset="utf-8"><ul>${listing}</ul>`;
-        return send(res, 200, { 'Content-Type': 'text/html; charset=utf-8' }, html);
+  let filePath = safeFsPath(req.url);
+  fs.stat(filePath, (err, stats) => {
+    if (!err && stats.isDirectory()) {
+      filePath = path.join(filePath, 'index.html');
+    }
+    fs.access(filePath, fs.constants.F_OK, (existsErr) => {
+      if (existsErr) {
+        // SPA fallback to index.html
+        const fallback = path.join(ROOT, 'index.html');
+        return sendFile(res, fallback);
       }
-    }
-    if (!fs.existsSync(target)) {
-      return send(res, 404, { 'Content-Type': 'text/plain' }, 'Not Found');
-    }
-    const ext = path.extname(target).toLowerCase();
-    const type = mime[ext] || 'application/octet-stream';
-    const stream = fs.createReadStream(target);
-    res.writeHead(200, { 'Content-Type': type });
-    stream.pipe(res);
-  } catch (e) {
-    return send(res, 500, { 'Content-Type': 'text/plain' }, 'Internal Server Error');
-  }
+      return sendFile(res, filePath);
+    });
+  });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[dev] Static server running at http://127.0.0.1:${PORT}/`);
+server.listen(PORT, () => {
+  // eslint-disable-next-line no-console
+  console.log(`Preview server running at http://localhost:${PORT}/`);
 });

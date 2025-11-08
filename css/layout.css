@@ -190,7 +190,7 @@
 }
 
 .header-nav-link.active {
-    color: var(--primary-color);
+    color: inherit; /* 선택 시각 효과 제거 */
 }
 
 /* 현재 앱 헤더 컨테이너(ID)에도 동일한 높이/섀도우 적용 */
@@ -211,6 +211,7 @@
   min-height: 48px; /* 네비 영역 최소 높이 확보 */
   display: flex;
   align-items: center;
+  justify-content: space-between; /* 로고 좌측, 메뉴 우측 배치 */
 }
 
 /* 네비 링크: 공통 규칙(nav-link 또는 SPA data-route) */
@@ -219,8 +220,8 @@
   color: var(--gray-900);
   font-weight: 600;
   text-decoration: none;
-  font-size: 13px;
-  line-height: 24px;
+  font-size: 18px; /* 로고와 동일 크기 */
+  line-height: 24px; /* 로고 줄높이와 동일 */
   min-height: 48px; /* 터치 타깃 */
   padding: 0.5rem 0.75rem; /* 8/12px 리듬 */
   display: inline-block;
@@ -236,9 +237,10 @@
   outline-offset: 2px;
 }
 
+/* 선택된 메뉴의 시각 효과 제거(접근성 속성은 유지) */
 #main-nav-container nav a.nav-link[aria-current="page"],
 #main-nav-container nav a[data-route][aria-current="page"] {
-  color: var(--primary-color);
+  color: inherit;
 }
 
 /* 브랜드 로고 텍스트: 고정 크기/줄높이로 초기 레이아웃 안정화 */
@@ -314,12 +316,13 @@
     border-radius: 12px;
     scroll-snap-align: start;
     touch-action: manipulation;
-    font-size: 13px;
+    font-size: 18px; /* 로고와 동일 크기 */
   }
+  /* 모바일 활성 시각 효과 제거 */
   .mobile-nav-actions a[data-route][aria-current="page"] {
-    background-color: var(--gray-100);
-    color: var(--gray-900);
-    font-weight: 600;
+    background-color: transparent;
+    color: inherit;
+    font-weight: inherit;
   }
   .mobile-nav-actions a[data-route]:focus-visible {
     outline: 2px solid var(--primary-color);
@@ -696,11 +699,87 @@
     min-height: 48px; /* 모바일도 48px 확보 */
   }
   #main-nav-container nav a[data-route] {
-    font-size: 13px;
-    line-height: 20px;
+    font-size: 18px; /* 로고와 동일 크기 */
+    line-height: 24px; /* 로고 줄높이와 동일 */
     min-height: 48px;
   }
   .header-content { gap: 0.5rem; }
   .header-nav { gap: 0.75rem; }
   .grid { gap: 0.5rem; }
+}
+
+/* 홈 메뉴 항목 제거로 불필요한 오버라이드 삭제됨 */
+
+/* Login Page Layout */
+.login-page {
+  min-height: 80vh;
+  padding: 3rem 1rem;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.0), rgba(0,0,0,0.02));
+}
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+  padding: 28px;
+}
+.login-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+}
+.login-subtitle {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+.login-form {
+  margin-top: 24px;
+}
+.login-success {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+  border-radius: 10px;
+}
+.login-footer {
+  margin-top: 18px;
+  text-align: center;
+}
+.btn-secondary {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  border: 1px solid #111827;
+  color: #111827;
+  background: transparent;
+}
+.btn-secondary:hover {
+  background: #111827;
+  color: #fff;
+}
+/* Input group fine-tuning for login */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.input-group-addon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+}
+.form-input {
+  flex: 1;
 }
