@@ -405,11 +405,6 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
   contain-intrinsic-size: 200px 120px;
 }
 
-/* 저대역폭/데이터 절약 모드에서 썸네일 트랜지션 최소화 */
-.reduced-data .post-card-thumb-img {
-  transition: none !important;
-  filter: none !important;
-}
 
 /* 관련/인기 글 섹션: 미니멀 축소 */
 #related-posts, #popular-posts { margin-top: 0.75rem; }
@@ -447,9 +442,6 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
   .post-card-thumb-img { border: none; }
 }
 
-/* 데이터 절약 모드에서 추가로 인터랙션 약화 */
-.reduced-data .blog-card:hover,
-.reduced-data .post-card:hover { transform: none !important; box-shadow: none !important; }
 
 /* 한국어 타이포그래피 보강: 단어 줄바꿈/줄간격/헤더 줄나눔 */
 .blog-post-content,
