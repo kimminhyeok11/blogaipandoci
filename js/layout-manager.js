@@ -19,8 +19,8 @@
   const MOBILE_BREAKPOINT = 640;
 
   // 개발 로깅 플래그: localhost에서는 기본 활성, 그 외는 Config로 제어
-  const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-  const debugLayout = (window.Config && window.Config.DEBUG_LAYOUT === true) || isLocalHost;
+  // 디버그 검사는 명시적으로 활성화된 경우에만 수행 (로컬 자동 활성화 제거)
+  const debugLayout = !!(window.Config && window.Config.DEBUG_LAYOUT === true);
 
   const q = (sel, root = document) => root.querySelector(sel);
   const qa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
