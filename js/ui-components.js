@@ -1,18 +1,59 @@
 // UI 컴포넌트들
 const UIComponents = {
+    _toastQueue: [],
+    _maxToastStack: 3,
     // 토스트 알림
     showToast(message, type = 'info', duration = 3000) {
         const toastContainer = DOM.$('#toast-container') || this.createToastContainer();
-        
+        const isReduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // 중복 병합: 동일 메시지 토스트가 이미 있으면 갱신/재배치
+        const existing = Array.from(toastContainer.children || []).find(el => {
+            try { return el.querySelector('.text-sm.font-medium')?.textContent === message; } catch { return false; }
+        });
+        if (existing) {
+            const inner = existing.querySelector('.flex.items-center');
+            if (inner) inner.className = `flex items-center p-4 mb-4 text-sm rounded-lg shadow-lg ${this.getToastClasses(type)}`;
+            // 아이콘도 타입에 맞춰 갱신
+            const iconHost = existing.querySelector('.flex-shrink-0');
+            if (iconHost) iconHost.innerHTML = this.getToastIcon(type);
+            // 제거 타이머 리셋
+            const oldId = existing.dataset.timerId ? Number(existing.dataset.timerId) : null;
+            if (oldId) { try { clearTimeout(oldId); } catch { /* ignore */ } }
+            const newId = setTimeout(() => {
+                existing.classList.add('translate-x-full');
+                setTimeout(() => { existing.remove(); this._drainToastQueue(); }, 300);
+            }, duration);
+            existing.dataset.timerId = String(newId);
+            // 가장 최근으로 이동
+            toastContainer.appendChild(existing);
+            // 키보드 트리거 시 포커스
+            try {
+                const ae = document.activeElement;
+                const triggered = ae && (ae.tagName === 'BUTTON' || ae.tagName === 'A' || ae.getAttribute('role') === 'button');
+                if (triggered) existing.focus({ preventScroll: true });
+            } catch { /* ignore */ }
+            return;
+        }
+
+        // 스택 한도: 가득 차면 큐에 적재
+        if ((toastContainer.children?.length || 0) >= this._maxToastStack) {
+            this._toastQueue.push({ message, type, duration });
+            return;
+        }
+
         const toast = DOM.create('div', {
-            className: `toast toast-${type} transform translate-x-full transition-transform duration-300 ease-in-out`,
+            className: `toast toast-${type} ${isReduceMotion ? '' : 'transform translate-x-full transition-transform duration-300 ease-in-out'}`,
+            role: (type === 'error' || type === 'warning') ? 'alert' : 'status',
+            'aria-live': (type === 'error' || type === 'warning') ? 'assertive' : 'polite',
+            tabIndex: '-1',
             innerHTML: `
                 <div class="flex items-center p-4 mb-4 text-sm rounded-lg shadow-lg ${this.getToastClasses(type)}">
                     <div class="flex-shrink-0">
                         ${this.getToastIcon(type)}
                     </div>
                     <div class="ml-3 text-sm font-medium">${message}</div>
-                    <button type="button" class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 hover:bg-gray-100 inline-flex h-8 w-8" onclick="this.parentElement.parentElement.remove()">
+                    <button type="button" class="toast-close ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 hover:bg-gray-100 inline-flex h-8 w-8" aria-label="닫기">
                         <span class="sr-only">닫기</span>
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -24,22 +65,52 @@ const UIComponents = {
         
         toastContainer.appendChild(toast);
         
-        // 애니메이션으로 표시
-        setTimeout(() => {
+        // 표시 (모션 감소 시 즉시 표시)
+        if (isReduceMotion) {
+            // 모션 감소에서는 애니메이션 없이 표시
             toast.classList.remove('translate-x-full');
-        }, 100);
+        } else {
+            setTimeout(() => { toast.classList.remove('translate-x-full'); }, 100);
+        }
+
+        // 키보드 트리거 상황에서 접근성 향상: 포커스 부여
+        try {
+            const ae = document.activeElement;
+            const triggeredByKeyboard = ae && (ae.tagName === 'BUTTON' || ae.tagName === 'A' || ae.getAttribute('role') === 'button');
+            if (triggeredByKeyboard) toast.focus({ preventScroll: true });
+        } catch { /* ignore */ }
         
+        // 닫기 버튼 이벤트 바인딩 (CSP 준수)
+        const closeBtn = toast.querySelector('.toast-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                toast.remove();
+                this._drainToastQueue();
+            });
+        }
+
         // 자동 제거
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
             toast.classList.add('translate-x-full');
-            setTimeout(() => toast.remove(), 300);
+            setTimeout(() => { toast.remove(); this._drainToastQueue(); }, 300);
         }, duration);
+        toast.dataset.timerId = String(timerId);
+    },
+    _drainToastQueue() {
+        const toastContainer = DOM.$('#toast-container') || this.createToastContainer();
+        while (this._toastQueue.length && (toastContainer.children?.length || 0) < this._maxToastStack) {
+            const next = this._toastQueue.shift();
+            if (!next) break;
+            this.showToast(next.message, next.type, next.duration);
+        }
     },
     
     createToastContainer() {
         const container = DOM.create('div', {
             id: 'toast-container',
-            className: 'fixed top-4 right-4 z-50 space-y-2'
+            className: 'fixed top-4 right-4 z-50 space-y-2',
+            'aria-live': 'polite',
+            'aria-atomic': 'true'
         });
         document.body.appendChild(container);
         return container;
@@ -65,50 +136,46 @@ const UIComponents = {
         return icons[type] || icons.info;
     },
     
-    // 확인 다이얼로그
+    // 확인 다이얼로그 (CSS 모달 구조/접근성/포커스 트랩 적용)
     showConfirm(message, onConfirm, onCancel) {
+        const host = document.getElementById('modal-container') || document.body;
+        const id = `confirm-modal-${Date.now()}`;
         const modal = DOM.create('div', {
-            className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50',
+            id,
+            className: 'hidden',
             innerHTML: `
-                <div class="bg-white rounded-lg p-6 max-w-md mx-4">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">확인</h3>
-                    <p class="text-gray-600 mb-6">${message}</p>
-                    <div class="flex justify-end space-x-3">
-                        <button class="cancel-btn px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">취소</button>
-                        <button class="confirm-btn px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition">확인</button>
+                <div class="modal-overlay">
+                    <div class="modal-content confirm-modal modal-danger modal-content-md">
+                        <div class="modal-header">
+                            <h3 class="modal-title">확인</h3>
+                            <button class="modal-close" aria-label="닫기">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="modal-icon">⚠️</div>
+                            <p class="modal-message">${message}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn px-4 py-2 rounded-lg border cancel-btn">취소</button>
+                            <button class="btn px-4 py-2 rounded-lg bg-red-600 text-white confirm-btn">확인</button>
+                        </div>
                     </div>
-                </div>
-            `
+                </div>`
         });
-        
+        host.appendChild(modal);
+
         const cancelBtn = modal.querySelector('.cancel-btn');
         const confirmBtn = modal.querySelector('.confirm-btn');
-        
-        const cleanup = () => {
-            modal.remove();
-        };
-        
-        cancelBtn.onclick = () => {
-            cleanup();
-            if (onCancel) onCancel();
-        };
-        
-        confirmBtn.onclick = () => {
-            cleanup();
-            if (onConfirm) onConfirm();
-        };
-        
-        // ESC 키로 닫기
-        const handleKeydown = (e) => {
-            if (e.key === 'Escape') {
-                cleanup();
-                if (onCancel) onCancel();
-                document.removeEventListener('keydown', handleKeydown);
-            }
-        };
-        
-        document.addEventListener('keydown', handleKeydown);
-        document.body.appendChild(modal);
+        const closeBtn = modal.querySelector('.modal-close');
+
+        const cleanup = () => { setTimeout(() => modal.remove(), 200); };
+
+        const doCancel = () => { DOM.closeModal(id); cleanup(); if (onCancel) onCancel(); };
+        const doConfirm = () => { DOM.closeModal(id); cleanup(); if (onConfirm) onConfirm(); };
+        if (cancelBtn) cancelBtn.addEventListener('click', doCancel);
+        if (confirmBtn) confirmBtn.addEventListener('click', doConfirm);
+        if (closeBtn) closeBtn.addEventListener('click', doCancel);
+
+        DOM.openModal(id);
     },
     
     // 프로그레스 바
@@ -116,11 +183,11 @@ const UIComponents = {
         const progressContainer = DOM.create('div', {
             className: 'w-full bg-gray-200 rounded-full h-2.5 mb-4',
             innerHTML: `
-                <div class="bg-purple-600 h-2.5 rounded-full transition-all duration-300 ease-out" style="width: ${initialValue}%"></div>
+                <div class="progress-bar-fill bg-purple-600 h-2.5 rounded-full transition-all duration-300 ease-out" style="width: ${initialValue}%"></div>
             `
         });
         
-        const progressBar = progressContainer.querySelector('.bg-purple-600');
+        const progressBar = progressContainer.querySelector('.progress-bar-fill');
         
         if (typeof container === 'string') {
             DOM.$(container)?.appendChild(progressContainer);

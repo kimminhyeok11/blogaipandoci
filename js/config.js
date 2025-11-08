@@ -8,7 +8,7 @@
         IMAGE_BUCKET_NAME: 'thought-images',
         SITE_URL: 'https://blogaipandoci.vercel.app',
         CATEGORIES: ['AI', '기술', '보험', '일상', '기타'],
-        POSTS_PER_PAGE: 10,
+        POSTS_PER_PAGE: 8,
         MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
         ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     };

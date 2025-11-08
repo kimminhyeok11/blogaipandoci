@@ -90,26 +90,141 @@ const DOM = {
         return url.pathname + url.search;
     },
     
-    // 모달 관련
+    // 모달 관련 (접근성/포커스 트랩/스크롤 잠금 통합)
     openModal(id) {
         const modal = this.$(`#${id}`);
-        if (modal) {
-            modal.classList.remove('hidden');
-            this.show(modal);
-            document.body.style.overflow = 'hidden';
-        }
-    },
-    
-    closeModal(id) {
-        const modal = this.$(`#${id}`);
-        if (modal) {
-            this.hide(modal, {
-                complete: () => {
-                    modal.classList.add('hidden');
-                    document.body.style.overflow = '';
+        if (!modal) return;
+
+        // 표시 및 스크롤 잠금
+        modal.classList.remove('hidden');
+        this.show(modal);
+        document.body.classList.add('modal-open');
+
+        // 배경 접근 차단: 주요 컨테이너 inert + aria-hidden 적용
+        try {
+            const bgSelectors = ['#app-container', '#main-nav-container'];
+            bgSelectors.forEach(sel => {
+                const el = document.querySelector(sel);
+                if (el && !modal.contains(el)) {
+                    el.setAttribute('inert', '');
+                    el.setAttribute('aria-hidden', 'true');
                 }
             });
+        } catch (_) { /* noop */ }
+
+        // ARIA 역할/레이블 설정
+        const content = modal.querySelector('.modal-content');
+        if (content) {
+            content.setAttribute('role', 'dialog');
+            content.setAttribute('aria-modal', 'true');
+            const titleEl = content.querySelector('.modal-title');
+            if (titleEl) {
+                if (!titleEl.id) titleEl.id = `${id}-title`;
+                content.setAttribute('aria-labelledby', titleEl.id);
+            }
+            const descEl = content.querySelector('.modal-message, .modal-body');
+            if (descEl && !content.hasAttribute('aria-describedby')) {
+                const descId = `${id}-desc`;
+                if (!descEl.id) descEl.id = descId;
+                content.setAttribute('aria-describedby', descEl.id);
+            }
         }
+
+        // 이전 포커스 저장
+        modal.__returnFocus = document.activeElement;
+
+        // 포커스 가능한 요소 수집
+        const focusables = Array.from(modal.querySelectorAll(
+            'a[href], area[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )).filter(el => el.offsetParent !== null);
+
+        // 초기 포커스 부여
+        const initialFocus = focusables[0] || content;
+        if (initialFocus) {
+            if (!initialFocus.hasAttribute('tabindex')) initialFocus.setAttribute('tabindex', '-1');
+            initialFocus.focus({ preventScroll: true });
+        }
+
+        // 포커스 트랩 핸들러
+        const onKeydown = (e) => {
+            if (e.key === 'Tab') {
+                const list = Array.from(modal.querySelectorAll(
+                    'a[href], area[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                )).filter(el => el.offsetParent !== null);
+                if (list.length === 0) return;
+                const first = list[0];
+                const last = list[list.length - 1];
+                const active = document.activeElement;
+                if (e.shiftKey) {
+                    if (active === first || !modal.contains(active)) {
+                        e.preventDefault();
+                        last.focus();
+                    }
+                } else {
+                    if (active === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                // 모달 내에서 ESC로 닫기 (중복 안전)
+                this.closeModal(id);
+            }
+        };
+        modal.__onKeydown = onKeydown;
+        modal.addEventListener('keydown', onKeydown, true);
+
+        // 오버레이 외부 클릭으로 닫기
+        const overlay = modal.querySelector('.modal-overlay');
+        const onOverlayClick = (ev) => {
+            if (ev.target === overlay) this.closeModal(id);
+        };
+        if (overlay) {
+            modal.__onOverlayClick = onOverlayClick;
+            overlay.addEventListener('click', onOverlayClick);
+        }
+    },
+
+    closeModal(id) {
+        const modal = this.$(`#${id}`);
+        if (!modal) return;
+
+        // 이벤트 핸들러 제거
+        if (modal.__onKeydown) {
+            modal.removeEventListener('keydown', modal.__onKeydown, true);
+            modal.__onKeydown = null;
+        }
+        const overlay = modal.querySelector('.modal-overlay');
+        if (overlay && modal.__onOverlayClick) {
+            overlay.removeEventListener('click', modal.__onOverlayClick);
+            modal.__onOverlayClick = null;
+        }
+
+        // 애니메이션 숨김 후 정리
+        this.hide(modal, {
+            complete: () => {
+                modal.classList.add('hidden');
+                document.body.classList.remove('modal-open');
+
+                // 배경 복원: inert/aria-hidden 제거
+                try {
+                    const bgSelectors = ['#app-container', '#main-nav-container'];
+                    bgSelectors.forEach(sel => {
+                        const el = document.querySelector(sel);
+                        if (el) {
+                            el.removeAttribute('inert');
+                            el.removeAttribute('aria-hidden');
+                        }
+                    });
+                } catch (_) { /* noop */ }
+                // 포커스 복원
+                const prev = modal.__returnFocus;
+                if (prev && typeof prev.focus === 'function') {
+                    prev.focus({ preventScroll: true });
+                }
+                modal.__returnFocus = null;
+            }
+        });
     },
     
     // 로딩 스피너
