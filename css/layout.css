@@ -250,9 +250,7 @@
   display: inline-block;
 }
 
-/* 햄버거 버튼/아이콘: 이미 유틸로 고정되지만 재확인 */
-#main-nav-container .hamburger-btn { inline-size: 36px; block-size: 36px; }
-#main-nav-container .hamburger-icon { inline-size: 20px; block-size: 16px; }
+/* (삭제) 햄버거 버튼/아이콘 오버라이드 제거됨 */
 
 /* 네비 링크 방문 상태 가독성 보정 */
 #main-nav-container nav a.nav-link:visited,
@@ -268,6 +266,50 @@
     min-height: 44px;
   }
   .header-content { min-height: 52px; }
+}
+
+/* 신규: 모바일 상단 네비게이션(320px~768px) 무햄버거 레이아웃 */
+@media (max-width: 768px) {
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background-color: var(--header-bg, rgba(255,255,255,0.92));
+    backdrop-filter: saturate(120%) blur(8px);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .mobile-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+  .mobile-nav-actions a.nav-link,
+  .mobile-nav-actions a[data-route] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    scroll-snap-align: start;
+    touch-action: manipulation;
+  }
+  .mobile-nav-actions a[data-route][aria-current="page"] {
+    background-color: var(--gray-100);
+    color: var(--gray-900);
+    font-weight: 600;
+  }
 }
 
 /* 모션 감소: 전환 및 필터 완화 */
