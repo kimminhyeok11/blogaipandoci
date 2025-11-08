@@ -57,12 +57,4 @@
   .sm\:px-6 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
 }
 
-/* Hamburger button/icon styling */
-.hamburger-btn { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 0.5rem; border: 1px solid var(--gray-200); background: #fff; color: var(--gray-800); }
-.hamburger-btn:hover { background: rgba(0,0,0,0.05); }
-.hamburger-btn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
-.hamburger-icon { position: relative; width: 1.125rem; height: 0.9rem; }
-.hamburger-icon .bar { position: absolute; left: 0; right: 0; height: 2px; background: var(--gray-800); border-radius: 2px; }
-.hamburger-icon .bar-top { top: 0; }
-.hamburger-icon .bar-middle { top: calc(50% - 1px); }
-.hamburger-icon .bar-bottom { bottom: 0; }
+/* (삭제) 햄버거 버튼/아이콘 기본 스타일 제거됨 */
