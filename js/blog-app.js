@@ -14,19 +14,20 @@ catch (e) { /* noop */ }
 class BlogApp {
     
     // 앱 상태 (State)
-    state = {
-        user: null,
-        isAuthReady: false,
-        currentCategory: '전체',
-        editorInstance: null,
-        archives: {
-            category: '전체',
-            tag: '',
-            page: 1,
-            pageSize: 20,
-            total: 0,
-        }
-    };
+  state = {
+      user: null,
+      isAuthReady: false,
+      currentCategory: '전체',
+      editorInstance: null,
+      archives: {
+          category: '전체',
+          tag: '',
+          page: 1,
+          pageSize: 20,
+          sort: 'latest',
+          total: 0,
+      }
+  };
 
     // 서비스 인스턴스
     supabase = null;
@@ -419,16 +420,32 @@ class BlogApp {
         this.switchToView('view-archives');
         const container = DOM.$('#view-archives');
         if (!container) return;
-        const { category, tag } = this.state.archives;
+        // URL 쿼리에서 상태 동기화
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const cat = params.get('category');
+            const tagQ = params.get('tag');
+            const page = Number(params.get('page') || this.state.archives.page) || 1;
+            const pageSize = Number(params.get('pageSize') || this.state.archives.pageSize) || 20;
+            const sort = params.get('sort') || this.state.archives.sort || 'latest';
+            this.state.archives.category = cat || this.state.archives.category || '전체';
+            this.state.archives.tag = tagQ || this.state.archives.tag || '';
+            this.state.archives.page = page;
+            this.state.archives.pageSize = pageSize;
+            this.state.archives.sort = ['latest','oldest','title'].includes(sort) ? sort : 'latest';
+        } catch (_) { /* noop */ }
+        const { category, tag, pageSize: ps, sort: s } = this.state.archives;
         container.innerHTML = '<section class="max-w-4xl mx-auto py-10 px-6">'
             + '<div class="flex items-center justify-between">'
             +   '<h1 class="text-2xl font-bold">아카이브</h1>'
-            +   '<div class="text-xs text-gray-500">페이지당 20개</div>'
+            +   `<div class="text-xs text-gray-500">페이지당 ${ps}개</div>`
             + '</div>'
-            + '<div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">'
+            + '<div class="mt-4 grid grid-cols-1 sm:grid-cols-4 gap-3">'
             +   '<div><label class="block text-xs text-gray-600">카테고리</label><select id="archives-filter-category" class="mt-1 w-full border rounded-lg p-2"><option value="전체">전체</option></select></div>'
             +   '<div><label class="block text-xs text-gray-600">태그</label><input id="archives-filter-tag" type="text" class="mt-1 w-full border rounded-lg p-2" placeholder="예: 보험"></div>'
-            +   '<div class="flex items-end"><button id="archives-filter-apply" class="w-full px-3 py-2 rounded-lg bg-black text-white">필터 적용</button></div>'
+            +   '<div><label class="block text-xs text-gray-600">정렬</label><select id="archives-filter-sort" class="mt-1 w-full border rounded-lg p-2"><option value="latest">최신순</option><option value="oldest">오래된순</option><option value="title">제목순</option></select></div>'
+            +   '<div><label class="block text-xs text-gray-600">개수</label><select id="archives-filter-pageSize" class="mt-1 w-full border rounded-lg p-2"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select></div>'
+            +   '<div class="sm:col-span-4 flex items-center justify-end"><button id="archives-filter-apply" class="px-3 py-2 rounded-lg bg-black text-white">필터 적용</button></div>'
             + '</div>'
             + '<div id="archives-list" class="mt-6 space-y-6"></div>'
             + '<div id="archives-pagination" class="mt-8 flex items-center justify-center gap-2"></div>'
@@ -440,6 +457,10 @@ class BlogApp {
         // 기존 값 채우기
         const tagInput = DOM.$('#archives-filter-tag');
         if (tagInput) tagInput.value = tag || '';
+        const sortSel = DOM.$('#archives-filter-sort');
+        if (sortSel) sortSel.value = s || 'latest';
+        const psSel = DOM.$('#archives-filter-pageSize');
+        if (psSel) psSel.value = String(ps || 20);
 
         // 이벤트 바인딩
         const applyBtn = DOM.$('#archives-filter-apply');
@@ -447,10 +468,22 @@ class BlogApp {
             applyBtn.onclick = () => {
                 const catSel = DOM.$('#archives-filter-category');
                 const tagField = DOM.$('#archives-filter-tag');
+                const sortSel = DOM.$('#archives-filter-sort');
+                const psSel = DOM.$('#archives-filter-pageSize');
                 this.state.archives.category = catSel ? catSel.value : '전체';
                 this.state.archives.tag = tagField ? tagField.value.trim() : '';
+                this.state.archives.sort = sortSel ? sortSel.value : 'latest';
+                this.state.archives.pageSize = psSel ? Number(psSel.value) || 20 : 20;
                 this.state.archives.page = 1;
-                this.loadArchives().catch(err => this.handleError(err, 'loadArchives'));
+                // URL 쿼리로 상태 반영
+                const q = new URLSearchParams({
+                    category: this.state.archives.category || '전체',
+                    tag: this.state.archives.tag || '',
+                    sort: this.state.archives.sort || 'latest',
+                    pageSize: String(this.state.archives.pageSize || 20),
+                    page: '1',
+                });
+                this.navigate(`/archives?${q.toString()}`);
             };
         }
 
@@ -458,7 +491,7 @@ class BlogApp {
     }
 
     async loadArchives() {
-        const { category, tag, page, pageSize } = this.state.archives;
+        const { category, tag, page, pageSize, sort } = this.state.archives;
         const list = DOM.$('#archives-list');
         if (!list) return;
         // 캐시 기반 즉시 렌더 제거됨
@@ -483,8 +516,16 @@ class BlogApp {
         let dataQuery = this.supabase
             .from(table)
             .select(selectCols)
-            .eq('status', 'published')
-            .order('created_at', { ascending: false });
+            .eq('status', 'published');
+        if (sort === 'latest') {
+            dataQuery = dataQuery.order('created_at', { ascending: false });
+        } else if (sort === 'oldest') {
+            dataQuery = dataQuery.order('created_at', { ascending: true });
+        } else if (sort === 'title') {
+            dataQuery = dataQuery.order('title', { ascending: true });
+        } else {
+            dataQuery = dataQuery.order('created_at', { ascending: false });
+        }
         if (category && category !== '전체') {
             dataQuery = dataQuery.eq('category', category);
         }
@@ -530,6 +571,16 @@ class BlogApp {
 
         // 페이지네이션 렌더
         this.renderArchivesPagination();
+
+        // 총 개수 및 범위 안내
+        try {
+            const fromIdx = (page - 1) * pageSize + 1;
+            const toIdx = Math.min(this.state.archives.total, page * pageSize);
+            const headerInfo = document.querySelector('#view-archives section .text-xs.text-gray-500');
+            if (headerInfo) {
+                headerInfo.textContent = `총 ${this.state.archives.total}개 · ${fromIdx}–${toIdx} 표시중`;
+            }
+        } catch (_) { /* noop */ }
     }
 
     renderArchivesPagination() {
@@ -554,7 +605,15 @@ class BlogApp {
             btn.onclick = () => {
                 const targetPage = Number(btn.getAttribute('data-page')) || 1;
                 this.state.archives.page = targetPage;
-                this.loadArchives().catch(err => this.handleError(err, 'loadArchives'));
+                // URL 쿼리 업데이트
+                const q = new URLSearchParams({
+                    category: this.state.archives.category || '전체',
+                    tag: this.state.archives.tag || '',
+                    sort: this.state.archives.sort || 'latest',
+                    pageSize: String(this.state.archives.pageSize || 20),
+                    page: String(targetPage),
+                });
+                this.navigate(`/archives?${q.toString()}`);
             };
         });
     }
@@ -599,22 +658,38 @@ class BlogApp {
         const container = DOM.$('#main-nav-container');
         if (!container) return;
         const isLoggedIn = !!this.state.user;
-        const writerLink = isLoggedIn ? '<a href="/writer" data-route class="text-sm font-medium text-gray-800 hover:text-black">글쓰기</a>' : '';
-        const dashLink = isLoggedIn ? '<a href="/dashboard" data-route class="text-sm font-medium text-gray-800 hover:text-black">대시보드</a>' : '';
+        // 이미 렌더된 경우: 로그인 상태가 동일하면 재구성 대신 활성 링크만 업데이트
+        const existingLinks = container.querySelector('#nav-links');
+        if (existingLinks && this._navLogged === isLoggedIn) {
+            const currentPath = window.location.pathname;
+            existingLinks.querySelectorAll('a[data-route]').forEach(a => {
+                const href = a.getAttribute('href');
+                const isCurrent = href === currentPath;
+                if (isCurrent) {
+                    a.setAttribute('aria-current', 'page');
+                } else {
+                    a.removeAttribute('aria-current');
+                }
+            });
+            return; // 불필요한 DOM 재렌더 방지
+        }
+        const writerLink = isLoggedIn ? '<a href="/writer" data-route class="nav-link">글쓰기</a>' : '';
+        const dashLink = isLoggedIn ? '<a href="/dashboard" data-route class="nav-link">대시보드</a>' : '';
         const authLink = isLoggedIn
-            ? '<button id="logout-btn" class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그아웃</button>'
-            : '<a href="/login" data-route class="text-sm px-3 py-1 rounded-full bg-black/5 hover:bg-black/10">로그인</a>';
+            ? '<a id="logout-btn" href="#" class="nav-link">로그아웃</a>'
+            : '<a id="login-link" href="/login" data-route class="nav-link">로그인</a>';
         const linksHtml = [
-            '<a href="/" data-route class="text-sm font-medium text-gray-800 hover:text-black">홈</a>',
-            '<a href="/archives" data-route class="text-sm font-medium text-gray-800 hover:text-black">아카이브</a>',
+            '<a href="/" data-route class="nav-link">홈</a>',
+            '<a href="/archives" data-route class="nav-link">아카이브</a>',
             writerLink,
             dashLink,
-            '<a href="/feed.xml" class="text-sm font-medium text-gray-800 hover:text-black" rel="alternate" type="application/rss+xml">RSS</a>',
-            '<a href="/sitemap.xml" class="text-sm font-medium text-gray-800 hover:text-black">Sitemap</a>',
+            '<a href="/feed.xml" class="nav-link" rel="alternate" type="application/rss+xml">RSS</a>',
+            '<a href="/sitemap.xml" class="nav-link">Sitemap</a>',
             authLink
         ].filter(Boolean).join('');
 
-        container.innerHTML = '<nav class="w-full nav-inner flex items-center justify-between py-2 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">'
+        // 네비게이션 마크업: 레이아웃 CSS에 맞춰 미니멀 구조로 단순화
+        container.innerHTML = '<nav class="w-full nav-inner">'
             + '<a href="/" data-route class="brand font-extrabold text-xl tracking-tight">InsureLog</a>'
             + '<button id="nav-toggle" class="hamburger-btn sm:hidden" aria-expanded="false" aria-controls="nav-menu" aria-haspopup="menu" aria-label="메뉴">'
             +   '<span class="hamburger-icon" aria-hidden="true">'
@@ -624,8 +699,10 @@ class BlogApp {
             +   '</span>'
             +   '<span class="sr-only">메뉴</span>'
             + '</button>'
-            + '<div id="nav-links" class="hidden sm:flex items-center gap-5">' + linksHtml + '</div>'
+            + '<div id="nav-links" class="hidden sm:flex header-nav">' + linksHtml + '</div>'
             + '</nav>'
+        // 현재 로그인 상태 캐시 (메모이즈 키)
+        this._navLogged = isLoggedIn;
             // 모바일 팝오버 메뉴(버튼 근처에 고정 위치로 표시)
             + '<div id="nav-menu" class="hidden sm:hidden fixed z-50 bg-white border rounded-2xl shadow-xl p-4 w-64" aria-hidden="true" role="menu" aria-label="모바일 네비게이션">'
             +   '<div class="flex items-center justify-between mb-4">'
@@ -656,7 +733,8 @@ class BlogApp {
 
         // 로그아웃 버튼 동작
         if (logoutBtn) {
-            logoutBtn.onclick = async () => {
+            logoutBtn.onclick = async (ev) => {
+                try { ev?.preventDefault?.(); } catch (_) {}
                 try {
                     if (this.supabase && this.supabase.auth) {
                         await this.supabase.auth.signOut();
@@ -831,10 +909,12 @@ class BlogApp {
         this.switchToView('view-library');
         const container = DOM.$('#view-library');
         if (container) {
-            container.innerHTML = '<section class="mx-auto py-6 px-4 sm:px-6 max-w-full sm:max-w-4xl">'
-                + '<h1 class="text-2xl font-bold mb-2">최근 글</h1>'
-                + '<div id="home-posts" class="mt-6 grid grid-cols-1 gap-2"></div>'
-                + '<div id="home-pagination" class="mt-4 flex justify-center"></div>'
+            container.innerHTML = '<section>'
+                + '<div class="section-header">'
+                +   '<h2 class="section-title">최근 글</h2>'
+                + '</div>'
+                + '<div id="home-posts" class="grid grid-cols-1 gap-2"></div>'
+                + '<div id="home-pagination" class="flex justify-center"></div>'
                 + '</section>';
 
             // SEO 메타 업데이트
@@ -857,7 +937,7 @@ class BlogApp {
         if (!container) return;
 
         // [Layout] 본문 폭을 네비게이션(max-w-4xl)과 맞춰 일관성을 유지합니다.
-        container.innerHTML = '<article class="max-w-full mx-auto py-8 px-0 sm:px-6">'
+        container.innerHTML = '<article>'
             + '<div class="mb-6">'
             +   '<div class="h-8 w-2/3 bg-gray-200 animate-pulse rounded"></div>'
             + '</div>'
@@ -2014,12 +2094,13 @@ class BlogApp {
         const items = list.map((p, idx) => {
             const url = '/post/' + encodeURIComponent(p.slug || p.id);
             const views = Number(p.view_count || 0);
-            const date = this.formatDate(p.created_at);
+            const date = this.formatDateKR(p.created_at);
             return (
               `<li class="popular-item">`
               + `<span class="popular-rank">${idx + 1}</span>`
               + `<a class="popular-link" href="${url}" data-route>${this.escapeHTML(p.title || '')}</a>`
-              + `<span class="popular-meta">${date} · ${views}회</span>`
+              + `<span class="popular-date">${date}</span>`
+              + `<span class="popular-views">${views.toLocaleString('ko-KR')}</span>`
               + `</li>`
             );
         }).join('');
