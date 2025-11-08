@@ -34,8 +34,7 @@
     <meta name="twitter:title" content="InsureLog - AI, 기술, 그리고 보험">
     <meta name="twitter:description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
     <meta name="twitter:image" content="https://blogaipandoci.vercel.app/og-image.svg">
-    <!-- 번들 프리로드 (존재할 경우만 브라우저가 가져옴; 없으면 무시) -->
-    <link rel="preload" as="script" href="/app.bundle.min.js" crossorigin>
+    <!-- 번들 프리로드 제거: 존재하지 않을 때 발생하는 중복 요청/abort 로그 방지 -->
     
     <!-- Scripts & Stylesheets -->
     <!-- 스타일 유틸리티(style.css)는 유지하고, 모듈 CSS는 개별 링크로 병렬 로드 -->
@@ -275,7 +274,10 @@
 
         // 분리된 JavaScript 모듈들 로드
         // .min.js가 존재하면 우선 로드, 실패 시 원본으로 폴백
-        const resolveMinPath = (src) => src.replace(/\.js$/, '.min.js');
+        const resolveMinPath = (src) => {
+            const isDevHost = (location.hostname === '127.0.0.1' || location.hostname === 'localhost');
+            return isDevHost ? src : src.replace(/\.js$/, '.min.js');
+        };
         const loadScript = (src) => {
             return new Promise((resolve, reject) => {
                 const tryLoad = (candidate, fallback) => {
@@ -309,49 +311,12 @@
             return !!(window.supabase && typeof window.supabase.createClient === 'function');
         };
 
-        // 번들이 존재하면 우선 로드하여 네트워크 왕복을 줄입니다.
-        async function tryLoadBundleAndBoot() {
-            const candidates = ['/app.bundle.min.js', '/app.bundle.js'];
-            for (const url of candidates) {
-                try {
-                    const res = await fetch(url, { method: 'HEAD' });
-                    if (!res.ok) continue;
-                    await new Promise((resolve, reject) => {
-                        const s = document.createElement('script');
-                        s.src = url;
-                        s.defer = true;
-                        s.nonce = 'r4nd0m';
-                        s.onload = resolve;
-                        s.onerror = () => reject(new Error('Bundle load failed'));
-                        document.head.appendChild(s);
-                    });
-                    // 번들에는 BlogApp/DOM/UIComponents 등이 포함됨
-                    const boot = () => {
-                        new BlogApp();
-                        const tryInitLayout = () => { if (window.LayoutManager) window.LayoutManager.init(); };
-                        if ('requestIdleCallback' in window) {
-                            requestIdleCallback(tryInitLayout);
-                        } else {
-                            setTimeout(tryInitLayout, 1200);
-                        }
-                    };
-                    if (document.readyState === 'loading') {
-                        document.addEventListener('DOMContentLoaded', boot);
-                    } else {
-                        boot();
-                    }
-                    return true;
-                } catch (_) { /* 다음 후보 시도 */ }
-            }
-            return false;
-        }
+        // 번들 부트 로직 제거: 모듈 로딩 경로로 일원화
 
         // 모듈들을 순차적으로 로드 (의존성 보장)
         (async () => {
             try {
-                // 번들 우선 시도
-                const bundled = await tryLoadBundleAndBoot();
-                if (bundled) return;
+                // 모듈 기반 부트로 일원화 (번들 미사용)
                 // Config와 DOM 유틸을 먼저 로드해 기본 전역을 준비
                 await loadScript('/js/config.js');
                 await loadScript('/js/dom-utils.js');
@@ -359,6 +324,10 @@
                 await loadScript('/js/ui-components.js');
                 // Supabase 동적 임포트가 선행되도록 대기 (초기화 경합 방지)
                 await waitForSupabaseReady(3500);
+                // 선언형 라우터 모듈 로드
+                await loadScript('/js/router.js');
+                // 인증 서비스 모듈 로드 (BlogApp에서 사용)
+                await loadScript('/js/auth-service.js');
                 await loadScript('/js/blog-app.js');
                 // 레이아웃 매니저 및 부가 모듈은 초기 페인트 이후 유휴 시간에 로드
                 const deferScript = (src) => {
