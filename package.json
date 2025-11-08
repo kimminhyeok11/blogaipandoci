@@ -5,7 +5,12 @@
     "build:copy-static": "node scripts/copy-static-files.js",
     "build": "npm run build:copy-static && npm run build:minify && npm run build:bundle"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
+  },
+  "devDependencies": {
     "chrome-launcher": "^1.2.1",
     "isomorphic-git": "^1.34.2",
     "lighthouse": "^13.0.1",
