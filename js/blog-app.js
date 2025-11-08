@@ -689,7 +689,7 @@ class BlogApp {
         ].filter(Boolean).join('');
 
         // 네비게이션 마크업: 모바일에서 항상 보이는 상단 네비로 전환(햄버거 제거)
-        container.innerHTML = '<nav class="w-full nav-inner">'
+        container.innerHTML = '<nav class="w-full nav-inner" aria-label="주요">'
             + '<a href="/" data-route class="brand font-extrabold text-xl tracking-tight">InsureLog</a>'
             + '<div id="nav-links" class="header-nav mobile-nav-actions">' + linksHtml + '</div>'
             + '</nav>'

@@ -275,13 +275,16 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    padding: 8px 12px;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 12px;
     position: sticky;
     top: 0;
     z-index: 40;
     background-color: var(--header-bg, rgba(255,255,255,0.92));
-    backdrop-filter: saturate(120%) blur(8px);
     border-bottom: 1px solid var(--gray-200);
+  }
+  /* 지원 환경에서만 블러 적용 (성능/호환성 고려) */
+  @supports ((-webkit-backdrop-filter: blur(8px)) or (backdrop-filter: blur(8px))) {
+    .nav-inner { backdrop-filter: saturate(120%) blur(8px); }
   }
   .mobile-nav-actions {
     display: flex;
@@ -292,7 +295,14 @@
     scroll-snap-type: x proximity;
     white-space: nowrap;
     max-width: 100%;
+    /* 가로 스크롤 힌트: 좌/우 가장자리 페이드 */
+    -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0px, rgba(0,0,0,1) 24px, rgba(0,0,0,1) calc(100% - 24px), rgba(0,0,0,0) 100%);
+            mask-image: linear-gradient(90deg, rgba(0,0,0,0) 0px, rgba(0,0,0,1) 24px, rgba(0,0,0,1) calc(100% - 24px), rgba(0,0,0,0) 100%);
+    overscroll-behavior-x: contain;
   }
+  /* 모바일에서 네비 스크롤바 숨김 (FF/WebKit) */
+  .mobile-nav-actions { scrollbar-width: none; }
+  .mobile-nav-actions::-webkit-scrollbar { display: none; }
   .mobile-nav-actions a.nav-link,
   .mobile-nav-actions a[data-route] {
     display: inline-flex;
@@ -304,11 +314,16 @@
     border-radius: 12px;
     scroll-snap-align: start;
     touch-action: manipulation;
+    font-size: 13px;
   }
   .mobile-nav-actions a[data-route][aria-current="page"] {
     background-color: var(--gray-100);
     color: var(--gray-900);
     font-weight: 600;
+  }
+  .mobile-nav-actions a[data-route]:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
   }
 }
 
