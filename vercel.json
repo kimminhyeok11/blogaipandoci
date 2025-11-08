@@ -1,6 +1,12 @@
 {
+  "buildCommand": "npm run build",
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/robots.txt", "destination": "/robots.txt" }
+    { "source": "/robots.txt", "destination": "/robots.txt" },
+    { "source": "/post/:slug", "destination": "/index.html" },
+    { "source": "/archives", "destination": "/index.html" },
+    { "source": "/dashboard", "destination": "/index.html" },
+    { "source": "/writer/:path*", "destination": "/index.html" },
+    { "source": "/library", "destination": "/index.html" }
   ]
 }
