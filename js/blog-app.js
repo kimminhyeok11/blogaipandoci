@@ -506,17 +506,22 @@ class BlogApp {
         if (category && category !== '전체') {
             countQuery = countQuery.eq('category', category);
         }
+        if (tag) {
+            countQuery = countQuery.contains('tags', [String(tag).toLowerCase()]);
+        }
         const { count } = await countQuery;
         this.state.archives.total = count || 0;
 
         // 데이터 쿼리 (페이지네이션, 필터 적용)
-        // 태그 필터가 없을 때는 refined_content를 조회하지 않아 페이로드와 메모리를 줄임
-        const selectCols = tag ? 'id, title, slug, created_at, category, refined_content, thumbnail_url'
-                               : 'id, title, slug, created_at, category, thumbnail_url';
+        // 서버에서 tags 배열로 필터링하므로 refined_content를 조회하지 않습니다
+        const selectCols = 'id, title, slug, created_at, category, thumbnail_url';
         let dataQuery = this.supabase
             .from(table)
             .select(selectCols)
             .eq('status', 'published');
+        if (tag) {
+            dataQuery = dataQuery.contains('tags', [String(tag).toLowerCase()]);
+        }
         if (sort === 'latest') {
             dataQuery = dataQuery.order('created_at', { ascending: false });
         } else if (sort === 'oldest') {
@@ -549,14 +554,8 @@ class BlogApp {
             catSel.value = category || '전체';
         }
 
-        // 태그 필터 클라이언트 적용
-        let filtered = data || [];
-        if (tag) {
-            filtered = filtered.filter(p => {
-                const tags = this.extractTagsFromHTML(p.refined_content || '') || [];
-                return tags.some(t => String(t).toLowerCase() === String(tag).toLowerCase());
-            });
-        }
+        // 서버 필터가 적용된 결과 사용
+        const filtered = data || [];
 
         // 최신 요청이 아닌 경우 DOM 반영을 건너뜀
         if (this._reqTokens.archives !== token) return;
@@ -807,6 +806,7 @@ class BlogApp {
             +     '<div><label class="block text-sm font-medium">상태</label><select id="post-status" class="form-select"><option value="draft">초안</option><option value="published">발행</option></select></div>'
             +   '</div>'
             +   '<div><label class="block text-sm font-medium">태그</label><input id="post-tags" type="text" class="form-input" placeholder="태그를 쉼표로 구분해 입력 (예: 보험,자동차,가이드)"></div>'
+            +   '<div id="tag-suggestions" class="flex flex-wrap gap-2 mt-2" aria-label="추천 태그" aria-live="polite"></div>'
             +   '<div><label class="block text-sm font-medium">썸네일 이미지</label><input id="post-thumb" type="file" accept="image/*" class="form-input"/></div>'
             +   '<div><label class="block text-sm font-medium">콘텐츠 (복사/붙여넣기 지원)</label>'
             +   '<div id="editor-toolbar" class="editor-toolbar btn-group mt-2">'
@@ -847,6 +847,7 @@ class BlogApp {
         if (isEdit) {
             this.loadWriterData(slug).catch(err => this.handleError(err, 'loadWriterData'));
         }
+        this.loadTagSuggestions().catch(err => this.handleError(err, 'loadTagSuggestions'));
 
         const form = DOM.$('#writer-form');
         if (form) {
@@ -1210,10 +1211,48 @@ class BlogApp {
             // 기존 저장 포맷(JSON/Markdown/HTML)에 관계없이 미리보기 HTML로 변환해 편집기에 채웁니다.
             const html = this.renderContentHTML(post.refined_content ?? post.content ?? '');
             editor.innerHTML = html;
-            // 저장된 태그 추출 후 입력창에 채우기
-            const tags = this.extractTagsFromHTML(post.refined_content);
+            // 저장된 태그 추출 후 입력창에 채우기 (DB tags 우선)
+            const tags = (Array.isArray(post.tags) && post.tags.length)
+                ? post.tags
+                : this.extractTagsFromHTML(post.refined_content);
             const tagInput = DOM.$('#post-tags');
             if (tagInput && tags.length) tagInput.value = tags.join(',');
+        }
+    }
+
+    async loadTagSuggestions() {
+        try {
+            const box = DOM.$('#tag-suggestions');
+            if (!box) return;
+            box.innerHTML = '<span class="text-xs text-gray-500">태그 불러오는 중...</span>';
+            const resp = await fetch('/api/tags');
+            if (!resp.ok) throw new Error('태그 목록 요청 실패');
+            const json = await resp.json();
+            const tags = Array.isArray(json.tags) ? json.tags.slice(0, 20) : [];
+            if (!tags.length) { box.innerHTML = '<span class="text-xs text-gray-500">추천 태그가 없습니다.</span>'; return; }
+            const makeChip = (name, count) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'px-2 py-1 text-xs rounded-full border border-gray-300 hover:border-black hover:bg-gray-50';
+                btn.textContent = `${name}`;
+                btn.setAttribute('aria-label', `${name} 태그 추가 (빈도 ${count})`);
+                btn.addEventListener('click', () => {
+                    try {
+                        const input = DOM.$('#post-tags');
+                        const cur = (input.value || '').split(',').map(s => s.trim()).filter(Boolean).map(s => s.toLowerCase());
+                        const tag = String(name || '').toLowerCase();
+                        if (!cur.includes(tag)) cur.push(tag);
+                        input.value = cur.join(', ');
+                        input.dispatchEvent(new Event('input'));
+                    } catch (_) { /* noop */ }
+                });
+                return btn;
+            };
+            box.innerHTML = '';
+            tags.forEach(t => { box.appendChild(makeChip(t.name, t.count)); });
+        } catch (e) {
+            const box = DOM.$('#tag-suggestions');
+            if (box) box.innerHTML = '<span class="text-xs text-gray-500">태그를 불러오지 못했습니다.</span>';
         }
     }
 
@@ -1265,6 +1304,13 @@ class BlogApp {
             const category = DOM.$('#post-category').value.trim();
             const status = DOM.$('#post-status').value;
             const fileInput = DOM.$('#post-thumb');
+            // 태그 입력 파싱 (DB 배열 저장용)
+            let tagsArr = [];
+            const tagInputForSave = DOM.$('#post-tags');
+            const tagsStrForSave = (tagInputForSave?.value || '').trim();
+            if (tagsStrForSave) {
+                tagsArr = tagsStrForSave.split(',').map(t => t.trim()).filter(Boolean).map(t => t.toLowerCase());
+            }
             // contenteditable 편집기에서 HTML 추출 및 정제
             const editor = DOM.$('#post-content-editor');
             let refined_content = '';
@@ -1275,14 +1321,7 @@ class BlogApp {
                 refined_content = refined_content
                     .replace(/<h1([^>]*)>/gi, '<h2$1>')
                     .replace(/<\/h1>/gi, '</h2>');
-                // 태그 입력을 숨은 data-tags로 콘텐츠 상단에 주입
-                const tagInput = DOM.$('#post-tags');
-                const tagsStr = (tagInput?.value || '').trim();
-                if (tagsStr) {
-                    const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
-                    const hidden = `<div data-tags="${this.escapeHTML(tags.join(','))}" style="display:none"></div>`;
-                    refined_content = hidden + refined_content;
-                }
+                // DB tags 컬럼 우선 저장으로 변경: 콘텐츠에 숨은 태그 주입 제거
                 // 이미지 alt 자동 보정: 캡션/제목/파일명 기반
                 refined_content = this.ensureImageAltAttributes(refined_content, title);
                 // 요약 자동 생성: 입력이 비어있으면 본문에서 160자 추출
@@ -1318,6 +1357,7 @@ class BlogApp {
                 slug,
                 updated_at: now,
                 author_id: this.state.user?.id || null,
+                tags: tagsArr,
             };
             if (thumbnail_url) base.thumbnail_url = thumbnail_url;
 
@@ -1400,7 +1440,8 @@ class BlogApp {
         }
 
         const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
-        const { data: post, error } = await this.supabase
+        // 1차: 원본 슬러그로 조회
+        let { data: post, error } = await this.supabase
             .from(table)
             .select('*')
             .eq('slug', slug)
@@ -1408,6 +1449,31 @@ class BlogApp {
             .maybeSingle();
 
         if (error) throw error;
+        // 2차: 과거 인덱스/특수문자 변형 호환 조회
+        if (!post) {
+            try {
+                const variants = [];
+                const raw = String(slug || '');
+                variants.push(raw);
+                variants.push(raw.toLowerCase());
+                // 구 슬러그에 언더스코어가 포함된 경우 하이픈으로 교체
+                variants.push(raw.replace(/_/g, '-'));
+                // 현재 규칙으로 정규화된 형태
+                variants.push(this.slugify(raw));
+                // 중복 제거
+                const uniq = Array.from(new Set(variants.filter(v => v && typeof v === 'string')));
+                if (uniq.length) {
+                    const { data: altList, error: altErr } = await this.supabase
+                        .from(table)
+                        .select('*')
+                        .in('slug', uniq)
+                        .eq('status', 'published')
+                        .limit(1);
+                    if (altErr) { /* 무시하고 계속 */ }
+                    post = (altList && altList[0]) || null;
+                }
+            } catch (_) { /* noop */ }
+        }
         if (!post) {
             container.innerHTML = '<section class="max-w-md mx-auto py-20 px-6 text-center">'
                 + '<h1 class="text-2xl font-extrabold">글을 찾을 수 없습니다</h1>'
@@ -1425,7 +1491,7 @@ class BlogApp {
         const title = this.escapeHTML(post.title || '제목 없음');
         const date = this.formatDate(post.created_at);
         const category = post.category ? `<span class="text-xs px-2 py-1 rounded-full bg-black/5">${this.escapeHTML(post.category)}</span>` : '';
-        const tags = this.extractTagsFromHTML(post.refined_content);
+        const tags = (Array.isArray(post.tags) && post.tags.length) ? post.tags : this.extractTagsFromHTML(post.refined_content);
         const tagsHtml = tags && tags.length ? `<div class="mt-2 flex flex-wrap gap-2">${tags.map(t => `<span class=\"text-xs px-2 py-1 rounded-full bg-blue-50 border border-blue-200\">${this.escapeHTML(t)}</span>`).join('')}</div>` : '';
 
         // 상세 페이지에서는 본문 내 삽입 이미지만 노출합니다 (상단 히어로 제거).
@@ -1504,6 +1570,8 @@ class BlogApp {
         try {
             const obj = typeof refined === 'string' ? JSON.parse(refined) : refined;
             if (obj && Array.isArray(obj.blocks)) {
+                // 포스트 상세 콘텐츠 렌더링 시작마다 첫 이미지 eager 처리 플래그 초기화
+                this._contentFirstImageEagerDone = false;
                 const html = obj.blocks.map(b => this.renderEditorBlock(b)).join('');
                 return this.dedupeConsecutiveImages(html);
             }
@@ -1595,7 +1663,40 @@ class BlogApp {
                     const srcset = w.map(x => `${this.getOptimizedPublicUrl(data.file.url, { width: x, quality: setQ, format: 'webp' })} ${x}w`).join(', ');
                     const sizeAttrs = (data.width && data.height) ? ` width="${data.width}" height="${data.height}"` : '';
                     const arClass = (!data.width || !data.height) ? ' class="aspect-16-9"' : '';
-                    return `<figure><img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${baseAlt}" loading="lazy" decoding="async"${sizeAttrs}${arClass}/><figcaption>${baseAlt}</figcaption></figure>`;
+                    // 콘텐츠 내 첫 번째 이미지에 eager/fetchpriority=high 적용 (LCP 후보)
+                    const eager = !this._contentFirstImageEagerDone;
+                    if (eager) {
+                        this._contentFirstImageEagerDone = true;
+                        try {
+                            // head에 이미지 프리로드 힌트 추가 (imagesrcset/imagesizes 포함)
+                            const existed = document.querySelector(`link[rel="preload"][as="image"][href="${src}"]`);
+                            if (!existed) {
+                                const l = document.createElement('link');
+                                l.rel = 'preload';
+                                l.as = 'image';
+                                l.href = src;
+                                if (srcset) l.setAttribute('imagesrcset', srcset);
+                                l.setAttribute('imagesizes', sizes);
+                                l.crossOrigin = 'anonymous';
+                                document.head.appendChild(l);
+                            }
+                            // 이미지 출처에 대한 프리커넥트로 DNS/TLS 시간을 단축
+                            try {
+                                const origin = new URL(src, window.location.origin).origin;
+                                const existedPre = document.querySelector(`link[rel="preconnect"][href="${origin}"]`);
+                                if (!existedPre) {
+                                    const p = document.createElement('link');
+                                    p.rel = 'preconnect';
+                                    p.href = origin;
+                                    p.crossOrigin = 'anonymous';
+                                    document.head.appendChild(p);
+                                }
+                            } catch { /* noop */ }
+                        } catch (_) { /* noop */ }
+                    }
+                    const loadingAttr = eager ? '' : ' loading="lazy"';
+                    const fetchPriorityAttr = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
+                    return `<figure><img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${baseAlt}"${loadingAttr}${fetchPriorityAttr} decoding="async"${sizeAttrs}${arClass}/><figcaption>${baseAlt}</figcaption></figure>`;
                 }
                 return '';
             case 'code':
@@ -1913,7 +2014,7 @@ class BlogApp {
         const inflightKey = `popular:${currentPostId || ''}`;
         const { data, error } = await this.withDedupe(inflightKey, () => this.supabase
             .from(table)
-            .select('id, title, slug, thumbnail_url, created_at, view_count, status')
+            .select('id, title, slug, thumbnail_url, created_at, view_count')
             .eq('status', 'published')
             .order('view_count', { ascending: false, nullsFirst: false })
             .limit(5));
@@ -2193,7 +2294,7 @@ class BlogApp {
             const { data, count, error } = await this.withDedupe(key, () =>
                 this.supabase
                     .from(table)
-                    .select('id, title, summary, slug, category, thumbnail_url, created_at, view_count, status', { count: 'exact' })
+                    .select('id, title, summary, slug, category, thumbnail_url, created_at', { count: 'exact' })
                     .eq('status', 'published')
                     .order('created_at', { ascending: false })
                     .range(from, to)
@@ -2240,6 +2341,52 @@ class BlogApp {
             // 최신 요청이 아닌 경우 DOM 반영을 건너뜀
             if (this._reqTokens.home !== token) return;
             container.innerHTML = this.renderPostsListHTML(data);
+
+            // 렌더 직후: 가시 영역의 첫 썸네일 이미지를 eager로 승격하고 preload 주입 (LCP 포함시키기)
+            try {
+                const imgs = Array.from(container.querySelectorAll('.post-card-thumb-img'));
+                if (imgs.length) {
+                    // Viewport 안의 첫 이미지 선택, 없으면 첫 이미지 사용
+                    const inView = imgs.find(img => {
+                        const r = img.getBoundingClientRect();
+                        return r && r.height > 0 && r.top >= 0 && r.top < ((window.innerHeight || 0) * 0.9);
+                    }) || imgs[0];
+                    if (inView) {
+                        // lazy 제거 및 fetchpriority 상향
+                        if (inView.getAttribute('loading') === 'lazy') inView.removeAttribute('loading');
+                        inView.setAttribute('fetchpriority', 'high');
+                        // preload 힌트 주입
+                        const src = inView.currentSrc || inView.getAttribute('src');
+                        const srcset = inView.getAttribute('srcset') || '';
+                        const sizes = inView.getAttribute('sizes') || '';
+                        if (src) {
+                            const existed = document.querySelector(`link[rel="preload"][as="image"][href="${src}"]`);
+                            if (!existed) {
+                                const l = document.createElement('link');
+                                l.rel = 'preload';
+                                l.as = 'image';
+                                l.href = src;
+                                if (srcset) l.setAttribute('imagesrcset', srcset);
+                                if (sizes) l.setAttribute('imagesizes', sizes);
+                                l.crossOrigin = 'anonymous';
+                                document.head.appendChild(l);
+                            }
+                            // 이미지 출처 preconnect로 핸드셰이크 비용 절감
+                            try {
+                                const origin = new URL(src, window.location.origin).origin;
+                                const existedPre = document.querySelector(`link[rel="preconnect"][href="${origin}"]`);
+                                if (!existedPre) {
+                                    const p = document.createElement('link');
+                                    p.rel = 'preconnect';
+                                    p.href = origin;
+                                    p.crossOrigin = 'anonymous';
+                                    document.head.appendChild(p);
+                                }
+                            } catch { /* noop */ }
+                        }
+                    }
+                }
+            } catch { /* noop */ }
         } catch (err) {
             // 사용자에게 명시적으로 안내하고, 토스트도 띄움
             const msg = (err && (err.message || err.msg)) ? String(err.message || err.msg) : '알 수 없는 오류';
