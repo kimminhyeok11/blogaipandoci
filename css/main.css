@@ -212,11 +212,20 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
 
 /* 많이 본 글 리스트 스타일 */
 .popular-list { list-style: none; padding: 0; margin: 0; }
-.popular-item { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.25rem 0; border-bottom: 1px dashed var(--gray-200); }
+.popular-item {
+  display: grid;
+  grid-template-columns: 2ch 1fr 10ch 8ch; /* rank | title | date | views */
+  column-gap: 0.75rem;
+  align-items: center;
+  padding: 0.25rem 0;
+  border-bottom: 1px dashed var(--gray-200);
+}
 .popular-item:last-child { border-bottom: none; }
-.popular-rank { font-weight: 600; color: var(--gray-600); min-width: 2ch; }
-.popular-link { color: var(--primary-color); }
+.popular-rank { font-weight: 600; color: var(--gray-600); min-width: 2ch; text-align: right; }
+.popular-link { color: var(--primary-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .popular-link:hover { color: var(--primary-hover); text-decoration: underline; }
+.popular-date { color: var(--gray-600); text-align: right; min-width: 10ch; font-variant-numeric: tabular-nums; }
+.popular-views { color: var(--gray-800); text-align: right; min-width: 6ch; font-variant-numeric: tabular-nums; }
 .popular-meta { margin-left: auto; font-size: 0.75rem; color: var(--gray-500); }
 .blog-post-content th,
 .blog-post-content td {
