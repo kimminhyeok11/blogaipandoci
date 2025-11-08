@@ -60,18 +60,8 @@ class BlogApp {
      */
     async init() {
         try {
-            // Supabase 클라이언트 준비 (있으면 초기화, 없으면 건너뜀)
-            try {
-                if (!this.supabase && window.supabase && window.Config?.SUPABASE_URL && window.Config?.SUPABASE_ANON_KEY) {
-                    this.supabase = window.supabase.createClient(
-                        window.Config.SUPABASE_URL,
-                        window.Config.SUPABASE_ANON_KEY,
-                        { auth: { storageKey: 'sb-insurelog-auth-token' } }
-                    );
-                }
-            } catch (e) {
-                console.warn('Supabase 초기화를 건너뜁니다:', e);
-            }
+            // Supabase 클라이언트 준비: 동적 모듈 로딩 지연을 고려해 대기 후 초기화
+            await this.ensureSupabaseReady(1200);
 
             // 초기 스크립트 일괄 로드를 제거하고 라우트별로 필요시 로드합니다.
 
@@ -201,6 +191,39 @@ class BlogApp {
         }
     }
 
+    // Supabase 준비를 보장하기 위한 유틸리티 (동적 모듈 로딩 지연 대응)
+    async ensureSupabaseReady(maxWaitMs = 800) {
+        try {
+            if (this.supabase) return true;
+            const start = Date.now();
+            // 즉시 가능하면 생성
+            if (window.supabase && window.Config?.SUPABASE_URL && window.Config?.SUPABASE_ANON_KEY) {
+                this.supabase = window.supabase.createClient(
+                    window.Config.SUPABASE_URL,
+                    window.Config.SUPABASE_ANON_KEY,
+                    { auth: { storageKey: 'sb-insurelog-auth-token' } }
+                );
+                return true;
+            }
+            // 대기 루프: 모듈 로딩/Config 주입을 기다림
+            while ((Date.now() - start) < maxWaitMs) {
+                await new Promise(r => setTimeout(r, 50));
+                if (window.supabase && window.Config?.SUPABASE_URL && window.Config?.SUPABASE_ANON_KEY) {
+                    this.supabase = window.supabase.createClient(
+                        window.Config.SUPABASE_URL,
+                        window.Config.SUPABASE_ANON_KEY,
+                        { auth: { storageKey: 'sb-insurelog-auth-token' } }
+                    );
+                    return true;
+                }
+            }
+            return !!this.supabase;
+        } catch (e) {
+            console.warn('ensureSupabaseReady 실패:', e);
+            return false;
+        }
+    }
+
     /**
      * [Global Event Listeners]
      * 전역 이벤트 리스너를 바인딩합니다.
@@ -219,14 +242,7 @@ class BlogApp {
             }
         });
         
-        // 온라인/오프라인 상태 감지
-        window.addEventListener('online', () => {
-            UIComponents.showToast('인터넷 연결이 복구되었습니다.', 'success');
-        });
-        
-        window.addEventListener('offline', () => {
-            UIComponents.showToast('인터넷 연결이 끊어졌습니다.', 'warning');
-        });
+        // 온라인/오프라인 토스트 기능 제거됨
     }
 
     /**
@@ -399,37 +415,7 @@ class BlogApp {
         const { category, tag, page, pageSize } = this.state.archives;
         const list = DOM.$('#archives-list');
         if (!list) return;
-
-        // SWR 캐시 즉시 렌더 (카테고리/페이지/페이지크기 별 캐시 키)
-        try {
-            const key = `archives:v1:${encodeURIComponent(category || '전체')}:${encodeURIComponent(tag || '')}:${page}:${pageSize}`;
-            const raw = localStorage.getItem(key);
-            if (raw) {
-                const cache = JSON.parse(raw);
-                const valid = cache && typeof cache.ts === 'number' && typeof cache.ttl === 'number'
-                    ? (cache.ts + cache.ttl) > Date.now() : false;
-                if (valid && Array.isArray(cache.data)) {
-                    let filtered = cache.data || [];
-                    if (tag) {
-                        filtered = filtered.filter(p => {
-                            const tags = this.extractTagsFromHTML(p.refined_content || '') || [];
-                            return tags.some(t => String(t).toLowerCase() === String(tag).toLowerCase());
-                        });
-                    }
-                    if (!filtered || filtered.length === 0) {
-                        list.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
-                    } else {
-                        const cards = this.renderPostsListHTML(filtered);
-                        list.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">${cards}</div>`;
-                    }
-                    if (typeof cache.total === 'number') {
-                        this.state.archives.total = cache.total;
-                    }
-                    // 캐시 기반 페이지네이션 갱신
-                    this.renderArchivesPagination();
-                }
-            }
-        } catch (_) { /* noop */ }
+        // 캐시 기반 즉시 렌더 제거됨
 
         if (!this.supabase) return; // 캐시 렌더 후 재검증 단계에서 Supabase 미준비 시 종료
         const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
@@ -494,12 +480,7 @@ class BlogApp {
             list.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">${cards}</div>`;
         }
 
-        // 캐시 저장 (SWR: 10분 TTL) — 필터/페이지 기준으로 저장
-        try {
-            const key = `archives:v1:${encodeURIComponent(category || '전체')}:${encodeURIComponent(tag || '')}:${page}:${pageSize}`;
-            const cache = { ts: Date.now(), ttl: 10 * 60 * 1000, data, total: this.state.archives.total };
-            localStorage.setItem(key, JSON.stringify(cache));
-        } catch (_) { /* noop */ }
+        // 캐시 저장 제거됨
 
         // 페이지네이션 렌더
         this.renderArchivesPagination();
@@ -739,59 +720,7 @@ class BlogApp {
             // SEO 메타 업데이트
             this.updatePageMeta('InsureLog - 최근 글', '최신 게시글 목록', window.location.href, '/og-image.svg');
 
-            // 로컬 캐시가 유효하면 즉시 렌더하여 초기 응답 가속 (SWR 캐시)
-            try {
-                const raw = localStorage.getItem('homePosts:v1');
-                if (raw) {
-                    const cached = JSON.parse(raw);
-                    const valid = cached && typeof cached.ts === 'number' && typeof cached.ttl === 'number'
-                      ? (cached.ts + cached.ttl) > Date.now() : false;
-                    if (valid && Array.isArray(cached.data) && cached.data.length) {
-                        const listEl = DOM.$('#home-posts');
-                        if (listEl) listEl.innerHTML = this.renderPostsListHTML(cached.data);
-                    }
-                }
-            } catch (_) { /* noop */ }
-
-            // 프리패치 데이터가 있으면 즉시 렌더하여 LCP 개선
-            try {
-                const prefetched = (window.__homePrefetchData && Array.isArray(window.__homePrefetchData))
-                  ? window.__homePrefetchData : null;
-                if (prefetched && prefetched.length) {
-                    const listEl = DOM.$('#home-posts');
-                    if (listEl) {
-                        listEl.innerHTML = this.renderPostsListHTML(prefetched);
-                    }
-                    // Above-the-fold 첫 썸네일을 이미지 프리로드하여 LCP 단축
-                    try {
-                        const first = prefetched[0];
-                        const conn = (navigator && navigator.connection) ? navigator.connection : {};
-                        const saveData = !!conn.saveData;
-                        const et = conn.effectiveType || '';
-                        const isSlow = saveData || /(^|[^a-z])(2g|3g)/.test(et);
-                        const baseW = 160, baseH = 160; // 홈 컴팩트 카드 썸네일은 1:1
-                        const q = isSlow ? 70 : 80;
-                        const widths = isSlow ? [96, 120, 160] : [120, 160, 192];
-                        const sizes = '(max-width: 640px) 96px, 120px';
-                        const thumbUrl = first?.thumbnail_url
-                          ? this.getTransformedPublicUrl(first.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', quality: q, format: 'webp' })
-                          : null;
-                        const srcset = first?.thumbnail_url
-                          ? widths.map(x => `${this.getTransformedPublicUrl(first.thumbnail_url, { width: x, height: x, resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ')
-                          : '';
-                        if (thumbUrl) {
-                            const link = document.createElement('link');
-                            link.rel = 'preload';
-                            link.as = 'image';
-                            link.href = thumbUrl;
-                            if (srcset) link.setAttribute('imagesrcset', srcset);
-                            link.setAttribute('imagesizes', sizes);
-                            link.setAttribute('fetchpriority', 'high');
-                            document.head.appendChild(link);
-                        }
-                    } catch (_) { /* noop */ }
-                }
-            } catch (_) { /* noop */ }
+            // 캐시/프리패치 기반 초기 렌더 제거됨
 
             // 비동기 데이터 로드 시작
             this.loadHomePosts(params).catch(err => this.handleError(err, 'loadHomePosts'));
@@ -1364,6 +1293,8 @@ class BlogApp {
      */
     async loadPostDetail(slug) {
         const container = DOM.$('#view-post');
+        // 동적 모듈 로딩 지연 시 초기화 시도
+        await this.ensureSupabaseReady(1200);
         if (!this.supabase) {
             container.innerHTML = '<div class="max-w-3xl mx-auto py-10 px-6 text-gray-600">데이터 소스가 준비되지 않았습니다.</div>';
             return;
@@ -1811,50 +1742,7 @@ class BlogApp {
     async loadPopularPosts(currentPostId = null) {
         const container = DOM.$('#popular-posts');
         if (!container) return;
-
-        // 캐시가 있으면 즉시 렌더 (SWR: 15분 TTL)
-        try {
-            const raw = localStorage.getItem('popularPosts:v1');
-            if (raw) {
-                const cache = JSON.parse(raw);
-                if (cache && Array.isArray(cache.data) && (Date.now() - (cache.ts || 0)) < (cache.ttl || 0)) {
-                    const initList = (cache.data || []).filter(p => p && p.id !== currentPostId);
-                    if (initList && initList.length > 0) {
-                        const header = '<h2 class="text-lg font-bold mb-3">많이 본 글</h2>';
-                        const initCards = initList.map((p, idx) => {
-                            const url = '/post/' + encodeURIComponent(p.slug || p.id);
-                            const hasImg = !!p.thumbnail_url;
-                            const rankBadge = `<span class="badge">${idx + 1}위</span>`;
-                            const viewsText = `<span class="text-xs text-gray-500">${Number(p.view_count || 0)}회</span>`;
-                            const img = hasImg
-                                ? (() => {
-                                    const q = 80;
-                                    const baseW = 120, baseH = 120; // 더 미니멀한 컴팩트 썸네일
-                                    const widths = [96, 120, 144, 160];
-                                    const sizes = '(max-width: 640px) 96px, 120px';
-                                    const src = this.getTransformedPublicUrl(p.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', format: 'webp', quality: q });
-                                    const srcset = widths.map(x => `${this.getTransformedPublicUrl(p.thumbnail_url, { width: x, height: x, resize: 'cover', format: 'webp', quality: q })} ${x}w`).join(', ');
-                                    const eager = idx === 0;
-                                    const loading = eager ? '' : ' loading="lazy"';
-                                    const fetchp = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
-                                    return `<img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${this.escapeHTML(p.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async"${loading}${fetchp}/>`;
-                                  })()
-                                : `<span class="thumb-initial">${this.escapeHTML(String((p.title || 'N')).trim().charAt(0).toUpperCase())}</span>`;
-                            return (
-                                `<article class="post-card post-card-compact">`
-                                + `<a href="${url}" data-route class="post-card-thumb${hasImg ? '' : ' placeholder'}">${img}</a>`
-                                + `<div class="post-card-main">`
-                                +   `<h3 class="post-card-title"><a href="${url}" data-route>${this.escapeHTML(p.title || '')}</a></h3>`
-                                +   `<p class="post-card-meta">${rankBadge} · ${viewsText}</p>`
-                                + `</div>`
-                                + `</article>`
-                            );
-                        }).join('');
-                        container.innerHTML = header + `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${initCards}</div>`;
-                    }
-                }
-            }
-        } catch (_) { /* noop */ }
+        // 캐시 기반 즉시 렌더 제거됨
 
         if (!this.supabase) return; // 캐시 렌더 후 Supabase 준비되지 않으면 종료
         const table = (window.Config && window.Config.DB_TABLE_NAME) || 'posts';
@@ -1904,11 +1792,7 @@ class BlogApp {
         }).join('');
         container.innerHTML = header + `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${cards}</div>`;
 
-        // 최신 데이터로 캐시 갱신
-        try {
-            const cache = { ts: Date.now(), ttl: 15 * 60 * 1000, data };
-            localStorage.setItem('popularPosts:v1', JSON.stringify(cache));
-        } catch (_) { /* noop */ }
+        // 캐시 저장 제거됨
     }
 
     // 파일명으로부터 alt 텍스트 유도어 생성
@@ -2122,52 +2006,15 @@ class BlogApp {
         const container = DOM.$('#home-posts');
         if (!container) return;
         const page = Number(params.get('page') || '1');
-        // 초기 렌더 가속: 프리패치/캐시를 페이지 1에서만 사용하고, 이후에는 항상 서버 데이터로 갱신합니다.
-        let initialRendered = false;
-        try {
-            const pre = window.__homePrefetchData;
-            if (page === 1 && Array.isArray(pre) && pre.length > 0) {
-                container.innerHTML = this.renderPostsListHTML(pre);
-                initialRendered = true;
-            }
-        } catch (_) { /* noop */ }
-
-        // 로컬 캐시(SWR) 존재 시 즉시 렌더 후 재검증 (페이지 1에서만)
-        try {
-            const raw = localStorage.getItem('homePosts:v1');
-            if (page === 1 && raw) {
-                const cache = JSON.parse(raw);
-                const valid = cache && Array.isArray(cache.data) && (Date.now() - (cache.ts || 0)) < (cache.ttl || 0);
-                if (valid) {
-                    container.innerHTML = this.renderPostsListHTML(cache.data);
-                    initialRendered = true;
-                }
-            }
-        } catch (_) { /* noop */ }
-
-        // 초기 렌더가 없으면 스켈레톤 표시
-        if (!initialRendered) {
-            container.innerHTML = '<div class="animate-pulse space-y-3">'
-                + '<div class="h-6 bg-gray-200 rounded"></div>'
-                + '<div class="h-24 bg-gray-200 rounded"></div>'
-                + '<div class="h-24 bg-gray-200 rounded"></div>'
-                + '</div>';
-        }
+        // 스켈레톤 표시
+        container.innerHTML = '<div class="animate-pulse space-y-3">'
+            + '<div class="h-6 bg-gray-200 rounded"></div>'
+            + '<div class="h-24 bg-gray-200 rounded"></div>'
+            + '<div class="h-24 bg-gray-200 rounded"></div>'
+            + '</div>';
 
         // 테스트/진단용 시나리오 파라미터 처리
         const scenario = params.get('scenario');
-        if (scenario === 'offline') {
-            container.innerHTML = '<div class="error-banner network-error">'
-                + '<div class="error-banner-content">'
-                +   '<svg class="error-banner-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v2h2v-2zm0-8H9v6h2V5z"/></svg>'
-                +   '<div class="error-banner-text">'
-                +     '<div class="error-banner-title">오프라인 상태입니다</div>'
-                +     '<div class="error-banner-message">네트워크 연결을 확인한 뒤 새로고침해 주세요.</div>'
-                +   '</div>'
-                + '</div>'
-                + '</div>';
-            return;
-        }
         if (scenario === 'empty') {
             container.innerHTML = '<div class="text-gray-500">표시할 게시글이 없습니다.</div>';
             return;
@@ -2179,22 +2026,10 @@ class BlogApp {
                 + '</div>';
             return;
         }
+        // 오프라인 감지/배너 표시 제거됨
 
-        // 실제 오프라인 감지 후 사용자 안내
-        if (navigator && typeof navigator.onLine === 'boolean' && !navigator.onLine) {
-            container.innerHTML = '<div class="error-banner network-error">'
-                + '<div class="error-banner-content">'
-                +   '<svg class="error-banner-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v2h2v-2zm0-8H9v6h2V5z"/></svg>'
-                +   '<div class="error-banner-text">'
-                +     '<div class="error-banner-title">오프라인 상태입니다</div>'
-                +     '<div class="error-banner-message">네트워크 연결을 확인한 뒤 새로고침해 주세요.</div>'
-                +   '</div>'
-                + '</div>'
-                + '</div>';
-            return;
-        }
-
-        // Supabase가 아직 준비되지 않은 초기 렌더에서는 프리패치/캐시 렌더를 유지하고 조용히 건너뜁니다.
+        // Supabase가 아직 준비되지 않은 초기 렌더에서는 초기화 시도 후 실패 시 프리패치/캐시 렌더를 유지하고 조용히 건너뜁니다.
+        await this.ensureSupabaseReady(1200);
         if (!this.supabase) return;
 
         // 페이지네이션 계산
@@ -2227,11 +2062,7 @@ class BlogApp {
                 return;
             }
 
-            // 캐시 저장 (SWR: 10분 TTL)
-            try {
-                const cache = { ts: Date.now(), ttl: 10 * 60 * 1000, data };
-                localStorage.setItem('homePosts:v1', JSON.stringify(cache));
-            } catch (_) { /* noop */ }
+            // 캐시 저장 제거됨
             
             // 페이지네이션 갱신
             try {
