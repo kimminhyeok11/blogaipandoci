@@ -688,34 +688,18 @@ class BlogApp {
             authLink
         ].filter(Boolean).join('');
 
-        // 네비게이션 마크업: 레이아웃 CSS에 맞춰 미니멀 구조로 단순화
+        // 네비게이션 마크업: 모바일에서 항상 보이는 상단 네비로 전환(햄버거 제거)
         container.innerHTML = '<nav class="w-full nav-inner">'
             + '<a href="/" data-route class="brand font-extrabold text-xl tracking-tight">InsureLog</a>'
-            + '<button id="nav-toggle" class="hamburger-btn sm:hidden" aria-expanded="false" aria-controls="nav-menu" aria-haspopup="menu" aria-label="메뉴">'
-            +   '<span class="hamburger-icon" aria-hidden="true">'
-            +     '<span class="bar bar-top"></span>'
-            +     '<span class="bar bar-middle"></span>'
-            +     '<span class="bar bar-bottom"></span>'
-            +   '</span>'
-            +   '<span class="sr-only">메뉴</span>'
-            + '</button>'
-            + '<div id="nav-links" class="hidden sm:flex header-nav">' + linksHtml + '</div>'
+            + '<div id="nav-links" class="header-nav mobile-nav-actions">' + linksHtml + '</div>'
             + '</nav>'
         // 현재 로그인 상태 캐시 (메모이즈 키)
         this._navLogged = isLoggedIn;
-            // 모바일 팝오버 메뉴(버튼 근처에 고정 위치로 표시)
-            + '<div id="nav-menu" class="hidden sm:hidden fixed z-50 bg-white border rounded-2xl shadow-xl p-4 w-64" aria-hidden="true" role="menu" aria-label="모바일 네비게이션">'
-            +   '<div class="flex items-center justify-between mb-4">'
-            +     '<span class="font-bold">메뉴</span>'
-            +     '<button id="nav-close" class="text-sm px-2 py-1 rounded border hover:bg-black/5" aria-label="닫기">닫기</button>'
-            +   '</div>'
-            +   '<nav class="flex flex-col gap-3">' + linksHtml + '</nav>'
-            + '</div>';
 
         // [Enhancement] 현재 경로 활성 상태 하이라이트 처리
         // 접근성(aria-current)과 가시성(font-semibold)을 함께 적용합니다.
         const currentPath = this.normalizePath(window.location.pathname);
-        const routeLinks = container.querySelectorAll('#nav-links a[data-route], #nav-menu a[data-route]');
+        const routeLinks = container.querySelectorAll('#nav-links a[data-route]');
         routeLinks.forEach(a => {
             const href = a.getAttribute('href') || '/';
             // 절대경로화하여 비교 안전성 확보
@@ -726,9 +710,6 @@ class BlogApp {
         });
 
         // 햄버거 메뉴 바인딩
-        const toggleBtn = DOM.$('#nav-toggle');
-        const menu = DOM.$('#nav-menu');
-        const closeBtn = DOM.$('#nav-close');
         const logoutBtn = DOM.$('#logout-btn');
 
         // 로그아웃 버튼 동작
@@ -747,156 +728,7 @@ class BlogApp {
                 }
             };
         }
-        if (toggleBtn && menu) {
-            // 외부 클릭 핸들러 중복 등록 방지
-            if (this._navOutsideHandler) {
-                document.removeEventListener('click', this._navOutsideHandler, true);
-                this._navOutsideHandler = null;
-            }
-
-            const positionMenuNearToggle = () => {
-                const rect = toggleBtn.getBoundingClientRect();
-                // 버튼 바로 아래, 약간의 여백을 두고 표시
-                // 메뉴는 position: fixed 이므로 viewport 좌표 사용 (scroll 오프셋 미포함)
-                const top = Math.round(rect.bottom + 8);
-                let left = Math.round(rect.left);
-                // 화면 우측을 넘지 않도록 조정
-                const maxLeft = window.innerWidth - menu.offsetWidth - 8;
-                left = Math.min(left, Math.max(8, maxLeft));
-                menu.style.top = top + 'px';
-                menu.style.left = left + 'px';
-            };
-
-            toggleBtn.onclick = () => {
-                const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-                toggleBtn.setAttribute('aria-expanded', String(!expanded));
-                if (expanded) {
-                    menu.classList.add('hidden');
-                    menu.setAttribute('aria-hidden', 'true');
-                    // 배경 복원 및 포커스 트랩 해제
-                    try {
-                        const app = document.querySelector('#app-container');
-                        app?.removeAttribute('inert');
-                        app?.removeAttribute('aria-hidden');
-                    } catch (_) {}
-                    if (menu.__onKeydown) {
-                        menu.removeEventListener('keydown', menu.__onKeydown, true);
-                        menu.__onKeydown = null;
-                    }
-                    // 토글 버튼 포커스 복원
-                    toggleBtn.focus({ preventScroll: true });
-                } else {
-                    // 표시 전에 위치 계산
-                    menu.classList.remove('hidden');
-                    positionMenuNearToggle();
-                    menu.setAttribute('aria-hidden', 'false');
-
-                    // 배경 inert 처리로 키보드 포커스 배경 이동 차단
-                    try {
-                        const app = document.querySelector('#app-container');
-                        if (app && !menu.contains(app)) {
-                            app.setAttribute('inert', '');
-                            app.setAttribute('aria-hidden', 'true');
-                        }
-                    } catch (_) {}
-
-                    // 초기 포커스 및 포커스 트랩
-                    const focusables = Array.from(menu.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
-                    const first = focusables[0] || menu;
-                    if (first && !first.hasAttribute('tabindex')) first.setAttribute('tabindex', '-1');
-                    first?.focus({ preventScroll: true });
-                    const onKeydown = (ev) => {
-                        if (ev.key === 'Tab') {
-                            const list = Array.from(menu.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
-                            if (list.length === 0) return;
-                            const firstEl = list[0];
-                            const lastEl = list[list.length - 1];
-                            const active = document.activeElement;
-                            if (ev.shiftKey) {
-                                if (active === firstEl || !menu.contains(active)) { ev.preventDefault(); lastEl.focus(); }
-                            } else {
-                                if (active === lastEl) { ev.preventDefault(); firstEl.focus(); }
-                            }
-                        } else if (ev.key === 'Escape') {
-                            // 메뉴 내부 ESC로 닫기
-                            menu.classList.add('hidden');
-                            menu.setAttribute('aria-hidden', 'true');
-                            toggleBtn.setAttribute('aria-expanded', 'false');
-                            try {
-                                const app = document.querySelector('#app-container');
-                                app?.removeAttribute('inert');
-                                app?.removeAttribute('aria-hidden');
-                            } catch (_) {}
-                            menu.removeEventListener('keydown', onKeydown, true);
-                            toggleBtn.focus({ preventScroll: true });
-                        }
-                    };
-                    menu.__onKeydown = onKeydown;
-                    menu.addEventListener('keydown', onKeydown, true);
-                }
-            };
-
-            // 창 리사이즈/스크롤 시 팝오버 재배치
-            const relocate = () => {
-                if (!menu.classList.contains('hidden')) positionMenuNearToggle();
-            };
-            window.addEventListener('resize', relocate);
-            window.addEventListener('scroll', relocate, { passive: true });
-
-            // 외부 클릭 시 닫기
-            this._navOutsideHandler = (ev) => {
-                const t = ev.target;
-                if (!menu.classList.contains('hidden') && !menu.contains(t) && !toggleBtn.contains(t)) {
-                    menu.classList.add('hidden');
-                    menu.setAttribute('aria-hidden', 'true');
-                    toggleBtn.setAttribute('aria-expanded', 'false');
-                    try {
-                        const app = document.querySelector('#app-container');
-                        app?.removeAttribute('inert');
-                        app?.removeAttribute('aria-hidden');
-                    } catch (_) {}
-                    if (menu.__onKeydown) {
-                        menu.removeEventListener('keydown', menu.__onKeydown, true);
-                        menu.__onKeydown = null;
-                    }
-                }
-            };
-            document.addEventListener('click', this._navOutsideHandler, true);
-            // ESC 키로 닫기
-            document.addEventListener('keydown', (ev) => {
-                if (ev.key === 'Escape') {
-                    menu.classList.add('hidden');
-                    menu.setAttribute('aria-hidden', 'true');
-                    toggleBtn.setAttribute('aria-expanded', 'false');
-                    try {
-                        const app = document.querySelector('#app-container');
-                        app?.removeAttribute('inert');
-                        app?.removeAttribute('aria-hidden');
-                    } catch (_) {}
-                    if (menu.__onKeydown) {
-                        menu.removeEventListener('keydown', menu.__onKeydown, true);
-                        menu.__onKeydown = null;
-                    }
-                    toggleBtn.focus({ preventScroll: true });
-                }
-            });
-        }
-        if (closeBtn && menu && toggleBtn) {
-            closeBtn.onclick = () => {
-                menu.classList.add('hidden');
-                menu.setAttribute('aria-hidden', 'true');
-                toggleBtn.setAttribute('aria-expanded', 'false');
-            };
-        }
-        if (menu && toggleBtn) {
-            menu.querySelectorAll('a[data-route]').forEach(a => {
-                a.addEventListener('click', () => {
-                    menu.classList.add('hidden');
-                    menu.setAttribute('aria-hidden', 'true');
-                    toggleBtn.setAttribute('aria-expanded', 'false');
-                });
-            });
-        }
+        // 햄버거/팝오버 메뉴 관련 로직 제거됨
 
         // 검색바 제거: 관련 마크업과 로직을 삭제하여 네비게이션을 간결화
     }
