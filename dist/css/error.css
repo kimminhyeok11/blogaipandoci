@@ -1,0 +1,416 @@
+/* 에러 처리 UI 스타일 */
+
+/* 에러 컨테이너 */
+.error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    min-height: 300px;
+}
+
+.error-container-full {
+    min-height: 50vh;
+}
+
+/* 에러 아이콘 */
+.error-icon {
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1.5rem;
+    color: var(--red-500);
+}
+
+.error-icon-lg {
+    width: 6rem;
+    height: 6rem;
+}
+
+.error-icon-sm {
+    width: 2rem;
+    height: 2rem;
+    margin-bottom: 1rem;
+}
+
+/* 에러 메시지 */
+.error-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+}
+
+.error-title-lg {
+    font-size: 2rem;
+}
+
+.error-message {
+    font-size: 1rem;
+    color: var(--gray-600);
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+    line-height: 1.6;
+}
+
+.error-details {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-bottom: 2rem;
+    font-family: var(--font-mono);
+    background-color: var(--gray-100);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--red-500);
+    text-align: left;
+    max-width: 500px;
+    overflow-x: auto;
+}
+
+/* 에러 액션 */
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* 인라인 에러 */
+.error-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--red-50);
+    border: 1px solid var(--red-200);
+    border-radius: var(--border-radius);
+    color: var(--red-700);
+    font-size: 0.875rem;
+}
+
+.error-inline-icon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--red-500);
+    flex-shrink: 0;
+}
+
+/* 폼 에러 */
+.form-error {
+    color: var(--red-600);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.form-error-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+}
+
+.input-error {
+    border-color: var(--red-500);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.input-error:focus {
+    border-color: var(--red-500);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+/* 에러 배너 */
+.error-banner {
+    background-color: var(--red-50);
+    border: 1px solid var(--red-200);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.error-banner-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.error-banner-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--red-500);
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.error-banner-text {
+    flex: 1;
+}
+
+.error-banner-title {
+    font-weight: 600;
+    color: var(--red-800);
+    margin-bottom: 0.25rem;
+}
+
+.error-banner-message {
+    color: var(--red-700);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.error-banner-close {
+    background: none;
+    border: none;
+    color: var(--red-500);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--border-radius-sm);
+    transition: background-color var(--transition-fast);
+}
+
+.error-banner-close:hover {
+    background-color: var(--red-100);
+}
+
+/* 네트워크 에러 */
+.network-error {
+    background-color: var(--orange-50);
+    border: 1px solid var(--orange-200);
+    color: var(--orange-800);
+}
+
+.network-error .error-icon {
+    color: var(--orange-500);
+}
+
+/* 404 에러 */
+.not-found-error {
+    background-color: var(--blue-50);
+    border: 1px solid var(--blue-200);
+    color: var(--blue-800);
+}
+
+.not-found-error .error-icon {
+    color: var(--blue-500);
+}
+
+/* 권한 에러 */
+.permission-error {
+    background-color: var(--yellow-50);
+    border: 1px solid var(--yellow-200);
+    color: var(--yellow-800);
+}
+
+.permission-error .error-icon {
+    color: var(--yellow-500);
+}
+
+/* 에러 토스트 */
+.toast.error {
+    background-color: var(--red-600);
+    border-color: var(--red-700);
+}
+
+.toast.warning {
+    background-color: var(--orange-600);
+    border-color: var(--orange-700);
+}
+
+/* 에러 모달 */
+.modal-error .modal-header {
+    background-color: var(--red-50);
+    border-bottom-color: var(--red-200);
+}
+
+.modal-error .modal-title {
+    color: var(--red-800);
+}
+
+.modal-error .modal-icon {
+    color: var(--red-500);
+}
+
+/* 로딩 에러 상태 */
+.loading-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    text-align: center;
+}
+
+.loading-error-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--gray-200);
+    border-top-color: var(--red-500);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* 재시도 버튼 */
+.retry-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.retry-button:hover {
+    background-color: var(--primary-color-dark);
+    transform: translateY(-1px);
+}
+
+.retry-button:disabled {
+    background-color: var(--gray-400);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.retry-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* 에러 경계 */
+.error-boundary {
+    border: 2px dashed var(--red-300);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    margin: 1rem 0;
+    background-color: var(--red-50);
+}
+
+.error-boundary-title {
+    color: var(--red-800);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.error-boundary-message {
+    color: var(--red-700);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.error-boundary-stack {
+    background-color: white;
+    border: 1px solid var(--red-200);
+    border-radius: var(--border-radius-sm);
+    padding: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--gray-700);
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+
+/* 반응형 에러 스타일 */
+@media (max-width: 768px) {
+    .error-container {
+        padding: 2rem 1rem;
+        min-height: 200px;
+    }
+    
+    .error-title {
+        font-size: 1.25rem;
+    }
+    
+    .error-message {
+        font-size: 0.875rem;
+    }
+    
+    .error-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .error-actions .btn {
+        width: 100%;
+    }
+    
+    .error-details {
+        font-size: 0.75rem;
+        padding: 0.75rem;
+    }
+}
+
+/* 다크 모드 에러 스타일 */
+@media (prefers-color-scheme: dark) {
+    .error-container {
+        background-color: var(--gray-900);
+    }
+    
+    .error-title {
+        color: var(--gray-100);
+    }
+    
+    .error-message {
+        color: var(--gray-300);
+    }
+    
+    .error-details {
+        background-color: var(--gray-800);
+        color: var(--gray-300);
+        border-left-color: var(--red-400);
+    }
+    
+    .error-inline {
+        background-color: var(--red-900);
+        border-color: var(--red-700);
+        color: var(--red-200);
+    }
+    
+    .error-banner {
+        background-color: var(--red-900);
+        border-color: var(--red-700);
+    }
+    
+    .error-banner-title {
+        color: var(--red-200);
+    }
+    
+    .error-banner-message {
+        color: var(--red-300);
+    }
+}
+
+/* 접근성 */
+.error-live-region {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* 에러 애니메이션 */
+.error-shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.error-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

@@ -17,16 +17,16 @@ const ScriptLoader = {
             if (options.nonce) {
                 script.nonce = options.nonce;
             }
-
-            script.addEventListener('load', () => {
+            
+            script.onload = () => {
                 this.loadedScripts.add(src);
                 resolve();
-            }, { once: true });
-
-            script.addEventListener('error', () => {
+            };
+            
+            script.onerror = () => {
                 reject(new Error(`Failed to load script: ${src}`));
-            }, { once: true });
-
+            };
+            
             document.head.appendChild(script);
         });
     },
@@ -41,10 +41,10 @@ const ScriptLoader = {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = href;
-
-            link.addEventListener('load', () => resolve(), { once: true });
-            link.addEventListener('error', () => reject(new Error(`Failed to load CSS: ${href}`)), { once: true });
-
+            
+            link.onload = resolve;
+            link.onerror = () => reject(new Error(`Failed to load CSS: ${href}`));
+            
             document.head.appendChild(link);
         });
     },

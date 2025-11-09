@@ -77,6 +77,12 @@ const fs = require('fs');
       // 현재 작업 변경 사항 포함
       'css/layout.css',
       'js/blog-app.js',
+      'js/script-loader.js',
+      'package.json',
+      // 빌드/번들 스크립트 포함
+      'scripts/build-minify.js',
+      'scripts/build-bundle.js',
+      'scripts/bundle-entry.js',
       // 최근 UI 축소 변경 사항 포함
       'css/main.css',
       'css/skeleton.css',

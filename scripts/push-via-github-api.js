@@ -164,6 +164,14 @@ async function main() {
     'css/layout.css',
     'js/blog-app.js',
     'js/layout-manager.js',
+    // 새로 추가된 번들/로더/설정 파일 포함
+    'js/script-loader.js',
+    'package.json',
+    'vercel.json',
+    'scripts/build-minify.js',
+    'scripts/copy-static-files.js',
+    'scripts/build-bundle.js',
+    'scripts/bundle-entry.js'
   ];
 
   const commitShas = [];

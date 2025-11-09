@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InsureLog</title>
     <meta name="description" content="AI, 기술, 그리고 보험에 대한 깊이 있는 분석과 기록들.">
-    <link rel="canonical" href="" id="canonical-link">
+    <link rel="canonical" href="https://blogaipandoci.vercel.app">
     <meta name="robots" content="index,follow">
     <meta name="theme-color" content="#ffffff">
     <meta name="nonce" content="r4nd0m">
@@ -21,7 +21,7 @@
     <link rel="dns-prefetch" href="//ddehwkwzmmvcxltlplua.supabase.co">
     
     <!-- CSP (Content Security Policy) -->
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://pagead2.googlesyndication.com https://www.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google https://*.gemius.pl https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com https://*.googlesyndication.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-r4nd0m' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://pagead2.googlesyndication.com https://www.googlesyndication.com https://www.googletagservices.com https://partner.googleadservices.com https://www.google-analytics.com https://*.adtrafficquality.google https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://i.ytimg.com https://*.adtrafficquality.google; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.googleadservices.com https://*.gstatic.com https://imasdk.googleapis.com https://*.adtrafficquality.google https://*.gemius.pl https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; frame-src 'self' https://*.youtube.com https://*.youtu.be https://*.vimeo.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.adtrafficquality.google https://*.google.com https://*.googlesyndication.com; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -48,7 +48,7 @@
     <!-- 코드 하이라이트 CSS는 초기 페인트 이후 지연 로드로 전환 -->
 
     <!-- Structured Data (JSON-LD): WebSite & Organization -->
-    <script type="application/ld+json" nonce="r4nd0m">
+    <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
@@ -57,7 +57,7 @@
       "inLanguage": "ko-KR"
     }
     </script>
-    <script type="application/ld+json" nonce="r4nd0m">
+    <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -75,8 +75,7 @@
         // 공개용(클라이언트) anon 키
         window.Config.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZWh3a3d6bW12Y3hsdGxwbHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MjcyNTgsImV4cCI6MjA3MjIwMzI1OH0.VNK-2RYRvLUr9f4fg59kQEEgjwUBZZQsQsrld9Zg7To';
         // 프로덕션 사이트 URL (매직링크 리디렉션 기준)
-        // 로컬 개발 시 현재 origin 우선 적용
-        window.Config.SITE_URL = (window.location.hostname === 'localhost' ? window.location.origin : 'https://blogaipandoci.vercel.app');
+        window.Config.SITE_URL = 'https://blogaipandoci.vercel.app';
         // Storage 이미지 버킷명 (LCP 이미지/썸네일 변환에 사용)
         window.Config.IMAGE_BUCKET_NAME = 'thought-images';
     </script>
@@ -86,29 +85,6 @@
     <!-- 폰트 스타일시트는 초기 페인트 후 비동기 로드로 전환 -->
 
     <!-- Google AdSense (프로덕션 환경에서만 로드) -->
-    <script nonce="r4nd0m">
-      // 로컬 개발 환경에서 메타 og:url 및 canonical 교체
-      (function(){
-        const isLocal = window.location.hostname === 'localhost';
-        const prodOrigin = 'https://blogaipandoci.vercel.app';
-        const origin = isLocal ? window.location.origin : prodOrigin;
-        // canonical
-        const canonical = document.getElementById('canonical-link');
-        if (canonical) canonical.href = origin + window.location.pathname;
-        // og:url
-        const ogUrl = document.querySelector('meta[property="og:url"]');
-        if (ogUrl) ogUrl.content = origin;
-        // ld+json WebSite
-        const ldWebSite = document.querySelector('script[type="application/ld+json"]');
-        if (ldWebSite) {
-          try {
-            const data = JSON.parse(ldWebSite.textContent);
-            if (data['@type'] === 'WebSite') data.url = origin;
-            ldWebSite.textContent = JSON.stringify(data);
-          } catch {}
-        }
-      })();
-    </script>
 </head>
 <body class="antialiased">
     <a href="#app-container" class="skip-link">본문 바로가기</a>
@@ -152,8 +128,8 @@
             const l = document.createElement('link');
             l.rel = 'stylesheet';
             l.href = href;
-            l.addEventListener('load', () => resolve(), { once: true });
-            l.addEventListener('error', () => reject(new Error(`Failed to load CSS: ${href}`)), { once: true });
+            l.onload = () => resolve();
+            l.onerror = () => reject(new Error(`Failed to load CSS: ${href}`));
             document.head.appendChild(l);
         });
         const nonCriticalCSS = [
@@ -308,14 +284,14 @@
                     const s = document.createElement('script');
                     s.src = candidate;
                     s.nonce = 'r4nd0m';
-                    s.addEventListener('load', () => resolve(), { once: true });
-                    s.addEventListener('error', () => {
+                    s.onload = resolve;
+                    s.onerror = () => {
                         if (fallback && candidate !== fallback) {
                             tryLoad(fallback, null);
                         } else {
                             reject(new Error('Script load failed: ' + candidate));
                         }
-                    }, { once: true });
+                    };
                     document.head.appendChild(s);
                 };
                 // 최소화된 파일 우선 시도

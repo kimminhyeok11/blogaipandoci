@@ -689,7 +689,7 @@ catch (e) { /* noop */ }
         // 이벤트 바인딩
         const applyBtn = DOM.$('#archives-filter-apply');
         if (applyBtn) {
-            applyBtn.addEventListener('click', () => {
+            applyBtn.onclick = () => {
                 const catSel = DOM.$('#archives-filter-category');
                 const tagField = DOM.$('#archives-filter-tag');
                 const sortSel = DOM.$('#archives-filter-sort');
@@ -708,7 +708,7 @@ catch (e) { /* noop */ }
                     page: '1',
                 });
                 this.navigate(`/archives?${q.toString()}`);
-            });
+            };
         }
 
         this.loadArchives().catch(err => this.handleError(err, 'loadArchives'));
@@ -834,7 +834,7 @@ catch (e) { /* noop */ }
         for (let p = start; p <= end; p++) pages.push(makeBtn(p, null, p === page));
         container.innerHTML = prev + pages.join('') + next;
         container.querySelectorAll('button[data-page]').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.onclick = () => {
                 const targetPage = Number(btn.getAttribute('data-page')) || 1;
                 this.state.archives.page = targetPage;
                 // URL 쿼리 업데이트
@@ -846,7 +846,7 @@ catch (e) { /* noop */ }
                     page: String(targetPage),
                 });
                 this.navigate(`/archives?${q.toString()}`);
-            });
+            };
         });
     }
 
@@ -966,7 +966,7 @@ catch (e) { /* noop */ }
 
         // 로그아웃 버튼 동작
         if (logoutBtn) {
-            logoutBtn.addEventListener('click', async (ev) => {
+            logoutBtn.onclick = async (ev) => {
                 try { ev?.preventDefault?.(); } catch (_) {}
                 try {
                     if (this.authService) {
@@ -980,7 +980,7 @@ catch (e) { /* noop */ }
                     // 실패해도 UI 기준으로 홈 이동
                     this.navigate('/');
                 }
-            });
+            };
         }
         // 햄버거/팝오버 메뉴 관련 로직 제거됨
 
@@ -1177,21 +1177,21 @@ catch (e) { /* noop */ }
         const queryInput = DOM.$('#post-picker-query');
 
         if (openBtn) {
-            openBtn.addEventListener('click', () => {
+            openBtn.onclick = () => {
                 DOM.openModal('post-picker-modal');
                 this.loadPostsForPicker('');
-            });
+            };
         }
         const doClose = () => DOM.closeModal('post-picker-modal');
-        if (closeBtn) closeBtn.addEventListener('click', doClose);
-        if (cancelBtn) cancelBtn.addEventListener('click', doClose);
+        if (closeBtn) closeBtn.onclick = doClose;
+        if (cancelBtn) cancelBtn.onclick = doClose;
         if (queryInput) {
-            queryInput.addEventListener('input', () => {
+            queryInput.oninput = () => {
                 clearTimeout(this._postPickerTimer);
                 this._postPickerTimer = setTimeout(() => {
                     this.loadPostsForPicker(queryInput.value.trim());
                 }, 200);
-            });
+            };
         }
     }
 
@@ -1816,7 +1816,7 @@ catch (e) { /* noop */ }
 
         container.innerHTML = '<article class="post-detail py-10">'
             + '<div class="post-detail-inner">'
-            + `<h2 class="post-title text-3xl font-extrabold tracking-tight">${title}</h2>`
+            + `<h1 class="post-title text-3xl font-extrabold tracking-tight">${title}</h1>`
             + `<div class="post-meta flex items-center"><span class="post-date">${date}</span>${category ? category.replace('<span', '<span class=\"post-category\"') : ''}</div>`
             + `${tagsHtml ? tagsHtml.replace('<div', '<div class=\"post-tags\"') : ''}`
             + `<div class="blog-post-content prose-custom">${contentHTML}</div>`
@@ -2646,10 +2646,10 @@ catch (e) { /* noop */ }
                         for (let p = start; p <= end; p++) pages.push(makeBtn(p, null, p === page));
                         pagEl.innerHTML = prev + pages.join('') + next;
                         pagEl.querySelectorAll('button[data-page]').forEach(btn => {
-                            btn.addEventListener('click', () => {
+                            btn.onclick = () => {
                                 const targetPage = Number(btn.getAttribute('data-page')) || 1;
                                 this.navigate(`/?page=${targetPage}`);
-                            });
+                            };
                         });
                         // prev/next 링크, robots 동기화
                         this.updatePrevNextLinks(totalPages, page);

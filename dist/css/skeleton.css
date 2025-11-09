@@ -1,0 +1,342 @@
+/* 스켈레톤 로더 스타일 */
+
+/* 기본 스켈레톤 */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: var(--border-radius);
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* 스켈레톤 변형 */
+.skeleton-text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-text-lg {
+    height: 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.skeleton-text-sm {
+    height: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.skeleton-title {
+    height: 2rem;
+    margin-bottom: 1rem;
+    width: 60%;
+}
+
+.skeleton-subtitle {
+    height: 1.5rem;
+    margin-bottom: 0.75rem;
+    width: 80%;
+}
+
+.skeleton-paragraph {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-paragraph:last-child {
+    width: 70%;
+}
+
+/* 스켈레톤 이미지 */
+.skeleton-image {
+    width: 100%;
+    height: 160px; /* 축소 */
+    border-radius: var(--border-radius);
+}
+
+.skeleton-image-sm {
+    height: 100px;
+}
+
+.skeleton-image-lg {
+    height: 300px;
+}
+
+.skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.skeleton-avatar-lg {
+    width: 60px;
+    height: 60px;
+}
+
+.skeleton-avatar-sm {
+    width: 30px;
+    height: 30px;
+}
+
+/* 스켈레톤 버튼 */
+.skeleton-button {
+    height: 2rem; /* 축소 */
+    width: 90px; /* 축소 */
+    border-radius: var(--border-radius);
+}
+
+.skeleton-button-sm {
+    height: 2rem;
+    width: 80px;
+}
+
+.skeleton-button-lg {
+    height: 3rem;
+    width: 120px;
+}
+
+/* 스켈레톤 카드 */
+.skeleton-card {
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--border-radius);
+    background-color: white;
+}
+
+.skeleton-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.skeleton-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* 스켈레톤 리스트 */
+.skeleton-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; /* 축소 */
+}
+
+.skeleton-list-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--border-radius);
+    background-color: white;
+}
+
+.skeleton-list-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* 스켈레톤 테이블 */
+.skeleton-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.skeleton-table th,
+.skeleton-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.skeleton-table-cell {
+    height: 1rem;
+    width: 100%;
+}
+
+/* 스켈레톤 폼 */
+.skeleton-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.skeleton-label {
+    height: 1rem;
+    width: 30%;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-input {
+    height: 2.5rem;
+    width: 100%;
+    border-radius: var(--border-radius);
+}
+
+.skeleton-textarea {
+    height: 6rem;
+    width: 100%;
+    border-radius: var(--border-radius);
+}
+
+/* 스켈레톤 네비게이션 */
+.skeleton-nav {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem 0;
+}
+
+.skeleton-nav-item {
+    height: 1.5rem;
+    width: 80px;
+}
+
+/* 스켈레톤 브레드크럼 */
+.skeleton-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.skeleton-breadcrumb-item {
+    height: 1rem;
+    width: 60px;
+}
+
+.skeleton-breadcrumb-separator {
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: #d1d5db;
+}
+
+/* 스켈레톤 통계 */
+.skeleton-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.skeleton-stat-card {
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--border-radius);
+    background-color: white;
+}
+
+.skeleton-stat-value {
+    height: 2rem;
+    width: 60%;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-stat-label {
+    height: 1rem;
+    width: 80%;
+}
+
+/* 스켈레톤 차트 */
+.skeleton-chart {
+    height: 300px;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--border-radius);
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.skeleton-chart-placeholder {
+    width: 80%;
+    height: 80%;
+    background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    border-radius: var(--border-radius);
+}
+
+/* 반응형 스켈레톤 */
+@media (max-width: 768px) {
+    .skeleton-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .skeleton-card {
+        padding: 1rem;
+    }
+    
+    .skeleton-chart {
+        height: 200px;
+    }
+}
+
+/* 다크 모드 스켈레톤 */
+@media (prefers-color-scheme: dark) {
+    .skeleton {
+        background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+        background-size: 200% 100%;
+    }
+    
+    .skeleton-card,
+    .skeleton-list-item,
+    .skeleton-stat-card,
+    .skeleton-chart {
+        background-color: #1f2937;
+        border-color: #374151;
+    }
+}
+
+/* 스켈레톤 애니메이션 제어 */
+.skeleton-no-animation {
+    animation: none;
+    background: #f0f0f0;
+}
+
+.skeleton-slow {
+    animation-duration: 2s;
+}
+
+.skeleton-fast {
+    animation-duration: 1s;
+}
+
+/* 접근성 */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+        background: #f0f0f0;
+    }
+}
+
+/* 추가 접근성: 모션 감소 시 모든 스켈레톤 변형 애니메이션 중단 */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-text,
+  .skeleton-title,
+  .skeleton-subtitle,
+  .skeleton-paragraph,
+  .skeleton-image,
+  .skeleton-avatar,
+  .skeleton-button,
+  .skeleton-card,
+  .skeleton-list,
+  .skeleton-list-item,
+  .skeleton-table,
+  .skeleton-table-cell,
+  .skeleton-input,
+  .skeleton-textarea,
+  .skeleton-nav,
+  .skeleton-breadcrumb,
+  .skeleton-breadcrumb-item,
+  .skeleton-chart,
+  .skeleton-chart-placeholder {
+    animation: none !important;
+    transition: none !important;
+  }
+}
