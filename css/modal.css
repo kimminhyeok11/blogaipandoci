@@ -266,3 +266,44 @@
 
 /* 모달 열림 시 바디 스크롤 잠금 (JS가 body.modal-open 토글 시 적용) */
 body.modal-open { overflow: hidden; }
+
+/* ------------------------------ */
+/* Login Modal spacing refinements */
+/* ------------------------------ */
+/* 목표: 내부 컨테이너 24px 패딩, 요소 간 8/16px 간격 유지 */
+#login-modal .modal-header {
+  padding: 24px 24px 16px; /* 상/좌우 24, 하 16 */
+}
+
+#login-modal .modal-body {
+  padding: 24px; /* 컨텐츠 주변 24px */
+}
+
+#login-modal .modal-footer {
+  padding: 16px 24px 24px; /* 상 16, 좌우/하 24 */
+}
+
+#login-modal .login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* 각 블록 간 기본 간격 16px */
+}
+
+#login-modal .login-form .form-field label {
+  display: block;
+  margin-bottom: 8px; /* 라벨과 입력 간 8px */
+}
+
+#login-modal .login-form .form-error { margin-top: 8px; }
+
+#login-modal .login-form #magic-send { margin-top: 16px; }
+
+#login-modal .login-form #magic-help,
+#login-modal .login-form #magic-success { margin-top: 8px; }
+
+/* 반응형: 모바일에서 패딩을 소폭 줄여 균형 유지 */
+@media (max-width: 640px) {
+  #login-modal .modal-header { padding: 20px 20px 12px; }
+  #login-modal .modal-body { padding: 16px; }
+  #login-modal .modal-footer { padding: 12px 20px 20px; }
+}

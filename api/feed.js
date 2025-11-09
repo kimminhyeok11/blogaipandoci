@@ -13,20 +13,25 @@ export default async function handler(req, res) {
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const includeContent = process.env.FEED_INCLUDE_CONTENT === '1';
     const selectCols = includeContent
-      ? 'slug, title, summary, updated_at, created_at, status, category, thumbnail_url, refined_content'
-      : 'slug, title, summary, updated_at, created_at, status, category, thumbnail_url';
-    const { data, error } = await supabase
+      ? 'slug, title, summary, updated_at, created_at, status, category, thumbnail_url, refined_content, tags'
+      : 'slug, title, summary, updated_at, created_at, status, category, thumbnail_url, tags';
+    const qTag = (req.query?.tag || '').toString().trim().toLowerCase();
+    let query = supabase
       .from('posts')
       .select(selectCols)
       .eq('status', 'published')
       .order('created_at', { ascending: false })
       .limit(50);
+    if (qTag) {
+      query = query.contains('tags', [qTag]);
+    }
+    const { data, error } = await query;
     if (error) throw error;
     // 변경 감지용 ETag/Last-Modified 헤더로 304 응답 지원
     const timestamps = (data || []).map(p => new Date(p.updated_at || p.created_at || Date.now()).getTime());
     const lastTs = timestamps.length ? Math.max(...timestamps) : Date.now();
     const lastMod = new Date(lastTs).toUTCString();
-    const etag = `W/"feed-${(data || []).length}-${lastTs}"`;
+    const etag = `W/"feed-${qTag || 'all'}-${(data || []).length}-${lastTs}"`;
     res.setHeader('ETag', etag);
     res.setHeader('Last-Modified', lastMod);
     const inm = req.headers['if-none-match'];
@@ -44,10 +49,10 @@ export default async function handler(req, res) {
       const desc = escapeXml(p.summary || '');
       const cats = [];
       if (p.category) cats.push(p.category);
-      if (includeContent && p.refined_content) {
-        const tags = extractTagsFromHTML(p.refined_content || '') || [];
-        tags.forEach(t => cats.push(t));
-      }
+      const tags = Array.isArray(p.tags) && p.tags.length
+        ? p.tags
+        : (includeContent && p.refined_content ? extractTagsFromHTML(p.refined_content || '') : []);
+      tags.forEach(t => cats.push(t));
       const catXml = cats.map(c => `<category>${escapeXml(c)}</category>`).join('');
       const enclosure = includeContent ? resolveEnclosure(p.thumbnail_url, p.refined_content || '') : (p.thumbnail_url ? { url: p.thumbnail_url, type: (p.thumbnail_url.endsWith('.png') ? 'image/png' : 'image/jpeg'), length: 0 } : null);
       const encXml = enclosure ? `<enclosure url="${escapeXml(enclosure.url)}" type="${escapeXml(enclosure.type)}" length="${enclosure.length}"/>` : '';

@@ -783,3 +783,20 @@
 .form-input {
   flex: 1;
 }
+
+/* Post Detail: 제목/본문 컨테이너 폭 일치 및 중앙 정렬 */
+.post-detail-inner {
+  width: 100%;
+  max-width: 720px; /* 본문과 동일 폭 */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+@media (max-width: 640px) {
+  .post-detail-inner {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
