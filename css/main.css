@@ -431,7 +431,7 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
 .post-card-wide .post-card-title { word-break: keep-all; overflow-wrap: anywhere; }
 .post-card-content-grid { display: grid; grid-template-columns: 1fr 280px; gap: 8px; align-items: stretch; }
 .post-card-summary-block { display: flex; flex-direction: column; gap: 8px; }
-.post-card-wide .post-card-summary { font-size: 0.9375rem; line-height: 1.6; color: var(--gray-800); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.post-card-wide .post-card-summary { font-size: 0.9375rem; line-height: 1.6; color: var(--gray-800); display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .post-card-wide .post-card-meta { margin-top: 8px; font-size: 0.8125rem; color: var(--gray-600); }
 .post-card-wide .post-card-actions { margin-top: 8px; }
 .post-card-wide .post-card-thumb { height: 100%; min-height: 160px; border-radius: 0.75rem; overflow: hidden; box-shadow: var(--shadow-sm); }
@@ -442,7 +442,7 @@ img.aspect-16-9 { aspect-ratio: 16/9; }
 @media (max-width: 640px) {
   .post-card-content-grid { grid-template-columns: 1fr; }
   .post-card-wide .post-card-thumb { height: auto; min-height: 140px; }
-  .post-card-wide .post-card-summary { -webkit-line-clamp: 2; }
+  .post-card-wide .post-card-summary { -webkit-line-clamp: 2; line-clamp: 2; }
 }
 
 /* 무썸네일 플레이스홀더 스타일 */

@@ -52,7 +52,14 @@
     async logAuthEvent(type, payload = {}) {
       try {
         if (!this.supabase) return;
-        const safe = { type, ...payload, ts: new Date().toISOString() };
+        const safe = {
+          type,
+          email_hint: (payload.email || '').replace(/(^.).+(@.+$)/, '$1***$2'),
+          provider: payload.provider || null,
+          user_agent: (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : null,
+          success: payload.success === true,
+          at: new Date().toISOString()
+        };
         await this.supabase.from('auth_events').insert(safe);
       } catch (_) {}
     }

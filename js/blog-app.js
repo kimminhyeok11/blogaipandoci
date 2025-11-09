@@ -1412,16 +1412,14 @@ catch (e) { /* noop */ }
                 await this.authService.logAuthEvent(type, payload);
                 return;
             }
-            const safe = {
+            // authService가 없는 경우 직접 처리
+            const eventData = {
                 type,
-                email_hint: (payload.email || '').replace(/(^.).+(@.+$)/, '$1***$2'),
-                provider: payload.provider || null,
-                user_agent: (navigator && navigator.userAgent) || null,
-                at: new Date().toISOString(),
-                success: false
+                payload,
+                at: new Date().toISOString()
             };
             if (this.supabase) {
-                await this.supabase.from('auth_events').insert(safe);
+                await this.supabase.from('auth_events').insert(eventData);
             }
         } catch (_) { /* ignore */ }
     }
@@ -2008,7 +2006,7 @@ catch (e) { /* noop */ }
                     }
                     const loadingAttr = eager ? '' : ' loading="lazy"';
                     const fetchPriorityAttr = eager ? ' fetchpriority="high"' : ' fetchpriority="low"';
-                    return `<figure><img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${baseAlt}"${loadingAttr}${fetchPriorityAttr} decoding="async"${sizeAttrs}${arClass}/><figcaption>${baseAlt}</figcaption></figure>`;
+                    return `<figure><img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${baseAlt}"${loadingAttr}${fetchPriorityAttr} decoding="async" crossorigin="anonymous"${sizeAttrs}${arClass}/><figcaption>${baseAlt}</figcaption></figure>`;
                 }
                 return '';
             case 'code':
@@ -2253,7 +2251,7 @@ catch (e) { /* noop */ }
                 const sizes = isSlow ? '(max-width: 600px) 100vw, 600px' : '(max-width: 768px) 100vw, 768px';
                 // width/height 속성으로 CLS를 줄입니다.
                 const sizeAttrs = (width && height) ? ` width="${width}" height="${height}"` : '';
-                this.insertHTMLAtCursor(`<figure><img src="${url}" srcset="${srcset}" sizes="${sizes}" alt="${this.escapeHTML(alt)}" loading="lazy" decoding="async"${sizeAttrs}/><figcaption>${this.escapeHTML(alt)}</figcaption></figure>`);
+        this.insertHTMLAtCursor(`<figure><img src="${url}" srcset="${srcset}" sizes="${sizes}" alt="${this.escapeHTML(alt)}" loading="lazy" decoding="async" crossorigin="anonymous"${sizeAttrs}/><figcaption>${this.escapeHTML(alt)}</figcaption></figure>`);
             }
         } catch (e) {
             this.handleError(e, 'handleEditorFiles');
@@ -2297,8 +2295,8 @@ catch (e) { /* noop */ }
                     const sizes = '(max-width: 640px) 96px, 120px';
                     const src = this.getTransformedPublicUrl(p.thumbnail_url, { width: baseW, height: baseH, resize: 'cover', quality: q, format: 'webp' });
                     const srcset = widths.map(x => `${this.getTransformedPublicUrl(p.thumbnail_url, { width: x, height: x, resize: 'cover', quality: q, format: 'webp' })} ${x}w`).join(', ');
-                    return `<img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${this.escapeHTML(p.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async" loading="lazy"/>`;
-                  })()
+                    return `<img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${this.escapeHTML(p.title || '')}" class="post-card-thumb-img" width="${baseW}" height="${baseH}" decoding="async" loading="lazy" crossorigin="anonymous"/>`;
+                })()
                 : `<span class="thumb-initial">${this.escapeHTML(String((p.title || 'N')).trim().charAt(0).toUpperCase())}</span>`;
             return (
                 `<article class="post-card post-card-compact">`
@@ -2458,6 +2456,7 @@ catch (e) { /* noop */ }
                 newImg.setAttribute('srcset', srcset);
                 newImg.setAttribute('sizes', sizes);
                 newImg.setAttribute('alt', altText);
+                newImg.setAttribute('crossorigin', 'anonymous');
                 const eager = i === 0;
                 if (eager) {
                     newImg.removeAttribute('loading');
@@ -2765,7 +2764,7 @@ catch (e) { /* noop */ }
                     }
                 } catch (_) { /* noop */ }
             }
-            const imgTag = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="post-card-thumb-img" width="${slotW}" height="${slotH}" decoding="async"${loading}${fetchp}/>` : '';
+        const imgTag = thumbUrl ? `<img src="${thumbUrl}"${srcset ? ` srcset="${srcset}" sizes="${sizes}"` : ''} alt="${this.escapeHTML(post.title || '')}" class="post-card-thumb-img" width="${slotW}" height="${slotH}" decoding="async"${loading}${fetchp} crossorigin="anonymous"/>` : '';
             const initial = this.escapeHTML(String((post.title || 'N')).trim().charAt(0).toUpperCase());
             const thumbBlock = `<a href="${href}" data-route class="post-card-thumb${thumbUrl ? '' : ' placeholder'}">${thumbUrl ? imgTag : `<span class=\"thumb-initial\">${initial}</span>`}</a>`;
             const date = this.formatDateKR(post.created_at);

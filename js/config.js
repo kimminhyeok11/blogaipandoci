@@ -2,8 +2,9 @@
 (function(){
     const defaults = {
         SUPABASE_URL: 'https://ddehwkwzmmvcxltlplua.supabase.co',
-        // 기본 키는 예시 값입니다. 실제 키가 window.Config에 이미 있다면 그 값을 유지합니다.
-        SUPABASE_ANON_KEY: 'PLACEHOLDER_REPLACE_WITH_REAL_KEY',
+        // SUPABASE_ANON_KEY는 index.html에서 직접 설정하거나, 
+        // 배포 환경에서는 빌드 프로세스를 통해 주입해야 합니다.
+        SUPABASE_ANON_KEY: '',
         DB_TABLE_NAME: 'posts',
         IMAGE_BUCKET_NAME: 'thought-images',
         SITE_URL: 'https://blogaipandoci.vercel.app',

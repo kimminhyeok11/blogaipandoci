@@ -109,6 +109,13 @@
         }
       })();
     </script>
+  <script>
+    // Supabase 키를 여기에 직접 설정합니다.
+    // 이 방식은 개발용이며, 프로덕션 환경에서는 환경 변수 등을 사용하는 것이 안전합니다.
+    window.Config = {
+      SUPABASE_ANON_KEY: 'YOUR_SUPABASE_ANON_KEY' // 여기에 실제 Supabase 익명 키를 입력하세요.
+    };
+  </script>
 </head>
 <body class="antialiased">
     <a href="#app-container" class="skip-link">본문 바로가기</a>
