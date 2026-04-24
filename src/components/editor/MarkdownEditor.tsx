@@ -183,6 +183,44 @@ export function MarkdownEditor({
     }
   };
 
+  // 클립보드 이미지 붙여넣기 처리
+  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+    if (!onImageUpload) return;
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    // 클립보드에서 이미지 파일 찾기
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      // 이미지 타입 확인
+      if (item.type.indexOf("image") !== -1) {
+        e.preventDefault();
+        
+        const blob = item.getAsFile();
+        if (!blob) continue;
+
+        // File 객체 생성 (이름 포함)
+        const timestamp = Date.now();
+        const file = new File([blob], `pasted-image-${timestamp}.png`, { type: item.type });
+
+        setIsUploading(true);
+        try {
+          const url = await onImageUpload(file);
+          insertText(`![이미지](${url})`, "\n");
+        } catch (error) {
+          console.error("Clipboard image upload failed:", error);
+          alert("클립보드 이미지 업로드에 실패했습니다.");
+        } finally {
+          setIsUploading(false);
+        }
+        
+        return; // 첫 번째 이미지만 처리
+      }
+    }
+  }, [onImageUpload, insertText]);
+
   const toolbarButtons = [
     { icon: Heading, action: insertHeading, title: "제목" },
     { icon: Bold, action: insertBold, title: "굵게" },
@@ -271,6 +309,7 @@ export function MarkdownEditor({
             ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            onPaste={handlePaste}
             placeholder={placeholder}
             className="w-full p-4 bg-paper text-ink font-serif text-base leading-loose resize-y focus:outline-none focus:ring-2 focus:ring-rust/20"
             style={{ minHeight, maxHeight }}
