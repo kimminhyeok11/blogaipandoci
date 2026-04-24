@@ -4,10 +4,18 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { marked } from "marked";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
 import { ShareButtons } from "@/components/posts/ShareButtons";
+
+// 서버용 Supabase 클라이언트 생성
+function getServerSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 // marked 렌더러 커스터마이징 (v12+ 호환)
 const renderer = {
@@ -123,6 +131,9 @@ interface PostPageProps {
 }
 
 async function getPost(slug: string): Promise<Post | null> {
+  const supabase = getServerSupabase();
+  if (!supabase) return null;
+  
   const { data, error } = await supabase
     .from("posts")
     .select("*, user:users(nickname, avatar_url)")

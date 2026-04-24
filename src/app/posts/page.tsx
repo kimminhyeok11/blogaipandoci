@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Metadata } from "next";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import type { Post } from "@/types";
 import { ArrowLeft } from "lucide-react";
 
@@ -9,9 +9,23 @@ export const metadata: Metadata = {
   description: "法 BLOG의 모든 게시글을 확인하세요.",
 };
 
-export const revalidate = 60; // 60초마다 재검증
+// 서버용 Supabase 클라이언트 생성
+function getServerSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    console.error("Supabase 환경변수 누락");
+    return null;
+  }
+  
+  return createClient(url, key);
+}
 
 async function getPosts(): Promise<Post[]> {
+  const supabase = getServerSupabase();
+  if (!supabase) return [];
+  
   const { data, error } = await supabase
     .from("posts")
     .select("*, user:users(nickname)")
@@ -20,7 +34,7 @@ async function getPosts(): Promise<Post[]> {
     .order("published_at", { ascending: false });
 
   if (error) {
-    // 에러 발생 시 빈 배열 반환
+    console.error("Posts fetch error:", error);
     return [];
   }
 
