@@ -8,6 +8,7 @@ import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 // MarkdownEditor 동적 임포트 (코드 분할)
 const MarkdownEditor = lazy(() => import("@/components/editor/MarkdownEditor").then(mod => ({ default: mod.MarkdownEditor })));
@@ -18,6 +19,7 @@ function WritePageContent() {
   const editSlug = searchParams.get("edit");
   const isEditMode = !!editSlug;
   const { showToast } = useToast();
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -132,8 +134,6 @@ function WritePageContent() {
 
     try {
       // Check auth
-      const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
         showToast("로그인이 필요합니다.", "error");
         router.push("/login");
@@ -186,8 +186,10 @@ function WritePageContent() {
         showToast(published ? "글이 발행되었습니다." : "임시 저장되었습니다.", "success");
         router.push(`/posts/${slug}`);
       }
-    } catch {
-      showToast("저장에 실패했습니다. 다시 시도해주세요.", "error");
+    } catch (err) {
+      console.error("저장 오류:", err);
+      const msg = err instanceof Error ? err.message : "저장에 실패했습니다.";
+      showToast(msg, "error");
     } finally {
       setIsSubmitting(false);
     }

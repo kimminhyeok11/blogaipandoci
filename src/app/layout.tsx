@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Serif_KR, Noto_Sans_KR, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 // 폰트 최적화
 const notoSerifKR = Noto_Serif_KR({
@@ -119,9 +120,11 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen font-serif">
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <AuthProvider>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );
