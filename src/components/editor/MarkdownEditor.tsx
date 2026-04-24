@@ -109,8 +109,7 @@ function processMarkdown(text: string): string {
   if (!text) return "";
   try {
     return marked.parse(text) as string;
-  } catch (error) {
-    console.error("Markdown parsing error:", error);
+  } catch {
     return text;
   }
 }
@@ -174,9 +173,8 @@ export function MarkdownEditor({
       const url = await onImageUpload(file);
       const alt = file.name.replace(/\.[^/.]+$/, "");
       insertText(`![${alt}](${url})`, "\n");
-    } catch (error) {
-      console.error("Image upload failed:", error);
-      alert("이미지 업로드에 실패했습니다.");
+    } catch {
+      // 에러 처리
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -211,9 +209,8 @@ export function MarkdownEditor({
         try {
           const url = await onImageUpload(file);
           insertText(`![이미지](${url})`, "\n");
-        } catch (error) {
-          console.error("Clipboard image upload failed:", error);
-          alert("클립보드 이미지 업로드에 실패했습니다.");
+        } catch {
+          // 에러 처리
         } finally {
           setIsUploading(false);
         }

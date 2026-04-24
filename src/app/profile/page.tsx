@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, User, Mail, LogOut, Loader2, Edit3 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface UserProfile {
   id: string;
@@ -16,6 +17,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -45,8 +47,8 @@ export default function ProfilePage() {
           avatar_url: profile?.avatar_url || null,
           created_at: authUser.created_at,
         });
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
+      } catch {
+        // 에러 처리
       } finally {
         setIsLoading(false);
       }
@@ -59,10 +61,10 @@ export default function ProfilePage() {
     setIsLoggingOut(true);
     try {
       await supabase.auth.signOut();
+      showToast("로그아웃되었습니다.", "success");
       router.push("/");
-    } catch (error) {
-      console.error("Logout error:", error);
-      alert("로그아웃에 실패했습니다.");
+    } catch {
+      showToast("로그아웃에 실패했습니다.", "error");
     } finally {
       setIsLoggingOut(false);
     }
