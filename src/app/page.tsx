@@ -5,7 +5,6 @@ import Link from "next/link";
 import { PenSquare, User, Search } from "lucide-react";
 import { AdSense } from "@/components/ads/AdSense";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/Toast";
 
 interface Post {
   id: string;
@@ -24,7 +23,6 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const { showToast } = useToast();
 
   // 스마트 스티키 헤더 - 스크롤 감지
   useEffect(() => {
@@ -60,7 +58,8 @@ export default function HomePage() {
         .limit(1);
 
       if (popularError) {
-        showToast("인기글 로딩 실패", "error");
+        // 에러 조용히 처리 (사용자에게 불필요한 알림 제거)
+        console.error("인기글 로딩 실패:", popularError);
       }
 
       if (popularPosts && popularPosts.length > 0) {
@@ -79,7 +78,8 @@ export default function HomePage() {
         .limit(5);
 
       if (latestError) {
-        showToast("최신글 로딩 실패", "error");
+        // 에러 조용히 처리
+        console.error("최신글 로딩 실패:", latestError);
       }
 
       if (latestPosts) {
@@ -90,11 +90,12 @@ export default function HomePage() {
 
       // 데이터 로드 완료
     } catch (err) {
-      showToast("데이터 로딩 중 오류 발생", "error");
+      // 에러 조용히 처리
+      console.error("데이터 로딩 오류:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [showToast]);
+  }, []);
 
   // 초기 로드
   useEffect(() => {
