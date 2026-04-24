@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search, Loader2, FileText } from "lucide-react";
+import { useParams } from "next/navigation";
+import { ArrowLeft, Tag, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-interface SearchResult {
+interface Post {
   id: string;
   title: string;
   excerpt: string;
@@ -15,51 +16,39 @@ interface SearchResult {
   view_count: number;
 }
 
-export default function SearchPage() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-
-  const performSearch = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setResults([]);
-      setHasSearched(false);
-      return;
-    }
-
-    setIsSearching(true);
-    setHasSearched(true);
-
-    try {
-      const { data, error } = await supabase
-        .from("posts")
-        .select("id, title, excerpt, slug, category, published_at, view_count")
-        .eq("published", true)
-        .not("published_at", "is", null)
-        .or(`title.ilike.%${searchQuery}%,excerpt.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`)
-        .order("published_at", { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-      setResults(data || []);
-    } catch (error) {
-      console.error("Search error:", error);
-    } finally {
-      setIsSearching(false);
-    }
-  }, []);
+export default function TagPage() {
+  const params = useParams();
+  const tag = decodeURIComponent(params.tag as string);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      performSearch(query);
-    }, 300);
+    const fetchPosts = async () => {
+      try {
+        // 태그로 검색 (태그 컬럼이 문자열이거나 JSON 배열일 수 있음)
+        const { data, error } = await supabase
+          .from("posts")
+          .select("id, title, excerpt, slug, category, published_at, view_count")
+          .eq("published", true)
+          .not("published_at", "is", null)
+          .ilike("tags", `%${tag}%`)
+          .order("published_at", { ascending: false });
 
-    return () => clearTimeout(timer);
-  }, [query, performSearch]);
+        if (error) throw error;
+        setPosts(data || []);
+      } catch (error) {
+        console.error("Failed to fetch posts:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [tag]);
 
   return (
     <div className="min-h-screen bg-paper">
+      {/* Header */}
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>
         <Link href="/" className="masthead-title">
@@ -67,15 +56,16 @@ export default function SearchPage() {
         </Link>
       </header>
 
+      {/* Navigation */}
       <nav className="border-b border-rule bg-paper">
         <div className="max-w-content mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-12">
             <Link
-              href="/"
+              href="/tags"
               className="flex items-center gap-1 font-sans text-xs font-medium text-muted hover:text-rust transition-colors"
             >
               <ArrowLeft size={14} />
-              홈으로
+              모든 태그
             </Link>
           </div>
         </div>
@@ -84,39 +74,33 @@ export default function SearchPage() {
       <main className="max-w-content mx-auto px-4 sm:px-6 py-16">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <Search className="text-rust" size={28} />
-            <h1 className="text-2xl font-black text-ink">검색</h1>
+            <Tag className="text-rust" size={28} />
+            <h1 className="text-2xl font-black text-ink">#{tag}</h1>
           </div>
           <p className="font-sans text-sm text-muted">
-            제목, 내용, 요약에서 검색합니다.
+            {isLoading ? "불러오는 중..." : `총 ${posts.length}개의 글`}
           </p>
         </div>
-        
-        <div className="relative mb-8">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="검색어를 입력하세요..."
-            className="w-full px-4 py-4 pl-12 bg-white border border-rule rounded-sm focus:outline-none focus:ring-2 focus:ring-rust/20 font-sans"
-          />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={20} />
-          {isSearching && (
-            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 text-rust animate-spin" size={20} />
-          )}
-        </div>
 
-        {hasSearched && !isSearching && (
-          <div className="mb-4">
-            <p className="font-sans text-sm text-muted">
-              {results.length > 0 ? `${results.length}개의 결과` : "검색 결과가 없습니다"}
-            </p>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="animate-spin text-rust" size={32} />
           </div>
-        )}
-
-        {results.length > 0 && (
+        ) : posts.length === 0 ? (
+          <div className="text-center py-16 border border-rule bg-cream rounded-sm">
+            <p className="font-sans text-sm text-muted mb-4">
+              이 태그의 글이 없습니다.
+            </p>
+            <Link
+              href="/write"
+              className="inline-block px-4 py-2 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors"
+            >
+              첫 글 작성하기
+            </Link>
+          </div>
+        ) : (
           <div className="grid gap-6">
-            {results.map((post) => (
+            {posts.map((post) => (
               <article
                 key={post.id}
                 className="group border-b border-rule pb-6 last:border-0"
@@ -150,17 +134,9 @@ export default function SearchPage() {
             ))}
           </div>
         )}
-
-        {!hasSearched && !query && (
-          <div className="text-center py-16">
-            <FileText className="mx-auto text-muted mb-4" size={48} />
-            <p className="font-sans text-sm text-muted">
-              검색어를 입력하세요
-            </p>
-          </div>
-        )}
       </main>
 
+      {/* Footer */}
       <footer className="border-t-3 border-double border-ink text-center py-6 px-4 mt-16">
         <div className="font-sans text-xs text-muted tracking-wider">
           <p className="mb-2">法 BLOG · 깊이 있는 분석과 인사이트</p>

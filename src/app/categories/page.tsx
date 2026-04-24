@@ -2,59 +2,56 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Tag, Loader2 } from "lucide-react";
+import { ArrowLeft, Folder, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-interface TagData {
+interface Category {
   name: string;
   count: number;
 }
 
-export default function TagsPage() {
-  const [tags, setTags] = useState<TagData[]>([]);
+export default function CategoriesPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTags = async () => {
+    const fetchCategories = async () => {
       try {
         const { data: posts, error } = await supabase
           .from("posts")
-          .select("tags")
+          .select("category")
           .eq("published", true)
           .not("published_at", "is", null);
 
         if (error) throw error;
 
-        // 태그 파싱 및 집계
-        const tagMap = new Map<string, number>();
+        // 카테고리 집계
+        const categoryMap = new Map<string, number>();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         posts?.forEach((post: any) => {
-          if (post.tags) {
-            // 쉼표로 구분된 태그 파싱
-            const tagList = post.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
-            tagList.forEach((tag: string) => {
-              tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-            });
+          if (post.category) {
+            categoryMap.set(post.category, (categoryMap.get(post.category) || 0) + 1);
           }
         });
 
-        const sortedTags = Array.from(tagMap.entries())
+        const sortedCategories = Array.from(categoryMap.entries())
           .map(([name, count]) => ({ name, count }))
           .sort((a, b) => b.count - a.count);
 
-        setTags(sortedTags);
+        setCategories(sortedCategories);
       } catch (error) {
-        console.error("Failed to fetch tags:", error);
+        console.error("Failed to fetch categories:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTags();
+    fetchCategories();
   }, []);
 
   return (
     <div className="min-h-screen bg-paper">
+      {/* Header */}
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>
         <Link href="/" className="masthead-title">
@@ -62,6 +59,7 @@ export default function TagsPage() {
         </Link>
       </header>
 
+      {/* Navigation */}
       <nav className="border-b border-rule bg-paper">
         <div className="max-w-content mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-12">
@@ -79,11 +77,11 @@ export default function TagsPage() {
       <main className="max-w-content mx-auto px-4 sm:px-6 py-16">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <Tag className="text-rust" size={28} />
-            <h1 className="text-2xl font-black text-ink">태그</h1>
+            <Folder className="text-rust" size={28} />
+            <h1 className="text-2xl font-black text-ink">카테고리</h1>
           </div>
           <p className="font-sans text-sm text-muted">
-            모든 태그 목록입니다.
+            글들이 카테고리별로 분류되어 있습니다.
           </p>
         </div>
 
@@ -91,33 +89,35 @@ export default function TagsPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="animate-spin text-rust" size={32} />
           </div>
-        ) : tags.length === 0 ? (
+        ) : categories.length === 0 ? (
           <div className="text-center py-16 border border-rule bg-cream rounded-sm">
             <p className="font-sans text-sm text-muted">
-              아직 태그가 없습니다.
+              아직 카테고리가 없습니다.
             </p>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-3">
-            {tags.map((tag) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {categories.map((category) => (
               <Link
-                key={tag.name}
-                href={`/tags/${encodeURIComponent(tag.name)}`}
-                className="group flex items-center gap-2 px-4 py-2 bg-cream/30 border border-rule rounded-full hover:border-rust hover:bg-rust/5 transition-all"
+                key={category.name}
+                href={`/posts?category=${encodeURIComponent(category.name)}`}
+                className="group block p-6 bg-cream/30 border border-rule rounded-sm hover:border-rust transition-colors"
               >
-                <span className="text-rust">#</span>
-                <span className="font-sans text-sm text-ink group-hover:text-rust transition-colors">
-                  {tag.name}
-                </span>
-                <span className="font-sans text-xs text-muted bg-cream px-1.5 py-0.5 rounded">
-                  {tag.count}
-                </span>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-ink group-hover:text-rust transition-colors">
+                    {category.name}
+                  </h3>
+                  <span className="font-sans text-xs text-muted bg-cream px-2 py-1 rounded">
+                    {category.count}개
+                  </span>
+                </div>
               </Link>
             ))}
           </div>
         )}
       </main>
 
+      {/* Footer */}
       <footer className="border-t-3 border-double border-ink text-center py-6 px-4 mt-16">
         <div className="font-sans text-xs text-muted tracking-wider">
           <p className="mb-2">法 BLOG · 깊이 있는 분석과 인사이트</p>
