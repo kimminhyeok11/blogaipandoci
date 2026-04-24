@@ -29,8 +29,7 @@ export default function CategoriesPage() {
 
         // 카테고리 집계
         const categoryMap = new Map<string, number>();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        posts?.forEach((post: any) => {
+        (posts as { category: string | null }[])?.forEach((post) => {
           if (post.category) {
             categoryMap.set(post.category, (categoryMap.get(post.category) || 0) + 1);
           }

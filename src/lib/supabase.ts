@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
+import type { Post } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -21,6 +22,18 @@ export const getSupabaseClient = () => {
 };
 
 export const supabase = getSupabaseClient();
+
+// 타입 헬퍼 - 테이블 타입 명시적 추출
+export type PostsTable = {
+  Row: Post;
+  Insert: Omit<Post, 'id' | 'created_at' | 'updated_at' | 'view_count'> & {
+    id?: string;
+    view_count?: number;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Update: Partial<PostsTable['Insert']>;
+};
 
 // 이미지 업로드 유틸리티
 export const uploadImage = async (

@@ -33,9 +33,7 @@ export default function ProfilePage() {
         }
 
         // 사용자 프로필 정보 가져오기
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: profile } = await (supabase as any)
-          .from("users")
+        const { data: profile } = await (supabase.from("users") as any)
           .select("nickname, avatar_url")
           .eq("id", authUser.id)
           .single();

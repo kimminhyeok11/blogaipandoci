@@ -29,8 +29,7 @@ export default function TagsPage() {
 
         // 태그 파싱 및 집계
         const tagMap = new Map<string, number>();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        posts?.forEach((post: any) => {
+        (posts as { tags: string | null }[])?.forEach((post) => {
           if (post.tags) {
             // 쉼표로 구분된 태그 파싱
             const tagList = post.tags.split(",").map((t: string) => t.trim()).filter(Boolean);

@@ -35,9 +35,8 @@ function WritePageContent() {
 
     const loadPost = async () => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: post, error } = await (supabase as any)
-          .from("posts")
+        const { data: post, error } = await (supabase
+          .from("posts") as any)
           .select("*")
           .eq("slug", editSlug)
           .single();
@@ -61,7 +60,7 @@ function WritePageContent() {
         setCategory(post.category || "");
         setTags(post.tags || "");
       } catch {
-        // 에러 처리
+        showToast("글 로딩 실패", "error");
       } finally {
         setIsLoading(false);
       }
@@ -156,9 +155,8 @@ function WritePageContent() {
 
       if (isEditMode && postId) {
         // 수정 모드: update
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any)
-          .from("posts")
+        const { error } = await (supabase
+          .from("posts") as any)
           .update({
             title: title.trim(),
             content: content.trim(),
@@ -177,8 +175,7 @@ function WritePageContent() {
         router.push(`/posts/${slug}`);
       } else {
         // 신규 작성: insert
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from("posts").insert({
+        const { error } = await (supabase.from("posts") as any).insert({
           user_id: user.id,
           title: title.trim(),
           slug,

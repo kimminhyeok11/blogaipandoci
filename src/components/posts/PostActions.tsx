@@ -33,8 +33,7 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
 
     setIsDeleting(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("posts").delete().eq("id", postId);
+      const { error } = await (supabase.from("posts") as any).delete().eq("id", postId);
 
       if (error) throw error;
 
