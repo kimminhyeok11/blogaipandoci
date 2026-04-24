@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Folder, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/Toast";
 
 interface Category {
   name: string;
@@ -14,40 +12,10 @@ interface Category {
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { showToast } = useToast();
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const { data: posts, error } = await supabase
-          .from("posts")
-          .select("category")
-          .eq("published", true)
-          .neq("published_at", null);
-
-        if (error) throw error;
-
-        // 카테고리 집계
-        const categoryMap = new Map<string, number>();
-        (posts as { category: string | null }[])?.forEach((post) => {
-          if (post.category) {
-            categoryMap.set(post.category, (categoryMap.get(post.category) || 0) + 1);
-          }
-        });
-
-        const sortedCategories = Array.from(categoryMap.entries())
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count);
-
-        setCategories(sortedCategories);
-      } catch {
-        showToast("카테고리 로딩 실패", "error");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCategories();
+    // category 컬럼이 DB에 없으므로 빈 배열로 설정
+    setIsLoading(false);
   }, []);
 
   return (

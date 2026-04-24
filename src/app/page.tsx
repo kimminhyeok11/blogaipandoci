@@ -11,9 +11,9 @@ interface Post {
   title: string;
   excerpt: string;
   slug: string;
-  category: string;
   published_at: string;
   view_count: number;
+  user_id: string;
   user?: { nickname: string };
 }
 
@@ -51,7 +51,7 @@ export default function HomePage() {
       // 인기글 (조회수 기준) - 히어로에 표시
       const { data: popularPosts, error: popularError } = await supabase
         .from("posts")
-        .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
+        .select("id, title, excerpt, slug, published_at, view_count, user_id")
         .eq("published", true)
         .neq("published_at", null)
         .order("view_count", { ascending: false })
@@ -71,7 +71,7 @@ export default function HomePage() {
       // 최신글 (날짜 기준)
       const { data: latestPosts, error: latestError } = await supabase
         .from("posts")
-        .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
+        .select("id, title, excerpt, slug, published_at, view_count, user_id")
         .eq("published", true)
         .neq("published_at", null)
         .order("published_at", { ascending: false })
@@ -201,7 +201,7 @@ export default function HomePage() {
           </section>
         ) : featuredPost ? (
           <section className="hero">
-            <div className="section-label">{featuredPost.category || "심층 분석"}</div>
+            <div className="section-label">심층 분석</div>
             <h1 className="headline">
               {featuredPost.title.split(",")[0] || featuredPost.title},
               <br />
@@ -252,7 +252,7 @@ export default function HomePage() {
                 <Link href={`/posts/${post.slug}`} className="block">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="font-mono text-2xs tracking-wider uppercase text-rust">
-                      {post.category}
+                      심층 분석
                     </span>
                     <span className="text-rule">·</span>
                     <span className="font-sans text-2xs text-muted">
