@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       .from("posts")
       .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
       .eq("published", true)
-      .not("published_at", "is", null)
+      .neq("published_at", null)
       .order("published_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -33,8 +33,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ posts: data, count });
-  } catch (error) {
-    console.error("API Error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

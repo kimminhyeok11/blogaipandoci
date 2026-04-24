@@ -22,8 +22,8 @@ export const compressImage = async (
   try {
     const compressedFile = await imageCompression(file, defaultOptions);
     return compressedFile;
-  } catch (error) {
-    console.error('Image compression failed:', error);
+  } catch {
+    // 이미지 압축 실패 시 원본 반환
     return file;
   }
 };

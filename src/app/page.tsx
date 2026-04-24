@@ -103,13 +103,11 @@ export default function HomePage() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        console.log("[Visibility] Page visible - refreshing posts");
         fetchPosts();
       }
     };
 
     const handleFocus = () => {
-      console.log("[Focus] Window focused - refreshing posts");
       fetchPosts();
     };
 

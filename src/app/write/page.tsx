@@ -69,36 +69,41 @@ function WritePageContent() {
   }, [editSlug, router]);
 
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
-    // Compress and convert to WebP
-    const imageCompression = (await import("browser-image-compression")).default;
-    
-    const compressedFile = await imageCompression(file, {
-      maxSizeMB: 1,
-      maxWidthOrHeight: 1920,
-      useWebWorker: true,
-      fileType: "image/webp",
-    });
-
-    // Upload to Supabase Storage
-    const fileExt = "webp";
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `posts/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("images")
-      .upload(filePath, compressedFile, {
-        cacheControl: "3600",
-        upsert: false,
+    try {
+      // Compress and convert to WebP
+      const imageCompression = (await import("browser-image-compression")).default;
+      
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        fileType: "image/webp",
       });
 
-    if (uploadError) throw uploadError;
+      // Upload to Supabase Storage
+      const fileExt = "webp";
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `posts/${fileName}`;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from("images")
-      .getPublicUrl(filePath);
+      const { error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(filePath, compressedFile, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
-    return publicUrl;
-  }, []);
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("images")
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch {
+      showToast("이미지 업로드에 실패했습니다.", "error");
+      throw new Error("Image upload failed");
+    }
+  }, [showToast]);
 
   const handleSubmit = async (published: boolean = false) => {
     // 유효성 검사

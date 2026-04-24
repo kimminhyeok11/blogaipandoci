@@ -39,8 +39,8 @@ export default function CategoriesPage() {
           .sort((a, b) => b.count - a.count);
 
         setCategories(sortedCategories);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
+      } catch {
+        // 에러 처리
       } finally {
         setIsLoading(false);
       }

@@ -36,8 +36,7 @@ export async function GET() {
         avatar_url: profile?.avatar_url || null,
       },
     });
-  } catch (error) {
-    console.error("Auth API Error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

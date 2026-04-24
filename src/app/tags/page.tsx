@@ -43,8 +43,8 @@ export default function TagsPage() {
           .sort((a, b) => b.count - a.count);
 
         setTags(sortedTags);
-      } catch (error) {
-        console.error("Failed to fetch tags:", error);
+      } catch {
+        // 에러 처리
       } finally {
         setIsLoading(false);
       }

@@ -70,8 +70,7 @@ export async function POST(request: Request) {
       url: publicUrl,
       path: filePath,
     });
-  } catch (error) {
-    console.error("Upload Error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

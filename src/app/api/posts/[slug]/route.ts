@@ -31,8 +31,7 @@ export async function GET(
     }
 
     return NextResponse.json({ post: data });
-  } catch (error) {
-    console.error("API Error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -90,8 +89,7 @@ export async function PUT(
     }
 
     return NextResponse.json({ post: data });
-  } catch (error) {
-    console.error("API Error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -143,8 +141,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("API Error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
