@@ -32,13 +32,13 @@ export function AdSense({
     // 중복 로드 방지
     if (isLoaded.current) return;
 
-    // @ts-ignore
+    // @ts-expect-error - adsbygoogle is not in global types
     if (window.adsbygoogle) {
       try {
         isLoaded.current = true;
-        // @ts-ignore
+        // @ts-expect-error - adsbygoogle is not in global types
         window.adsbygoogle.push({});
-      } catch (e) {
+      } catch {
         // 이미 로드된 경우 무시
       }
     }

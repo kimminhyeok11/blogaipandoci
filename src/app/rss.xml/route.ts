@@ -4,6 +4,7 @@ export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
 
   // 최신 게시글 20개 가져오기
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: posts } = await (supabase as any)
     .from("posts")
     .select("title, slug, excerpt, content, published_at, user:users(nickname)")
@@ -13,6 +14,7 @@ export async function GET() {
 
   const items = (posts || [])
     .map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (post: any) => `
     <item>
       <title>${escapeXml(post.title)}</title>

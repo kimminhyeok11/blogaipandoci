@@ -27,11 +27,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // 동적 게시글
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: posts } = await (supabase as any)
     .from("posts")
     .select("slug, updated_at, published_at")
     .eq("published", true);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const postPages = (posts || []).map((post: any) => ({
     url: `${baseUrl}/posts/${post.slug}/`,
     lastModified: new Date(post.updated_at || post.published_at || new Date()),
