@@ -158,10 +158,10 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* 광고 - AdSense에서 발급받은 실제 슬롯 ID로 변경하세요 */}
+          {/* 광고 */}
           <div className="my-12">
             <AdSense
-              slot="1234567890"
+              slot="7498833217"
               style={{ minHeight: "250px" }}
               format="auto"
             />
