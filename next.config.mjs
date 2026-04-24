@@ -10,6 +10,24 @@ const nextConfig = {
   generateEtags: true,
   compress: true,
   poweredByHeader: false,
+  // 캐시 무효화 - 매 빌드마다 새로운 ID
+  generateBuildId: async () => {
+    return Date.now().toString();
+  },
+  // 정적 파일 캐시 설정
+  async headers() {
+    return [
+      {
+        source: '/:all*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
