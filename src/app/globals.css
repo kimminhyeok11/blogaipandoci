@@ -28,13 +28,10 @@ html {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Noto Serif KR', serif;
+  font-family: var(--font-serif), 'Noto Serif KR', serif;
   line-height: 1.8;
   overflow-x: hidden;
 }
-
-/* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
 
 /* 저널리즘 스타일 컴포넌트 */
 @layer components {

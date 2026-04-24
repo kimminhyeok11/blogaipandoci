@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { marked } from "marked";
@@ -230,11 +231,14 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Cover Image */}
         {post.cover_image && (
-          <div className="max-w-content mx-auto px-4 sm:px-6 mb-8">
-            <img
+          <div className="max-w-content mx-auto px-4 sm:px-6 mb-8 relative aspect-video max-h-[400px]">
+            <Image
               src={post.cover_image}
               alt={post.cover_image_alt || post.title}
-              className="w-full h-auto max-h-[400px] object-cover rounded-sm"
+              fill
+              className="object-cover rounded-sm"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+              priority
             />
           </div>
         )}

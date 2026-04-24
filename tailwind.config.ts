@@ -23,9 +23,9 @@ const config: Config = {
         foreground: "var(--foreground, #1a1612)",
       },
       fontFamily: {
-        serif: ["Noto Serif KR", "serif"],
-        sans: ["Noto Sans KR", "sans-serif"],
-        mono: ["DM Mono", "monospace"],
+        serif: ["var(--font-serif)", "Noto Serif KR", "serif"],
+        sans: ["var(--font-sans)", "Noto Sans KR", "sans-serif"],
+        mono: ["var(--font-mono)", "DM Mono", "monospace"],
       },
       fontSize: {
         "2xs": "10px",

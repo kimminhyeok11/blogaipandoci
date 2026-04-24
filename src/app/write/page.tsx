@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense, lazy } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
-import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
+
+// MarkdownEditor 동적 임포트 (코드 분할)
+const MarkdownEditor = lazy(() => import("@/components/editor/MarkdownEditor").then(mod => ({ default: mod.MarkdownEditor })));
 
 function WritePageContent() {
   const router = useRouter();
