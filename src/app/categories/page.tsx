@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Folder, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface Category {
   name: string;
@@ -13,6 +14,7 @@ interface Category {
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -40,7 +42,7 @@ export default function CategoriesPage() {
 
         setCategories(sortedCategories);
       } catch {
-        // 에러 처리
+        showToast("카테고리 로딩 실패", "error");
       } finally {
         setIsLoading(false);
       }

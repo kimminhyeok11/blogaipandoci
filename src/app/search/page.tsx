@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ArrowLeft, Search, Loader2, FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface SearchResult {
   id: string;
@@ -20,6 +21,7 @@ export default function SearchPage() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const { showToast } = useToast();
 
   const performSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
@@ -44,7 +46,7 @@ export default function SearchPage() {
       if (error) throw error;
       setResults(data || []);
     } catch {
-      // 에러 처리
+      showToast("검색 중 오류 발생", "error");
     } finally {
       setIsSearching(false);
     }

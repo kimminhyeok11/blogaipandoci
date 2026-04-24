@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Tag, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface Post {
   id: string;
@@ -21,6 +22,7 @@ export default function TagPage() {
   const tag = decodeURIComponent(params.tag as string);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -37,7 +39,7 @@ export default function TagPage() {
         if (error) throw error;
         setPosts(data || []);
       } catch {
-        // 에러 처리
+        showToast("글 로딩 실패", "error");
       } finally {
         setIsLoading(false);
       }

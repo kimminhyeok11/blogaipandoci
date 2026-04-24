@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Tag, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface TagData {
   name: string;
@@ -13,6 +14,7 @@ interface TagData {
 export default function TagsPage() {
   const [tags, setTags] = useState<TagData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -44,7 +46,7 @@ export default function TagsPage() {
 
         setTags(sortedTags);
       } catch {
-        // 에러 처리
+        showToast("태그 로딩 실패", "error");
       } finally {
         setIsLoading(false);
       }

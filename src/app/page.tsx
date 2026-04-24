@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { PenSquare, User, Search } from "lucide-react";
 import { AdSense } from "@/components/ads/AdSense";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface Post {
   id: string;
@@ -23,6 +24,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const { showToast } = useToast();
 
   // 스마트 스티키 헤더 - 스크롤 감지
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function HomePage() {
   }, [lastScrollY]);
 
   // Supabase에서 인기글 및 최신글 가져오기
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     setIsLoading(true);
     try {
       // 인기글 (조회수 기준) - 히어로에 표시
@@ -58,7 +60,7 @@ export default function HomePage() {
         .limit(1);
 
       if (popularError) {
-        // 에러 처리 (필요시 Toast로 표시)
+        showToast("인기글 로딩 실패", "error");
       }
 
       if (popularPosts && popularPosts.length > 0) {
@@ -77,7 +79,7 @@ export default function HomePage() {
         .limit(5);
 
       if (latestError) {
-        // 에러 처리 (필요시 Toast로 표시)
+        showToast("최신글 로딩 실패", "error");
       }
 
       if (latestPosts) {
@@ -87,17 +89,17 @@ export default function HomePage() {
       }
 
       // 데이터 로드 완료
-    } catch {
-      // 에러 처리
+    } catch (err) {
+      showToast("데이터 로딩 중 오류 발생", "error");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showToast]);
 
   // 초기 로드
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [fetchPosts]);
 
   // 페이지 포커스 시 강제 재로딩
   useEffect(() => {
@@ -118,7 +120,7 @@ export default function HomePage() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleFocus);
     };
-  }, []);
+  }, [fetchPosts]);
 
   return (
     <div className="min-h-screen bg-paper">
