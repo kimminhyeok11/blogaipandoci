@@ -48,9 +48,6 @@ export default function HomePage() {
   const fetchPosts = async () => {
     setIsLoading(true);
     try {
-      // 캐시 방지를 위해 타임스탬프 추가
-      const timestamp = Date.now();
-
       // 인기글 (조회수 기준) - 히어로에 표시
       const { data: popularPosts, error: popularError } = await supabase
         .from("posts")
