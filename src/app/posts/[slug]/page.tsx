@@ -6,6 +6,7 @@ import { marked } from "marked";
 import { supabase } from "@/lib/supabase";
 import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
+import { ShareButtons } from "@/components/posts/ShareButtons";
 
 // marked 렌더러 커스터마이징 (v12+ 호환)
 const renderer = {
@@ -255,28 +256,7 @@ export default async function PostPage({ params }: PostPageProps) {
           <div className="ornament">— ✦ —</div>
 
           {/* Share */}
-          <div className="flex items-center justify-center gap-4 py-6">
-            <a
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(
-                typeof window !== "undefined" ? window.location.href : ""
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-[#1da1f2] text-white font-sans text-xs font-medium rounded-sm hover:opacity-90 transition-opacity"
-            >
-              𝕏 트윗하기
-            </a>
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                typeof window !== "undefined" ? window.location.href : ""
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-[#4267B2] text-white font-sans text-xs font-medium rounded-sm hover:opacity-90 transition-opacity"
-            >
-              f 공유하기
-            </a>
-          </div>
+          <ShareButtons title={post.title} />
         </article>
       </main>
 

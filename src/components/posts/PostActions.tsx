@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Loader2 } from "lucide-react";
@@ -18,11 +18,11 @@ export function PostActions({ postId, slug, authorId }: PostActionsProps) {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
 
   // 현재 사용자 확인
-  useState(() => {
+  useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setCurrentUser(data.user?.id || null);
     });
-  });
+  }, []);
 
   const handleDelete = async () => {
     if (!confirm("정말로 이 글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {

@@ -31,7 +31,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data: posts } = await (supabase as any)
     .from("posts")
     .select("slug, updated_at, published_at")
-    .eq("published", true);
+    .eq("published", true)
+    .not("published_at", "is", null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const postPages = (posts || []).map((post: any) => ({

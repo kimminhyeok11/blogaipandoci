@@ -45,48 +45,84 @@ export default function HomePage() {
   }, [lastScrollY]);
 
   // Supabase에서 인기글 및 최신글 가져오기
+  const fetchPosts = async () => {
+    setIsLoading(true);
+    try {
+      // 캐시 방지를 위해 타임스탬프 추가
+      const timestamp = Date.now();
+
+      // 인기글 (조회수 기준) - 히어로에 표시
+      const { data: popularPosts, error: popularError } = await supabase
+        .from("posts")
+        .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
+        .eq("published", true)
+        .not("published_at", "is", null)
+        .order("view_count", { ascending: false })
+        .limit(1);
+
+      if (popularError) {
+        console.error("Popular posts error:", popularError);
+      }
+
+      if (popularPosts && popularPosts.length > 0) {
+        setFeaturedPost(popularPosts[0]);
+      } else {
+        setFeaturedPost(null);
+      }
+
+      // 최신글 (날짜 기준)
+      const { data: latestPosts, error: latestError } = await supabase
+        .from("posts")
+        .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
+        .eq("published", true)
+        .not("published_at", "is", null)
+        .order("published_at", { ascending: false })
+        .limit(5);
+
+      if (latestError) {
+        console.error("Latest posts error:", latestError);
+      }
+
+      if (latestPosts) {
+        setRecentPosts(latestPosts);
+      } else {
+        setRecentPosts([]);
+      }
+
+      console.log("[Posts Refresh]", timestamp, "popular:", popularPosts?.length || 0, "latest:", latestPosts?.length || 0);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 초기 로드
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        // 인기글 (조회수 기준) - 히어로에 표시
-        const { data: popularPosts, error: popularError } = await supabase
-          .from("posts")
-          .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
-          .eq("published", true)
-          .order("view_count", { ascending: false })
-          .limit(1);
+    fetchPosts();
+  }, []);
 
-        if (popularError) {
-          console.error("Popular posts error:", popularError);
-        }
-
-        if (popularPosts && popularPosts.length > 0) {
-          setFeaturedPost(popularPosts[0]);
-        }
-
-        // 최신글 (날짜 기준)
-        const { data: latestPosts, error: latestError } = await supabase
-          .from("posts")
-          .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
-          .eq("published", true)
-          .order("published_at", { ascending: false })
-          .limit(5);
-
-        if (latestError) {
-          console.error("Latest posts error:", latestError);
-        }
-
-        if (latestPosts) {
-          setRecentPosts(latestPosts);
-        }
-      } catch (error) {
-        console.error("Failed to fetch posts:", error);
-      } finally {
-        setIsLoading(false);
+  // 페이지 포커스 시 강제 재로딩
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        console.log("[Visibility] Page visible - refreshing posts");
+        fetchPosts();
       }
     };
 
-    fetchPosts();
+    const handleFocus = () => {
+      console.log("[Focus] Window focused - refreshing posts");
+      fetchPosts();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   return (
