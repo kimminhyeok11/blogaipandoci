@@ -44,16 +44,26 @@ renderer.hr = () => {
   return `<hr class="border-t border-rule my-6" />`;
 };
 
-// 체크리스트 스타일링 (GFM)
+// 리스트 스타일링 - 배경색과 구분선
+renderer.list = ({ items, ordered }) => {
+  const type = ordered ? 'ol' : 'ul';
+  const listClass = ordered 
+    ? 'list-decimal list-inside my-4 space-y-1 bg-cream/30 rounded-sm p-2 border-l-4 border-rust/30' 
+    : 'list-disc list-inside my-4 space-y-1 bg-cream/30 rounded-sm p-2 border-l-4 border-rust/30';
+  const body = items.map((item: { text: string }) => `<li class="py-1 pl-2 border-b border-rule/30 last:border-0">${item.text}</li>`).join('');
+  return `<${type} class="${listClass}">${body}</${type}>`;
+};
+
+// 체크리스트 스타일링 (GFM) - 배경색 추가
 renderer.listitem = ({ text, checked, task }) => {
   if (task) {
     const checkbox = checked 
       ? '<span class="inline-block w-4 h-4 bg-rust rounded flex items-center justify-center text-white text-xs flex-shrink-0">✓</span>'
       : '<span class="inline-block w-4 h-4 border-2 border-muted rounded flex-shrink-0"></span>';
     const textClass = checked ? 'line-through text-muted' : '';
-    return `<li class="ml-4 flex items-center gap-2 list-none">${checkbox}<span class="${textClass}">${text}</span></li>`;
+    return `<li class="py-1 pl-2 border-b border-rule/30 last:border-0 flex items-center gap-2 list-none">${checkbox}<span class="${textClass}">${text}</span></li>`;
   }
-  return `<li class="ml-4">${text}</li>`;
+  return `<li class="py-1 pl-2 border-b border-rule/30 last:border-0">${text}</li>`;
 };
 
 // 테이블 스타일링
