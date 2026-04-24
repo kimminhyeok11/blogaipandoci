@@ -7,110 +7,112 @@ import { supabase } from "@/lib/supabase";
 import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
 
-// marked 설정
-marked.setOptions({
+// marked 렌더러 커스터마이징 (v12+ 호환)
+const renderer = {
+  // 링크 새창에서 열기
+  link(token: { href: string; title?: string | null; text: string }) {
+    return `<a href="${token.href}" class="text-rust underline hover:text-rust-light" target="_blank" rel="noopener noreferrer"${token.title ? ` title="${token.title}"` : ''}>${token.text}</a>`;
+  },
+
+  // 이미지 스타일링
+  image(token: { href: string; title?: string | null; text: string }) {
+    return `<img src="${token.href}" alt="${token.text}" class="my-4 max-w-full h-auto rounded" loading="lazy"${token.title ? ` title="${token.title}"` : ''} />`;
+  },
+
+  // 코드 블록 스타일링
+  code(token: { text: string; lang?: string }) {
+    return `<pre class="bg-cream p-4 rounded overflow-x-auto font-mono text-sm my-4"><code${token.lang ? ` class="language-${token.lang}"` : ''}>${token.text}</code></pre>`;
+  },
+
+  // 인라인 코드 스타일링
+  codespan(token: { text: string }) {
+    return `<code class="bg-cream px-1 py-0.5 rounded text-sm font-mono">${token.text}</code>`;
+  },
+
+  // 인용구 스타일링
+  blockquote(token: { text: string }) {
+    return `<blockquote class="border-l-4 border-rust pl-4 italic text-stone my-4">${token.text}</blockquote>`;
+  },
+
+  // 구분선 스타일링
+  hr() {
+    return `<hr class="border-t border-rule my-6" />`;
+  },
+
+  // 리스트 스타일링
+  list(token: { items: { text: string }[]; ordered: boolean }) {
+    const type = token.ordered ? 'ol' : 'ul';
+    const listClass = token.ordered
+      ? 'list-decimal list-inside my-4 space-y-1 bg-cream/30 rounded-sm p-2 border-l-4 border-rust/30'
+      : 'list-disc list-inside my-4 space-y-1 bg-cream/30 rounded-sm p-2 border-l-4 border-rust/30';
+    const body = token.items.map((item) => `<li class="py-1 pl-2 border-b border-rule/30 last:border-0">${item.text}</li>`).join('');
+    return `<${type} class="${listClass}">${body}</${type}>`;
+  },
+
+  // 체크리스트 스타일링
+  listitem(token: { text: string; checked?: boolean; task?: boolean }) {
+    if (token.task) {
+      const checkbox = token.checked
+        ? '<span class="inline-block w-4 h-4 bg-rust rounded flex items-center justify-center text-white text-xs flex-shrink-0">✓</span>'
+        : '<span class="inline-block w-4 h-4 border-2 border-muted rounded flex-shrink-0"></span>';
+      const textClass = token.checked ? 'line-through text-muted' : '';
+      return `<li class="py-1 pl-2 border-b border-rule/30 last:border-0 flex items-center gap-2 list-none">${checkbox}<span class="${textClass}">${token.text}</span></li>`;
+    }
+    return `<li class="py-1 pl-2 border-b border-rule/30 last:border-0">${token.text}</li>`;
+  },
+
+  // 테이블 스타일링
+  table(token: { header: { text: string }[]; rows: { text: string }[][] }) {
+    const headerHtml = token.header.map(cell => `<th class="border border-rule px-3 py-2 bg-cream font-bold text-left">${cell.text}</th>`).join('');
+    const bodyHtml = token.rows.map(row =>
+      `<tr>${row.map(cell => `<td class="border border-rule px-3 py-2">${cell.text}</td>`).join('')}</tr>`
+    ).join('');
+    return `<table class="w-full border-collapse my-4 text-sm"><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
+  },
+
+  // 헤딩 스타일링
+  heading(token: { text: string; depth: number }) {
+    const classes: Record<number, string> = {
+      1: "text-3xl font-bold mt-8 mb-4",
+      2: "text-2xl font-bold mt-6 mb-3",
+      3: "text-xl font-bold mt-4 mb-2",
+      4: "text-lg font-bold mt-3 mb-2",
+      5: "text-base font-bold mt-3 mb-1",
+      6: "text-sm font-bold mt-2 mb-1",
+    };
+    return `<h${token.depth} class="${classes[token.depth]}">${token.text}</h${token.depth}>`;
+  },
+
+  // 단락 스타일링
+  paragraph(token: { text: string }) {
+    return `<p class="my-4 leading-loose">${token.text}</p>`;
+  },
+
+  // 볼드 텍스트 렌더링
+  strong(token: { text: string }) {
+    return `<strong class="font-bold text-ink">${token.text}</strong>`;
+  },
+
+  // 이탤릭 텍스트 렌더링
+  em(token: { text: string }) {
+    return `<em class="italic">${token.text}</em>`;
+  },
+};
+
+// marked 설정 (v12+ 호환)
+marked.use({
   gfm: true,
   breaks: true,
+  renderer,
 });
-
-// marked 렌더러 커스터마이징
-const renderer = new marked.Renderer();
-
-// 링크 새창에서 열기
-renderer.link = ({ href, title, text }) => {
-  return `<a href="${href}" class="text-rust underline hover:text-rust-light" target="_blank" rel="noopener noreferrer"${title ? ` title="${title}"` : ''}>${text}</a>`;
-};
-
-// 이미지 스타일링
-renderer.image = ({ href, title, text }) => {
-  return `<img src="${href}" alt="${text}" class="my-4 max-w-full h-auto rounded" loading="lazy"${title ? ` title="${title}"` : ''} />`;
-};
-
-// 코드 블록 스타일링
-renderer.code = ({ text, lang }) => {
-  return `<pre class="bg-cream p-4 rounded overflow-x-auto font-mono text-sm my-4"><code${lang ? ` class="language-${lang}"` : ''}>${text}</code></pre>`;
-};
-
-// 인라인 코드 스타일링
-renderer.codespan = ({ text }) => {
-  return `<code class="bg-cream px-1 py-0.5 rounded text-sm font-mono">${text}</code>`;
-};
-
-// 인용구 스타일링
-renderer.blockquote = ({ text }) => {
-  return `<blockquote class="border-l-4 border-rust pl-4 italic text-stone my-4">${text}</blockquote>`;
-};
-
-// 구분선 스타일링
-renderer.hr = () => {
-  return `<hr class="border-t border-rule my-6" />`;
-};
-
-// 리스트 스타일링
-renderer.list = ({ items, ordered }) => {
-  const type = ordered ? 'ol' : 'ul';
-  const listClass = ordered
-    ? 'list-decimal list-inside my-4 space-y-1 bg-cream/30 rounded-sm p-2 border-l-4 border-rust/30'
-    : 'list-disc list-inside my-4 space-y-1 bg-cream/30 rounded-sm p-2 border-l-4 border-rust/30';
-  const body = items.map((item: { text: string }) => `<li class="py-1 pl-2 border-b border-rule/30 last:border-0">${item.text}</li>`).join('');
-  return `<${type} class="${listClass}">${body}</${type}>`;
-};
-
-// 체크리스트 스타일링
-renderer.listitem = ({ text, checked, task }) => {
-  if (task) {
-    const checkbox = checked
-      ? '<span class="inline-block w-4 h-4 bg-rust rounded flex items-center justify-center text-white text-xs flex-shrink-0">✓</span>'
-      : '<span class="inline-block w-4 h-4 border-2 border-muted rounded flex-shrink-0"></span>';
-    const textClass = checked ? 'line-through text-muted' : '';
-    return `<li class="py-1 pl-2 border-b border-rule/30 last:border-0 flex items-center gap-2 list-none">${checkbox}<span class="${textClass}">${text}</span></li>`;
-  }
-  return `<li class="py-1 pl-2 border-b border-rule/30 last:border-0">${text}</li>`;
-};
-
-// 테이블 스타일링
-renderer.table = ({ header, rows }) => {
-  const headerHtml = header.map(cell => `<th class="border border-rule px-3 py-2 bg-cream font-bold text-left">${cell.text}</th>`).join('');
-  const bodyHtml = rows.map(row =>
-    `<tr>${row.map(cell => `<td class="border border-rule px-3 py-2">${cell.text}</td>`).join('')}</tr>`
-  ).join('');
-  return `<table class="w-full border-collapse my-4 text-sm"><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
-};
-
-// 헤딩 스타일링
-renderer.heading = ({ text, depth }) => {
-  const classes: Record<number, string> = {
-    1: "text-3xl font-bold mt-8 mb-4",
-    2: "text-2xl font-bold mt-6 mb-3",
-    3: "text-xl font-bold mt-4 mb-2",
-    4: "text-lg font-bold mt-3 mb-2",
-    5: "text-base font-bold mt-3 mb-1",
-    6: "text-sm font-bold mt-2 mb-1",
-  };
-  return `<h${depth} class="${classes[depth]}">${text}</h${depth}>`;
-};
-
-// 단락 스타일링
-renderer.paragraph = ({ text }) => {
-  return `<p class="my-4 leading-loose">${text}</p>`;
-};
-
-// 볼드 텍스트 렌더링
-renderer.strong = ({ text }) => {
-  return `<strong class="font-bold text-ink">${text}</strong>`;
-};
-
-// 이탤릭 텍스트 렌더링
-renderer.em = ({ text }) => {
-  return `<em class="italic">${text}</em>`;
-};
 
 // 마크다운 처리 함수
 function processMarkdown(text: string): string {
   if (!text) return "";
   try {
-    return marked.parse(text, { renderer }) as string;
-  } catch {
+    return marked.parse(text) as string;
+  } catch (error) {
+    console.error("Markdown parsing error:", error);
     return text;
   }
 }
