@@ -21,7 +21,7 @@ export default function CategoriesPage() {
           .from("posts")
           .select("category")
           .eq("published", true)
-          .not("published_at", "is", null);
+          .neq("published_at", null);
 
         if (error) throw error;
 

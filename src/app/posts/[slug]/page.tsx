@@ -112,8 +112,7 @@ function processMarkdown(text: string): string {
   if (!text) return "";
   try {
     return marked.parse(text) as string;
-  } catch (error) {
-    console.error("Markdown parsing error:", error);
+  } catch {
     return text;
   }
 }

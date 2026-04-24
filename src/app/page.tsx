@@ -53,7 +53,7 @@ export default function HomePage() {
         .from("posts")
         .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
         .eq("published", true)
-        .not("published_at", "is", null)
+        .neq("published_at", null)
         .order("view_count", { ascending: false })
         .limit(1);
 
@@ -72,7 +72,7 @@ export default function HomePage() {
         .from("posts")
         .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
         .eq("published", true)
-        .not("published_at", "is", null)
+        .neq("published_at", null)
         .order("published_at", { ascending: false })
         .limit(5);
 

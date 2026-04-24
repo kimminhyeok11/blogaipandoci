@@ -30,14 +30,14 @@ export default function TagPage() {
           .from("posts")
           .select("id, title, excerpt, slug, category, published_at, view_count")
           .eq("published", true)
-          .not("published_at", "is", null)
+          .neq("published_at", null)
           .ilike("tags", `%${tag}%`)
           .order("published_at", { ascending: false });
 
         if (error) throw error;
         setPosts(data || []);
-      } catch (error) {
-        console.error("Failed to fetch posts:", error);
+      } catch {
+        // 에러 처리
       } finally {
         setIsLoading(false);
       }

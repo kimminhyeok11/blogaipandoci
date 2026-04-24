@@ -36,15 +36,15 @@ export default function SearchPage() {
         .from("posts")
         .select("id, title, excerpt, slug, category, published_at, view_count")
         .eq("published", true)
-        .not("published_at", "is", null)
+        .neq("published_at", null)
         .or(`title.ilike.%${searchQuery}%,excerpt.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`)
         .order("published_at", { ascending: false })
         .limit(20);
 
       if (error) throw error;
       setResults(data || []);
-    } catch (error) {
-      console.error("Search error:", error);
+    } catch {
+      // 에러 처리
     } finally {
       setIsSearching(false);
     }

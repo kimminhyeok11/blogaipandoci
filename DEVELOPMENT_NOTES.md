@@ -307,13 +307,42 @@ const slug = `${baseSlug}-${timestamp}`;
 
 ---
 
+## 🧹 클린 코드 표준
+
+### 금지 항목 (Production Code)
+```typescript
+// ❌ 금지 - alert 사용
+alert("메시지");
+
+// ❌ 금지 - console.log/error
+console.log("디버그");
+console.error("에러");
+
+// ✅ 대안 - Toast 사용
+import { useToast } from "@/components/ui/Toast";
+const { showToast } = useToast();
+showToast("메시지", "success" | "error" | "warning" | "info");
+```
+
+### 허용 예외
+```typescript
+// ✅ 허용 - confirm (파괴적 작업 확인)
+if (!confirm("정말 삭제하시겠습니까?")) return;
+
+// ✅ 허용 - error.tsx의 console.error
+// (Next.js 에러 바운더리용)
+```
+
+---
+
 ## 🐛 알려진 이슈
 
 | 이슈 | 상태 | 해결 방안 |
 |------|------|----------|
 | Supabase 타입 에러 | ⚠️ 감수 | `as any` 캐스팅 사용 |
 | img 태그 경고 | ⚠️ 무시 | Next Image 마이그레이션 예정 |
-| console.log 제거 | ✅ 완료 | 프로덕션 클린 |
+| console.log | ✅ 완료 | 모두 제거됨 |
+| alert | ✅ 완료 | Toast로 교체 완료 |
 
 ---
 
