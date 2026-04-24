@@ -48,11 +48,16 @@ export default function HomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  // Supabase에서 인기글 및 최신글 가져오기
+  // Fetch popular and latest posts from Supabase
   const fetchPosts = useCallback(async () => {
     setIsLoading(true);
+    console.log("[DEBUG] fetchPosts start");
+    console.log("[DEBUG] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log("[DEBUG] Current user:", user?.id || "anonymous");
+
     try {
-      // 인기글 (조회수 기준) - 히어로에 표시
+      // Popular posts (by view count) - for hero section
+      console.log("[DEBUG] Popular posts query start...");
       const { data: popularPosts, error: popularError } = await supabase
         .from("posts")
         .select("id, title, excerpt, slug, published_at, view_count, user_id")
@@ -61,18 +66,27 @@ export default function HomePage() {
         .order("view_count", { ascending: false })
         .limit(1);
 
+      console.log("[DEBUG] Popular posts result:", { 
+        data: popularPosts, 
+        error: popularError,
+        count: popularPosts?.length || 0 
+      });
+
       if (popularError) {
-        console.error("인기글 로딩 실패:", popularError);
-        showToast("인기글 로딩 실패: " + popularError.message, "error");
+        console.error("[ERROR] Popular posts failed:", popularError);
+        showToast("Popular posts failed: " + popularError.message, "error");
       }
 
       if (popularPosts && popularPosts.length > 0) {
+        console.log("[DEBUG] Featured post set:", (popularPosts[0] as any).title);
         setFeaturedPost(popularPosts[0]);
       } else {
+        console.log("[DEBUG] No featured post (condition: published=true, published_at!=null)");
         setFeaturedPost(null);
       }
 
-      // 최신글 (날짜 기준)
+      // Latest posts (by date)
+      console.log("[DEBUG] Latest posts query start...");
       const { data: latestPosts, error: latestError } = await supabase
         .from("posts")
         .select("id, title, excerpt, slug, published_at, view_count, user_id")
@@ -81,33 +95,41 @@ export default function HomePage() {
         .order("published_at", { ascending: false })
         .limit(5);
 
+      console.log("[DEBUG] Latest posts result:", { 
+        data: latestPosts, 
+        error: latestError,
+        count: latestPosts?.length || 0 
+      });
+
       if (latestError) {
-        console.error("최신글 로딩 실패:", latestError);
-        showToast("최신글 로딩 실패: " + latestError.message, "error");
+        console.error("[ERROR] Latest posts failed:", latestError);
+        showToast("Latest posts failed: " + latestError.message, "error");
       }
 
-      if (latestPosts) {
+      if (latestPosts && latestPosts.length > 0) {
+        console.log("[DEBUG] Latest posts list:", (latestPosts as any[]).map(p => ({ id: p.id, title: p.title, published: p.published_at })));
         setRecentPosts(latestPosts);
       } else {
+        console.log("[DEBUG] No latest posts (condition: published=true, published_at!=null)");
         setRecentPosts([]);
       }
 
-      // 데이터 로드 완료
+      // Data loading complete
     } catch (err) {
-      console.error("데이터 로딩 오류:", err);
-      const msg = err instanceof Error ? err.message : "데이터 로딩 실패";
+      console.error("[ERROR] Data loading error:", err);
+      const msg = err instanceof Error ? err.message : "Data loading failed";
       showToast(msg, "error");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // 초기 로드
+  // Initial load
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
 
-  // 페이지 포커스 시 강제 재로딩
+  // Force reload on page focus
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -136,12 +158,12 @@ export default function HomePage() {
           isHeaderVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
-        <div className="masthead-pub">깊이 있는 분석과 인사이트</div>
+        <div className="masthead-pub">Deep Analysis and Insights</div>
         <Link href="/" className="masthead-title">
           法 BLOG
         </Link>
         <div className="masthead-date">
-          {new Date().toLocaleDateString("ko-KR", {
+          {new Date().toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
             day: "numeric",
