@@ -49,24 +49,32 @@ export default function HomePage() {
     const fetchPosts = async () => {
       try {
         // 인기글 (조회수 기준) - 히어로에 표시
-        const { data: popularPosts } = await supabase
+        const { data: popularPosts, error: popularError } = await supabase
           .from("posts")
-          .select("id, title, excerpt, slug, category, published_at, view_count, user:users(nickname)")
+          .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
           .eq("published", true)
           .order("view_count", { ascending: false })
           .limit(1);
+
+        if (popularError) {
+          console.error("Popular posts error:", popularError);
+        }
 
         if (popularPosts && popularPosts.length > 0) {
           setFeaturedPost(popularPosts[0]);
         }
 
         // 최신글 (날짜 기준)
-        const { data: latestPosts } = await supabase
+        const { data: latestPosts, error: latestError } = await supabase
           .from("posts")
-          .select("id, title, excerpt, slug, category, published_at, view_count, user:users(nickname)")
+          .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
           .eq("published", true)
           .order("published_at", { ascending: false })
           .limit(5);
+
+        if (latestError) {
+          console.error("Latest posts error:", latestError);
+        }
 
         if (latestPosts) {
           setRecentPosts(latestPosts);

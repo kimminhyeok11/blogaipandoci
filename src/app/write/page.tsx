@@ -117,7 +117,15 @@ function WritePageContent() {
         return;
       }
 
-      const slug = isEditMode ? editSlug : generateSlug(title);
+      // 고유한 slug 생성 (중복 방지를 위해 타임스탬프 추가)
+      let slug: string;
+      if (isEditMode) {
+        slug = editSlug!;
+      } else {
+        const baseSlug = generateSlug(title);
+        const timestamp = Date.now().toString(36).slice(-6);
+        slug = `${baseSlug}-${timestamp}`;
+      }
       
       // Auto-generate excerpt if not provided
       const finalExcerpt = excerpt.trim() || content.slice(0, 150).replace(/[#*`]/g, "") + "...";
