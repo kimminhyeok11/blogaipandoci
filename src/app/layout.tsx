@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     description: "법률, 기술, 비즈니스에 대한 깊이 있는 분석과 인사이트가 담긴 블로그입니다.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image.png",
         width: 1200,
         height: 630,
         alt: "法 BLOG",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "法 BLOG - 깊이 있는 분석과 인사이트",
     description: "법률, 기술, 비즈니스에 대한 깊이 있는 분석과 인사이트가 담긴 블로그입니다.",
-    images: ["/og-image.png"],
+    images: ["/twitter-image.png"],
   },
   robots: {
     index: true,
@@ -68,8 +68,8 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
+    icon: "/icon.png",
+    shortcut: "/favicon.ico.jpg",
     apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
