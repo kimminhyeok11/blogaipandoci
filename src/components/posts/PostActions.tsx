@@ -4,7 +4,7 @@ import { useState, useEffect, memo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, db } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 
 interface PostActionsProps {
@@ -33,7 +33,7 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
 
     setIsDeleting(true);
     try {
-      const { error } = await (supabase.from("posts") as any).delete().eq("id", postId);
+      const { error } = await db.posts().delete().eq("id", postId);
 
       if (error) throw error;
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, User, Mail, LogOut, Loader2, Edit3 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, db } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 
 interface UserProfile {
@@ -33,7 +33,7 @@ export default function ProfilePage() {
         }
 
         // 사용자 프로필 정보 가져오기
-        const { data: profile } = await (supabase.from("users") as any)
+        const { data: profile } = await db.users()
           .select("nickname, avatar_url")
           .eq("id", authUser.id)
           .single();
