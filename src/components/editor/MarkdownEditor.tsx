@@ -93,6 +93,16 @@ renderer.paragraph = ({ text }) => {
   return `<p class="my-4 leading-loose">${text}</p>`;
 };
 
+// 볼드 텍스트 렌더링
+renderer.strong = ({ text }) => {
+  return `<strong class="font-bold text-ink">${text}</strong>`;
+};
+
+// 이탤릭 텍스트 렌더링
+renderer.em = ({ text }) => {
+  return `<em class="italic">${text}</em>`;
+};
+
 // 마크다운 처리 함수
 function processMarkdown(text: string): string {
   if (!text) return "";
