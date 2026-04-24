@@ -58,6 +58,22 @@ function WritePageContent() {
         setTitle(post.title);
         setContent(post.content);
         setExcerpt(post.excerpt || "");
+
+        // 기존 태그 로드
+        const { data: postTags } = await (supabase.from("post_tags") as any)
+          .select("tag_id")
+          .eq("post_id", post.id);
+
+        if (postTags?.length) {
+          const tagIds = postTags.map((pt: any) => pt.tag_id);
+          const { data: tagData } = await (supabase.from("tags") as any)
+            .select("name")
+            .in("id", tagIds);
+          
+          if (tagData?.length) {
+            setTags(tagData.map((t: any) => t.name).join(", "));
+          }
+        }
       } catch {
         showToast("글 로딩 실패", "error");
       } finally {
@@ -150,6 +166,9 @@ function WritePageContent() {
       // Auto-generate excerpt if not provided
       const finalExcerpt = excerpt.trim() || content.slice(0, 150).replace(/[#*`]/g, "") + "...";
 
+      // 태그 파싱
+      const tagList = tags.split(",").map(t => t.trim()).filter(Boolean);
+
       if (isEditMode && postId) {
         // 수정 모드: update
         const { error } = await (supabase.from("posts") as any).update({
@@ -164,11 +183,15 @@ function WritePageContent() {
 
         if (error) throw error;
 
+        // 기존 태그 삭제 후 새 태그 저장
+        await (supabase.from("post_tags") as any).delete().eq("post_id", postId);
+        await saveTags(postId, tagList);
+
         showToast(published ? "글이 수정되었습니다." : "임시 저장되었습니다.", "success");
         router.push(`/posts/${slug}`);
       } else {
-        // 신규 작성: insert
-        const { error } = await (supabase.from("posts") as any).insert({
+        // 신규 작성: insert 후 id 받아오기
+        const { data: newPost, error } = await (supabase.from("posts") as any).insert({
           user_id: user.id,
           title: title.trim(),
           slug,
@@ -176,9 +199,14 @@ function WritePageContent() {
           excerpt: finalExcerpt,
           published,
           published_at: published ? new Date().toISOString() : null,
-        });
+        }).select("id").single();
 
         if (error) throw error;
+
+        // 태그 저장
+        if (newPost?.id) {
+          await saveTags(newPost.id, tagList);
+        }
 
         showToast(published ? "글이 발행되었습니다." : "임시 저장되었습니다.", "success");
         router.push(`/posts/${slug}`);
@@ -189,6 +217,29 @@ function WritePageContent() {
       showToast(msg, "error");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // 태그 저장 헬퍼 함수
+  const saveTags = async (postId: string, tagList: string[]) => {
+    if (!tagList.length) return;
+
+    for (const tagName of tagList) {
+      const tagSlug = tagName.toLowerCase().replace(/\s+/g, "-");
+
+      // 1. 태그 upsert
+      const { data: tagData } = await (supabase.from("tags") as any)
+        .upsert({ name: tagName, slug: tagSlug }, { onConflict: "slug" })
+        .select("id")
+        .single();
+
+      if (tagData?.id) {
+        // 2. post_tags insert
+        await (supabase.from("post_tags") as any).insert({
+          post_id: postId,
+          tag_id: tagData.id,
+        });
+      }
     }
   };
 
