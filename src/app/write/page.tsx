@@ -24,8 +24,6 @@ function WritePageContent() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
-  const [category, setCategory] = useState("");
-  const [tags, setTags] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
@@ -59,8 +57,6 @@ function WritePageContent() {
         setTitle(post.title);
         setContent(post.content);
         setExcerpt(post.excerpt || "");
-        setCategory(post.category || "");
-        setTags(post.tags || "");
       } catch {
         showToast("글 로딩 실패", "error");
       } finally {
@@ -261,9 +257,6 @@ function WritePageContent() {
         ) : showPreview ? (
           <div className="prose-journal bg-white border border-rule p-8 rounded-sm">
             <h1 className="headline mb-4">{title || "제목 없음"}</h1>
-            {category && (
-              <div className="section-label mb-6">{category}</div>
-            )}
             <div className="whitespace-pre-wrap font-serif text-base leading-loose">
               {content || "내용 없음"}
             </div>
@@ -281,33 +274,6 @@ function WritePageContent() {
               />
             </div>
 
-            {/* Meta Inputs */}
-            <div className="grid sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
-                  카테고리
-                </label>
-                <input
-                  type="text"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="예: 법률 심층 리포트"
-                  className="w-full px-3 py-2 bg-cream border border-rule rounded-sm text-sm font-sans text-ink placeholder-muted focus:outline-none focus:border-rust transition-colors"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
-                  태그 (쉼표로 구분)
-                </label>
-                <input
-                  type="text"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="예: 저작권, 판례, 기술"
-                  className="w-full px-3 py-2 bg-cream border border-rule rounded-sm text-sm font-sans text-ink placeholder-muted focus:outline-none focus:border-rust transition-colors"
-                />
-              </div>
-            </div>
 
             {/* Excerpt Input */}
             <div>
