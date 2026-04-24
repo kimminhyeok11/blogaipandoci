@@ -165,6 +165,13 @@ export function MarkdownEditor({
                     .replace(/^\s*\d+\.\s+(.*$)/gim, '<li class="ml-4">$1</li>')
                     // Quote
                     .replace(/^>\s+(.*$)/gim, '<blockquote class="border-l-4 border-rust pl-4 italic text-stone my-4">$1</blockquote>')
+                    // Tables
+                    .replace(/\|(.+)\|/g, (match: string) => {
+                      const cells = match.split('|').filter(c => c.trim()).map(c => `<td class="border border-rule px-3 py-2">${c.trim()}</td>`).join('');
+                      return `<tr>${cells}</tr>`;
+                    })
+                    .replace(/(<tr>.*<\/tr>\n?)+/g, '<table class="w-full border-collapse my-4 text-sm">$&</table>')
+                    .replace(/<tr>(<td[^>]*>[^<]*<\/td>\s*)*<td[^>]*>(-|–|—){3,}[^<]*<\/td>(<td[^>]*>[^<]*<\/td>\s*)*<\/tr>/g, '')
                     // Images
                     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-4 max-w-full h-auto rounded" />')
                     // Links
