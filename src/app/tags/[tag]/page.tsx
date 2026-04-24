@@ -12,7 +12,6 @@ interface Post {
   title: string;
   excerpt: string;
   slug: string;
-  category: string;
   published_at: string;
   view_count: number;
 }
@@ -27,13 +26,40 @@ export default function TagPage() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        // 태그로 검색 (태그 컬럼이 문자열이거나 JSON 배열일 수 있음)
+        // 1. 태그 slug로 tag_id 찾기
+        const { data: tagData, error: tagError } = await (supabase
+          .from("tags") as any)
+          .select("id")
+          .eq("slug", tag)
+          .single();
+
+        if (tagError || !tagData) {
+          setPosts([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // 2. post_tags로 해당 태그의 게시글 ID 찾기
+        const { data: postTags, error: postTagsError } = await (supabase
+          .from("post_tags") as any)
+          .select("post_id")
+          .eq("tag_id", tagData.id);
+
+        if (postTagsError || !postTags?.length) {
+          setPosts([]);
+          setIsLoading(false);
+          return;
+        }
+
+        const postIds = postTags.map((pt: any) => pt.post_id);
+
+        // 3. posts 테이블에서 게시글 정보 가져오기
         const { data, error } = await supabase
           .from("posts")
-          .select("id, title, excerpt, slug, category, published_at, view_count")
+          .select("id, title, excerpt, slug, published_at, view_count")
           .eq("published", true)
           .neq("published_at", null)
-          .ilike("tags", `%${tag}%`)
+          .in("id", postIds)
           .order("published_at", { ascending: false });
 
         if (error) throw error;
@@ -109,11 +135,7 @@ export default function TagPage() {
               >
                 <Link href={`/posts/${post.slug}`} className="block">
                   <div className="flex items-center gap-3 mb-2">
-                    {post.category && (
-                      <span className="font-sans text-2xs text-rust">
-                        {post.category}
-                      </span>
-                    )}
+                    <span className="font-sans text-2xs text-rust">#{tag}</span>
                     <span className="text-rule">·</span>
                     <span className="font-sans text-2xs text-muted">
                       {new Date(post.published_at).toLocaleDateString("ko-KR")}

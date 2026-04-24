@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 
 interface TagData {
   name: string;
+  slug: string;
   count: number;
 }
 
@@ -17,8 +18,30 @@ export default function TagsPage() {
   const { showToast } = useToast();
 
   useEffect(() => {
-    // tags 컬럼이 DB에 없으므로 빈 배열로 설정
-    setIsLoading(false);
+    const fetchTags = async () => {
+      try {
+        // tags 테이블과 post_tags 조인하여 게시글 수 계산
+        const { data: tagData, error } = await supabase
+          .from("tags")
+          .select("name, slug, post_tags(count)");
+
+        if (error) throw error;
+
+        const formattedTags = (tagData || []).map((tag: any) => ({
+          name: tag.name,
+          slug: tag.slug,
+          count: tag.post_tags?.[0]?.count || 0,
+        })).sort((a, b) => b.count - a.count);
+
+        setTags(formattedTags);
+      } catch {
+        showToast("태그 로딩 실패", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTags();
   }, []);
 
   return (

@@ -24,6 +24,7 @@ function WritePageContent() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
+  const [tags, setTags] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
@@ -274,6 +275,19 @@ function WritePageContent() {
               />
             </div>
 
+            {/* Tags Input */}
+            <div>
+              <label className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
+                태그 (쉼표로 구분)
+              </label>
+              <input
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="예: 저작권, 판례, 기술"
+                className="w-full px-3 py-2 bg-cream border border-rule rounded-sm text-sm font-sans text-ink placeholder-muted focus:outline-none focus:border-rust transition-colors"
+              />
+            </div>
 
             {/* Excerpt Input */}
             <div>
