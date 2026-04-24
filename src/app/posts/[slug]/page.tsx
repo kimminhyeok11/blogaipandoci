@@ -2,9 +2,26 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Share2 } from "lucide-react";
+import { marked } from "marked";
 import { supabase } from "@/lib/supabase";
 import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
+
+// marked 설정
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
+
+// 마크다운 처리 함수
+function processMarkdown(text: string): string {
+  if (!text) return "";
+  try {
+    return marked.parse(text) as string;
+  } catch {
+    return text;
+  }
+}
 
 interface PostPageProps {
   params: { slug: string };
@@ -136,9 +153,10 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Article Content */}
         <article className="article-body">
-          <div className="prose-journal whitespace-pre-wrap font-serif text-base leading-loose text-[#2a2420]">
-            {post.content}
-          </div>
+          <div 
+            className="prose-journal font-serif text-base leading-loose text-[#2a2420]"
+            dangerouslySetInnerHTML={{ __html: processMarkdown(post.content) }}
+          />
 
           <div className="ornament">— ✦ —</div>
 
