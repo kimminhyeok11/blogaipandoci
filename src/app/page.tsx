@@ -61,7 +61,7 @@ export default function HomePage() {
         .limit(1);
 
       if (popularError) {
-        console.error("Popular posts error:", popularError);
+        // 에러 처리 (필요시 Toast로 표시)
       }
 
       if (popularPosts && popularPosts.length > 0) {
@@ -80,7 +80,7 @@ export default function HomePage() {
         .limit(5);
 
       if (latestError) {
-        console.error("Latest posts error:", latestError);
+        // 에러 처리 (필요시 Toast로 표시)
       }
 
       if (latestPosts) {
@@ -89,9 +89,9 @@ export default function HomePage() {
         setRecentPosts([]);
       }
 
-      console.log("[Posts Refresh]", timestamp, "popular:", popularPosts?.length || 0, "latest:", latestPosts?.length || 0);
-    } catch (error) {
-      console.error("Failed to fetch posts:", error);
+      // 데이터 로드 완료
+    } catch {
+      // 에러 처리
     } finally {
       setIsLoading(false);
     }

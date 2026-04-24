@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/utils/cn";
+import { useToast } from "@/components/ui/Toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -43,11 +45,13 @@ export default function LoginPage() {
 
         if (signUpError) throw signUpError;
 
-        alert("회원가입이 완료되었습니다. 이메일을 확인해주세요.");
+        showToast("회원가입이 완료되었습니다. 이메일을 확인해주세요.", "success");
         setMode("login");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
+      const msg = err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
+      setError(msg);
+      showToast(msg, "error");
     } finally {
       setIsLoading(false);
     }
@@ -167,16 +171,16 @@ export default function LoginPage() {
                 type="button"
                 onClick={async () => {
                   if (!email.trim()) {
-                    alert("이메일을 입력해주세요.");
+                    showToast("이메일을 입력해주세요.", "warning");
                     return;
                   }
                   const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
                     redirectTo: `${window.location.origin}/auth/reset-password`,
                   });
                   if (error) {
-                    alert(error.message);
+                    showToast(error.message, "error");
                   } else {
-                    alert("비밀번호 재설정 이메일을 보냈습니다.");
+                    showToast("비밀번호 재설정 이메일을 보냈습니다.", "success");
                   }
                 }}
                 className="font-sans text-xs text-muted hover:text-rust transition-colors"

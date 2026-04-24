@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface PostActionsProps {
   postId: string;
@@ -14,6 +15,7 @@ interface PostActionsProps {
 
 export function PostActions({ postId, slug, authorId }: PostActionsProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
 
@@ -36,12 +38,11 @@ export function PostActions({ postId, slug, authorId }: PostActionsProps) {
 
       if (error) throw error;
 
-      alert("글이 삭제되었습니다.");
+      showToast("글이 삭제되었습니다.", "success");
       router.push("/posts");
       router.refresh();
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert("삭제에 실패했습니다.");
+    } catch {
+      showToast("삭제에 실패했습니다.", "error");
     } finally {
       setIsDeleting(false);
     }

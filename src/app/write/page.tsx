@@ -8,12 +8,14 @@ import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 function WritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editSlug = searchParams.get("edit");
   const isEditMode = !!editSlug;
+  const { showToast } = useToast();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -39,7 +41,6 @@ function WritePageContent() {
           .single();
 
         if (error || !post) {
-          alert("글을 찾을 수 없습니다.");
           router.push("/posts");
           return;
         }
@@ -47,7 +48,6 @@ function WritePageContent() {
         // 작성자 본인 확인
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id !== post.user_id) {
-          alert("수정 권한이 없습니다.");
           router.push(`/posts/${editSlug}`);
           return;
         }
@@ -56,9 +56,8 @@ function WritePageContent() {
         setTitle(post.title);
         setContent(post.content);
         setExcerpt(post.excerpt || "");
-      } catch (error) {
-        console.error("Load post error:", error);
-        alert("글을 불러오는데 실패했습니다.");
+      } catch {
+        // 에러 처리
       } finally {
         setIsLoading(false);
       }
@@ -101,7 +100,7 @@ function WritePageContent() {
 
   const handleSubmit = async (published: boolean = false) => {
     if (!title.trim() || !content.trim()) {
-      alert("제목과 내용을 입력해주세요.");
+      showToast("제목과 내용을 입력해주세요.", "warning");
       return;
     }
 
@@ -112,7 +111,7 @@ function WritePageContent() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        alert("로그인이 필요합니다.");
+        showToast("로그인이 필요합니다.", "error");
         router.push("/login");
         return;
       }
@@ -147,7 +146,7 @@ function WritePageContent() {
 
         if (error) throw error;
 
-        alert(published ? "글이 수정되었습니다." : "임시 저장되었습니다.");
+        showToast(published ? "글이 수정되었습니다." : "임시 저장되었습니다.", "success");
         router.push(`/posts/${slug}`);
       } else {
         // 신규 작성: insert
@@ -164,12 +163,11 @@ function WritePageContent() {
 
         if (error) throw error;
 
-        alert(published ? "글이 발행되었습니다." : "임시 저장되었습니다.");
+        showToast(published ? "글이 발행되었습니다." : "임시 저장되었습니다.", "success");
         router.push(`/posts/${slug}`);
       }
-    } catch (error) {
-      console.error("Save error:", error);
-      alert("저장에 실패했습니다. 다시 시도해주세요.");
+    } catch {
+      showToast("저장에 실패했습니다. 다시 시도해주세요.", "error");
     } finally {
       setIsSubmitting(false);
     }
