@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface AdSenseProps {
   slot: string;
@@ -19,20 +19,34 @@ export function AdSense({
   layoutKey,
   responsive = true,
 }: AdSenseProps) {
+  const adRef = useRef<HTMLModElement>(null);
+  const isLoaded = useRef(false);
+
   useEffect(() => {
+    // 로컬호스트에서는 광고 로드 안 함
+    if (typeof window === "undefined") return;
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return;
+    }
+
+    // 중복 로드 방지
+    if (isLoaded.current) return;
+
     // @ts-ignore
-    if (typeof window !== "undefined" && window.adsbygoogle) {
+    if (window.adsbygoogle) {
       try {
+        isLoaded.current = true;
         // @ts-ignore
         window.adsbygoogle.push({});
       } catch (e) {
-        console.error("AdSense error:", e);
+        // 이미 로드된 경우 무시
       }
     }
   }, []);
 
   return (
     <ins
+      ref={adRef}
       className="adsbygoogle"
       style={{
         display: "block",

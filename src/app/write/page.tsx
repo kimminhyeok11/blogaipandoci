@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect, use } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
@@ -11,6 +11,10 @@ import { supabase } from "@/lib/supabase";
 
 export default function WritePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editSlug = searchParams.get("edit");
+  const isEditMode = !!editSlug;
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
@@ -18,6 +22,50 @@ export default function WritePage() {
   const [tags, setTags] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditMode);
+  const [postId, setPostId] = useState<string | null>(null);
+
+  // 수정 모드: 기존 게시글 불러오기
+  useEffect(() => {
+    if (!editSlug) return;
+
+    const loadPost = async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: post, error } = await (supabase as any)
+          .from("posts")
+          .select("*")
+          .eq("slug", editSlug)
+          .single();
+
+        if (error || !post) {
+          alert("글을 찾을 수 없습니다.");
+          router.push("/posts");
+          return;
+        }
+
+        // 작성자 본인 확인
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id !== post.user_id) {
+          alert("수정 권한이 없습니다.");
+          router.push(`/posts/${editSlug}`);
+          return;
+        }
+
+        setPostId(post.id);
+        setTitle(post.title);
+        setContent(post.content);
+        setExcerpt(post.excerpt || "");
+      } catch (error) {
+        console.error("Load post error:", error);
+        alert("글을 불러오는데 실패했습니다.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPost();
+  }, [editSlug, router]);
 
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
     // Compress and convert to WebP
@@ -69,26 +117,48 @@ export default function WritePage() {
         return;
       }
 
-      const slug = generateSlug(title);
+      const slug = isEditMode ? editSlug : generateSlug(title);
       
       // Auto-generate excerpt if not provided
       const finalExcerpt = excerpt.trim() || content.slice(0, 150).replace(/[#*`]/g, "") + "...";
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("posts").insert({
-        user_id: user.id,
-        title: title.trim(),
-        slug,
-        content: content.trim(),
-        excerpt: finalExcerpt,
-        published,
-        published_at: published ? new Date().toISOString() : null,
-      });
+      if (isEditMode && postId) {
+        // 수정 모드: update
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
+          .from("posts")
+          .update({
+            title: title.trim(),
+            content: content.trim(),
+            excerpt: finalExcerpt,
+            published,
+            published_at: published ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", postId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      alert(published ? "글이 발행되었습니다." : "임시 저장되었습니다.");
-      router.push(`/posts/${slug}`);
+        alert(published ? "글이 수정되었습니다." : "임시 저장되었습니다.");
+        router.push(`/posts/${slug}`);
+      } else {
+        // 신규 작성: insert
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from("posts").insert({
+          user_id: user.id,
+          title: title.trim(),
+          slug,
+          content: content.trim(),
+          excerpt: finalExcerpt,
+          published,
+          published_at: published ? new Date().toISOString() : null,
+        });
+
+        if (error) throw error;
+
+        alert(published ? "글이 발행되었습니다." : "임시 저장되었습니다.");
+        router.push(`/posts/${slug}`);
+      }
     } catch (error) {
       console.error("Save error:", error);
       alert("저장에 실패했습니다. 다시 시도해주세요.");
@@ -112,7 +182,7 @@ export default function WritePage() {
                 <ArrowLeft size={20} />
               </Link>
               <h1 className="font-sans text-sm font-medium text-ink">
-                새 글 작성
+                {isEditMode ? "글 수정하기" : "새 글 작성"}
               </h1>
             </div>
 
@@ -145,7 +215,7 @@ export default function WritePage() {
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors disabled:opacity-50"
               >
                 <Save size={14} />
-                발행하기
+                {isEditMode ? "수정완료" : "발행하기"}
               </button>
             </div>
           </div>
@@ -153,7 +223,14 @@ export default function WritePage() {
       </header>
 
       <main className="max-w-content mx-auto px-4 sm:px-6 py-8">
-        {showPreview ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="flex items-center gap-3 text-muted">
+              <Loader2 size={24} className="animate-spin" />
+              <span className="font-sans text-sm">글을 불러오는 중...</span>
+            </div>
+          </div>
+        ) : showPreview ? (
           <div className="prose-journal bg-white border border-rule p-8 rounded-sm">
             <h1 className="headline mb-4">{title || "제목 없음"}</h1>
             {category && (

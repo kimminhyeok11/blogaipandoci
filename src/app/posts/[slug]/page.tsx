@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Share2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Post } from "@/types";
+import { PostActions } from "@/components/posts/PostActions";
 
 interface PostPageProps {
   params: { slug: string };
@@ -99,6 +100,7 @@ export default async function PostPage({ params }: PostPageProps) {
               >
                 <Share2 size={16} />
               </button>
+              <PostActions postId={post.id} slug={post.slug} authorId={post.user_id} />
             </div>
           </div>
         </div>
