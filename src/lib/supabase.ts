@@ -35,6 +35,15 @@ export type PostsTable = {
   Update: Partial<PostsTable['Insert']>;
 };
 
+// 타입 안전한 테이블 헬퍼 - as any 중복 제거
+export const db = {
+  posts: () => supabase.from('posts') as any,
+  users: () => supabase.from('users') as any,
+  tags: () => supabase.from('tags') as any,
+  post_tags: () => supabase.from('post_tags') as any,
+  images: () => supabase.from('images') as any,
+};
+
 // 이미지 업로드 유틸리티
 export const uploadImage = async (
   file: File,

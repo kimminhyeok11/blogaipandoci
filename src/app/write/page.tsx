@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
-import { supabase } from "@/lib/supabase";
+import { supabase, db } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -36,8 +36,7 @@ function WritePageContent() {
 
     const loadPost = async () => {
       try {
-        const { data: post, error } = await (supabase
-          .from("posts") as any)
+        const { data: post, error } = await db.posts()
           .select("*")
           .eq("slug", editSlug)
           .single();
@@ -60,13 +59,13 @@ function WritePageContent() {
         setExcerpt(post.excerpt || "");
 
         // 기존 태그 로드
-        const { data: postTags } = await (supabase.from("post_tags") as any)
+        const { data: postTags } = await db.post_tags()
           .select("tag_id")
           .eq("post_id", post.id);
 
         if (postTags?.length) {
           const tagIds = postTags.map((pt: any) => pt.tag_id);
-          const { data: tagData } = await (supabase.from("tags") as any)
+          const { data: tagData } = await db.tags()
             .select("name")
             .in("id", tagIds);
           
@@ -171,7 +170,7 @@ function WritePageContent() {
 
       if (isEditMode && postId) {
         // 수정 모드: update
-        const { error } = await (supabase.from("posts") as any).update({
+        const { error } = await db.posts().update({
             title: title.trim(),
             content: content.trim(),
             excerpt: finalExcerpt,
@@ -184,14 +183,14 @@ function WritePageContent() {
         if (error) throw error;
 
         // 기존 태그 삭제 후 새 태그 저장
-        await (supabase.from("post_tags") as any).delete().eq("post_id", postId);
+        await db.post_tags().delete().eq("post_id", postId);
         await saveTags(postId, tagList);
 
         showToast(published ? "글이 수정되었습니다." : "임시 저장되었습니다.", "success");
         router.push(`/posts/${slug}`);
       } else {
         // 신규 작성: insert 후 id 받아오기
-        const { data: newPost, error } = await (supabase.from("posts") as any).insert({
+        const { data: newPost, error } = await db.posts().insert({
           user_id: user.id,
           title: title.trim(),
           slug,
@@ -228,14 +227,14 @@ function WritePageContent() {
       const tagSlug = tagName.toLowerCase().replace(/\s+/g, "-");
 
       // 1. 태그 upsert
-      const { data: tagData } = await (supabase.from("tags") as any)
+      const { data: tagData } = await db.tags()
         .upsert({ name: tagName, slug: tagSlug }, { onConflict: "slug" })
         .select("id")
         .single();
 
       if (tagData?.id) {
         // 2. post_tags insert
-        await (supabase.from("post_tags") as any).insert({
+        await db.post_tags().insert({
           post_id: postId,
           tag_id: tagData.id,
         });
