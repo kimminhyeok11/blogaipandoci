@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Loader2 } from "lucide-react";
@@ -13,7 +13,7 @@ interface PostActionsProps {
   authorId: string;
 }
 
-export function PostActions({ postId, slug, authorId }: PostActionsProps) {
+function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -73,3 +73,5 @@ export function PostActions({ postId, slug, authorId }: PostActionsProps) {
     </div>
   );
 }
+
+export const PostActions = memo(PostActionsComponent);

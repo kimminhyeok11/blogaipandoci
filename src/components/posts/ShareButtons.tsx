@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { Check, Copy, Share2 } from "lucide-react";
 
 interface ShareButtonsProps {
   title: string;
 }
 
-export function ShareButtons({ title }: ShareButtonsProps) {
+function ShareButtonsComponent({ title }: ShareButtonsProps) {
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -173,3 +173,5 @@ export function ShareButtons({ title }: ShareButtonsProps) {
     </div>
   );
 }
+
+export const ShareButtons = memo(ShareButtonsComponent);
