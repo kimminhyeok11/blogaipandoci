@@ -136,7 +136,7 @@ async function getPost(slug: string): Promise<Post | null> {
   
   const { data, error } = await supabase
     .from("posts")
-    .select("*, user:users(nickname, avatar_url)")
+    .select("*")
     .eq("slug", slug)
     .eq("published", true)
     .single();

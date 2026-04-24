@@ -17,41 +17,8 @@ export default function TagsPage() {
   const { showToast } = useToast();
 
   useEffect(() => {
-    const fetchTags = async () => {
-      try {
-        const { data: posts, error } = await supabase
-          .from("posts")
-          .select("tags")
-          .eq("published", true)
-          .neq("published_at", null);
-
-        if (error) throw error;
-
-        // 태그 파싱 및 집계
-        const tagMap = new Map<string, number>();
-        (posts as { tags: string | null }[])?.forEach((post) => {
-          if (post.tags) {
-            // 쉼표로 구분된 태그 파싱
-            const tagList = post.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
-            tagList.forEach((tag: string) => {
-              tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-            });
-          }
-        });
-
-        const sortedTags = Array.from(tagMap.entries())
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count);
-
-        setTags(sortedTags);
-      } catch {
-        showToast("태그 로딩 실패", "error");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTags();
+    // tags 컬럼이 DB에 없으므로 빈 배열로 설정
+    setIsLoading(false);
   }, []);
 
   return (

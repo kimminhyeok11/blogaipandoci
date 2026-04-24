@@ -36,7 +36,7 @@ export default function SearchPage() {
     try {
       const { data, error } = await supabase
         .from("posts")
-        .select("id, title, excerpt, slug, category, published_at, view_count")
+        .select("id, title, excerpt, slug, published_at, view_count")
         .eq("published", true)
         .neq("published_at", null)
         .or(`title.ilike.%${searchQuery}%,excerpt.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`)

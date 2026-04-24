@@ -155,14 +155,10 @@ function WritePageContent() {
 
       if (isEditMode && postId) {
         // 수정 모드: update
-        const { error } = await (supabase
-          .from("posts") as any)
-          .update({
+        const { error } = await (supabase.from("posts") as any).update({
             title: title.trim(),
             content: content.trim(),
             excerpt: finalExcerpt,
-            category: category.trim() || null,
-            tags: tags.trim() || null,
             published,
             published_at: published ? new Date().toISOString() : null,
             updated_at: new Date().toISOString(),
@@ -181,8 +177,6 @@ function WritePageContent() {
           slug,
           content: content.trim(),
           excerpt: finalExcerpt,
-          category: category.trim() || null,
-          tags: tags.trim() || null,
           published,
           published_at: published ? new Date().toISOString() : null,
         });

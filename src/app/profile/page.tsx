@@ -46,7 +46,7 @@ export default function ProfilePage() {
           created_at: authUser.created_at,
         });
       } catch {
-        // 에러 처리
+        showToast("프로필 로딩 실패", "error");
       } finally {
         setIsLoading(false);
       }
