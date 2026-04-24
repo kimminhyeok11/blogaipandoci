@@ -134,11 +134,13 @@ async function getPost(slug: string): Promise<Post | null> {
   const supabase = getServerSupabase();
   if (!supabase) return null;
   
+  // posts와 users 조인하여 탈퇴 회원 게시글 제외
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select("*, user:users!inner(is_deleted)")
     .eq("slug", slug)
     .eq("published", true)
+    .eq("users.is_deleted", false)
     .single();
 
   if (error || !data) return null;

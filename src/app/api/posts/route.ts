@@ -12,19 +12,14 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("posts")
-      .select("id, title, excerpt, slug, category, published_at, view_count, user_id")
+      .select("id, title, excerpt, slug, published_at, view_count, user_id")
       .eq("published", true)
       .neq("published_at", null)
       .order("published_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (category) {
-      query = query.eq("category", category);
-    }
-
-    if (tag) {
-      query = query.ilike("tags", `%${tag}%`);
-    }
+    // TODO: 태그 필터링 구현 (post_tags 테이블 조인 필요)
+    // 현재 tag 파라미터는 무시됨
 
     const { data, error, count } = await query;
 

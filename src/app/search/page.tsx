@@ -11,7 +11,6 @@ interface SearchResult {
   title: string;
   excerpt: string;
   slug: string;
-  category: string;
   published_at: string;
   view_count: number;
 }
@@ -125,11 +124,7 @@ export default function SearchPage() {
               >
                 <Link href={`/posts/${post.slug}`} className="block">
                   <div className="flex items-center gap-3 mb-2">
-                    {post.category && (
-                      <span className="font-sans text-2xs text-rust">
-                        {post.category}
-                      </span>
-                    )}
+                    <span className="font-sans text-2xs text-rust">글</span>
                     <span className="text-rule">·</span>
                     <span className="font-sans text-2xs text-muted">
                       {new Date(post.published_at).toLocaleDateString("ko-KR")}

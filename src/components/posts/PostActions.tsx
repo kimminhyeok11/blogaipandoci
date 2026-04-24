@@ -31,9 +31,19 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
       return;
     }
 
+    // 작성자 본인 확인 (API 호출 전 이중 검증)
+    if (currentUser !== authorId) {
+      showToast("삭제 권한이 없습니다.", "error");
+      return;
+    }
+
     setIsDeleting(true);
     try {
-      const { error } = await db.posts().delete().eq("id", postId);
+      // 소유권 검증: user_id가 현재 사용자와 일치하는 게시글만 삭제
+      const { error } = await db.posts()
+        .delete()
+        .eq("id", postId)
+        .eq("user_id", currentUser);
 
       if (error) throw error;
 
