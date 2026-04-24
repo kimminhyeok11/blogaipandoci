@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
@@ -9,7 +9,7 @@ import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
 import { supabase } from "@/lib/supabase";
 
-export default function WritePage() {
+function WritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editSlug = searchParams.get("edit");
@@ -325,5 +325,20 @@ export default function WritePage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function WritePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <div className="flex items-center gap-3 text-muted">
+          <Loader2 size={24} className="animate-spin" />
+          <span className="font-sans text-sm">로딩 중...</span>
+        </div>
+      </div>
+    }>
+      <WritePageContent />
+    </Suspense>
   );
 }
