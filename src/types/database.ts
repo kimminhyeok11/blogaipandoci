@@ -14,6 +14,8 @@ export type Database = {
           published: boolean;
           featured: boolean;
           view_count: number;
+          category: string | null;
+          tags: string | null;
           meta_title: string | null;
           meta_description: string | null;
           created_at: string;

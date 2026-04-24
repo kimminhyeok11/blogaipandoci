@@ -1,6 +1,12 @@
 import { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
 
+interface SitemapPost {
+  slug: string;
+  updated_at: string | null;
+  published_at: string | null;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
 
@@ -27,15 +33,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // 동적 게시글
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: posts } = await (supabase as any)
+  const { data } = await supabase
     .from("posts")
     .select("slug, updated_at, published_at")
     .eq("published", true)
-    .not("published_at", "is", null);
+    .neq("published_at", null);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const postPages = (posts || []).map((post: any) => ({
+  const posts = (data || []) as SitemapPost[];
+
+  const postPages = posts.map((post) => ({
     url: `${baseUrl}/posts/${post.slug}/`,
     lastModified: new Date(post.updated_at || post.published_at || new Date()),
     changeFrequency: "weekly" as const,

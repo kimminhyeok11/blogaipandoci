@@ -1,22 +1,31 @@
 import { supabase } from "@/lib/supabase";
 
+interface RssPost {
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  published_at: string;
+  user: { nickname: string | null } | null;
+}
+
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
 
   // 최신 게시글 20개 가져오기
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: posts } = await (supabase as any)
+  const { data } = await supabase
     .from("posts")
     .select("title, slug, excerpt, content, published_at, user:users(nickname)")
     .eq("published", true)
-    .not("published_at", "is", null)
+    .neq("published_at", null)
     .order("published_at", { ascending: false })
     .limit(20);
 
-  const items = (posts || [])
+  const posts = (data || []) as RssPost[];
+
+  const items = posts
     .map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (post: any) => `
+      (post) => `
     <item>
       <title>${escapeXml(post.title)}</title>
       <link>${baseUrl}/posts/${post.slug}/</link>
