@@ -1,0 +1,209 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f5f0e8;
+  --foreground: #1a1612;
+  --ink: #1a1612;
+  --paper: #f5f0e8;
+  --cream: #ede7d7;
+  --rust: #b84c2a;
+  --rust-light: #d4633f;
+  --gold: #c8963c;
+  --muted: #7a6e62;
+  --rule: #c4b89a;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Noto Serif KR', serif;
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+
+/* 저널리즘 스타일 컴포넌트 */
+@layer components {
+  .masthead {
+    @apply border-b-3 border-double border-ink py-4 px-4 text-center bg-paper sticky top-0 z-50;
+  }
+
+  .masthead-pub {
+    @apply font-sans text-xs tracking-wider text-muted mb-1;
+  }
+
+  .masthead-title {
+    @apply text-3xl font-black text-ink tracking-tight inline-block hover:text-rust transition-colors;
+  }
+
+  .masthead-date {
+    @apply font-sans text-xs text-muted mt-1;
+  }
+
+  .section-label {
+    @apply inline-block font-mono text-2xs tracking-widest uppercase text-rust border-t border-b border-rust py-1 px-3 mb-7;
+  }
+
+  .headline {
+    @apply text-3xl sm:text-4xl md:text-5xl font-black leading-tight tracking-tight text-ink mb-4;
+  }
+
+  .headline em {
+    @apply not-italic text-rust relative;
+  }
+
+  .subheadline {
+    @apply font-sans text-base font-light text-muted max-w-xl mx-auto mb-8 leading-relaxed;
+  }
+
+  .article-body {
+    @apply max-w-article mx-auto px-6 py-14 pb-20;
+  }
+
+  .lead {
+    @apply text-lg font-semibold leading-relaxed text-ink mb-8 pb-8 border-b border-rule;
+  }
+
+  .ornament {
+    @apply text-center text-gold text-lg my-9 tracking-widest;
+  }
+
+  .pull-quote {
+    @apply border-l-4 border-rust py-3 pl-6 my-9;
+  }
+
+  .pull-quote p {
+    @apply text-xl font-bold leading-snug text-rust m-0 italic;
+  }
+
+  .timeline {
+    @apply bg-cream border border-rule p-9 my-10 relative;
+  }
+
+  .highlight-box {
+    @apply bg-white border border-rule border-t-3 border-t-gold p-7 my-10;
+  }
+
+  .law-box {
+    @apply bg-ink text-paper p-8 my-10;
+  }
+
+  .verdict-box {
+    @apply bg-ink text-paper max-w-content mx-auto p-10 grid grid-cols-1 md:grid-cols-3 gap-0 border-t-4 border-rust;
+  }
+}
+
+/* 마크다운 콘텐츠 스타일 */
+@layer components {
+  .prose-journal h2 {
+    @apply text-xl font-black mt-12 mb-4 pt-8 border-t-2 border-ink tracking-tight;
+  }
+
+  .prose-journal h2 .num {
+    @apply font-mono text-xs text-rust block mb-1 tracking-widest;
+  }
+
+  .prose-journal p {
+    @apply text-base leading-loose mb-5 text-[#2a2420];
+  }
+
+  .prose-journal strong {
+    @apply font-bold;
+  }
+
+  .prose-journal em {
+    @apply italic;
+  }
+
+  .prose-journal blockquote {
+    @apply border-l-4 border-rust pl-6 py-3 my-9;
+  }
+
+  .prose-journal blockquote p {
+    @apply text-xl font-bold leading-snug text-rust italic m-0;
+  }
+
+  .prose-journal ul, .prose-journal ol {
+    @apply my-6 pl-6;
+  }
+
+  .prose-journal li {
+    @apply mb-2 leading-relaxed;
+  }
+
+  .prose-journal a {
+    @apply text-rust underline underline-offset-2 hover:text-rust-light transition-colors;
+  }
+
+  .prose-journal img {
+    @apply w-full h-auto my-8 rounded-sm;
+  }
+
+  .prose-journal pre {
+    @apply bg-cream p-4 my-6 overflow-x-auto text-sm font-mono rounded-sm;
+  }
+
+  .prose-journal code {
+    @apply bg-cream px-1.5 py-0.5 text-sm font-mono rounded-sm;
+  }
+
+  .prose-journal pre code {
+    @apply bg-transparent p-0;
+  }
+}
+
+/* 모바일 최적화 */
+@layer utilities {
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--rule);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* 선택 텍스트 색상 */
+::selection {
+  background: var(--rust);
+  color: var(--paper);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
