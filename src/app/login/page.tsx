@@ -18,9 +18,40 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<"login" | "register">("login");
 
+  // 이메일 형식 검증
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // 입력값 검증
+    if (!email.trim()) {
+      setError("이메일을 입력해주세요.");
+      showToast("이메일을 입력해주세요.", "warning");
+      return;
+    }
+
+    if (!isValidEmail(email.trim())) {
+      setError("올바른 이메일 형식이 아닙니다.");
+      showToast("올바른 이메일 형식이 아닙니다.", "warning");
+      return;
+    }
+
+    if (!password) {
+      setError("비밀번호를 입력해주세요.");
+      showToast("비밀번호를 입력해주세요.", "warning");
+      return;
+    }
+
+    if (mode === "register" && password.length < 6) {
+      setError("비밀번호는 최소 6자 이상이어야 합니다.");
+      showToast("비밀번호는 최소 6자 이상이어야 합니다.", "warning");
+      return;
+    }
+
     setIsLoading(true);
 
     try {

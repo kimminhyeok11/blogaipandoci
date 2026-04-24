@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { marked } from "marked";
 import { supabase } from "@/lib/supabase";
 import type { Post } from "@/types";
@@ -205,12 +205,6 @@ export default async function PostPage({ params }: PostPageProps) {
               홈으로
             </Link>
             <div className="flex items-center gap-2">
-              <button
-                className="p-2 text-muted hover:text-rust transition-colors"
-                aria-label="공유하기"
-              >
-                <Share2 size={16} />
-              </button>
               <PostActions postId={post.id} slug={post.slug} authorId={post.user_id} />
             </div>
           </div>

@@ -307,6 +307,79 @@ const slug = `${baseSlug}-${timestamp}`;
 
 ---
 
+## 👤 사용자 시나리오 및 예외처리
+
+### 1. 인증 플로우
+| 시나리오 | 처리 | 파일 |
+|----------|------|------|
+| 로그인 | 이메일 형식 검증, 비밀번호 6자 이상 | `login/page.tsx` |
+| 회원가입 | 동일 검증 + 이메일 확인 메일 발송 | `login/page.tsx` |
+| 비밀번호 재설정 | `/auth/reset-password` 페이지에서 처리 | `auth/reset-password/page.tsx` |
+| 미로그인 사용자 | Toast 메시지 후 로그인 페이지로 리다이렉트 | `write/page.tsx` |
+
+### 2. 글 작성/수정 플로우
+| 시나리오 | 검증 | 처리 |
+|----------|------|------|
+| 제목 입력 | 최소 2자 이상 | Toast warning |
+| 내용 입력 | 최소 10자 이상 | Toast warning |
+| 임시저장 | published=false, published_at=null | 메인에 표시 안 됨 |
+| 발행 | published=true, published_at=현재시간 | 메인에 표시됨 |
+| 수정 권한 | 작성자 본인만 수정 가능 | 권한 없으면 리다이렉트 |
+| 이미지 업로드 | 1MB 이하, WebP 변환 | 실패 시 무시 (UX 개선) |
+
+### 3. 글 조회 플로우
+| 시나리오 | 처리 | 파일 |
+|----------|------|------|
+| 목록 조회 | published=true + published_at!=null | `page.tsx`, `posts/page.tsx` |
+| 상세 조회 | published=true만 (비공개 글은 작성자만) | `posts/[slug]/page.tsx` |
+| 존재하지 않는 글 | 404 notFound() | `posts/[slug]/page.tsx` |
+| 삭제 | confirm()으로 확인, 성공 시 목록으로 | `PostActions.tsx` |
+
+### 4. 입력값 검증 패턴
+```typescript
+// 이메일 검증
+const isValidEmail = (email: string) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+// 제목/내용 길이 검증
+if (title.trim().length < 2) {
+  showToast("제목은 최소 2자 이상이어야 합니다.", "warning");
+  return;
+}
+
+// 비밀번호 검증 (회원가입 시)
+if (password.length < 6) {
+  showToast("비밀번호는 최소 6자 이상이어야 합니다.", "warning");
+  return;
+}
+```
+
+### 5. 에러 처리 패턴
+```typescript
+// 1. 사용자에게 피드백 (Toast)
+try {
+  await saveData();
+  showToast("저장되었습니다.", "success");
+} catch {
+  showToast("저장에 실패했습니다.", "error");
+}
+
+// 2. 조용히 처리 (console 제거)
+try {
+  await fetchData();
+} catch {
+  // 에러 처리
+}
+
+// 3. 리다이렉트
+if (!user) {
+  showToast("로그인이 필요합니다.", "error");
+  router.push("/login");
+  return;
+}
+```
+
 ## 🧹 클린 코드 표준
 
 ### 금지 항목 (Production Code)

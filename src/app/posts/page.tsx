@@ -9,15 +9,18 @@ export const metadata: Metadata = {
   description: "法 BLOG의 모든 게시글을 확인하세요.",
 };
 
+export const revalidate = 60; // 60초마다 재검증
+
 async function getPosts(): Promise<Post[]> {
   const { data, error } = await supabase
     .from("posts")
     .select("*, user:users(nickname)")
     .eq("published", true)
+    .neq("published_at", null)
     .order("published_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching posts:", error);
+    // 에러 발생 시 빈 배열 반환
     return [];
   }
 

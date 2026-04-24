@@ -56,6 +56,8 @@ function WritePageContent() {
         setTitle(post.title);
         setContent(post.content);
         setExcerpt(post.excerpt || "");
+        setCategory(post.category || "");
+        setTags(post.tags || "");
       } catch {
         // 에러 처리
       } finally {
@@ -99,8 +101,24 @@ function WritePageContent() {
   }, []);
 
   const handleSubmit = async (published: boolean = false) => {
-    if (!title.trim() || !content.trim()) {
-      showToast("제목과 내용을 입력해주세요.", "warning");
+    // 유효성 검사
+    if (!title.trim()) {
+      showToast("제목을 입력해주세요.", "warning");
+      return;
+    }
+
+    if (title.trim().length < 2) {
+      showToast("제목은 최소 2자 이상이어야 합니다.", "warning");
+      return;
+    }
+
+    if (!content.trim()) {
+      showToast("내용을 입력해주세요.", "warning");
+      return;
+    }
+
+    if (content.trim().length < 10) {
+      showToast("내용은 최소 10자 이상이어야 합니다.", "warning");
       return;
     }
 
@@ -138,6 +156,8 @@ function WritePageContent() {
             title: title.trim(),
             content: content.trim(),
             excerpt: finalExcerpt,
+            category: category.trim() || null,
+            tags: tags.trim() || null,
             published,
             published_at: published ? new Date().toISOString() : null,
             updated_at: new Date().toISOString(),
@@ -157,6 +177,8 @@ function WritePageContent() {
           slug,
           content: content.trim(),
           excerpt: finalExcerpt,
+          category: category.trim() || null,
+          tags: tags.trim() || null,
           published,
           published_at: published ? new Date().toISOString() : null,
         });
