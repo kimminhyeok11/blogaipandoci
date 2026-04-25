@@ -134,16 +134,24 @@ async function getPost(slug: string): Promise<Post | null> {
   const supabase = getServerSupabase();
   if (!supabase) return null;
   
-  // posts와 users 조인하여 탈퇴 회원 게시글 제외
+  // URL 디코딩 (한글/특수문자 처리)
+  const decodedSlug = decodeURIComponent(slug);
+  console.log("[DEBUG] getPost - original slug:", slug);
+  console.log("[DEBUG] getPost - decoded slug:", decodedSlug);
+  
   const { data, error } = await supabase
     .from("posts")
-    .select("*, user:users!inner(is_deleted)")
-    .eq("slug", slug)
+    .select("*, user:users(nickname, avatar_url)")
+    .eq("slug", decodedSlug)
     .eq("published", true)
-    .eq("users.is_deleted", false)
     .single();
 
-  if (error || !data) return null;
+  if (error) {
+    console.error("[DEBUG] getPost error:", error);
+    return null;
+  }
+  
+  console.log("[DEBUG] getPost - data found:", !!data);
   return data as Post;
 }
 

@@ -145,8 +145,12 @@ function WritePageContent() {
     setIsSubmitting(true);
 
     try {
-      // Check auth
-      if (!user) {
+      // Check auth directly from supabase (more reliable than useAuth hook)
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      console.log("[DEBUG] Submit - currentUser:", currentUser?.id);
+      console.log("[DEBUG] Submit - isEditMode:", isEditMode, "postId:", postId);
+      
+      if (!currentUser) {
         showToast("로그인이 필요합니다.", "error");
         router.push("/login");
         return;
@@ -170,6 +174,7 @@ function WritePageContent() {
 
       if (isEditMode && postId) {
         // 수정 모드: update
+        console.log("[DEBUG] Updating post:", postId, "by user:", currentUser.id);
         const { error } = await db.posts().update({
             title: title.trim(),
             content: content.trim(),
@@ -180,7 +185,11 @@ function WritePageContent() {
           })
           .eq("id", postId);
 
-        if (error) throw error;
+        if (error) {
+          console.error("[DEBUG] Update error:", error);
+          throw error;
+        }
+        console.log("[DEBUG] Update successful");
 
         // 기존 태그 삭제 후 새 태그 저장
         await db.post_tags().delete().eq("post_id", postId);
@@ -191,7 +200,7 @@ function WritePageContent() {
       } else {
         // 신규 작성: insert 후 id 받아오기
         const { data: newPost, error } = await db.posts().insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           title: title.trim(),
           slug,
           content: content.trim(),

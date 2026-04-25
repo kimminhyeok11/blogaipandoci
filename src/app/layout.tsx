@@ -4,7 +4,6 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 
-// 폰트 최적화
 const notoSerifKR = Noto_Serif_KR({
   subsets: ["latin"],
   weight: ["400", "600", "700", "900"],
@@ -37,14 +36,14 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app"),
   title: {
-    default: "法 BLOG - 깊이 있는 분석과 인사이트",
-    template: "%s | 法 BLOG",
+    default: "BLOG - Deep Analysis & Insights",
+    template: "%s | BLOG",
   },
-  description: "법률, 기술, 비즈니스에 대한 깊이 있는 분석과 인사이트가 담긴 블로그입니다.",
-  keywords: ["블로그", "법률", "기술", "분석", "인사이트"],
-  authors: [{ name: "法 BLOG" }],
-  creator: "法 BLOG",
-  publisher: "法 BLOG",
+  description: "A blog featuring in-depth analysis and insights on law, technology, and business.",
+  keywords: ["blog", "law", "tech", "analysis", "insights"],
+  authors: [{ name: "BLOG" }],
+  creator: "BLOG",
+  publisher: "BLOG",
   formatDetection: {
     email: false,
     address: false,
@@ -54,22 +53,22 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ko_KR",
     url: "/",
-    siteName: "法 BLOG",
-    title: "法 BLOG - 깊이 있는 분석과 인사이트",
-    description: "법률, 기술, 비즈니스에 대한 깊이 있는 분석과 인사이트가 담긴 블로그입니다.",
+    siteName: "BLOG",
+    title: "BLOG - Deep Analysis & Insights",
+    description: "A blog featuring in-depth analysis and insights on law, technology, and business.",
     images: [
       {
         url: "/opengraph-image.png",
         width: 1200,
         height: 630,
-        alt: "法 BLOG",
+        alt: "BLOG",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "法 BLOG - 깊이 있는 분석과 인사이트",
-    description: "법률, 기술, 비즈니스에 대한 깊이 있는 분석과 인사이트가 담긴 블로그입니다.",
+    title: "BLOG - Deep Analysis & Insights",
+    description: "A blog featuring in-depth analysis and insights on law, technology, and business.",
     images: ["/twitter-image.png"],
   },
   robots: {
@@ -108,11 +107,8 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${notoSerifKR.variable} ${notoSansKR.variable} ${dmMono.variable}`}>
       <head>
-        {/* Preconnect to critical domains */}
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
-        
-        {/* Google AdSense */}
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112"

@@ -205,9 +205,9 @@ export default function HomePage() {
                 <span className="hidden sm:inline">글쓰기</span>
               </Link>
               <Link
-                href="/login"
+                href={user ? "/profile" : "/login"}
                 className="p-2 text-muted hover:text-rust transition-colors"
-                aria-label="로그인"
+                aria-label={user ? "마이페이지" : "로그인"}
               >
                 <User size={18} />
               </Link>

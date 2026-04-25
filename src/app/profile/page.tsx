@@ -32,11 +32,10 @@ export default function ProfilePage() {
           return;
         }
 
-        // 사용자 프로필 정보 가져오기 (탈퇴 회원 제외)
+        // 사용자 프로필 정보 가져오기
         const { data: profile } = await db.users()
           .select("nickname, avatar_url")
           .eq("id", authUser.id)
-          .eq("is_deleted", false)
           .single();
 
         setUser({
