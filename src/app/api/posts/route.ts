@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       .from("posts")
       .select("id, title, excerpt, slug, published_at, view_count, user_id")
       .eq("published", true)
-      .neq("published_at", null)
+      .not("published_at", "is", null)
       .order("published_at", { ascending: false })
       .range(offset, offset + limit - 1);
 

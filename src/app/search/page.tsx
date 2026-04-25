@@ -37,7 +37,7 @@ export default function SearchPage() {
         .from("posts")
         .select("id, title, excerpt, slug, published_at, view_count")
         .eq("published", true)
-        .neq("published_at", null)
+        .not("published_at", "is", null)
         .or(`title.ilike.%${searchQuery}%,excerpt.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`)
         .order("published_at", { ascending: false })
         .limit(20);

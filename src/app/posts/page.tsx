@@ -30,7 +30,7 @@ async function getPosts(): Promise<Post[]> {
     .from("posts")
     .select("*, user:users(nickname)")
     .eq("published", true)
-    .neq("published_at", null)
+    .not("published_at", "is", null)
     .order("published_at", { ascending: false });
 
   if (error) {

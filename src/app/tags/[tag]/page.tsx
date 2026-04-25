@@ -58,7 +58,7 @@ export default function TagPage() {
           .from("posts")
           .select("id, title, excerpt, slug, published_at, view_count")
           .eq("published", true)
-          .neq("published_at", null)
+          .not("published_at", "is", null)
           .in("id", postIds)
           .order("published_at", { ascending: false });
 

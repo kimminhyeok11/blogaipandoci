@@ -17,7 +17,7 @@ export async function GET() {
     .from("posts")
     .select("title, slug, excerpt, content, published_at, user:users(nickname)")
     .eq("published", true)
-    .neq("published_at", null)
+    .not("published_at", "is", null)
     .order("published_at", { ascending: false })
     .limit(20);
 

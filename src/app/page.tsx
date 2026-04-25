@@ -62,7 +62,7 @@ export default function HomePage() {
         .from("posts")
         .select("id, title, excerpt, slug, published_at, view_count, user_id")
         .eq("published", true)
-        .neq("published_at", null)
+        .not("published_at", "is", null)
         .order("view_count", { ascending: false })
         .limit(1);
 
@@ -81,7 +81,7 @@ export default function HomePage() {
         console.log("[DEBUG] Featured post set:", (popularPosts[0] as any).title);
         setFeaturedPost(popularPosts[0]);
       } else {
-        console.log("[DEBUG] No featured post (condition: published=true, published_at!=null)");
+        console.log("[DEBUG] No featured post (condition: published=true, published_at is not null)");
         setFeaturedPost(null);
       }
 
@@ -91,7 +91,7 @@ export default function HomePage() {
         .from("posts")
         .select("id, title, excerpt, slug, published_at, view_count, user_id")
         .eq("published", true)
-        .neq("published_at", null)
+        .not("published_at", "is", null)
         .order("published_at", { ascending: false })
         .limit(5);
 
@@ -110,7 +110,7 @@ export default function HomePage() {
         console.log("[DEBUG] Latest posts list:", (latestPosts as any[]).map(p => ({ id: p.id, title: p.title, published: p.published_at })));
         setRecentPosts(latestPosts);
       } else {
-        console.log("[DEBUG] No latest posts (condition: published=true, published_at!=null)");
+        console.log("[DEBUG] No latest posts (condition: published=true, published_at is not null)");
         setRecentPosts([]);
       }
 

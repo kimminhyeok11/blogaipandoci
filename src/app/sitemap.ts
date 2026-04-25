@@ -37,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from("posts")
     .select("slug, updated_at, published_at")
     .eq("published", true)
-    .neq("published_at", null);
+    .not("published_at", "is", null);
 
   const posts = (data || []) as SitemapPost[];
 
