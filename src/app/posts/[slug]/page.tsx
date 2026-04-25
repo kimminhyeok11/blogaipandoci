@@ -8,6 +8,13 @@ import { createClient } from "@supabase/supabase-js";
 import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
 import { ShareButtons } from "@/components/posts/ShareButtons";
+import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
+
+// 동적 렌더링 - 데이터 변경 시 즉시 반영
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // 서버용 Supabase 클라이언트 생성
 function getServerSupabase() {
@@ -160,6 +167,7 @@ async function getPost(slug: string): Promise<Post | null> {
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const post = await getPost(params.slug);
+  const postUrl = `${SITE_URL}/posts/${params.slug}/`;
 
   if (!post) {
     return {
@@ -167,19 +175,29 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     };
   }
 
+  const description = (post.meta_description || post.excerpt || "").slice(0, 150);
+
   return {
     title: post.meta_title || post.title,
-    description: post.meta_description || post.excerpt || undefined,
+    description,
+    keywords: post.title.split(" ").filter((w: string) => w.length > 1),
+    authors: post.user?.nickname ? [{ name: post.user.nickname }] : undefined,
     openGraph: {
       title: post.title,
-      description: post.excerpt || undefined,
+      description,
       type: "article",
+      locale: "ko_KR",
+      url: postUrl,
+      siteName: "法 BLOG",
       publishedTime: post.published_at || undefined,
+      modifiedTime: post.updated_at || undefined,
       authors: post.user?.nickname ? [post.user.nickname] : undefined,
       images: post.cover_image
         ? [
             {
               url: post.cover_image,
+              width: 1200,
+              height: 630,
               alt: post.cover_image_alt || post.title,
             },
           ]
@@ -188,8 +206,11 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     twitter: {
       card: "summary_large_image",
       title: post.title,
-      description: post.excerpt || undefined,
+      description,
       images: post.cover_image ? [post.cover_image] : undefined,
+    },
+    alternates: {
+      canonical: postUrl,
     },
   };
 }
@@ -201,8 +222,31 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
+  // 본문에서 첫 이미지 추출 (Article Schema용)
+  const imgMatch = post.content?.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
+  const firstImage = post.cover_image || imgMatch?.[1] || undefined;
+  const postUrl = `${SITE_URL}/posts/${post.slug}/`;
+
   return (
     <div className="min-h-screen bg-paper">
+      {/* 구조화 데이터 (JSON-LD) */}
+      <ArticleSchema
+        title={post.title}
+        description={post.excerpt || undefined}
+        author={post.user?.nickname || "익명"}
+        authorId={post.user_id}
+        datePublished={post.published_at || post.created_at}
+        dateModified={post.updated_at || undefined}
+        url={postUrl}
+        image={firstImage}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: "홈", url: SITE_URL },
+          { name: "글 목록", url: `${SITE_URL}/posts/` },
+          { name: post.title, url: postUrl },
+        ]}
+      />
       {/* Header */}
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>

@@ -3,6 +3,9 @@ import { Noto_Serif_KR, Noto_Sans_KR, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
 
 const notoSerifKR = Noto_Serif_KR({
   subsets: ["latin"],
@@ -34,16 +37,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "BLOG - Deep Analysis & Insights",
-    template: "%s | BLOG",
+    default: "法 BLOG - 법률, 기술, 비즈니스 깊이 있는 분석",
+    template: "%s | 法 BLOG",
   },
-  description: "A blog featuring in-depth analysis and insights on law, technology, and business.",
-  keywords: ["blog", "law", "tech", "analysis", "insights"],
-  authors: [{ name: "BLOG" }],
-  creator: "BLOG",
-  publisher: "BLOG",
+  description: "법률, 기술, 비즈니스에 관한 깊이 있는 분석과 인사이트를 제공하는 블로그",
+  keywords: ["법률 블로그", "기술 분석", "비즈니스 인사이트", "법률 해설", "IT 트렌드"],
+  authors: [{ name: "法 BLOG" }],
+  creator: "法 BLOG",
+  publisher: "法 BLOG",
   formatDetection: {
     email: false,
     address: false,
@@ -52,24 +55,24 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "/",
-    siteName: "BLOG",
-    title: "BLOG - Deep Analysis & Insights",
-    description: "A blog featuring in-depth analysis and insights on law, technology, and business.",
+    url: SITE_URL,
+    siteName: "法 BLOG",
+    title: "法 BLOG - 법률, 기술, 비즈니스 깊이 있는 분석",
+    description: "법률, 기술, 비즈니스에 관한 깊이 있는 분석과 인사이트를 제공하는 블로그",
     images: [
       {
         url: "/opengraph-image.png",
         width: 1200,
         height: 630,
-        alt: "BLOG",
+        alt: "法 BLOG - 깊이 있는 분석과 인사이트",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BLOG - Deep Analysis & Insights",
-    description: "A blog featuring in-depth analysis and insights on law, technology, and business.",
-    images: ["/twitter-image.png"],
+    title: "法 BLOG - 법률, 기술, 비즈니스 깊이 있는 분석",
+    description: "법률, 기술, 비즈니스에 관한 깊이 있는 분석과 인사이트를 제공하는 블로그",
+    images: ["/opengraph-image.png"],
   },
   robots: {
     index: true,
@@ -89,14 +92,15 @@ export const metadata: Metadata = {
     "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || "",
   },
   alternates: {
-    canonical: "/",
+    canonical: SITE_URL,
   },
   icons: {
-    icon: "/icon.png",
+    icon: [
+      { url: "/icon.png", sizes: "32x32", type: "image/png" },
+    ],
     shortcut: "/favicon.ico.jpg",
     apple: "/apple-touch-icon.png",
   },
-  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -107,6 +111,8 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${notoSerifKR.variable} ${notoSansKR.variable} ${dmMono.variable}`}>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
         <script
@@ -114,6 +120,8 @@ export default function RootLayout({
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112"
           crossOrigin="anonymous"
         />
+        <OrganizationSchema />
+        <WebSiteSchema />
       </head>
       <body className="antialiased min-h-screen font-serif">
         <AuthProvider>
