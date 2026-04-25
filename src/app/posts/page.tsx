@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   description: "法 BLOG의 모든 게시글을 확인하세요.",
 };
 
+// 동적 렌더링 - 데이터 변경 시 즉시 반영
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // 서버용 Supabase 클라이언트 생성
 function getServerSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
