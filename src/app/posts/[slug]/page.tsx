@@ -144,6 +144,7 @@ async function getPost(slug: string): Promise<Post | null> {
     .select("*, user:users(nickname, avatar_url)")
     .eq("slug", decodedSlug)
     .eq("published", true)
+    .not("published_at", "is", null)  // 메인페이지와 동일한 조건
     .single();
 
   if (error) {
