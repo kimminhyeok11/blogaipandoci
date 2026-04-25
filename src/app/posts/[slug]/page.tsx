@@ -99,13 +99,15 @@ const renderer = {
   },
 
   // 볼드 텍스트 렌더링
-  strong(token: { text: string }) {
-    return `<strong class="font-bold text-ink">${token.text}</strong>`;
+  strong(token: { raw: string; text?: string }) {
+    const content = token.text || token.raw || "";
+    return `<strong class="font-bold text-ink">${content}</strong>`;
   },
 
   // 이탤릭 텍스트 렌더링
-  em(token: { text: string }) {
-    return `<em class="italic">${token.text}</em>`;
+  em(token: { raw: string; text?: string }) {
+    const content = token.text || token.raw || "";
+    return `<em class="italic">${content}</em>`;
   },
 };
 
