@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import type { Post } from "@/types";
-import { ArrowLeft } from "lucide-react";
+import { StickyNav } from "@/components/layout/StickyNav";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
 
@@ -77,23 +77,8 @@ export default async function PostsPage() {
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="border-b border-rule bg-paper">
-        <div className="max-w-content mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-12">
-            <Link
-              href="/"
-              className="flex items-center gap-1 font-sans text-xs font-medium text-muted hover:text-rust transition-colors"
-            >
-              <ArrowLeft size={14} />
-              홈으로
-            </Link>
-            <span className="font-sans text-xs text-muted">
-              총 {posts.length}개의 글
-            </span>
-          </div>
-        </div>
-      </nav>
+      {/* Navigation - 스마트 스티키 헤더 */}
+      <StickyNav backHref="/" backLabel="홈으로" />
 
       <main className="max-w-content mx-auto px-4 sm:px-6 py-12">
         <div className="mb-8">

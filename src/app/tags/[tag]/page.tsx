@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Tag, Loader2 } from "lucide-react";
+import { Tag, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
+import { StickyNav } from "@/components/layout/StickyNav";
 
 interface Post {
   id: string;
@@ -84,20 +85,8 @@ export default function TagPage() {
         </Link>
       </header>
 
-      {/* Navigation */}
-      <nav className="border-b border-rule bg-paper">
-        <div className="max-w-content mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-12">
-            <Link
-              href="/tags"
-              className="flex items-center gap-1 font-sans text-xs font-medium text-muted hover:text-rust transition-colors"
-            >
-              <ArrowLeft size={14} />
-              모든 태그
-            </Link>
-          </div>
-        </div>
-      </nav>
+      {/* Navigation - 스마트 스티키 헤더 */}
+      <StickyNav backHref="/tags" backLabel="모든 태그" />
 
       <main className="max-w-content mx-auto px-4 sm:px-6 py-16">
         <div className="mb-8">

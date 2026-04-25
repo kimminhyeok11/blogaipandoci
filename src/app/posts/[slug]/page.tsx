@@ -2,13 +2,13 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { marked } from "marked";
 import { createClient } from "@supabase/supabase-js";
 import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
 import { ShareButtons } from "@/components/posts/ShareButtons";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
+import { StickyNav } from "@/components/layout/StickyNav";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
 
@@ -262,23 +262,11 @@ export default async function PostPage({ params }: PostPageProps) {
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="border-b border-rule bg-paper">
-        <div className="max-w-content mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-12">
-            <Link
-              href="/"
-              className="flex items-center gap-1 font-sans text-xs font-medium text-muted hover:text-rust transition-colors"
-            >
-              <ArrowLeft size={14} />
-              홈으로
-            </Link>
-            <div className="flex items-center gap-2">
-              <PostActions postId={post.id} slug={post.slug} authorId={post.user_id} />
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* Navigation - 스마트 스티키 헤더 */}
+      <StickyNav backHref="/" backLabel="홈으로" />
+      <div className="flex justify-end max-w-content mx-auto px-4 sm:px-6 py-2">
+        <PostActions postId={post.id} slug={post.slug} authorId={post.user_id} />
+      </div>
 
       <main>
         {/* Hero */}

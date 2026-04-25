@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Tag, Loader2 } from "lucide-react";
+import { Tag, Loader2 } from "lucide-react";
+import { StickyNav } from "@/components/layout/StickyNav";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 
@@ -53,19 +54,7 @@ export default function TagsPage() {
         </Link>
       </header>
 
-      <nav className="border-b border-rule bg-paper">
-        <div className="max-w-content mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-12">
-            <Link
-              href="/"
-              className="flex items-center gap-1 font-sans text-xs font-medium text-muted hover:text-rust transition-colors"
-            >
-              <ArrowLeft size={14} />
-              홈으로
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <StickyNav backHref="/" backLabel="홈으로" />
 
       <main className="max-w-content mx-auto px-4 sm:px-6 py-16">
         <div className="mb-8">
