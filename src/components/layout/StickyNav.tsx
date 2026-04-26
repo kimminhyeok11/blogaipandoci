@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Search, PenSquare, User, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -13,25 +13,28 @@ interface StickyNavProps {
 
 export function StickyNav({ backHref = "/", backLabel = "홈으로", showFullNav = false }: StickyNavProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollY = useRef(0);
   const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      const prevScrollY = lastScrollY.current;
 
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      // 아래로 스크롤 & 100px 초과 시 숨김
+      if (currentScrollY > prevScrollY && currentScrollY > 100) {
         setIsVisible(false);
       } else {
+        // 위로 스크롤 or 최상단 시 표시
         setIsVisible(true);
       }
 
-      setLastScrollY(currentScrollY);
+      lastScrollY.current = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   return (
     <nav
