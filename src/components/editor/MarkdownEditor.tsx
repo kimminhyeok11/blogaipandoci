@@ -185,7 +185,7 @@ export function MarkdownEditor({
           >
             {value ? (
               <div
-                className="markdown-preview prose-journal whitespace-pre-wrap font-serif text-base leading-loose text-ink"
+                className="markdown-preview font-serif text-base leading-loose text-ink"
                 dangerouslySetInnerHTML={{
                   __html: processMarkdown(value)
                 }}

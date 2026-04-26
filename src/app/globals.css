@@ -146,12 +146,66 @@ body {
     @apply text-xl font-bold leading-snug text-rust italic m-0;
   }
 
-  .prose-journal ul, .prose-journal ol {
+  .prose-journal ul {
     @apply my-6 pl-6;
+    list-style-type: disc;
+  }
+
+  .prose-journal ol {
+    @apply my-6 pl-6;
+    list-style-type: decimal;
+  }
+
+  .prose-journal ul ul {
+    list-style-type: circle;
+    @apply mt-1 mb-0;
+  }
+
+  .prose-journal ol ol {
+    list-style-type: lower-alpha;
+    @apply mt-1 mb-0;
   }
 
   .prose-journal li {
     @apply mb-2 leading-relaxed;
+    display: list-item;
+  }
+
+  .prose-journal li > ul,
+  .prose-journal li > ol {
+    @apply mt-1 mb-0;
+  }
+
+  .prose-journal figure {
+    @apply my-6;
+  }
+
+  .prose-journal figure img {
+    @apply my-0;
+  }
+
+  .prose-journal figcaption {
+    @apply text-center text-xs text-muted mt-2 font-sans;
+  }
+
+  .prose-journal del {
+    @apply line-through text-muted;
+  }
+
+  .prose-journal table {
+    @apply w-full border-collapse my-6 text-sm;
+  }
+
+  .prose-journal th {
+    @apply border border-rule px-3 py-2 bg-cream font-bold text-left;
+  }
+
+  .prose-journal td {
+    @apply border border-rule px-3 py-2;
+  }
+
+  .prose-journal hr {
+    @apply border-t border-rule my-8;
   }
 
   .prose-journal a {
