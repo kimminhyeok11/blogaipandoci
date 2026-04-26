@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading, Code, Eye, Edit3, CheckSquare } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading, Code, Eye, Edit3, CheckSquare, ChevronDown } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { processMarkdown } from "@/lib/markdown";
 import { useToast } from "@/components/ui/Toast";
@@ -47,7 +47,11 @@ export function MarkdownEditor({
     }, 0);
   }, [value, onChange]);
 
-  const insertHeading = () => insertText("## ", "\n\n");
+  // 제목 삽입 (레벨 1~6)
+  const insertHeading = useCallback((level: number = 2) => {
+    const hashes = '#'.repeat(level);
+    insertText(`${hashes} `, '\n\n');
+  }, [insertText]);
   const insertBold = () => insertText("**", "**");
   const insertItalic = () => insertText("*", "*");
   const insertQuote = () => insertText("> ", "\n");
@@ -194,15 +198,15 @@ export function MarkdownEditor({
       return;
     }
 
-    // 단축키: Ctrl/Cmd + L (순서 없는 목록)
-    if (isMod && e.key === 'l' && !e.shiftKey) {
+    // 단축키: Ctrl/Cmd + Shift + U (순서 없는 목록 - U: Unordered)
+    if (isMod && e.shiftKey && e.key === 'u') {
       e.preventDefault();
       insertUnorderedList();
       return;
     }
 
-    // 단축키: Ctrl/Cmd + Shift + L (순서 있는 목록)
-    if (isMod && e.shiftKey && e.key === 'L') {
+    // 단축키: Ctrl/Cmd + Shift + O (순서 있는 목록 - O: Ordered)
+    if (isMod && e.shiftKey && e.key === 'o') {
       e.preventDefault();
       insertOrderedList();
       return;
@@ -325,22 +329,69 @@ export function MarkdownEditor({
     }
   }, [onImageUpload, insertText, showToast]);
 
+  // 툴바 버튼 정의 (단축키 설명 포함)
   const toolbarButtons = [
-    { icon: Heading, action: insertHeading, title: "제목" },
-    { icon: Bold, action: insertBold, title: "굵게" },
-    { icon: Italic, action: insertItalic, title: "기울임" },
-    { icon: Quote, action: insertQuote, title: "인용" },
-    { icon: List, action: insertUnorderedList, title: "목록" },
-    { icon: ListOrdered, action: insertOrderedList, title: "번호 목록" },
-    { icon: CheckSquare, action: insertChecklist, title: "체크리스트" },
-    { icon: LinkIcon, action: insertLink, title: "링크" },
-    { icon: Code, action: insertCode, title: "코드 블록" },
+    { icon: Bold, action: insertBold, title: "굵게 (Ctrl+B)", shortcut: "Ctrl+B" },
+    { icon: Italic, action: insertItalic, title: "기울임 (Ctrl+I)", shortcut: "Ctrl+I" },
+    { icon: Quote, action: insertQuote, title: "인용 (Ctrl+.)", shortcut: "Ctrl+." },
+    { icon: List, action: insertUnorderedList, title: "목록 (Ctrl+Shift+U)", shortcut: "Ctrl+Shift+U" },
+    { icon: ListOrdered, action: insertOrderedList, title: "번호 목록 (Ctrl+Shift+O)", shortcut: "Ctrl+Shift+O" },
+    { icon: CheckSquare, action: insertChecklist, title: "체크리스트 (- [ ])", shortcut: "- [ ]" },
+    { icon: LinkIcon, action: insertLink, title: "링크 (Ctrl+K)", shortcut: "Ctrl+K" },
+    { icon: Code, action: insertCode, title: "코드 블록", shortcut: "```" },
   ];
+
+  // 제목 레벨 선택 상태
+  const [showHeadingMenu, setShowHeadingMenu] = useState(false);
+  const headingMenuRef = useRef<HTMLDivElement>(null);
+
+  // 제목 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (headingMenuRef.current && !headingMenuRef.current.contains(e.target as Node)) {
+        setShowHeadingMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="border border-rule rounded-sm bg-white overflow-hidden">
       {/* Toolbar */}
       <div className="flex items-center gap-1 p-2 border-b border-rule bg-cream flex-wrap">
+        {/* 제목 드롭다운 */}
+        <div ref={headingMenuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setShowHeadingMenu(!showHeadingMenu)}
+            className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation flex items-center gap-0.5"
+            title="제목 (Ctrl+1~6)"
+            aria-label="제목"
+          >
+            <Heading size={18} />
+            <ChevronDown size={14} />
+          </button>
+          {showHeadingMenu && (
+            <div className="absolute top-full left-0 mt-1 bg-white border border-rule rounded-sm shadow-lg z-10 py-1 min-w-[80px]">
+              {[1, 2, 3, 4, 5, 6].map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => {
+                    insertHeading(level);
+                    setShowHeadingMenu(false);
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-cream flex items-center gap-2"
+                >
+                  <span className="font-bold text-muted">{'#'.repeat(level)}</span>
+                  <span className="text-xs text-muted">Ctrl+{level}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {toolbarButtons.map(({ icon: Icon, action, title }) => (
           <button
             key={title}
