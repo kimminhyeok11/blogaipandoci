@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading, Code, Eye, Edit3, CheckSquare } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { processMarkdown } from "@/lib/markdown";
+import { useToast } from "@/components/ui/Toast";
 
 interface MarkdownEditorProps {
   value: string;
@@ -26,6 +27,7 @@ export function MarkdownEditor({
   const [isUploading, setIsUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
 
   const insertText = useCallback((before: string, after: string = "") => {
     const textarea = textareaRef.current;
@@ -52,20 +54,230 @@ export function MarkdownEditor({
   const insertUnorderedList = () => insertText("- ", "\n");
   const insertOrderedList = () => insertText("1. ", "\n");
   const insertChecklist = () => insertText("- [ ] ", "\n");
-  const insertLink = () => insertText("[", "](url)");
-  const insertCode = () => insertText("```\n", "\n```\n");
+  // 링크 삽입 - url 부분이 선택된 상태로 시작
+  const insertLink = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = "[";
+    const linkText = value.substring(start, end) || "텍스트";
+    const after = "](url)";
+    const newText = value.substring(0, start) + before + linkText + after + value.substring(end);
+
+    onChange(newText);
+
+    // "url" 부분을 선택 (대체 가능하도록)
+    setTimeout(() => {
+      textarea.focus();
+      const urlStart = start + before.length + linkText.length + 2; // ]( 이후
+      const urlEnd = urlStart + 3; // "url" 길이
+      textarea.setSelectionRange(urlStart, urlEnd);
+    }, 0);
+  }, [value, onChange]);
+  // 코드 블록 삽입 - 커서를 중간(코드 입력 위치)으로 이동
+  const insertCode = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = "```\n";
+    const after = "\n```\n";
+    const selectedText = value.substring(start, end);
+    const newText = value.substring(0, start) + before + selectedText + after + value.substring(end);
+
+    onChange(newText);
+
+    // 커서를 ``` 사이 중간으로 이동
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + before.length + selectedText.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  }, [value, onChange]);
+
+  // 현재 줄의 내용과 커서 위치 분석
+  const getCurrentLineInfo = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return null;
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const linesBefore = textBeforeCursor.split('\n');
+    const currentLineIndex = linesBefore.length - 1;
+    const currentLine = linesBefore[currentLineIndex] || '';
+    return { cursorPos, currentLine, currentLineIndex, textBeforeCursor };
+  }, [value]);
+
+  // 현재 줄의 리스트/인용 마커 제거 (Shift+Tab 기능)
+  const unindentCurrentLine = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const textBeforeCursor = value.substring(0, start);
+    const linesBefore = textBeforeCursor.split('\n');
+    const currentLineIndex = linesBefore.length - 1;
+    const allLines = value.split('\n');
+    const currentLine = allLines[currentLineIndex] || '';
+
+    // 마커 패턴들 제거
+    const patterns = [
+      /^-\s*\[([ x])\]\s*/,  // 체크리스트
+      /^-\s*/,              // UL
+      /^\d+\.\s*/,          // OL
+      /^>\s*/,              // 인용구
+    ];
+
+    let newLine = currentLine;
+    for (const pattern of patterns) {
+      if (pattern.test(newLine)) {
+        newLine = newLine.replace(pattern, '');
+        break;
+      }
+    }
+
+    if (newLine !== currentLine) {
+      allLines[currentLineIndex] = newLine;
+      const newValue = allLines.join('\n');
+      onChange(newValue);
+
+      // 커서 위치 조정
+      const removedLength = currentLine.length - newLine.length;
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start - removedLength, end - removedLength);
+      }, 0);
+    }
+  }, [value, onChange]);
+
+  // 리스트 자동 생성 및 키보드 단축키 처리
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const isMod = e.ctrlKey || e.metaKey;
+
+    // 단축키: Ctrl/Cmd + B (굵게)
+    if (isMod && e.key === 'b') {
+      e.preventDefault();
+      insertBold();
+      return;
+    }
+
+    // 단축키: Ctrl/Cmd + I (기울임)
+    if (isMod && e.key === 'i') {
+      e.preventDefault();
+      insertItalic();
+      return;
+    }
+
+    // 단축키: Ctrl/Cmd + K (링크)
+    if (isMod && e.key === 'k') {
+      e.preventDefault();
+      insertLink();
+      return;
+    }
+
+    // 단축키: Ctrl/Cmd + 숫자 1~6 (제목)
+    if (isMod && e.key >= '1' && e.key <= '6') {
+      e.preventDefault();
+      const depth = parseInt(e.key, 10);
+      const hashes = '#'.repeat(depth);
+      insertText(`${hashes} `, '\n\n');
+      return;
+    }
+
+    // 단축키: Ctrl/Cmd + . (인용구)
+    if (isMod && e.key === '.') {
+      e.preventDefault();
+      insertQuote();
+      return;
+    }
+
+    // 단축키: Ctrl/Cmd + L (순서 없는 목록)
+    if (isMod && e.key === 'l' && !e.shiftKey) {
+      e.preventDefault();
+      insertUnorderedList();
+      return;
+    }
+
+    // 단축키: Ctrl/Cmd + Shift + L (순서 있는 목록)
+    if (isMod && e.shiftKey && e.key === 'L') {
+      e.preventDefault();
+      insertOrderedList();
+      return;
+    }
+
+    // 단축키: Shift + Tab (현재 줄 마커 제거)
+    if (e.shiftKey && e.key === 'Tab') {
+      e.preventDefault();
+      unindentCurrentLine();
+      return;
+    }
+
+    // Enter 키: 리스트 자동 생성
+    if (e.key !== 'Enter') return;
+
+    const lineInfo = getCurrentLineInfo();
+    if (!lineInfo) return;
+    const { currentLine } = lineInfo;
+
+    // 현재 줄이 비어있으면 리스트 종료 (아무것도 안 함)
+    if (!currentLine.trim()) return;
+
+    // UL 패턴 (- 항목)
+    const ulMatch = currentLine.match(/^-\s*(.*)$/);
+    if (ulMatch) {
+      e.preventDefault();
+      insertText("\n- ", "");
+      return;
+    }
+
+    // OL 패턴 (1. 2. 3. 항목)
+    const olMatch = currentLine.match(/^(\d+)\.\s*(.*)$/);
+    if (olMatch) {
+      e.preventDefault();
+      const nextNum = parseInt(olMatch[1], 10) + 1;
+      insertText(`\n${nextNum}. `, "");
+      return;
+    }
+
+    // 체크리스트 패턴 (- [ ] 또는 - [x])
+    const checkMatch = currentLine.match(/^-\s*\[([ x])\]\s*(.*)$/);
+    if (checkMatch) {
+      e.preventDefault();
+      insertText("\n- [ ] ", "");
+      return;
+    }
+
+    // 인용구 패턴 (> 내용)
+    const quoteMatch = currentLine.match(/^>\s*(.*)$/);
+    if (quoteMatch) {
+      e.preventDefault();
+      insertText("\n> ", "");
+      return;
+    }
+  }, [getCurrentLineInfo, insertText, insertBold, insertItalic, insertLink, insertQuote, insertUnorderedList, insertOrderedList, unindentCurrentLine]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !onImageUpload) return;
+
+    // 파일 크기 체크 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("이미지 크기는 10MB 이하여야 합니다.", "error");
+      return;
+    }
 
     setIsUploading(true);
     try {
       const url = await onImageUpload(file);
       const alt = file.name.replace(/\.[^/.]+$/, "");
       insertText(`![${alt}](${url})`, "\n");
-    } catch {
-      // 에러 처리
+      showToast("이미지가 업로드되었습니다.", "success");
+    } catch (err) {
+      showToast("이미지 업로드에 실패했습니다. 다시 시도해 주세요.", "error");
+      console.error("Image upload error:", err);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -100,8 +312,10 @@ export function MarkdownEditor({
         try {
           const url = await onImageUpload(file);
           insertText(`![이미지](${url})`, "\n");
-        } catch {
-          // 에러 처리
+          showToast("클립보드 이미지가 업로드되었습니다.", "success");
+        } catch (err) {
+          showToast("클립보드 이미지 업로드에 실패했습니다.", "error");
+          console.error("Clipboard paste error:", err);
         } finally {
           setIsUploading(false);
         }
@@ -109,7 +323,7 @@ export function MarkdownEditor({
         return; // 첫 번째 이미지만 처리
       }
     }
-  }, [onImageUpload, insertText]);
+  }, [onImageUpload, insertText, showToast]);
 
   const toolbarButtons = [
     { icon: Heading, action: insertHeading, title: "제목" },
@@ -200,6 +414,7 @@ export function MarkdownEditor({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onPaste={handlePaste}
+            onKeyDown={handleKeyDown}
             placeholder={placeholder}
             className="w-full p-4 bg-paper text-ink font-serif text-base leading-loose resize-y focus:outline-none focus:ring-2 focus:ring-rust/20"
             style={{ minHeight, maxHeight }}
