@@ -116,160 +116,283 @@ body {
   }
 }
 
-/* 마크다운 콘텐츠 스타일 */
-@layer components {
-  .prose-journal h1 {
-    @apply text-3xl font-black mt-10 mb-5 tracking-tight text-ink;
-  }
+/* 마크다운 콘텐츠 스타일 — @layer 밖에서 정의하여 Preflight/글로벌 리셋보다 높은 우선순위 보장 */
+.prose-journal h1 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 900;
+  margin-top: 2.5rem;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
 
-  .prose-journal h2 {
-    @apply text-2xl font-black mt-10 mb-4 pt-8 border-t-2 border-ink tracking-tight;
-  }
+.prose-journal h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 900;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--ink);
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
 
-  .prose-journal h2 .num {
-    @apply font-mono text-xs text-rust block mb-1 tracking-widest;
-  }
+.prose-journal h2 .num {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  color: var(--rust);
+  display: block;
+  margin-bottom: 0.25rem;
+  letter-spacing: 0.35em;
+}
 
-  .prose-journal h3 {
-    @apply text-xl font-bold mt-8 mb-3 text-ink;
-  }
+.prose-journal h3 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--ink);
+}
 
-  .prose-journal h4 {
-    @apply text-lg font-bold mt-6 mb-2 text-ink;
-  }
+.prose-journal h4 {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--ink);
+}
 
-  .prose-journal h5 {
-    @apply text-base font-bold mt-4 mb-2 text-ink;
-  }
+.prose-journal h5 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--ink);
+}
 
-  .prose-journal h6 {
-    @apply text-sm font-bold mt-4 mb-1 text-muted uppercase tracking-wider;
-  }
+.prose-journal h6 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
 
-  .prose-journal p {
-    @apply text-base leading-loose mb-5 text-[#2a2420];
-  }
+.prose-journal p {
+  font-size: 1rem;
+  line-height: 1.9;
+  margin-bottom: 1.25rem;
+  color: #2a2420;
+}
 
-  .prose-journal strong {
-    @apply font-bold;
-  }
+.prose-journal strong {
+  font-weight: 700;
+}
 
-  .prose-journal em {
-    @apply italic;
-  }
+.prose-journal em {
+  font-style: italic;
+}
 
-  .prose-journal blockquote {
-    @apply border-l-4 border-rust pl-6 py-3 my-9;
-  }
+.prose-journal blockquote {
+  border-left: 4px solid var(--rust);
+  padding-left: 1.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  margin-top: 2.25rem;
+  margin-bottom: 2.25rem;
+}
 
-  .prose-journal blockquote p {
-    @apply text-xl font-bold leading-snug text-rust italic m-0;
-  }
+.prose-journal blockquote p {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.375;
+  color: var(--rust);
+  font-style: italic;
+  margin: 0;
+}
 
-  .prose-journal ul {
-    @apply my-6 pl-6;
-    list-style-type: disc;
-  }
+.prose-journal ul {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
 
-  .prose-journal ol {
-    @apply my-6 pl-6;
-    list-style-type: decimal;
-  }
+.prose-journal ol {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+  list-style-type: decimal;
+}
 
-  .prose-journal ul ul {
-    list-style-type: circle;
-    @apply mt-1 mb-0;
-  }
+.prose-journal ul ul {
+  list-style-type: circle;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
 
-  .prose-journal ol ol {
-    list-style-type: lower-alpha;
-    @apply mt-1 mb-0;
-  }
+.prose-journal ol ol {
+  list-style-type: lower-alpha;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
 
-  .prose-journal li {
-    @apply mb-2 leading-relaxed;
-    display: list-item;
-  }
+.prose-journal li {
+  margin-bottom: 0.5rem;
+  line-height: 1.8;
+  display: list-item;
+}
 
-  .prose-journal li > ul,
-  .prose-journal li > ol {
-    @apply mt-1 mb-0;
-  }
+.prose-journal li > ul,
+.prose-journal li > ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
 
-  .prose-journal ul.checklist {
-    @apply pl-0 my-4 space-y-1 bg-cream/30 rounded-sm p-3 border-l-4 border-amber-400/50;
-    list-style-type: none;
-  }
+.prose-journal ul.checklist {
+  padding-left: 0;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(237, 231, 215, 0.3);
+  border-radius: 2px;
+  padding: 0.75rem;
+  border-left: 4px solid rgba(251, 191, 36, 0.5);
+  list-style-type: none;
+}
 
-  .prose-journal li.task-item {
-    @apply flex items-start gap-2 py-1 border-b border-rule/20;
-    display: flex;
-    list-style-type: none;
-  }
+.prose-journal li.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(196, 184, 154, 0.2);
+  list-style-type: none;
+}
 
-  .prose-journal li.task-item:last-child {
-    @apply border-b-0;
-  }
+.prose-journal li.task-item:last-child {
+  border-bottom: 0;
+}
 
-  .prose-journal .checkbox {
-    @apply inline-flex items-center justify-center w-4 h-4 border-2 border-muted rounded flex-shrink-0 mt-0.5;
-  }
+.prose-journal .checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--muted);
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
 
-  .prose-journal .checkbox.checked {
-    @apply bg-rust border-rust text-white text-xs;
-  }
+.prose-journal .checkbox.checked {
+  background: var(--rust);
+  border-color: var(--rust);
+  color: white;
+  font-size: 0.75rem;
+}
 
-  .prose-journal figure {
-    @apply my-6;
-  }
+.prose-journal figure {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
 
-  .prose-journal figure img {
-    @apply my-0;
-  }
+.prose-journal figure img {
+  margin-top: 0;
+  margin-bottom: 0;
+}
 
-  .prose-journal figcaption {
-    @apply text-center text-xs text-muted mt-2 font-sans;
-  }
+.prose-journal figcaption {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  font-family: var(--font-sans), sans-serif;
+}
 
-  .prose-journal del {
-    @apply line-through text-muted;
-  }
+.prose-journal del {
+  text-decoration: line-through;
+  color: var(--muted);
+}
 
-  .prose-journal table {
-    @apply w-full border-collapse my-6 text-sm;
-  }
+.prose-journal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
 
-  .prose-journal th {
-    @apply border border-rule px-3 py-2 bg-cream font-bold text-left;
-  }
+.prose-journal th {
+  border: 1px solid var(--rule);
+  padding: 0.5rem 0.75rem;
+  background: var(--cream);
+  font-weight: 700;
+  text-align: left;
+}
 
-  .prose-journal td {
-    @apply border border-rule px-3 py-2;
-  }
+.prose-journal td {
+  border: 1px solid var(--rule);
+  padding: 0.5rem 0.75rem;
+}
 
-  .prose-journal hr {
-    @apply border-t border-rule my-8;
-  }
+.prose-journal hr {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
 
-  .prose-journal a {
-    @apply text-rust underline underline-offset-2 hover:text-rust-light transition-colors;
-  }
+.prose-journal a {
+  color: var(--rust);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
 
-  .prose-journal img {
-    @apply w-full h-auto my-8 rounded-sm;
-  }
+.prose-journal a:hover {
+  color: var(--rust-light);
+}
 
-  .prose-journal pre {
-    @apply bg-cream p-4 my-6 overflow-x-auto text-sm font-mono rounded-sm;
-  }
+.prose-journal img {
+  width: 100%;
+  height: auto;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  border-radius: 2px;
+}
 
-  .prose-journal code {
-    @apply bg-cream px-1.5 py-0.5 text-sm font-mono rounded-sm;
-  }
+.prose-journal pre {
+  background: var(--cream);
+  padding: 1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  font-family: var(--font-mono), monospace;
+  border-radius: 2px;
+}
 
-  .prose-journal pre code {
-    @apply bg-transparent p-0;
-  }
+.prose-journal code {
+  background: var(--cream);
+  padding: 0.125rem 0.375rem;
+  font-size: 0.875rem;
+  font-family: var(--font-mono), monospace;
+  border-radius: 2px;
+}
+
+.prose-journal pre code {
+  background: transparent;
+  padding: 0;
 }
 
 /* 모바일 최적화 */
