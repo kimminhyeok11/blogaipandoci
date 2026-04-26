@@ -16,7 +16,7 @@ const notifyIndexNow = async (path: string) => {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     const url = `${siteUrl}${path}`;
     
-    await fetch("/api/indexnow-notify", {
+    await fetch("/api/indexnow-notify/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ urls: [url] }),
