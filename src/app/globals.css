@@ -118,12 +118,32 @@ body {
 
 /* 마크다운 콘텐츠 스타일 */
 @layer components {
+  .prose-journal h1 {
+    @apply text-3xl font-black mt-10 mb-5 tracking-tight text-ink;
+  }
+
   .prose-journal h2 {
-    @apply text-xl font-black mt-12 mb-4 pt-8 border-t-2 border-ink tracking-tight;
+    @apply text-2xl font-black mt-10 mb-4 pt-8 border-t-2 border-ink tracking-tight;
   }
 
   .prose-journal h2 .num {
     @apply font-mono text-xs text-rust block mb-1 tracking-widest;
+  }
+
+  .prose-journal h3 {
+    @apply text-xl font-bold mt-8 mb-3 text-ink;
+  }
+
+  .prose-journal h4 {
+    @apply text-lg font-bold mt-6 mb-2 text-ink;
+  }
+
+  .prose-journal h5 {
+    @apply text-base font-bold mt-4 mb-2 text-ink;
+  }
+
+  .prose-journal h6 {
+    @apply text-sm font-bold mt-4 mb-1 text-muted uppercase tracking-wider;
   }
 
   .prose-journal p {
@@ -174,6 +194,29 @@ body {
   .prose-journal li > ul,
   .prose-journal li > ol {
     @apply mt-1 mb-0;
+  }
+
+  .prose-journal ul.checklist {
+    @apply pl-0 my-4 space-y-1 bg-cream/30 rounded-sm p-3 border-l-4 border-amber-400/50;
+    list-style-type: none;
+  }
+
+  .prose-journal li.task-item {
+    @apply flex items-start gap-2 py-1 border-b border-rule/20;
+    display: flex;
+    list-style-type: none;
+  }
+
+  .prose-journal li.task-item:last-child {
+    @apply border-b-0;
+  }
+
+  .prose-journal .checkbox {
+    @apply inline-flex items-center justify-center w-4 h-4 border-2 border-muted rounded flex-shrink-0 mt-0.5;
+  }
+
+  .prose-journal .checkbox.checked {
+    @apply bg-rust border-rust text-white text-xs;
   }
 
   .prose-journal figure {

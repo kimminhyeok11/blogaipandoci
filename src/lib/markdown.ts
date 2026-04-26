@@ -23,36 +23,25 @@ const renderer = {
     return `<code class="bg-cream px-1 py-0.5 rounded text-sm font-mono">${token.text}</code>`;
   },
 
-  // 인용구 스타일링
+  // 인용구 스타일링 (CSS .prose-journal blockquote에서 관리)
   blockquote(this: any, token: { tokens: any[] }) {
     const body = this.parser.parse(token.tokens);
-    return `<blockquote class="border-l-4 border-rust pl-4 italic text-stone my-4">${body}</blockquote>`;
+    return `<blockquote>${body}</blockquote>`;
   },
 
-  // 구분선 스타일링
+  // 구분선 스타일링 (CSS .prose-journal hr에서 관리)
   hr() {
-    return `<hr class="border-t border-rule my-6" />`;
+    return `<hr />`;
   },
 
-  // 리스트 스타일링 (UL / OL 구분)
+  // 리스트 스타일링 (CSS .prose-journal ul/ol에서 관리, 체크리스트만 특수 클래스)
   list(this: any, token: { items: any[]; ordered: boolean; start?: number | "" }) {
     const type = token.ordered ? 'ol' : 'ul';
-
-    // 체크리스트 감지
     const hasTask = token.items.some((item: any) => item.task);
-
-    let listClass: string;
-    if (hasTask) {
-      listClass = 'my-4 space-y-1 bg-cream/30 rounded-sm p-3 border-l-4 border-amber-400/50';
-    } else if (token.ordered) {
-      listClass = 'list-decimal pl-6 my-4 space-y-1.5';
-    } else {
-      listClass = 'list-disc pl-6 my-4 space-y-1.5';
-    }
-
     const body = token.items.map((item: any) => this.listitem(item)).join('');
     const startAttr = token.ordered && token.start !== 1 ? ` start="${token.start}"` : '';
-    return `<${type} class="${listClass}"${startAttr}>${body}</${type}>`;
+    const cls = hasTask ? ' class="checklist"' : '';
+    return `<${type}${cls}${startAttr}>${body}</${type}>`;
   },
 
   // 리스트 아이템 스타일링 (체크리스트 포함)
@@ -62,13 +51,13 @@ const renderer = {
     if (token.task) {
       const checked = token.checked;
       const checkbox = checked
-        ? '<span class="inline-flex items-center justify-center w-4 h-4 bg-rust rounded text-white text-xs flex-shrink-0 mr-2">✓</span>'
-        : '<span class="inline-flex items-center justify-center w-4 h-4 border-2 border-muted rounded flex-shrink-0 mr-2"></span>';
+        ? '<span class="checkbox checked">✓</span>'
+        : '<span class="checkbox"></span>';
       const textClass = checked ? 'line-through text-muted' : '';
-      return `<li class="flex items-start gap-1 py-1 border-b border-rule/20 last:border-0 list-none">${checkbox}<span class="${textClass}">${text}</span></li>`;
+      return `<li class="task-item">${checkbox}<span class="${textClass}">${text}</span></li>`;
     }
 
-    return `<li class="py-0.5 leading-relaxed">${text}</li>`;
+    return `<li>${text}</li>`;
   },
 
   // 테이블 스타일링
@@ -86,46 +75,38 @@ const renderer = {
     return `<table class="w-full border-collapse my-4 text-sm"><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
   },
 
-  // 헤딩 스타일링
+  // 헤딩 스타일링 (CSS .prose-journal h1~h6에서 관리)
   heading(this: any, token: { tokens: any[]; depth: number }) {
     const text = this.parser.parseInline(token.tokens);
-    const classes: Record<number, string> = {
-      1: "text-3xl font-bold mt-8 mb-4",
-      2: "text-2xl font-bold mt-6 mb-3",
-      3: "text-xl font-bold mt-4 mb-2",
-      4: "text-lg font-bold mt-3 mb-2",
-      5: "text-base font-bold mt-3 mb-1",
-      6: "text-sm font-bold mt-2 mb-1",
-    };
-    return `<h${token.depth} class="${classes[token.depth]}">${text}</h${token.depth}>`;
+    return `<h${token.depth}>${text}</h${token.depth}>`;
   },
 
-  // 단락 스타일링
+  // 단락 스타일링 (CSS .prose-journal p에서 관리)
   paragraph(this: any, token: { tokens: any[] }) {
     const text = this.parser.parseInline(token.tokens);
     // 이미지만 있는 단락은 p 태그 없이 바로 반환 (figure 중첩 방지)
     if (token.tokens.length === 1 && token.tokens[0].type === 'image') {
       return text;
     }
-    return `<p class="my-4 leading-loose">${text}</p>`;
+    return `<p>${text}</p>`;
   },
 
   // 볼드 텍스트 렌더링
   strong(this: any, token: { tokens: any[] }) {
     const text = this.parser.parseInline(token.tokens);
-    return `<strong class="font-bold text-ink">${text}</strong>`;
+    return `<strong>${text}</strong>`;
   },
 
   // 이탤릭 텍스트 렌더링
   em(this: any, token: { tokens: any[] }) {
     const text = this.parser.parseInline(token.tokens);
-    return `<em class="italic">${text}</em>`;
+    return `<em>${text}</em>`;
   },
 
   // 취소선 렌더링
   del(this: any, token: { tokens: any[] }) {
     const text = this.parser.parseInline(token.tokens);
-    return `<del class="line-through text-muted">${text}</del>`;
+    return `<del>${text}</del>`;
   },
 };
 
