@@ -4,6 +4,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
+import { Analytics } from "@vercel/analytics/next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
 
@@ -129,6 +130,7 @@ export default function RootLayout({
             {children}
           </ToastProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
