@@ -7,6 +7,7 @@ import { processMarkdown } from "@/lib/markdown";
 import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
 import { ShareButtons } from "@/components/posts/ShareButtons";
+import { RelatedPosts } from "@/components/posts/RelatedPosts";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import { StickyNav } from "@/components/layout/StickyNav";
 
@@ -53,6 +54,54 @@ async function getPost(slug: string): Promise<Post | null> {
   
   console.log("[DEBUG] getPost - data found:", !!data);
   return data as Post;
+}
+
+// 관련 글 가져오기 (태그 기반 또는 최신글)
+async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
+  const supabase = getServerSupabase();
+  if (!supabase) return [];
+
+  const tagIds = currentPost.tags?.map((t) => t.id) || [];
+
+  let relatedPosts: Post[] = [];
+
+  // 태그가 있는 경우: 같은 태그를 가진 글 먼저 검색
+  if (tagIds.length > 0) {
+    const { data: taggedPosts } = await supabase
+      .from("posts")
+      .select("*, user:users(nickname), tags!inner(*)")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .in("tags.id", tagIds)
+      .neq("id", currentPost.id)
+      .order("published_at", { ascending: false })
+      .limit(6);
+
+    if (taggedPosts) {
+      relatedPosts = taggedPosts as Post[];
+    }
+  }
+
+  // 태그 기반 결과가 4개 미만이면 최신글로 보충
+  if (relatedPosts.length < 4) {
+    const excludeIds = [currentPost.id, ...relatedPosts.map((p) => p.id)];
+    const needMore = 6 - relatedPosts.length;
+
+    const { data: recentPosts } = await supabase
+      .from("posts")
+      .select("*, user:users(nickname), tags(*)")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .not("id", "in", `(${excludeIds.join(",")})`)
+      .order("published_at", { ascending: false })
+      .limit(needMore);
+
+    if (recentPosts) {
+      relatedPosts = [...relatedPosts, ...(recentPosts as Post[])];
+    }
+  }
+
+  return relatedPosts.slice(0, 6);
 }
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
@@ -111,6 +160,9 @@ export default async function PostPage({ params }: PostPageProps) {
   if (!post) {
     notFound();
   }
+
+  // 관련 글 가져오기
+  const relatedPosts = await getRelatedPosts(post);
 
   // 본문에서 첫 이미지 추출 (Article Schema용)
   const imgMatch = post.content?.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
@@ -201,6 +253,9 @@ export default async function PostPage({ params }: PostPageProps) {
           {/* Share */}
           <ShareButtons title={post.title} />
         </article>
+
+        {/* Related Posts - 이어서 읽기 */}
+        <RelatedPosts posts={relatedPosts} currentPostId={post.id} />
       </main>
 
       {/* Footer */}
