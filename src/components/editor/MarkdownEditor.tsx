@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading, Code, Eye, Edit3, CheckSquare, ChevronDown } from "lucide-react";
+import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading, Code, Eye, Edit3, CheckSquare, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { processMarkdown } from "@/lib/markdown";
 import { useToast } from "@/components/ui/Toast";
@@ -25,10 +25,20 @@ export function MarkdownEditor({
 }: MarkdownEditorProps) {
   const [preview, setPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
+  // 통계 계산
+  const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
+  const charCount = value.length;
+  const readTime = Math.max(1, Math.ceil(wordCount / 200)); // 분당 200단어 기준
+  const lineCount = value ? value.split('\n').length : 1;
+
+  // 기본 텍스트 삽입 (선택 영역을 대체)
   const insertText = useCallback((before: string, after: string = "") => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -47,13 +57,42 @@ export function MarkdownEditor({
     }, 0);
   }, [value, onChange]);
 
+  // 선택한 텍스트 감싸기 (선택 영역 유지) - Bold, Italic 등에 사용
+  const wrapText = useCallback((before: string, after: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = value.substring(start, end);
+    
+    // 선택된 텍스트가 없으면 기본값 삽입
+    if (!selectedText) {
+      insertText(before, after);
+      return;
+    }
+
+    const newText = value.substring(0, start) + before + selectedText + after + value.substring(end);
+    onChange(newText);
+    
+    // 선택 영역을 감싼 텍스트로 유지
+    setTimeout(() => {
+      textarea.focus();
+      const newStart = start + before.length;
+      const newEnd = newStart + selectedText.length;
+      textarea.setSelectionRange(newStart, newEnd);
+    }, 0);
+  }, [value, onChange, insertText]);
+
   // 제목 삽입 (레벨 1~6)
   const insertHeading = useCallback((level: number = 2) => {
     const hashes = '#'.repeat(level);
     insertText(`${hashes} `, '\n\n');
   }, [insertText]);
-  const insertBold = () => insertText("**", "**");
-  const insertItalic = () => insertText("*", "*");
+  // 선택한 텍스트를 굵게/기울임으로 감싸기 (선택 영역 유지)
+  const insertBold = () => wrapText("**", "**");
+  const insertItalic = () => wrapText("*", "*");
+  const insertCodeInline = () => wrapText("`", "`");
   const insertQuote = () => insertText("> ", "\n");
   const insertUnorderedList = () => insertText("- ", "\n");
   const insertOrderedList = () => insertText("1. ", "\n");
@@ -212,10 +251,73 @@ export function MarkdownEditor({
       return;
     }
 
-    // 단축키: Shift + Tab (현재 줄 마커 제거)
+    // Tab: 들여쓰기 (2칸 공백 추가)
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      
+      // 선택 영역이 여러 줄인 경우
+      if (start !== end) {
+        const selectedText = value.substring(start, end);
+        const lines = selectedText.split('\n');
+        const indentedLines = lines.map(line => '  ' + line);
+        const newSelectedText = indentedLines.join('\n');
+        const newValue = value.substring(0, start) + newSelectedText + value.substring(end);
+        onChange(newValue);
+        
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start, start + newSelectedText.length);
+        }, 0);
+      } else {
+        // 단일 커서 위치
+        insertText('  ', '');
+      }
+      return;
+    }
+
+    // 단축키: Shift + Tab (현재 줄 마커 제거 또는 들여쓰기 해제)
     if (e.shiftKey && e.key === 'Tab') {
       e.preventDefault();
-      unindentCurrentLine();
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = value.substring(start, end);
+      
+      // 먼저 마커 제거 시도
+      const textBeforeCursor = value.substring(0, start);
+      const linesBefore = textBeforeCursor.split('\n');
+      const currentLineIndex = linesBefore.length - 1;
+      const allLines = value.split('\n');
+      const currentLine = allLines[currentLineIndex] || '';
+      
+      // 마커 패턴 확인
+      const hasMarker = /^-\s*\[([ x])\]\s*|^-\s*|^\d+\.\s*|^>\s*/.test(currentLine);
+      
+      if (hasMarker && selectedText === '') {
+        unindentCurrentLine();
+        return;
+      }
+      
+      // 들여쓰기 해제 (2칸 공백 제거)
+      if (start !== end) {
+        const lines = selectedText.split('\n');
+        const outdentedLines = lines.map(line => line.replace(/^  /, ''));
+        const newSelectedText = outdentedLines.join('\n');
+        const newValue = value.substring(0, start) + newSelectedText + value.substring(end);
+        onChange(newValue);
+        
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start, start + newSelectedText.length);
+        }, 0);
+      }
       return;
     }
 
@@ -290,6 +392,53 @@ export function MarkdownEditor({
     }
   };
 
+  // 드래그 앤 드롭 이미지 업로드 처리
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (!onImageUpload) return;
+
+    const files = e.dataTransfer.files;
+    if (files.length === 0) return;
+
+    // 이미지 파일만 처리
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      showToast("이미지 파일만 업로드할 수 있습니다.", "error");
+      return;
+    }
+
+    // 첫 번째 이미지만 처리
+    const file = imageFiles[0];
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("이미지 크기는 10MB 이하여야 합니다.", "error");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const url = await onImageUpload(file);
+      const alt = file.name.replace(/\.[^/.]+$/, "");
+      insertText(`![${alt}](${url})`, "\n");
+      showToast("이미지가 업로드되었습니다.", "success");
+    } catch (err) {
+      showToast("이미지 업로드에 실패했습니다.", "error");
+      console.error("Drag drop error:", err);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [onImageUpload, insertText, showToast]);
+
   // 클립보드 이미지 붙여넣기 처리
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
     if (!onImageUpload) return;
@@ -338,7 +487,7 @@ export function MarkdownEditor({
     { icon: ListOrdered, action: insertOrderedList, title: "번호 목록 (Ctrl+Shift+O)", shortcut: "Ctrl+Shift+O" },
     { icon: CheckSquare, action: insertChecklist, title: "체크리스트 (- [ ])", shortcut: "- [ ]" },
     { icon: LinkIcon, action: insertLink, title: "링크 (Ctrl+K)", shortcut: "Ctrl+K" },
-    { icon: Code, action: insertCode, title: "코드 블록", shortcut: "```" },
+    { icon: Code, action: insertCodeInline, title: "인라인 코드 (`)", shortcut: "`" },
   ];
 
   // 제목 레벨 선택 상태
@@ -428,6 +577,17 @@ export function MarkdownEditor({
 
         <div className="flex-1" />
 
+        {/* 전체 화면 토글 */}
+        <button
+          type="button"
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation"
+          title={isFullscreen ? "전체 화면 종료 (Esc)" : "전체 화면 (F11)"}
+          aria-label={isFullscreen ? "전체 화면 종료" : "전체 화면"}
+        >
+          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+        </button>
+
         <button
           type="button"
           onClick={() => setPreview(!preview)}
@@ -441,12 +601,31 @@ export function MarkdownEditor({
         </button>
       </div>
 
-      {/* Editor Area */}
-      <div className="relative">
+      {/* Editor Area - 드래그앤드롭 + 전체화면 지원 */}
+      <div 
+        ref={editorRef}
+        className={cn(
+          "relative",
+          isDragging && "ring-2 ring-rust ring-inset"
+        )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {/* 드래그 오버레이 */}
+        {isDragging && (
+          <div className="absolute inset-0 bg-rust/10 z-20 flex items-center justify-center border-2 border-rust border-dashed m-2 rounded-sm">
+            <span className="text-rust font-sans font-medium">이미지를 여기에 놓으세요</span>
+          </div>
+        )}
+        
         {preview ? (
           <div
-            className="prose-journal p-4 overflow-y-auto bg-paper"
-            style={{ minHeight, maxHeight }}
+            className={cn(
+              "prose-journal p-4 overflow-y-auto bg-paper",
+              isFullscreen && "h-[calc(100vh-120px)]"
+            )}
+            style={!isFullscreen ? { minHeight, maxHeight } : undefined}
           >
             {value ? (
               <div
@@ -467,8 +646,11 @@ export function MarkdownEditor({
             onPaste={handlePaste}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="w-full p-4 bg-paper text-ink font-serif text-base leading-loose resize-y focus:outline-none focus:ring-2 focus:ring-rust/20"
-            style={{ minHeight, maxHeight }}
+            className={cn(
+              "w-full p-4 bg-paper text-ink font-serif text-base leading-loose resize-y focus:outline-none focus:ring-2 focus:ring-rust/20",
+              isFullscreen && "h-[calc(100vh-120px)] resize-none"
+            )}
+            style={!isFullscreen ? { minHeight, maxHeight } : undefined}
             spellCheck={false}
           />
         )}
@@ -483,14 +665,19 @@ export function MarkdownEditor({
         )}
       </div>
 
-      {/* Status Bar */}
+      {/* Status Bar - 상세 통계 */}
       <div className="flex items-center justify-between px-3 py-2 border-t border-rule bg-cream text-xs font-sans text-muted">
-        <span>
-          {value.length.toLocaleString()} 자
-        </span>
-        <span className="hidden sm:inline">
-          마크다운 지원
-        </span>
+        <div className="flex items-center gap-3">
+          <span title="글자 수">{charCount.toLocaleString()} 자</span>
+          <span className="hidden sm:inline" title="단어 수">{wordCount.toLocaleString()} 단어</span>
+          <span className="hidden sm:inline" title="줄 수">{lineCount} 줄</span>
+          <span className="hidden md:inline text-rust">약 {readTime}분 소요</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="hidden sm:inline">Tab: 들여쓰기</span>
+          <span className="hidden sm:inline">Shift+Tab: 내어쓰기</span>
+          <span className="hidden md:inline">드래그로 이미지 업로드</span>
+        </div>
       </div>
     </div>
   );
