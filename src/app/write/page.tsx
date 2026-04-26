@@ -10,6 +10,23 @@ import { supabase, db } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
 
+// IndexNow 알림 헬퍼
+const notifyIndexNow = async (path: string) => {
+  try {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const url = `${siteUrl}${path}`;
+    
+    await fetch("/api/indexnow-notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ urls: [url] }),
+    });
+  } catch (err) {
+    // IndexNow 실패는 사용자에게 표시하지 않음 (백그라운드 처리)
+    console.error("IndexNow notification failed:", err);
+  }
+};
+
 // MarkdownEditor 동적 임포트 (코드 분할)
 const MarkdownEditor = lazy(() => import("@/components/editor/MarkdownEditor").then(mod => ({ default: mod.MarkdownEditor })));
 
@@ -196,6 +213,12 @@ function WritePageContent() {
         await saveTags(postId, tagList);
 
         showToast(published ? "글이 수정되었습니다." : "임시 저장되었습니다.", "success");
+        
+        // IndexNow 알림 (발행된 경우에만)
+        if (published) {
+          await notifyIndexNow(`/posts/${slug}`);
+        }
+        
         router.push(`/posts/${slug}`);
       } else {
         // 신규 작성: insert 후 id 받아오기
@@ -217,6 +240,12 @@ function WritePageContent() {
         }
 
         showToast(published ? "글이 발행되었습니다." : "임시 저장되었습니다.", "success");
+        
+        // IndexNow 알림 (발행된 경우에만)
+        if (published) {
+          await notifyIndexNow(`/posts/${slug}`);
+        }
+        
         router.push(`/posts/${slug}`);
       }
     } catch (err) {
