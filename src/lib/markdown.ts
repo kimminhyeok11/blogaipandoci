@@ -1,6 +1,6 @@
 import { marked } from "marked";
 
-// marked 렌더러 커스터마이징 (v18 호환 - this.parser.parseInline 사용)
+// marked 렌더러 커스터마이징 (v18 호환)
 const renderer = {
   // 링크 새창에서 열기
   link(this: any, token: { href: string; title?: string | null; tokens: any[] }) {
@@ -110,19 +110,19 @@ const renderer = {
   },
 };
 
-// marked 설정
+// marked 설정 (v18 - use() 방식)
 marked.use({
   gfm: true,
   breaks: true,
-  renderer,
+  renderer: renderer as any,  // 타입 단언으로 v18 호환
 });
 
 // 마크다운 → HTML 변환 (에디터 & 상세페이지 공용)
 export function processMarkdown(text: string): string {
   if (!text) return "";
   try {
-    // HTML 태그가 포함된 콘텐츠도 지원
-    return marked.parse(text) as string;
+    // marked v18 - 동기 파싱
+    return marked.parse(text, { async: false }) as string;
   } catch {
     return text;
   }
