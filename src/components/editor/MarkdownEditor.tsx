@@ -89,14 +89,44 @@ export function MarkdownEditor({
     const hashes = '#'.repeat(level);
     insertText(`${hashes} `, '\n\n');
   }, [insertText]);
+
+  // 실제 전체 화면 API 토글
+  const toggleFullscreen = useCallback(() => {
+    const container = editorRef.current;
+    if (!container) return;
+
+    if (!document.fullscreenElement) {
+      container.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(() => {
+        // 실패 시 CSS 전체 화면으로 폴백
+        setIsFullscreen(true);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch(() => {
+        setIsFullscreen(false);
+      });
+    }
+  }, []);
+
+  // 전체 화면 변경 이벤트 감지
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
   // 선택한 텍스트를 굵게/기울임으로 감싸기 (선택 영역 유지)
-  const insertBold = () => wrapText("**", "**");
-  const insertItalic = () => wrapText("*", "*");
-  const insertCodeInline = () => wrapText("`", "`");
-  const insertQuote = () => insertText("> ", "\n");
-  const insertUnorderedList = () => insertText("- ", "\n");
-  const insertOrderedList = () => insertText("1. ", "\n");
-  const insertChecklist = () => insertText("- [ ] ", "\n");
+  const insertBold = useCallback(() => wrapText("**", "**"), [wrapText]);
+  const insertItalic = useCallback(() => wrapText("*", "*"), [wrapText]);
+  const insertCodeInline = useCallback(() => wrapText("`", "`"), [wrapText]);
+  const insertQuote = useCallback(() => insertText("> ", "\n"), [insertText]);
+  const insertUnorderedList = useCallback(() => insertText("- ", "\n"), [insertText]);
+  const insertOrderedList = useCallback(() => insertText("1. ", "\n"), [insertText]);
+  const insertChecklist = useCallback(() => insertText("- [ ] ", "\n"), [insertText]);
   // 링크 삽입 - url 부분이 선택된 상태로 시작
   const insertLink = useCallback(() => {
     const textarea = textareaRef.current;
@@ -251,6 +281,19 @@ export function MarkdownEditor({
       return;
     }
 
+    // 단축키: F11 (전체 화면)
+    if (e.key === 'F11') {
+      e.preventDefault();
+      toggleFullscreen();
+      return;
+    }
+
+    // 단축키: ESC (전체 화면 종료 - 브라우저 기본 동작과 함께)
+    if (e.key === 'Escape' && document.fullscreenElement) {
+      document.exitFullscreen();
+      return;
+    }
+
     // Tab: 들여쓰기 (2칸 공백 추가)
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
@@ -363,7 +406,7 @@ export function MarkdownEditor({
       insertText("\n> ", "");
       return;
     }
-  }, [getCurrentLineInfo, insertText, insertBold, insertItalic, insertLink, insertQuote, insertUnorderedList, insertOrderedList, unindentCurrentLine]);
+  }, [getCurrentLineInfo, insertText, insertBold, insertItalic, insertLink, insertQuote, insertUnorderedList, insertOrderedList, unindentCurrentLine, toggleFullscreen]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -580,7 +623,7 @@ export function MarkdownEditor({
         {/* 전체 화면 토글 */}
         <button
           type="button"
-          onClick={() => setIsFullscreen(!isFullscreen)}
+          onClick={toggleFullscreen}
           className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation"
           title={isFullscreen ? "전체 화면 종료 (Esc)" : "전체 화면 (F11)"}
           aria-label={isFullscreen ? "전체 화면 종료" : "전체 화면"}
