@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Search, PenSquare, User, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -11,30 +11,64 @@ interface StickyNavProps {
   showFullNav?: boolean;
 }
 
+// throttle 유틸리티
+function throttle<T extends (...args: any[]) => void>(func: T, limit: number): T {
+  let inThrottle: boolean;
+  return ((...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  }) as T;
+}
+
 export function StickyNav({ backHref = "/", backLabel = "홈으로", showFullNav = false }: StickyNavProps) {
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
+  const ticking = useRef(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const prevScrollY = lastScrollY.current;
+  const updateVisibility = useCallback(() => {
+    const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    const prevScrollY = lastScrollY.current;
 
-      // 아래로 스크롤 & 100px 초과 시 숨김
-      if (currentScrollY > prevScrollY && currentScrollY > 100) {
-        setIsVisible(false);
-      } else {
-        // 위로 스크롤 or 최상단 시 표시
-        setIsVisible(true);
-      }
+    // 아래로 스크롤 & 50px 초과 시 숨김 (모바일에서는 더 빨리 반응)
+    if (currentScrollY > prevScrollY && currentScrollY > 50) {
+      setIsVisible(false);
+    } else {
+      // 위로 스크롤 or 최상단 시 표시
+      setIsVisible(true);
+    }
 
-      lastScrollY.current = currentScrollY;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    lastScrollY.current = currentScrollY;
+    ticking.current = false;
   }, []);
+
+  const handleScroll = useCallback(
+    throttle(() => {
+      if (!ticking.current) {
+        requestAnimationFrame(updateVisibility);
+        ticking.current = true;
+      }
+    }, 100),
+    [updateVisibility]
+  );
+
+  useEffect(() => {
+    // 초기값 설정
+    lastScrollY.current = window.scrollY || document.documentElement.scrollTop || 0;
+
+    // scroll 이벤트
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    // touchmove 이벤트 (모바일 인앱 대응)
+    window.addEventListener("touchmove", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("touchmove", handleScroll);
+    };
+  }, [handleScroll]);
 
   return (
     <nav
