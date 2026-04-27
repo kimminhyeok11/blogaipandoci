@@ -189,21 +189,6 @@ export default async function PostPage({ params }: PostPageProps) {
           { name: post.title, url: postUrl },
         ]}
       />
-      {/* Header */}
-      <header className="masthead">
-        <div className="masthead-pub">깊이 있는 분석과 인사이트</div>
-        <Link href="/" className="masthead-title">
-          法 BLOG
-        </Link>
-        <div className="masthead-date">
-          {new Date(post.published_at || post.created_at).toLocaleDateString("ko-KR", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </div>
-      </header>
-
       {/* Navigation - 스마트 스티키 헤더 */}
       <StickyNav backHref="/" backLabel="홈으로" />
       <div className="flex justify-end max-w-content mx-auto px-4 sm:px-6 py-2">
