@@ -191,6 +191,8 @@ body {
   line-height: 1.9;
   margin-bottom: 1.25rem;
   color: #2a2420;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .prose-journal strong {
@@ -249,6 +251,8 @@ body {
   margin-bottom: 0.5rem;
   line-height: 1.8;
   display: list-item;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .prose-journal li > ul,
@@ -357,6 +361,8 @@ body {
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color 0.15s;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .prose-journal a:hover {
@@ -377,9 +383,12 @@ body {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   overflow-x: auto;
-  font-size: 0.875rem;
   font-family: var(--font-mono), monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
   border-radius: 2px;
+  word-break: break-all;
+  white-space: pre-wrap;
 }
 
 .prose-journal code {
@@ -388,6 +397,8 @@ body {
   font-size: 0.875rem;
   font-family: var(--font-mono), monospace;
   border-radius: 2px;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .prose-journal pre code {
