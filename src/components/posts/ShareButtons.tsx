@@ -25,8 +25,37 @@ function ShareButtonsComponent({ title }: ShareButtonsProps) {
   };
 
   const handleFacebookShare = () => {
-    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-    openShareWindow(url);
+    // 모바일 기기 체크
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      
+      // iOS: fb:// 스킴 사용 (설치된 경우 앱으로 열림)
+      if (isIOS) {
+        window.location.href = `fb://dialog/share?app_id=165476064451548&href=${encodeURIComponent(shareUrl)}`;
+        // 1초 후 앱이 열리지 않으면 웹으로 폴백
+        setTimeout(() => {
+          const webUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+          window.location.href = webUrl;
+        }, 1000);
+      } else {
+        // Android: intent:// URL 사용 (앱 우선, 없으면 웹)
+        const intentUrl = `intent://share?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}#Intent;package=com.facebook.katana;scheme=fb;end`;
+        window.location.href = intentUrl;
+        // 폴백: 웹 공유
+        setTimeout(() => {
+          if (document.visibilityState === 'visible') {
+            const webUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+            window.location.href = webUrl;
+          }
+        }, 500);
+      }
+    } else {
+      // 데스크톱: 기존 방식 (팝업)
+      const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+      openShareWindow(url);
+    }
   };
 
   const handleKakaoShare = () => {
