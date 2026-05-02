@@ -46,6 +46,115 @@ function WritePageContent() {
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [postId, setPostId] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // 자동 저장 키 생성 (수정 모드 vs 새 글)
+  const getAutoSaveKey = (key: string) => {
+    return editSlug ? `blog_edit_${editSlug}_${key}` : `blog_draft_${key}`;
+  };
+
+  // localStorage에 임시 저장
+  const saveToLocalStorage = useCallback(() => {
+    if (isEditMode && !title && !content) return; // 수정 모드에서 데이터 없으면 스킵
+    
+    localStorage.setItem(getAutoSaveKey('title'), title);
+    localStorage.setItem(getAutoSaveKey('content'), content);
+    localStorage.setItem(getAutoSaveKey('excerpt'), excerpt);
+    localStorage.setItem(getAutoSaveKey('tags'), tags);
+    localStorage.setItem(getAutoSaveKey('timestamp'), new Date().toISOString());
+    setLastSaved(new Date());
+  }, [title, content, excerpt, tags, editSlug, isEditMode]);
+
+  // localStorage에서 복원
+  const loadFromLocalStorage = useCallback(() => {
+    const savedTitle = localStorage.getItem(getAutoSaveKey('title'));
+    const savedContent = localStorage.getItem(getAutoSaveKey('content'));
+    const savedExcerpt = localStorage.getItem(getAutoSaveKey('excerpt'));
+    const savedTags = localStorage.getItem(getAutoSaveKey('tags'));
+    const savedTimestamp = localStorage.getItem(getAutoSaveKey('timestamp'));
+
+    if (savedTitle || savedContent) {
+      const timestamp = savedTimestamp ? new Date(savedTimestamp) : null;
+      const timeStr = timestamp?.toLocaleTimeString('ko-KR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      
+      return {
+        title: savedTitle || '',
+        content: savedContent || '',
+        excerpt: savedExcerpt || '',
+        tags: savedTags || '',
+        timestamp: timeStr,
+        hasData: !!(savedTitle || savedContent)
+      };
+    }
+    return null;
+  }, [editSlug]);
+
+  // localStorage 정리
+  const clearLocalStorage = useCallback(() => {
+    localStorage.removeItem(getAutoSaveKey('title'));
+    localStorage.removeItem(getAutoSaveKey('content'));
+    localStorage.removeItem(getAutoSaveKey('excerpt'));
+    localStorage.removeItem(getAutoSaveKey('tags'));
+    localStorage.removeItem(getAutoSaveKey('timestamp'));
+  }, [editSlug]);
+
+  // 자동 저장 (30초마다 + 내용 변경 시)
+  useEffect(() => {
+    if (!title && !content) return;
+    
+    // 30초마다 자동 저장
+    const interval = setInterval(() => {
+      saveToLocalStorage();
+    }, 30000);
+
+    // 페이지 숨겨질 때도 저장 (모바일 백그라운드)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        saveToLocalStorage();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // 페이지 떠나기 전 저장
+    const handleBeforeUnload = () => {
+      saveToLocalStorage();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [saveToLocalStorage, title, content]);
+
+  // 페이지 로드 시 복원 확인
+  useEffect(() => {
+    // 수정 모드에서는 기존 글을 먼저 로드하고, 임시 저장이 있으면 확인
+    if (isEditMode) return; // 수정 모드는 기존 로직에서 처리
+
+    const saved = loadFromLocalStorage();
+    if (saved?.hasData) {
+      const confirmed = window.confirm(
+        `${saved.timestamp || '이전'}에 저장된 임시 글이 있습니다.\n\n` +
+        `제목: ${saved.title.slice(0, 30)}${saved.title.length > 30 ? '...' : ''}\n\n` +
+        `불러오시겠습니까? (취소 시 임시 글은 삭제됩니다)`
+      );
+      
+      if (confirmed) {
+        setTitle(saved.title);
+        setContent(saved.content);
+        setExcerpt(saved.excerpt);
+        setTags(saved.tags);
+        showToast('임시 저장된 글을 불러왔습니다', 'success');
+      } else {
+        clearLocalStorage();
+      }
+    }
+  }, []);
 
   // 수정 모드: 기존 게시글 불러오기
   useEffect(() => {
@@ -71,9 +180,42 @@ function WritePageContent() {
         }
 
         setPostId(post.id);
-        setTitle(post.title);
-        setContent(post.content);
-        setExcerpt(post.excerpt || "");
+        
+        // 임시 저장된 데이터가 있는지 확인
+        const saved = loadFromLocalStorage();
+        if (saved?.hasData) {
+          const postUpdatedAt = new Date(post.updated_at);
+          const savedTime = saved.timestamp ? new Date(saved.timestamp) : null;
+          
+          // 임시 저장이 더 최신이면 확인
+          if (savedTime && savedTime > postUpdatedAt) {
+            const confirmed = window.confirm(
+              `${saved.timestamp}에 임시 저장된 수정 내용이 있습니다.\n\n` +
+              `임시 저장 내용을 불러오시겠습니까? (취소 시 서버 저장된 버전을 사용합니다)`
+            );
+            
+            if (confirmed) {
+              setTitle(saved.title);
+              setContent(saved.content);
+              setExcerpt(saved.excerpt);
+              setTags(saved.tags);
+              showToast('임시 저장된 수정 내용을 불러왔습니다', 'success');
+            } else {
+              setTitle(post.title);
+              setContent(post.content);
+              setExcerpt(post.excerpt || "");
+              clearLocalStorage();
+            }
+          } else {
+            setTitle(post.title);
+            setContent(post.content);
+            setExcerpt(post.excerpt || "");
+          }
+        } else {
+          setTitle(post.title);
+          setContent(post.content);
+          setExcerpt(post.excerpt || "");
+        }
 
         // 기존 태그 로드
         const { data: postTags } = await db.post_tags()
@@ -214,6 +356,9 @@ function WritePageContent() {
 
         showToast(published ? "글이 수정되었습니다." : "임시 저장되었습니다.", "success");
         
+        // 임시 저장 데이터 정리
+        clearLocalStorage();
+        
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
           await notifyIndexNow(`/posts/${slug}`);
@@ -240,6 +385,9 @@ function WritePageContent() {
         }
 
         showToast(published ? "글이 발행되었습니다." : "임시 저장되었습니다.", "success");
+        
+        // 임시 저장 데이터 정리
+        clearLocalStorage();
         
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
@@ -300,6 +448,16 @@ function WritePageContent() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* 자동 저장 상태 표시 */}
+              {lastSaved && (
+                <span className="hidden sm:block font-sans text-xs text-muted mr-2">
+                  {lastSaved.toLocaleTimeString('ko-KR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })} 자동 저장됨
+                </span>
+              )}
+              
               <button
                 type="button"
                 onClick={() => setShowPreview(!showPreview)}
