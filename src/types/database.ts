@@ -152,6 +152,38 @@ export type Database = {
           created_at?: string;
         };
       };
+      post_revisions: {
+        Row: {
+          id: string;
+          post_id: string;
+          title: string;
+          content: string;
+          excerpt: string | null;
+          revision_number: number;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          title: string;
+          content: string;
+          excerpt?: string | null;
+          revision_number?: number;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          post_id?: string;
+          title?: string;
+          content?: string;
+          excerpt?: string | null;
+          revision_number?: number;
+          created_by?: string;
+          created_at?: string;
+        };
+      };
     };
   };
 };

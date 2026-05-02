@@ -23,21 +23,22 @@ export async function GET(request: Request) {
       .from("posts")
       .select("id, user_id")
       .eq("slug", slug)
-      .single() as any;
+      .single();
 
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    if ((post as any).user_id !== user.id) {
+    const postData = post as { id: string; user_id: string };
+    if (postData.user_id !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // 리비전 조회
-    const { data: revisions, error } = await (supabase
-      .from("post_revisions") as any)
+    const { data: revisions, error } = await supabase
+      .from("post_revisions")
       .select("id, title, content, excerpt, created_at, revision_number")
-      .eq("post_id", (post as any).id)
+      .eq("post_id", postData.id)
       .order("created_at", { ascending: false })
       .limit(limit);
 
@@ -83,23 +84,26 @@ export async function POST(request: Request) {
       .from("posts")
       .select("user_id")
       .eq("id", post_id)
-      .single() as any;
+      .single();
 
-    if (!post || (post as any).user_id !== user.id) {
+    const postData = post as { user_id: string } | null;
+    if (!postData || postData.user_id !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // 리비전 저장 (최신 10개만 유지)
-    const { data: revision, error } = await (supabase
-      .from("post_revisions") as any)
-      .insert({
-        post_id,
-        title,
-        content,
-        excerpt: excerpt || "",
-        revision_number: revision_number || 1,
-        created_by: user.id,
-      })
+    const revisionData = {
+      post_id: post_id as string,
+      title: title as string,
+      content: content as string,
+      excerpt: (excerpt || "") as string,
+      revision_number: (revision_number || 1) as number,
+      created_by: user.id,
+    };
+    
+    const { data: revision, error } = await (supabase as any)
+      .from("post_revisions")
+      .insert(revisionData)
       .select()
       .single();
 
@@ -112,17 +116,17 @@ export async function POST(request: Request) {
     }
 
     // 오래된 리비전 정리 (최신 10개만 유지)
-    const { data: oldRevisions } = await (supabase
-      .from("post_revisions") as any)
+    const { data: oldRevisions } = await supabase
+      .from("post_revisions")
       .select("id")
       .eq("post_id", post_id)
       .order("created_at", { ascending: false })
       .gt("id", 10);
 
     if (oldRevisions && oldRevisions.length > 0) {
-      const idsToDelete = (oldRevisions as any[]).slice(10).map((r) => r.id);
+      const idsToDelete = (oldRevisions as { id: string }[]).slice(10).map((r) => r.id);
       if (idsToDelete.length > 0) {
-        await (supabase.from("post_revisions") as any).delete().in("id", idsToDelete);
+        await supabase.from("post_revisions").delete().in("id", idsToDelete);
       }
     }
 
@@ -155,8 +159,8 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { error } = await (supabase
-      .from("post_revisions") as any)
+    const { error } = await supabase
+      .from("post_revisions")
       .delete()
       .eq("id", revisionId)
       .eq("created_by", user.id);
