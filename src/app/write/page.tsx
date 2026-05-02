@@ -9,6 +9,7 @@ import { generateSlug } from "@/utils/image";
 import { supabase, db } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { RevisionHistory } from "@/components/editor/RevisionHistory";
 
 // IndexNow 알림 헬퍼
 const notifyIndexNow = async (path: string) => {
@@ -359,6 +360,24 @@ function WritePageContent() {
         // 임시 저장 데이터 정리
         clearLocalStorage();
         
+        // 히스토리 저장 (수정 시)
+        if (postId) {
+          try {
+            await fetch("/api/revisions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                post_id: postId,
+                title: title.trim(),
+                content: content.trim(),
+                excerpt: finalExcerpt,
+              }),
+            });
+          } catch (err) {
+            console.error("히스토리 저장 실패:", err);
+          }
+        }
+        
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
           await notifyIndexNow(`/posts/${slug}`);
@@ -456,6 +475,21 @@ function WritePageContent() {
                     minute: '2-digit' 
                   })} 자동 저장됨
                 </span>
+              )}
+              
+              {/* 글 히스토리 (수정 모드에서만) */}
+              {isEditMode && (
+                <RevisionHistory
+                  slug={editSlug}
+                  currentContent={content}
+                  currentTitle={title}
+                  currentExcerpt={excerpt}
+                  onRestore={(revision) => {
+                    setTitle(revision.title);
+                    setContent(revision.content);
+                    setExcerpt(revision.excerpt);
+                  }}
+                />
               )}
               
               <button
