@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading, Code, Eye, Edit3, CheckSquare, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
+import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading, Code, Eye, Edit3, CheckSquare, ChevronDown, Maximize2, Minimize2, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { processMarkdown } from "@/lib/markdown";
 import { useToast } from "@/components/ui/Toast";
@@ -27,6 +27,15 @@ export function MarkdownEditor({
   const [isUploading, setIsUploading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // 이미지 모달 상태
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
+  const [imageLink, setImageLink] = useState("");
+  const [imageCaption, setImageCaption] = useState("");
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -408,7 +417,8 @@ export function MarkdownEditor({
     }
   }, [getCurrentLineInfo, insertText, insertBold, insertItalic, insertLink, insertQuote, insertUnorderedList, insertOrderedList, unindentCurrentLine, toggleFullscreen]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 이미지 선택 (파일 선택 시 모달 열기)
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !onImageUpload) return;
 
@@ -418,12 +428,19 @@ export function MarkdownEditor({
       return;
     }
 
+    // 먼저 이미지 업로드
     setIsUploading(true);
     try {
       const url = await onImageUpload(file);
-      const alt = file.name.replace(/\.[^/.]+$/, "");
-      insertText(`![${alt}](${url})`, "\n");
-      showToast("이미지가 업로드되었습니다.", "success");
+      const defaultAlt = file.name.replace(/\.[^/.]+$/, "");
+      
+      // 모달 열기
+      setPendingImageFile(file);
+      setImageUrl(url);
+      setImageAlt(defaultAlt);
+      setImageCaption(defaultAlt); // 설명은 alt와 동일하게
+      setImageLink("");
+      setShowImageModal(true);
     } catch (err) {
       showToast("이미지 업로드에 실패했습니다. 다시 시도해 주세요.", "error");
       console.error("Image upload error:", err);
@@ -434,6 +451,54 @@ export function MarkdownEditor({
       }
     }
   };
+
+  // 이미지 모달 확인 - 마크다운 삽입
+  const handleImageModalConfirm = useCallback(() => {
+    if (!imageUrl) return;
+
+    const alt = imageAlt.trim() || "이미지";
+    const caption = imageCaption.trim();
+    const link = imageLink.trim();
+
+    // 이미지 마크다운 생성
+    const imageMarkdown = `![${alt}](${imageUrl})`;
+    
+    // 링크가 있으면 이미지를 링크로 감싸기
+    const finalMarkdown = link 
+      ? `[${imageMarkdown}](${link})`
+      : imageMarkdown;
+
+    // 캡션이 있으면 figure 형태로 (HTML)
+    let insertContent;
+    if (caption && !link) {
+      // 설명이 있고 링크 없음: figure 태그 사용
+      insertContent = `<figure class="my-6">\n${imageMarkdown}\n<figcaption class="text-center text-sm text-muted mt-2">${caption}</figcaption>\n</figure>`;
+    } else if (caption && link) {
+      // 설명과 링크 둘 다 있음
+      insertContent = `<figure class="my-6">\n[${imageMarkdown}](${link})\n<figcaption class="text-center text-sm text-muted mt-2">${caption}</figcaption>\n</figure>`;
+    } else {
+      // 기본 마크다운
+      insertContent = finalMarkdown;
+    }
+
+    insertText(insertContent, "\n\n");
+    showToast("이미지가 삽입되었습니다.", "success");
+    
+    // 모달 닫기 및 상태 초기화
+    closeImageModal();
+  }, [imageUrl, imageAlt, imageCaption, imageLink, insertText, showToast]);
+
+  // 이미지 모달 닫기
+  const closeImageModal = useCallback(() => {
+    setShowImageModal(false);
+    setPendingImageFile(null);
+    setImageUrl("");
+    setImageAlt("");
+    setImageCaption("");
+    setImageLink("");
+  }, []);
+
+  // ...
 
   // 드래그 앤 드롭 이미지 업로드 처리
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -468,19 +533,26 @@ export function MarkdownEditor({
       return;
     }
 
+    // 업로드 후 모달 열기
     setIsUploading(true);
     try {
       const url = await onImageUpload(file);
-      const alt = file.name.replace(/\.[^/.]+$/, "");
-      insertText(`![${alt}](${url})`, "\n");
-      showToast("이미지가 업로드되었습니다.", "success");
+      const defaultAlt = file.name.replace(/\.[^/.]+$/, "");
+      
+      setPendingImageFile(file);
+      setImageUrl(url);
+      setImageAlt(defaultAlt);
+      setImageCaption(defaultAlt);
+      setImageLink("");
+      setShowImageModal(true);
     } catch (err) {
       showToast("이미지 업로드에 실패했습니다.", "error");
       console.error("Drag drop error:", err);
     } finally {
+      setIsDragging(false);
       setIsUploading(false);
     }
-  }, [onImageUpload, insertText, showToast]);
+  }, [onImageUpload, showToast]);
 
   // 클립보드 이미지 붙여넣기 처리
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
@@ -613,7 +685,7 @@ export function MarkdownEditor({
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          onChange={handleImageUpload}
+          onChange={handleImageSelect}
           className="hidden"
           aria-hidden="true"
         />
@@ -722,6 +794,95 @@ export function MarkdownEditor({
           <span className="hidden md:inline">드래그로 이미지 업로드</span>
         </div>
       </div>
+
+      {/* 이미지 설정 모달 */}
+      {showImageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden">
+            {/* 모달 헤더 */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-rule bg-cream">
+              <h3 className="font-serif text-lg font-medium text-ink">이미지 설정</h3>
+              <button
+                type="button"
+                onClick={closeImageModal}
+                className="p-1 text-muted hover:text-ink transition-colors"
+                aria-label="닫기"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* 모달 본문 */}
+            <div className="p-4 space-y-4">
+              {/* 이미지 미리보기 */}
+              {imageUrl && (
+                <div className="flex justify-center">
+                  <img
+                    src={imageUrl}
+                    alt="미리보기"
+                    className="max-h-40 rounded shadow-sm"
+                  />
+                </div>
+              )}
+
+              {/* Alt 텍스트 (이미지 설명) */}
+              <div>
+                <label className="block text-sm font-sans font-medium text-ink mb-1">
+                  이미지 설명 (alt)
+                </label>
+                <input
+                  type="text"
+                  value={imageAlt}
+                  onChange={(e) => {
+                    setImageAlt(e.target.value);
+                    setImageCaption(e.target.value); // 설명과 동기화
+                  }}
+                  placeholder="이미지에 대한 설명을 입력하세요"
+                  className="w-full px-3 py-2 border border-rule rounded-sm bg-paper text-ink font-sans text-sm focus:outline-none focus:ring-2 focus:ring-rust/20"
+                />
+                <p className="mt-1 text-xs text-muted font-sans">
+                  접근성을 위해 이미지 내용을 간결히 설명해주세요
+                </p>
+              </div>
+
+              {/* 링크 URL */}
+              <div>
+                <label className="block text-sm font-sans font-medium text-ink mb-1">
+                  링크 URL (선택사항)
+                </label>
+                <input
+                  type="url"
+                  value={imageLink}
+                  onChange={(e) => setImageLink(e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full px-3 py-2 border border-rule rounded-sm bg-paper text-ink font-sans text-sm focus:outline-none focus:ring-2 focus:ring-rust/20"
+                />
+                <p className="mt-1 text-xs text-muted font-sans">
+                  이미지를 클릭하면 해당 주소로 이동합니다
+                </p>
+              </div>
+            </div>
+
+            {/* 모달 푸터 */}
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-rule bg-cream">
+              <button
+                type="button"
+                onClick={closeImageModal}
+                className="px-4 py-2 text-sm font-sans font-medium text-muted hover:text-ink transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleImageModalConfirm}
+                className="px-4 py-2 bg-rust text-paper text-sm font-sans font-medium rounded-sm hover:bg-rust-light transition-colors"
+              >
+                삽입하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
