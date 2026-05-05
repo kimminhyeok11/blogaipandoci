@@ -256,15 +256,18 @@ function WritePageContent() {
       });
 
       // Upload to Supabase Storage
-      const fileExt = "webp";
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`;
       const filePath = `posts/${fileName}`;
+
+      // webp로 변환된 blob을 올바른 파일명의 File 객체로 변환
+      const uploadFile = new File([compressedFile], fileName, { type: "image/webp" });
 
       const { error: uploadError } = await supabase.storage
         .from("images")
-        .upload(filePath, compressedFile, {
+        .upload(filePath, uploadFile, {
           cacheControl: "3600",
           upsert: false,
+          contentType: "image/webp",
         });
 
       if (uploadError) throw uploadError;
@@ -274,7 +277,8 @@ function WritePageContent() {
         .getPublicUrl(filePath);
 
       return publicUrl;
-    } catch {
+    } catch (err) {
+      console.error("이미지 업로드 오류:", err);
       showToast("이미지 업로드에 실패했습니다.", "error");
       throw new Error("Image upload failed");
     }
