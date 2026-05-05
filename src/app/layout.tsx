@@ -5,6 +5,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import { Analytics } from "@vercel/analytics/next";
+import { AdSenseScript } from "@/components/ads/AdSenseScript";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
 
@@ -117,15 +118,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112"
-          crossOrigin="anonymous"
-        />
         <OrganizationSchema />
         <WebSiteSchema />
       </head>
       <body className="antialiased min-h-screen font-serif">
+        <AdSenseScript />
         <AuthProvider>
           <ToastProvider>
             {children}
