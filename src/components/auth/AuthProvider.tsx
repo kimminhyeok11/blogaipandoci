@@ -4,9 +4,13 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Session, User } from "@supabase/supabase-js";
 
+interface AuthUser extends User {
+  role?: string;
+}
+
 interface AuthContextType {
   session: Session | null;
-  user: User | null;
+  user: AuthUser | null;
   isLoading: boolean;
   refreshSession: () => Promise<void>;
 }
@@ -20,13 +24,34 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const fetchUserRole = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single() as { data: { role: string } | null; error: Error | null };
+    
+    if (error) {
+      console.error('Failed to fetch user role:', error);
+      return 'user';
+    }
+    
+    return data?.role || 'user';
+  };
 
   const refreshSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setSession(session);
-    setUser(session?.user ?? null);
+    
+    if (session?.user) {
+      const role = await fetchUserRole(session.user.id);
+      setUser({ ...session.user, role });
+    } else {
+      setUser(null);
+    }
   };
 
   useEffect(() => {
@@ -35,10 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 세션 변경 구독
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("Auth state changed:", event);
         setSession(session);
-        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const role = await fetchUserRole(session.user.id);
+          setUser({ ...session.user, role });
+        } else {
+          setUser(null);
+        }
+        
         setIsLoading(false);
       }
     );

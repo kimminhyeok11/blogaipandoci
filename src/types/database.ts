@@ -63,6 +63,7 @@ export type Database = {
           email: string;
           nickname: string | null;
           avatar_url: string | null;
+          role: string;
           created_at: string;
           updated_at: string;
         };
@@ -71,6 +72,7 @@ export type Database = {
           email: string;
           nickname?: string | null;
           avatar_url?: string | null;
+          role?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -79,6 +81,7 @@ export type Database = {
           email?: string;
           nickname?: string | null;
           avatar_url?: string | null;
+          role?: string;
           created_at?: string;
           updated_at?: string;
         };

@@ -46,12 +46,19 @@ export default function StatsPage() {
   useEffect(() => {
     if (isAuthLoading) return;
     if (!user) {
+      window.location.href = "/login?redirect=/admin/stats";
+      return;
+    }
+
+    // 관리자 권한 체크
+    if (user.role !== 'admin') {
+      showToast("관리자 권한이 필요합니다", "error");
       window.location.href = "/";
       return;
     }
 
     fetchStats();
-  }, [user, isAuthLoading]);
+  }, [user, isAuthLoading, showToast]);
 
   const fetchStats = async () => {
     try {
