@@ -7,6 +7,7 @@ import { AdSense } from "@/components/ads/AdSense";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useQuery } from "@tanstack/react-query";
 
 interface Post {
   id: string;
@@ -22,7 +23,6 @@ interface Post {
 export default function HomePage() {
   const [featuredPost, setFeaturedPost] = useState<Post | null>(null);
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { showToast } = useToast();
@@ -48,16 +48,13 @@ export default function HomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  // Fetch popular and latest posts from Supabase
-  const fetchPosts = useCallback(async () => {
-    setIsLoading(true);
-    console.log("[DEBUG] fetchPosts start");
-    console.log("[DEBUG] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log("[DEBUG] Current user:", user?.id || "anonymous");
-
-    try {
+  // React Query로 데이터 가져오기 (캐싱 적용)
+  const { data: postsData, isLoading } = useQuery({
+    queryKey: ['posts', 'main'],
+    queryFn: async () => {
+      console.log("[DEBUG] React Query fetchPosts start");
+      
       // Popular posts (by view count) - for hero section
-      console.log("[DEBUG] Popular posts query start...");
       const { data: popularPosts, error: popularError } = await supabase
         .from("posts")
         .select("id, title, excerpt, slug, published_at, view_count, user_id")
@@ -66,27 +63,11 @@ export default function HomePage() {
         .order("view_count", { ascending: false })
         .limit(1);
 
-      console.log("[DEBUG] Popular posts result:", { 
-        data: popularPosts, 
-        error: popularError,
-        count: popularPosts?.length || 0 
-      });
-
       if (popularError) {
         console.error("[ERROR] Popular posts failed:", popularError);
-        showToast("Popular posts failed: " + popularError.message, "error");
-      }
-
-      if (popularPosts && popularPosts.length > 0) {
-        console.log("[DEBUG] Featured post set:", (popularPosts[0] as any).title);
-        setFeaturedPost(popularPosts[0]);
-      } else {
-        console.log("[DEBUG] No featured post (condition: published=true, published_at is not null)");
-        setFeaturedPost(null);
       }
 
       // Latest posts (by date)
-      console.log("[DEBUG] Latest posts query start...");
       const { data: latestPosts, error: latestError } = await supabase
         .from("posts")
         .select("id, title, excerpt, slug, published_at, view_count, user_id")
@@ -95,60 +76,26 @@ export default function HomePage() {
         .order("published_at", { ascending: false })
         .limit(5);
 
-      console.log("[DEBUG] Latest posts result:", { 
-        data: latestPosts, 
-        error: latestError,
-        count: latestPosts?.length || 0 
-      });
-
       if (latestError) {
         console.error("[ERROR] Latest posts failed:", latestError);
-        showToast("Latest posts failed: " + latestError.message, "error");
       }
 
-      if (latestPosts && latestPosts.length > 0) {
-        console.log("[DEBUG] Latest posts list:", (latestPosts as any[]).map(p => ({ id: p.id, title: p.title, published: p.published_at })));
-        setRecentPosts(latestPosts);
-      } else {
-        console.log("[DEBUG] No latest posts (condition: published=true, published_at is not null)");
-        setRecentPosts([]);
-      }
+      return {
+        featuredPost: popularPosts?.[0] || null,
+        recentPosts: latestPosts || []
+      };
+    },
+    staleTime: 1000 * 60 * 5, // 5분 동안 캐싱
+    gcTime: 1000 * 60 * 10, // 10분 후 가비지 컬렉션
+  });
 
-      // Data loading complete
-    } catch (err) {
-      console.error("[ERROR] Data loading error:", err);
-      const msg = err instanceof Error ? err.message : "Data loading failed";
-      showToast(msg, "error");
-    } finally {
-      setIsLoading(false);
+  // 데이터 설정
+  useEffect(() => {
+    if (postsData) {
+      setFeaturedPost(postsData.featuredPost);
+      setRecentPosts(postsData.recentPosts);
     }
-  }, []);
-
-  // Initial load
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
-
-  // Force reload on page focus
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        fetchPosts();
-      }
-    };
-
-    const handleFocus = () => {
-      fetchPosts();
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [fetchPosts]);
+  }, [postsData]);
 
   return (
     <div className="min-h-screen bg-paper">

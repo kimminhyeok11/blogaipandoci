@@ -3,6 +3,7 @@ import { Noto_Serif_KR, Noto_Sans_KR, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import { Analytics } from "@vercel/analytics/next";
 import { AdSenseScript } from "@/components/ads/AdSenseScript";
@@ -123,11 +124,13 @@ export default function RootLayout({
       </head>
       <body className="antialiased min-h-screen font-serif">
         <AdSenseScript />
-        <AuthProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </AuthProvider>
+        </QueryProvider>
         <Analytics />
       </body>
     </html>
