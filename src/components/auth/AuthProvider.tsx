@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Session, User } from "@supabase/supabase-js";
 
@@ -60,27 +60,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    let subscription: { unsubscribe: () => void } | null = null;
+    let isMounted = true;
+
     // 초기 세션 복원
-    refreshSession().then(() => setIsLoading(false));
+    refreshSession().then(() => {
+      if (isMounted) setIsLoading(false);
+    });
 
     // 세션 변경 구독
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+        
         console.log("Auth state changed:", event);
         setSession(session);
         
         if (session?.user) {
           const role = await fetchUserRole(session.user.id);
-          setUser({ ...session.user, role });
+          if (isMounted) {
+            setUser({ ...session.user, role });
+          }
         } else {
-          setUser(null);
+          if (isMounted) setUser(null);
         }
         
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     );
+    subscription = sub;
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      // 타이머 지연으로 Strict Mode 언마운트/마운트 사이 lock 해제 시간 확보
+      setTimeout(() => {
+        subscription?.unsubscribe();
+      }, 0);
+    };
   }, []);
 
   return (
