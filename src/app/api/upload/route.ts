@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabase, getServiceSupabase } from "@/lib/supabase";
 
 // POST /api/upload - 이미지 업로드
 export async function POST(request: Request) {
   try {
-    // 인증 확인
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // 요청에서 사용자 ID 추출 (헤더)
+    const authHeader = request.headers.get('authorization');
+    const userId = authHeader?.replace('Bearer ', '');
+    
+    if (!userId) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Unauthorized: No user ID" },
         { status: 401 }
       );
     }
@@ -44,10 +46,11 @@ export async function POST(request: Request) {
     const randomString = Math.random().toString(36).substring(2, 8);
     const fileExt = file.name.split(".").pop();
     const fileName = `${timestamp}-${randomString}.${fileExt}`;
-    const filePath = `uploads/${user.id}/${fileName}`;
+    const filePath = `uploads/${userId}/${fileName}`;
 
-    // Supabase Storage에 업로드
-    const { error: uploadError } = await supabase.storage
+    // 서비스 역할로 Supabase Storage에 업로드 (RLS 우회)
+    const serviceSupabase = getServiceSupabase();
+    const { error: uploadError } = await serviceSupabase.storage
       .from("images")
       .upload(filePath, file, {
         cacheControl: "3600",
@@ -62,7 +65,7 @@ export async function POST(request: Request) {
     }
 
     // 공개 URL 가져오기
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = serviceSupabase.storage
       .from("images")
       .getPublicUrl(filePath);
 

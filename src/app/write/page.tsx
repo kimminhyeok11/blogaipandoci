@@ -255,34 +255,31 @@ function WritePageContent() {
         fileType: "image/webp",
       });
 
-      // Upload to Supabase Storage
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`;
-      const filePath = `posts/${fileName}`;
+      // Upload to API with Authorization header
+      const formData = new FormData();
+      formData.append('file', compressedFile, `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`);
 
-      // webp로 변환된 blob을 올바른 파일명의 File 객체로 변환
-      const uploadFile = new File([compressedFile], fileName, { type: "image/webp" });
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user?.id}`
+        },
+        body: formData
+      });
 
-      const { error: uploadError } = await supabase.storage
-        .from("images")
-        .upload(filePath, uploadFile, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: "image/webp",
-        });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Upload failed');
+      }
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("images")
-        .getPublicUrl(filePath);
-
-      return publicUrl;
+      const { url } = await response.json();
+      return url;
     } catch (err) {
-      console.error("이미지 업로드 오류:", err);
+      console.error("Image upload error:", err);
       showToast("이미지 업로드에 실패했습니다.", "error");
       throw new Error("Image upload failed");
     }
-  }, [showToast]);
+  }, [showToast, user?.id]);
 
   const handleSubmit = async (published: boolean = false) => {
     // 유효성 검사
