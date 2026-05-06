@@ -56,13 +56,35 @@ export type PostsTable = {
 
 // 타입 안전한 테이블 헬퍼 - as any 중복 제거
 export const db = {
-  posts: () => supabase.from('posts') as any,
-  users: () => supabase.from('users') as any,
-  tags: () => supabase.from('tags') as any,
-  post_tags: () => supabase.from('post_tags') as any,
-  images: () => supabase.from('images') as any,
+  posts: () => supabase.from('posts'),
+  users: () => supabase.from('users'),
+  tags: () => supabase.from('tags'),
+  postRevisions: () => supabase.from('post_revisions'),
+  userStats: () => supabase.from('user_stats'),
+  uploadLogs: () => supabase.from('upload_logs'),
 };
 
+// API 에러 타입 정의
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public code: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+// 표준 API 응답 타입
+export interface ApiResponse<T> {
+  data?: T;
+  error?: {
+    message: string;
+    code: string;
+    status: number;
+  };
+}
 // 이미지 업로드 유틸리티
 export const uploadImage = async (
   file: File,
