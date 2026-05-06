@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
-import { supabase, db } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { RevisionHistory } from "@/components/editor/RevisionHistory";
@@ -163,19 +163,34 @@ function WritePageContent() {
 
     const loadPost = async () => {
       try {
-        const { data: post, error } = await db.posts()
-          .select("*")
-          .eq("slug", editSlug)
-          .single();
+        // 작성자 인증 확인
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push("/posts");
+          return;
+        }
 
-        if (error || !post) {
+        // API로 글 조회 (RLS 우회)
+        const response = await fetch(`/api/posts/${editSlug}?edit=true`, {
+          headers: {
+            "Authorization": `Bearer ${user.id}`,
+          },
+        });
+
+        if (!response.ok) {
+          router.push("/posts");
+          return;
+        }
+
+        const { post } = await response.json();
+
+        if (!post) {
           router.push("/posts");
           return;
         }
 
         // 작성자 본인 확인
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id !== post.user_id) {
+        if (user.id !== post.user_id) {
           router.push(`/posts/${editSlug}`);
           return;
         }

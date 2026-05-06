@@ -8,35 +8,67 @@ export async function GET(
 ) {
   try {
     const { slug } = params;
+    const { searchParams } = new URL(request.url);
+    const isEditMode = searchParams.get("edit") === "true";
+    
+    const serviceSupabase = getServiceSupabase();
 
-    // 조회수 증가 (서비스 역할로 RLS 우회)
-    try {
-      const serviceSupabase = getServiceSupabase();
-      
-      // 현재 view_count 조회 후 +1
-      const { data: currentPost } = await serviceSupabase
-        .from('posts')
-        .select('view_count')
-        .eq('slug', slug)
-        .single();
-      
-      if (currentPost) {
-        await (serviceSupabase as any)
+    // 조회수 증가 (서비스 역할로 RLS 우회) - 조회 모드일 때만
+    if (!isEditMode) {
+      try {
+        const { data: currentPost } = await serviceSupabase
           .from('posts')
-          .update({ view_count: ((currentPost as any).view_count || 0) + 1 })
-          .eq('slug', slug);
+          .select('view_count')
+          .eq('slug', slug)
+          .single();
+        
+        if (currentPost) {
+          await (serviceSupabase as any)
+            .from('posts')
+            .update({ view_count: ((currentPost as any).view_count || 0) + 1 })
+            .eq('slug', slug);
+        }
+      } catch {
+        console.warn('View count increment failed');
       }
-    } catch {
-      // 조회수 증가 실패해도 글 조회는 계속 진행
-      console.warn('View count increment failed');
     }
 
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("slug", slug)
-      .eq("published", true)
-      .single();
+    let data, error;
+
+    if (isEditMode) {
+      // 수정 모드: 인증 확인 후 비공개 글도 반환
+      const authHeader = request.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      
+      const userId = authHeader.replace("Bearer ", "");
+      
+      // 서비스 역할로 모든 글 조회 (작성자 확인용)
+      const result = await (serviceSupabase.from("posts") as any)
+        .select("*")
+        .eq("slug", slug)
+        .single();
+      
+      data = result.data;
+      error = result.error;
+      
+      // 작성자 본인만 접근 가능
+      if (data && data.user_id !== userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      // 일반 조회 모드: 공개 글만
+      const result = await supabase
+        .from("posts")
+        .select("*")
+        .eq("slug", slug)
+        .eq("published", true)
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    }
 
     if (error) {
       if (error.code === "PGRST116") {
