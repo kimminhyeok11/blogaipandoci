@@ -62,7 +62,16 @@ export default function StatsPage() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("/api/stats");
+      if (!user?.id) {
+        throw new Error("User not authenticated");
+      }
+      
+      const response = await fetch("/api/stats", {
+        headers: {
+          'Authorization': `Bearer ${user.id}`
+        }
+      });
+      
       if (!response.ok) {
         throw new Error("Failed to fetch stats");
       }

@@ -1,24 +1,24 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getServiceSupabase } from "@/lib/supabase";
 
 // GET /api/stats - 통계 데이터 조회
 export async function GET(request: Request) {
-  if (!supabase) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    // 사용자 인증 확인
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const serviceSupabase = getServiceSupabase();
+    
+    // 요청에서 사용자 ID 추출 (헤더 또는 쿼리 파라미터)
+    const authHeader = request.headers.get('authorization');
+    const userId = authHeader?.replace('Bearer ', '');
+    
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
     }
 
-    // 관리자 권한 확인
-    const { data: userData, error: roleError } = await supabase
+    // 관리자 권한 확인 (service role로 RLS 우회)
+    const { data: userData, error: roleError } = await serviceSupabase
       .from('users')
       .select('role')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single() as { data: { role: string } | null; error: Error | null };
 
     if (roleError || userData?.role !== 'admin') {
@@ -26,31 +26,31 @@ export async function GET(request: Request) {
     }
 
     // 총 게시글 수
-    const { count: totalPosts } = await supabase
+    const { count: totalPosts } = await serviceSupabase
       .from("posts")
       .select("*", { count: "exact", head: true });
 
     // 발행된 게시글 수
-    const { count: publishedPosts } = await supabase
+    const { count: publishedPosts } = await serviceSupabase
       .from("posts")
       .select("*", { count: "exact", head: true })
       .eq("published", true);
 
     // 임시저장 게시글 수
-    const { count: draftPosts } = await supabase
+    const { count: draftPosts } = await serviceSupabase
       .from("posts")
       .select("*", { count: "exact", head: true })
       .eq("published", false);
 
     // 총 조회수
-    const { data: viewStats } = await supabase
+    const { data: viewStats } = await serviceSupabase
       .from("posts")
       .select("view_count");
     
     const totalViews = viewStats?.reduce((sum: number, post: { view_count: number }) => sum + (post.view_count || 0), 0) || 0;
 
     // 인기 게시글 TOP 5
-    const { data: popularPosts } = await supabase
+    const { data: popularPosts } = await serviceSupabase
       .from("posts")
       .select("id, title, slug, view_count, published_at")
       .eq("published", true)
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       .limit(5);
 
     // 최근 게시글 5개
-    const { data: recentPosts } = await supabase
+    const { data: recentPosts } = await serviceSupabase
       .from("posts")
       .select("id, title, slug, published, created_at, view_count")
       .order("created_at", { ascending: false })
@@ -67,7 +67,7 @@ export async function GET(request: Request) {
     // 이번 달 게시글 수
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const { count: thisMonthPosts } = await supabase
+    const { count: thisMonthPosts } = await serviceSupabase
       .from("posts")
       .select("*", { count: "exact", head: true })
       .gte("created_at", firstDayOfMonth);
@@ -93,17 +93,21 @@ export async function GET(request: Request) {
 // POST /api/stats - 조회수 추이 데이터 (최근 30일)
 export async function POST(request: Request) {
   try {
-    // 사용자 인증 확인
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const serviceSupabase = getServiceSupabase();
+    
+    // 요청에서 사용자 ID 추출 (헤더)
+    const authHeader = request.headers.get('authorization');
+    const userId = authHeader?.replace('Bearer ', '');
+    
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
     }
 
-    // 관리자 권한 확인
-    const { data: userData, error: roleError } = await supabase
+    // 관리자 권한 확인 (service role로 RLS 우회)
+    const { data: userData, error: roleError } = await serviceSupabase
       .from('users')
       .select('role')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single() as { data: { role: string } | null; error: Error | null };
 
     if (roleError || userData?.role !== 'admin') {
@@ -114,7 +118,7 @@ export async function POST(request: Request) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const { data: dailyStats } = await supabase
+    const { data: dailyStats } = await serviceSupabase
       .from("posts")
       .select("created_at")
       .gte("created_at", thirtyDaysAgo.toISOString())

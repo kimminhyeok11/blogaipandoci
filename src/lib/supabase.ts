@@ -4,8 +4,9 @@ import type { Post } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Supabase 클라이언트 (싱글톤)
+// Supabase 클라이언트 (싱글톤) - 클라이언트용
 let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
 
 export const getSupabaseClient = () => {
@@ -22,6 +23,24 @@ export const getSupabaseClient = () => {
 };
 
 export const supabase = getSupabaseClient();
+
+// 서비스 역할 클라이언트 - 서버/API용 (RLS 우회)
+let supabaseServiceInstance: ReturnType<typeof createClient<Database>> | null = null;
+
+export const getServiceSupabase = () => {
+  if (!supabaseServiceRoleKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
+  }
+  if (!supabaseServiceInstance) {
+    supabaseServiceInstance = createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+  }
+  return supabaseServiceInstance;
+};
 
 // 타입 헬퍼 - 테이블 타입 명시적 추출
 export type PostsTable = {
