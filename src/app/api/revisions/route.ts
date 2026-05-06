@@ -22,31 +22,23 @@ export async function GET(request: Request) {
 
     // 서비스 역할로 글 확인 및 권한 체크 (RLS 우회)
     const serviceSupabase = getServiceSupabase();
-    const { data: post } = await serviceSupabase
-      .from("posts")
+    const { data: post, error: postError } = await (serviceSupabase.from("posts") as any)
       .select("id, user_id")
       .eq("slug", slug)
-      .single() as { data: { id: string; user_id: string } | null; error: Error | null };
+      .single();
 
-    if (!post) {
+    if (postError || !post) {
+      console.error("Post fetch error:", postError);
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // 작성자 또는 관리자 권한 체크
-    const { data: userData } = await serviceSupabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single() as { data: { role: string } | null; error: Error | null };
-    
-    const isAdmin = userData?.role === 'admin';
-    if (post.user_id !== userId && !isAdmin) {
+    // 작성자 본인 확인 (간단하게)
+    if (post.user_id !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // 리비전 조회
-    const { data: revisions, error } = await serviceSupabase
-      .from("post_revisions")
+    const { data: revisions, error } = await (serviceSupabase.from("post_revisions") as any)
       .select("id, title, content, excerpt, created_at, revision_number")
       .eq("post_id", post.id)
       .order("created_at", { ascending: false })
@@ -91,23 +83,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
     }
 
-    // 서비스 역할로 작성자 확인 및 권한 체크
+    // 서비스 역할로 작성자 확인
     const serviceSupabase = getServiceSupabase();
-    const { data: post } = await serviceSupabase
-      .from("posts")
+    const { data: post, error: postError } = await (serviceSupabase.from("posts") as any)
       .select("user_id")
       .eq("id", post_id)
-      .single() as { data: { user_id: string } | null; error: Error | null };
+      .single();
 
-    // 관리자 권한 확인
-    const { data: userData } = await serviceSupabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single() as { data: { role: string } | null; error: Error | null };
-    
-    const isAdmin = userData?.role === 'admin';
-    if (!post || (post.user_id !== userId && !isAdmin)) {
+    if (postError || !post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // 작성자 본인 확인 (간단하게)
+    if (post.user_id !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
