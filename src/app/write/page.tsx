@@ -218,19 +218,12 @@ function WritePageContent() {
           setExcerpt(post.excerpt || "");
         }
 
-        // 기존 태그 로드
-        const { data: postTags } = await db.post_tags()
-          .select("tag_id")
-          .eq("post_id", post.id);
-
-        if (postTags?.length) {
-          const tagIds = postTags.map((pt: any) => pt.tag_id);
-          const { data: tagData } = await db.tags()
-            .select("name")
-            .in("id", tagIds);
-          
-          if (tagData?.length) {
-            setTags(tagData.map((t: any) => t.name).join(", "));
+        // 기존 태그 로드 (API 호출)
+        const tagsResponse = await fetch(`/api/tags?postId=${post.id}`);
+        if (tagsResponse.ok) {
+          const { tags } = await tagsResponse.json();
+          if (tags?.length) {
+            setTags(tags.join(", "));
           }
         }
       } catch {
@@ -360,8 +353,7 @@ function WritePageContent() {
 
         console.log("[DEBUG] Update successful via API");
 
-        // 기존 태그 삭제 후 새 태그 저장
-        await db.post_tags().delete().eq("post_id", postId);
+        // 태그 저장 (API에서 기존 태그 삭제 후 새로 저장)
         await saveTags(postId, tagList);
 
         showToast(published ? "글이 수정되었습니다." : "임시 저장되었습니다.", "success");
@@ -450,26 +442,28 @@ function WritePageContent() {
     }
   };
 
-  // 태그 저장 헬퍼 함수
+  // 태그 저장 헬퍼 함수 (API 호출)
   const saveTags = async (postId: string, tagList: string[]) => {
     if (!tagList.length) return;
 
-    for (const tagName of tagList) {
-      const tagSlug = tagName.toLowerCase().replace(/\s+/g, "-");
+    const currentUser = await supabase.auth.getUser();
+    if (!currentUser.data.user) return;
 
-      // 1. 태그 upsert
-      const { data: tagData } = await db.tags()
-        .upsert({ name: tagName, slug: tagSlug }, { onConflict: "slug" })
-        .select("id")
-        .single();
+    const response = await fetch("/api/tags", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${currentUser.data.user.id}`,
+      },
+      body: JSON.stringify({
+        postId,
+        tags: tagList,
+      }),
+    });
 
-      if (tagData?.id) {
-        // 2. post_tags insert
-        await db.post_tags().insert({
-          post_id: postId,
-          tag_id: tagData.id,
-        });
-      }
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "태그 저장 실패");
     }
   };
 

@@ -39,18 +39,24 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
 
     setIsDeleting(true);
     try {
-      // 소유권 검증: user_id가 현재 사용자와 일치하는 게시글만 삭제
-      const { error } = await db.posts()
-        .delete()
-        .eq("id", postId)
-        .eq("user_id", currentUser);
+      // API 호출로 삭제
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${currentUser}`,
+        },
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "삭제 실패");
+      }
 
       showToast("글이 삭제되었습니다.", "success");
       router.push("/posts");
       router.refresh();
-    } catch {
+    } catch (err) {
+      console.error("Delete error:", err);
       showToast("삭제에 실패했습니다.", "error");
     } finally {
       setIsDeleting(false);
