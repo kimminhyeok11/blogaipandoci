@@ -45,7 +45,8 @@ export async function GET(
       const userId = authHeader.replace("Bearer ", "");
       
       // 서비스 역할로 모든 글 조회 (작성자 확인용)
-      const result = await (serviceSupabase.from("posts") as any)
+      const result = await serviceSupabase
+        .from("posts")
         .select("*")
         .eq("slug", slug)
         .single();

@@ -20,7 +20,8 @@ export async function POST(request: Request) {
     const serviceSupabase = getServiceSupabase();
 
     // 기존 태그 연결 삭제
-    await (serviceSupabase.from("post_tags") as any)
+    await serviceSupabase
+      .from("post_tags")
       .delete()
       .eq("post_id", postId);
 
@@ -29,7 +30,8 @@ export async function POST(request: Request) {
       const slug = tagName.toLowerCase().replace(/\s+/g, "-");
       
       // 태그 조회 또는 생성
-      let { data: existingTag } = await (serviceSupabase.from("tags") as any)
+      let { data: existingTag } = await serviceSupabase
+        .from("tags")
         .select("id")
         .eq("slug", slug)
         .single();
@@ -38,7 +40,8 @@ export async function POST(request: Request) {
       if (existingTag) {
         tagId = existingTag.id;
       } else {
-        const { data: newTag, error: tagError } = await (serviceSupabase.from("tags") as any)
+        const { data: newTag, error: tagError } = await serviceSupabase
+          .from("tags")
           .insert({ name: tagName, slug })
           .select("id")
           .single();
@@ -48,7 +51,7 @@ export async function POST(request: Request) {
       }
 
       // 게시글-태그 연결
-      await (serviceSupabase.from("post_tags") as any).insert({
+      await serviceSupabase.from("post_tags").insert({
         post_id: postId,
         tag_id: tagId,
       });
@@ -73,7 +76,8 @@ export async function GET(request: Request) {
 
     const serviceSupabase = getServiceSupabase();
 
-    const { data, error } = await (serviceSupabase.from("post_tags") as any)
+    const { data, error } = await serviceSupabase
+      .from("post_tags")
       .select("tags(name)")
       .eq("post_id", postId);
 

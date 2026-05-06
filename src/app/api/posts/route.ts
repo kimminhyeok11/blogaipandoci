@@ -62,8 +62,8 @@ export async function POST(request: Request) {
 
     const serviceSupabase = getServiceSupabase();
 
-    const { data, error } = await (serviceSupabase
-      .from("posts") as any)
+    const { data, error } = await serviceSupabase
+      .from("posts")
       .insert({
         title,
         slug,
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
         cover_image,
         cover_image_alt,
         published,
-        user_id,
+        user_id: userId,
         published_at: published ? new Date().toISOString() : null,
       })
       .select()
@@ -114,8 +114,8 @@ export async function PUT(request: Request) {
     const serviceSupabase = getServiceSupabase();
 
     // Check if user owns this post
-    const { data: existingPost, error: fetchError } = await (serviceSupabase
-      .from("posts") as any)
+    const { data: existingPost, error: fetchError } = await serviceSupabase
+      .from("posts")
       .select("user_id")
       .eq("id", id)
       .single();
@@ -134,8 +134,8 @@ export async function PUT(request: Request) {
       );
     }
 
-    const { data, error } = await (serviceSupabase
-      .from("posts") as any)
+    const { data, error } = await serviceSupabase
+      .from("posts")
       .update({
         title,
         slug,

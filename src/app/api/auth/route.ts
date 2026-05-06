@@ -20,9 +20,8 @@ export async function GET() {
       );
     }
 
-    // 추가 프로필 정보 가져오기
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: profile } = await (supabase as any)
+    // 추가 프로필 정보 가져오기 (RLS 적용된 일반 클라이언트 사용)
+    const { data: profile } = await supabase
       .from("users")
       .select("nickname, avatar_url")
       .eq("id", user.id)
