@@ -11,8 +11,20 @@ import {
   TrendingUp, 
   Calendar,
   ArrowLeft,
-  Loader2
+  Loader2,
+  ImageIcon,
+  Trash2,
+  CheckSquare,
+  Square
 } from "lucide-react";
+
+interface OrphanedImage {
+  name: string;
+  path: string;
+  url: string;
+  size: number;
+  created_at: string;
+}
 
 interface StatsData {
   totalPosts: number;
@@ -42,6 +54,11 @@ export default function StatsPage() {
   const { showToast } = useToast();
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // 이미지 관리 상태
+  const [orphanImages, setOrphanImages] = useState<OrphanedImage[]>([]);
+  const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
+  const [isImageLoading, setIsImageLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -83,6 +100,99 @@ export default function StatsPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 고아 이미지 조회
+  const fetchOrphanImages = async () => {
+    if (!user?.id) return;
+    
+    setIsImageLoading(true);
+    try {
+      const response = await fetch('/api/admin/images', {
+        headers: {
+          'Authorization': `Bearer ${user.id}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch images');
+      }
+      
+      const data = await response.json();
+      setOrphanImages(data.orphans || []);
+    } catch (error) {
+      console.error('Orphan images fetch error:', error);
+      showToast('고아 이미지 조회에 실패했습니다', 'error');
+    } finally {
+      setIsImageLoading(false);
+    }
+  };
+
+  // 선택된 이미지 삭제
+  const deleteSelectedImages = async () => {
+    if (selectedImages.size === 0 || !user?.id) return;
+    
+    if (!confirm(`선택한 ${selectedImages.size}개의 이미지를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    setIsImageLoading(true);
+    try {
+      const paths = Array.from(selectedImages);
+      const response = await fetch('/api/admin/images', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.id}`
+        },
+        body: JSON.stringify({ paths })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete images');
+      }
+      
+      const result = await response.json();
+      showToast(`${result.deleted}개의 이미지가 삭제되었습니다`, 'success');
+      
+      // 목록 갱신
+      setSelectedImages(new Set());
+      fetchOrphanImages();
+    } catch (error) {
+      console.error('Image delete error:', error);
+      showToast('이미지 삭제에 실패했습니다', 'error');
+    } finally {
+      setIsImageLoading(false);
+    }
+  };
+
+  // 이미지 선택 토글
+  const toggleImageSelection = (path: string) => {
+    const newSelected = new Set(selectedImages);
+    if (newSelected.has(path)) {
+      newSelected.delete(path);
+    } else {
+      newSelected.add(path);
+    }
+    setSelectedImages(newSelected);
+  };
+
+  // 전체 선택/해제
+  const toggleSelectAll = () => {
+    if (selectedImages.size === orphanImages.length) {
+      setSelectedImages(new Set());
+    } else {
+      setSelectedImages(new Set(orphanImages.map(img => img.path)));
+    }
+  };
+
+  // 파일 크기 포맷팅
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (isAuthLoading || isLoading) {
@@ -254,6 +364,136 @@ export default function StatsPage() {
               ))
             )}
           </div>
+        </div>
+
+        {/* 이미지 저장소 관리 */}
+        <div className="bg-white border border-rule p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-ink mb-1">이미지 저장소 관리</h2>
+              <p className="text-sm text-muted font-sans">
+                게시글에서 사용되지 않는 고아 이미지를 관리합니다
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchOrphanImages}
+                disabled={isImageLoading}
+                className="px-3 py-2 bg-paper border border-rule text-ink rounded hover:bg-gray-50 transition-colors font-sans text-sm flex items-center gap-2 disabled:opacity-50"
+              >
+                <TrendingUp size={16} />
+                {isImageLoading ? '조회 중...' : '새로고침'}
+              </button>
+              {selectedImages.size > 0 && (
+                <button
+                  onClick={deleteSelectedImages}
+                  disabled={isImageLoading}
+                  className="px-3 py-2 bg-rust text-white rounded hover:bg-red-700 transition-colors font-sans text-sm flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Trash2 size={16} />
+                  {selectedImages.size}개 삭제
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 고아 이미지 통계 */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-paper border border-rule p-4">
+              <div className="text-3xl font-bold text-ink mb-1">{orphanImages.length}</div>
+              <div className="text-sm text-muted font-sans">고아 이미지 수</div>
+            </div>
+            <div className="bg-paper border border-rule p-4">
+              <div className="text-3xl font-bold text-ink mb-1">
+                {formatFileSize(orphanImages.reduce((sum, img) => sum + img.size, 0))}
+              </div>
+              <div className="text-sm text-muted font-sans">총 용량</div>
+            </div>
+          </div>
+
+          {/* 이미지 그리드 */}
+          {orphanImages.length > 0 ? (
+            <div>
+              {/* 전체 선택 */}
+              <div className="flex items-center gap-2 mb-4 pb-4 border-b border-rule">
+                <button
+                  onClick={toggleSelectAll}
+                  className="flex items-center gap-2 text-sm font-sans text-muted hover:text-ink transition-colors"
+                >
+                  {selectedImages.size === orphanImages.length ? (
+                    <CheckSquare size={18} className="text-rust" />
+                  ) : (
+                    <Square size={18} />
+                  )}
+                  전체 {selectedImages.size === orphanImages.length ? '해제' : '선택'}
+                </button>
+              </div>
+
+              {/* 이미지 목록 */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {orphanImages.map((image) => (
+                  <div
+                    key={image.path}
+                    className={`group relative bg-paper border-2 rounded-lg overflow-hidden cursor-pointer transition-all ${
+                      selectedImages.has(image.path)
+                        ? 'border-rust ring-2 ring-rust/20'
+                        : 'border-rule hover:border-gray-400'
+                    }`}
+                    onClick={() => toggleImageSelection(image.path)}
+                  >
+                    {/* 체크박스 */}
+                    <div className="absolute top-2 left-2 z-10">
+                      {selectedImages.has(image.path) ? (
+                        <CheckSquare size={20} className="text-rust" />
+                      ) : (
+                        <Square size={20} className="text-white drop-shadow-md" />
+                      )}
+                    </div>
+
+                    {/* 이미지 썸네일 */}
+                    <div className="aspect-square bg-gray-100">
+                      <img
+                        src={image.url}
+                        alt={image.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder-image.png';
+                        }}
+                      />
+                    </div>
+
+                    {/* 정보 */}
+                    <div className="p-2">
+                      <div className="text-xs text-muted font-sans truncate mb-1">
+                        {image.name}
+                      </div>
+                      <div className="text-xs text-rust font-sans font-medium">
+                        {formatFileSize(image.size)}
+                      </div>
+                      <div className="text-xs text-muted font-sans mt-1">
+                        {new Date(image.created_at).toLocaleDateString('ko-KR')}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-paper border border-rule rounded-lg">
+              <ImageIcon size={48} className="text-muted mx-auto mb-4" />
+              <p className="text-muted font-sans text-sm">
+                {isImageLoading ? '조회 중...' : '고아 이미지가 없습니다'}
+              </p>
+              <button
+                onClick={fetchOrphanImages}
+                disabled={isImageLoading}
+                className="mt-4 px-4 py-2 bg-paper border border-rule text-ink rounded hover:bg-gray-50 transition-colors font-sans text-sm"
+              >
+                {isImageLoading ? '조회 중...' : '고아 이미지 조회하기'}
+              </button>
+            </div>
+          )}
         </div>
       </main>
     </div>

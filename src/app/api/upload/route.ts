@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const randomString = Math.random().toString(36).substring(2, 8);
     const fileExt = file.name.split(".").pop();
     const fileName = `${timestamp}-${randomString}.${fileExt}`;
-    const filePath = `uploads/${userId}/${fileName}`;
+    const filePath = `uploads/${fileName}`;
 
     // 서비스 역할로 Supabase Storage에 업로드 (RLS 우회)
     const serviceSupabase = getServiceSupabase();
