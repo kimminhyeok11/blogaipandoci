@@ -39,8 +39,8 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
 
     setIsDeleting(true);
     try {
-      // API 호출로 삭제
-      const response = await fetch(`/api/posts/${postId}`, {
+      // API 호출로 삭제 (slug 기반)
+      const response = await fetch(`/api/posts/${slug}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${currentUser}`,

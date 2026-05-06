@@ -88,3 +88,47 @@ export async function GET(
     );
   }
 }
+
+// DELETE /api/posts/[slug] - 글 삭제
+export async function DELETE(
+  request: Request,
+  { params }: { params: { slug: string } }
+) {
+  try {
+    const { slug } = params;
+
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = authHeader.replace("Bearer ", "");
+    const serviceSupabase = getServiceSupabase();
+
+    // 글 조회하여 소유자 확인
+    const { data: post, error: fetchError } = await (serviceSupabase.from("posts") as any)
+      .select("user_id")
+      .eq("slug", slug)
+      .single();
+
+    if (fetchError || !post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    if (post.user_id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // 글 삭제
+    const { error } = await (serviceSupabase.from("posts") as any)
+      .delete()
+      .eq("slug", slug);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete post:", error);
+    return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
+  }
+}
