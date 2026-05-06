@@ -7,7 +7,6 @@ import { AdSense } from "@/components/ads/AdSense";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useQuery } from "@tanstack/react-query";
 
 interface Post {
   id: string;
@@ -23,6 +22,7 @@ interface Post {
 export default function HomePage() {
   const [featuredPost, setFeaturedPost] = useState<Post | null>(null);
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { showToast } = useToast();
@@ -48,70 +48,45 @@ export default function HomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  // React Query로 데이터 가져오기 (캐싱 적용)
-  const { data: postsData, isLoading, error } = useQuery({
-    queryKey: ['posts', 'main'],
-    queryFn: async () => {
-      console.log("[DEBUG] React Query fetchPosts start");
-      
-      // Popular posts (by view count) - for hero section
-      const { data: popularPosts, error: popularError } = await supabase
-        .from("posts")
-        .select("id, title, excerpt, slug, published_at, view_count, user_id")
-        .eq("published", true)
-        .not("published_at", "is", null)
-        .order("view_count", { ascending: false })
-        .limit(1);
-
-      if (popularError) {
-        console.error("[ERROR] Popular posts failed:", popularError);
-        throw new Error("인기 글 로딩 실패: " + popularError.message);
-      }
-
-      // Latest posts (by date)
-      const { data: latestPosts, error: latestError } = await supabase
-        .from("posts")
-        .select("id, title, excerpt, slug, published_at, view_count, user_id")
-        .eq("published", true)
-        .not("published_at", "is", null)
-        .order("published_at", { ascending: false })
-        .limit(5);
-
-      if (latestError) {
-        console.error("[ERROR] Latest posts failed:", latestError);
-        throw new Error("최신 글 로딩 실패: " + latestError.message);
-      }
-
-      console.log("[DEBUG] Posts loaded:", { 
-        featured: (popularPosts?.[0] as any)?.title || null, 
-        recentCount: latestPosts?.length || 0 
-      });
-
-      return {
-        featuredPost: popularPosts?.[0] || null,
-        recentPosts: latestPosts || []
-      };
-    },
-    staleTime: 1000 * 60 * 5, // 5분 동안 캐싱
-    gcTime: 1000 * 60 * 10, // 10분 후 가비지 컬렉션
-    retry: 2,
-  });
-
-  // 데이터 설정
+  // Fetch posts on mount
   useEffect(() => {
-    if (postsData) {
-      setFeaturedPost(postsData.featuredPost);
-      setRecentPosts(postsData.recentPosts);
-    }
-  }, [postsData]);
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      try {
+        // Popular posts (by view count)
+        const { data: popularPosts } = await supabase
+          .from("posts")
+          .select("id, title, excerpt, slug, published_at, view_count, user_id")
+          .eq("published", true)
+          .not("published_at", "is", null)
+          .order("view_count", { ascending: false })
+          .limit(1);
 
-  // 에러 발생 시 토스트 표시
-  useEffect(() => {
-    if (error) {
-      console.error("[ERROR] React Query error:", error);
-      showToast(error.message, "error");
-    }
-  }, [error, showToast]);
+        if (popularPosts && popularPosts.length > 0) {
+          setFeaturedPost(popularPosts[0]);
+        }
+
+        // Latest posts (by date)
+        const { data: latestPosts } = await supabase
+          .from("posts")
+          .select("id, title, excerpt, slug, published_at, view_count, user_id")
+          .eq("published", true)
+          .not("published_at", "is", null)
+          .order("published_at", { ascending: false })
+          .limit(5);
+
+        if (latestPosts) {
+          setRecentPosts(latestPosts);
+        }
+      } catch (err) {
+        console.error("Failed to fetch posts:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
 
   return (
     <div className="min-h-screen bg-paper">
