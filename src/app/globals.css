@@ -56,7 +56,7 @@ body {
   }
 
   .headline {
-    @apply text-3xl sm:text-4xl md:text-5xl font-black leading-tight tracking-tight text-ink mb-4;
+    @apply text-3xl sm:text-4xl md:text-5xl font-black leading-tight tracking-tight text-ink mb-4 max-w-4xl mx-auto px-4;
   }
 
   .headline em {
