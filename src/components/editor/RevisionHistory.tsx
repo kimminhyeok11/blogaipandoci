@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { History, X, RotateCcw, Loader2, ChevronDown } from "lucide-react";
 
 interface Revision {
@@ -29,6 +30,7 @@ export function RevisionHistory({
   onRestore,
 }: RevisionHistoryProps) {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [revisions, setRevisions] = useState<Revision[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,11 +40,15 @@ export function RevisionHistory({
   const [isRestoring, setIsRestoring] = useState(false);
 
   const fetchRevisions = useCallback(async () => {
-    if (!slug) return;
+    if (!slug || !user?.id) return;
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/revisions?slug=${slug}`);
+      const response = await fetch(`/api/revisions?slug=${slug}`, {
+        headers: {
+          'Authorization': `Bearer ${user.id}`
+        }
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch revisions");
       }
@@ -53,7 +59,7 @@ export function RevisionHistory({
     } finally {
       setIsLoading(false);
     }
-  }, [slug]);
+  }, [slug, user?.id]);
 
   useEffect(() => {
     if (isOpen && slug) {
@@ -66,11 +72,19 @@ export function RevisionHistory({
       showToast("새 글은 저장 후 히스토리를 사용할 수 있습니다", "warning");
       return;
     }
+    
+    if (!user?.id) {
+      showToast("로그인이 필요합니다", "error");
+      return;
+    }
 
     try {
       const response = await fetch("/api/revisions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${user.id}`
+        },
         body: JSON.stringify({
           post_id: slug,
           title: currentTitle,

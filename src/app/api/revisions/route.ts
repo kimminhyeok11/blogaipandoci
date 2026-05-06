@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabase, getServiceSupabase } from "@/lib/supabase";
 
 // GET /api/revisions?slug=xxx - 특정 글의 히스토리 조회
 export async function GET(request: Request) {
@@ -12,33 +12,43 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Slug is required" }, { status: 400 });
     }
 
-    // 사용자 인증 확인
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 요청에서 사용자 ID 추출 (헤더)
+    const authHeader = request.headers.get('authorization');
+    const userId = authHeader?.replace('Bearer ', '');
+    
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
     }
 
-    // 글 확인 및 작성자 권한 체크
-    const { data: post } = await supabase
+    // 서비스 역할로 글 확인 및 권한 체크 (RLS 우회)
+    const serviceSupabase = getServiceSupabase();
+    const { data: post } = await serviceSupabase
       .from("posts")
       .select("id, user_id")
       .eq("slug", slug)
-      .single();
+      .single() as { data: { id: string; user_id: string } | null; error: Error | null };
 
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    const postData = post as { id: string; user_id: string };
-    if (postData.user_id !== user.id) {
+    // 작성자 또는 관리자 권한 체크
+    const { data: userData } = await serviceSupabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single() as { data: { role: string } | null; error: Error | null };
+    
+    const isAdmin = userData?.role === 'admin';
+    if (post.user_id !== userId && !isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // 리비전 조회
-    const { data: revisions, error } = await supabase
+    const { data: revisions, error } = await serviceSupabase
       .from("post_revisions")
       .select("id, title, content, excerpt, created_at, revision_number")
-      .eq("post_id", postData.id)
+      .eq("post_id", post.id)
       .order("created_at", { ascending: false })
       .limit(limit);
 
@@ -73,21 +83,31 @@ export async function POST(request: Request) {
       );
     }
 
-    // 사용자 인증 확인
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 요청에서 사용자 ID 추출 (헤더)
+    const authHeader = request.headers.get('authorization');
+    const userId = authHeader?.replace('Bearer ', '');
+    
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
     }
 
-    // 작성자 확인
-    const { data: post } = await supabase
+    // 서비스 역할로 작성자 확인 및 권한 체크
+    const serviceSupabase = getServiceSupabase();
+    const { data: post } = await serviceSupabase
       .from("posts")
       .select("user_id")
       .eq("id", post_id)
-      .single();
+      .single() as { data: { user_id: string } | null; error: Error | null };
 
-    const postData = post as { user_id: string } | null;
-    if (!postData || postData.user_id !== user.id) {
+    // 관리자 권한 확인
+    const { data: userData } = await serviceSupabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single() as { data: { role: string } | null; error: Error | null };
+    
+    const isAdmin = userData?.role === 'admin';
+    if (!post || (post.user_id !== userId && !isAdmin)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -98,10 +118,10 @@ export async function POST(request: Request) {
       content: content as string,
       excerpt: (excerpt || "") as string,
       revision_number: (revision_number || 1) as number,
-      created_by: user.id,
+      created_by: userId,
     };
     
-    const { data: revision, error } = await (supabase as any)
+    const { data: revision, error } = await (serviceSupabase as any)
       .from("post_revisions")
       .insert(revisionData)
       .select()
@@ -116,17 +136,17 @@ export async function POST(request: Request) {
     }
 
     // 오래된 리비전 정리 (최신 10개만 유지)
-    const { data: oldRevisions } = await supabase
+    const { data: oldRevisions } = await serviceSupabase
       .from("post_revisions")
       .select("id")
       .eq("post_id", post_id)
       .order("created_at", { ascending: false })
-      .gt("id", 10);
+      .range(10, 100);
 
     if (oldRevisions && oldRevisions.length > 0) {
-      const idsToDelete = (oldRevisions as { id: string }[]).slice(10).map((r) => r.id);
+      const idsToDelete = (oldRevisions as { id: string }[]).map((r) => r.id);
       if (idsToDelete.length > 0) {
-        await supabase.from("post_revisions").delete().in("id", idsToDelete);
+        await (serviceSupabase as any).from("post_revisions").delete().in("id", idsToDelete);
       }
     }
 
@@ -153,17 +173,41 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // 사용자 인증 확인
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 요청에서 사용자 ID 추출 (헤더)
+    const authHeader = request.headers.get('authorization');
+    const userId = authHeader?.replace('Bearer ', '');
+    
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
     }
 
-    const { error } = await supabase
+    // 서비스 역할로 삭제 (RLS 우회)
+    const serviceSupabase = getServiceSupabase();
+    
+    // 관리자 권한 확인
+    const { data: userData } = await serviceSupabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single() as { data: { role: string } | null; error: Error | null };
+    
+    const isAdmin = userData?.role === 'admin';
+    
+    // 작성자 또는 관리자만 삭제 가능
+    const { data: revision } = await serviceSupabase
+      .from("post_revisions")
+      .select("created_by")
+      .eq("id", revisionId)
+      .single() as { data: { created_by: string } | null; error: Error | null };
+    
+    if (!revision || (revision.created_by !== userId && !isAdmin)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { error } = await (serviceSupabase as any)
       .from("post_revisions")
       .delete()
-      .eq("id", revisionId)
-      .eq("created_by", user.id);
+      .eq("id", revisionId);
 
     if (error) {
       console.error("Revision delete error:", error);

@@ -365,11 +365,14 @@ function WritePageContent() {
         clearLocalStorage();
         
         // 히스토리 저장 (수정 시)
-        if (postId) {
+        if (postId && user?.id) {
           try {
             await fetch("/api/revisions", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { 
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${user.id}`
+              },
               body: JSON.stringify({
                 post_id: postId,
                 title: title.trim(),
