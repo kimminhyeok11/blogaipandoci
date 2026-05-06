@@ -83,7 +83,7 @@ export default function HomePage() {
       }
 
       console.log("[DEBUG] Posts loaded:", { 
-        featured: popularPosts?.[0]?.title || null, 
+        featured: (popularPosts?.[0] as any)?.title || null, 
         recentCount: latestPosts?.length || 0 
       });
 
