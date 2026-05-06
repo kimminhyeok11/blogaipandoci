@@ -334,23 +334,31 @@ function WritePageContent() {
       const tagList = tags.split(",").map(t => t.trim()).filter(Boolean);
 
       if (isEditMode && postId) {
-        // 수정 모드: update
-        console.log("[DEBUG] Updating post:", postId, "by user:", currentUser.id);
-        const { error } = await db.posts().update({
+        // 수정 모드: API 호출
+        console.log("[DEBUG] Updating post via API:", postId, "by user:", currentUser.id);
+        const response = await fetch("/api/posts", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentUser.id}`,
+          },
+          body: JSON.stringify({
+            id: postId,
             title: title.trim(),
+            slug,
             content: content.trim(),
             excerpt: finalExcerpt,
             published,
-            published_at: published ? new Date().toISOString() : null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", postId);
+          }),
+        });
 
-        if (error) {
-          console.error("[DEBUG] Update error:", error);
-          throw error;
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("[DEBUG] Update API error:", errorData);
+          throw new Error(errorData.error || "글 수정에 실패했습니다.");
         }
-        console.log("[DEBUG] Update successful");
+
+        console.log("[DEBUG] Update successful via API");
 
         // 기존 태그 삭제 후 새 태그 저장
         await db.post_tags().delete().eq("post_id", postId);
@@ -389,18 +397,32 @@ function WritePageContent() {
         
         router.push(`/posts/${slug}`);
       } else {
-        // 신규 작성: insert 후 id 받아오기
-        const { data: newPost, error } = await db.posts().insert({
-          user_id: currentUser.id,
-          title: title.trim(),
-          slug,
-          content: content.trim(),
-          excerpt: finalExcerpt,
-          published,
-          published_at: published ? new Date().toISOString() : null,
-        }).select("id").single();
+        // 신규 작성: API 호출
+        console.log("[DEBUG] Creating new post via API");
+        const response = await fetch("/api/posts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentUser.id}`,
+          },
+          body: JSON.stringify({
+            user_id: currentUser.id,
+            title: title.trim(),
+            slug,
+            content: content.trim(),
+            excerpt: finalExcerpt,
+            published,
+          }),
+        });
 
-        if (error) throw error;
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "글 저장에 실패했습니다.");
+        }
+
+        const result = await response.json();
+        const newPost = result.data;
+        console.log("[DEBUG] Post created:", newPost);
 
         // 태그 저장
         if (newPost?.id) {
