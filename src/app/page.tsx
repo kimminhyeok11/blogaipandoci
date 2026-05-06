@@ -49,7 +49,7 @@ export default function HomePage() {
   }, [lastScrollY]);
 
   // React Query로 데이터 가져오기 (캐싱 적용)
-  const { data: postsData, isLoading } = useQuery({
+  const { data: postsData, isLoading, error } = useQuery({
     queryKey: ['posts', 'main'],
     queryFn: async () => {
       console.log("[DEBUG] React Query fetchPosts start");
@@ -65,6 +65,7 @@ export default function HomePage() {
 
       if (popularError) {
         console.error("[ERROR] Popular posts failed:", popularError);
+        throw new Error("인기 글 로딩 실패: " + popularError.message);
       }
 
       // Latest posts (by date)
@@ -78,7 +79,13 @@ export default function HomePage() {
 
       if (latestError) {
         console.error("[ERROR] Latest posts failed:", latestError);
+        throw new Error("최신 글 로딩 실패: " + latestError.message);
       }
+
+      console.log("[DEBUG] Posts loaded:", { 
+        featured: popularPosts?.[0]?.title || null, 
+        recentCount: latestPosts?.length || 0 
+      });
 
       return {
         featuredPost: popularPosts?.[0] || null,
@@ -87,6 +94,7 @@ export default function HomePage() {
     },
     staleTime: 1000 * 60 * 5, // 5분 동안 캐싱
     gcTime: 1000 * 60 * 10, // 10분 후 가비지 컬렉션
+    retry: 2,
   });
 
   // 데이터 설정
@@ -96,6 +104,14 @@ export default function HomePage() {
       setRecentPosts(postsData.recentPosts);
     }
   }, [postsData]);
+
+  // 에러 발생 시 토스트 표시
+  useEffect(() => {
+    if (error) {
+      console.error("[ERROR] React Query error:", error);
+      showToast(error.message, "error");
+    }
+  }, [error, showToast]);
 
   return (
     <div className="min-h-screen bg-paper">
