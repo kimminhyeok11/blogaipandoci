@@ -27,19 +27,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserRole = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single() as { data: { role: string } | null; error: Error | null };
-    
-    if (error) {
-      console.error('Failed to fetch user role:', error);
+  const fetchUserRole = async (userId: string): Promise<string> => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle() as { data: { role: string } | null; error: Error | null };
+      
+      if (error) {
+        console.warn('Role fetch warning:', error.message);
+        return 'user';
+      }
+      
+      return data?.role || 'user';
+    } catch (err) {
+      console.error('Role fetch error:', err);
       return 'user';
     }
-    
-    return data?.role || 'user';
   };
 
   const refreshSession = async () => {
