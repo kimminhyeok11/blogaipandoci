@@ -55,8 +55,8 @@ export async function GET(request: Request) {
 
     // 고아 이미지 필터링
     const orphans = files
-      ?.filter(file => !usedPaths.has(`uploads/${file.name}`))
-      .map(file => ({
+      ?.filter((file: any) => !usedPaths.has(`uploads/${file.name}`))
+      .map((file: any) => ({
         name: file.name,
         path: `uploads/${file.name}`,
         url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/uploads/${file.name}`,
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
       })) || [];
 
     // 총 용량 계산
-    const totalSize = orphans.reduce((sum, img) => sum + img.size, 0);
+    const totalSize = orphans.reduce((sum: number, img: any) => sum + img.size, 0);
 
     return NextResponse.json({
       orphans,

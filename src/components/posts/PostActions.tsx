@@ -21,7 +21,7 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
 
   // 현재 사용자 확인
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: any) => {
       setCurrentUser(data.user?.id || null);
     });
   }, []);

@@ -32,7 +32,7 @@ export default function TagsPage() {
           name: tag.name,
           slug: tag.slug,
           count: tag.post_tags?.[0]?.count || 0,
-        })).sort((a, b) => b.count - a.count);
+        })).sort((a: any, b: any) => b.count - a.count);
 
         setTags(formattedTags);
       } catch {

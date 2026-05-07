@@ -33,7 +33,7 @@ export function useAuth() {
 
     // 인증 상태 변경 리스너
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event: any, session: any) => {
         setState({
           user: session?.user || null,
           isLoading: false,

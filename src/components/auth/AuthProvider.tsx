@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 세션 변경 구독
     const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: any, session: any) => {
         if (!isMounted) return;
         
         console.log("Auth state changed:", event);

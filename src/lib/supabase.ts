@@ -5,10 +5,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Supabase 클라이언트 (싱글톤) - 클라이언트용
-let supabaseInstance: ReturnType<typeof createClient> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseClient = any;
 
-export const getSupabaseClient = () => {
+// Supabase 클라이언트 (싱글톤) - 클라이언트용
+let supabaseInstance: SupabaseClient = null;
+
+export const getSupabaseClient = (): SupabaseClient => {
   if (!supabaseInstance) {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -21,12 +24,12 @@ export const getSupabaseClient = () => {
   return supabaseInstance;
 };
 
-export const supabase = getSupabaseClient();
+export const supabase: SupabaseClient = getSupabaseClient();
 
 // 서비스 역할 클라이언트 - 서버/API용 (RLS 우회)
-let supabaseServiceInstance: ReturnType<typeof createClient> | null = null;
+let supabaseServiceInstance: SupabaseClient = null;
 
-export const getServiceSupabase = () => {
+export const getServiceSupabase = (): SupabaseClient => {
   if (!supabaseServiceRoleKey) {
     throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
   }
@@ -40,6 +43,7 @@ export const getServiceSupabase = () => {
   }
   return supabaseServiceInstance;
 };
+
 
 // 타입 헬퍼 - 테이블 타입 명시적 추출
 export type PostsTable = {
