@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Session, User } from "@supabase/supabase-js";
 
@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserRole = async (userId: string): Promise<string> => {
+  const fetchUserRole = useCallback(async (userId: string): Promise<string> => {
     try {
       const { data, error } = await supabase
         .from('users')
@@ -45,41 +45,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Role fetch error:', err);
       return 'user';
     }
-  };
+  }, []);
 
-  const refreshSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setSession(session);
-    
-    if (session?.user) {
-      const role = await fetchUserRole(session.user.id);
-      setUser({ ...session.user, role });
-    } else {
-      setUser(null);
+  const refreshSession = useCallback(async () => {
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      setSession(currentSession);
+      
+      if (currentSession?.user) {
+        const role = await fetchUserRole(currentSession.user.id);
+        setUser({ ...currentSession.user, role });
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      console.error('Session refresh error:', err);
     }
-  };
+  }, [fetchUserRole]);
 
   useEffect(() => {
-    let subscription: { unsubscribe: () => void } | null = null;
     let isMounted = true;
 
-    // 초기 세션 복원
-    refreshSession().then(() => {
-      if (isMounted) setIsLoading(false);
-    });
-
-    // 세션 변경 구독
-    const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
-      async (event: any, session: any) => {
+    // onAuthStateChange가 INITIAL_SESSION 이벤트로 초기 세션도 전달해줌
+    // 별도의 getSession() 호출 불필요 (lock 경쟁 방지)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event: any, currentSession: any) => {
         if (!isMounted) return;
         
         console.log("Auth state changed:", event);
-        setSession(session);
+        setSession(currentSession);
         
-        if (session?.user) {
-          const role = await fetchUserRole(session.user.id);
+        if (currentSession?.user) {
+          const role = await fetchUserRole(currentSession.user.id);
           if (isMounted) {
-            setUser({ ...session.user, role });
+            setUser({ ...currentSession.user, role });
           }
         } else {
           if (isMounted) setUser(null);
@@ -88,16 +87,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (isMounted) setIsLoading(false);
       }
     );
-    subscription = sub;
 
     return () => {
       isMounted = false;
-      // 타이머 지연으로 Strict Mode 언마운트/마운트 사이 lock 해제 시간 확보
-      setTimeout(() => {
-        subscription?.unsubscribe();
-      }, 0);
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserRole]);
 
   return (
     <AuthContext.Provider value={{ session, user, isLoading, refreshSession }}>
