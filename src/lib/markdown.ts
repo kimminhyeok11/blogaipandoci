@@ -119,15 +119,16 @@ marked.use({
 
 // 한글 앞뒤 **볼드** 및 *이탤릭* 인식 보강
 // marked는 CJK 문자 앞뒤의 ** 를 word boundary로 인식 못하는 경우가 있음
-// 예: "가나다**볼드**라마바" → zero-width space 삽입으로 해결
+// 예: "가나다**볼드**라마바" → 바깥쪽에만 zero-width space 삽입
 function fixCjkEmphasis(text: string): string {
-  // 한글/CJK 문자 뒤에 **가 오는 경우: 사이에 공백 삽입
-  text = text.replace(/([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])\*\*/g, '$1 **');
-  // **뒤에 한글/CJK 문자가 오는 경우
-  text = text.replace(/\*\*([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])/g, '** $1');
-  // 단일 * 이탤릭도 동일 처리 (**를 먼저 처리했으므로 단일 *만 남음)
-  text = text.replace(/([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])\*(?!\*)/g, '$1 *');
-  text = text.replace(/(?<!\*)\*([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])/g, '* $1');
+  const ZWS = '\u200B'; // zero-width space
+  // 한글 바로 뒤에 여는 ** (볼드 시작): 한글]\u200B**텍스트**
+  text = text.replace(/([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])\*\*(?!\s|\*)/g, `$1${ZWS}**`);
+  // 닫는 ** 바로 뒤에 한글 (볼드 끝): **텍스트**\u200B[한글
+  text = text.replace(/(?<!\s|\*)\*\*([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])/g, `**${ZWS}$1`);
+  // 단일 * 이탤릭도 동일 처리
+  text = text.replace(/([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])\*(?!\*|\s)/g, `$1${ZWS}*`);
+  text = text.replace(/(?<!\*|\s)\*([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])/g, `*${ZWS}$1`);
   return text;
 }
 
