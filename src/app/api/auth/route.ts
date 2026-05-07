@@ -27,12 +27,15 @@ export async function GET() {
       .eq("id", user.id)
       .single();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const profileData = profile as any;
+
     return NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
-        nickname: profile?.nickname || null,
-        avatar_url: profile?.avatar_url || null,
+        nickname: profileData?.nickname || null,
+        avatar_url: profileData?.avatar_url || null,
       },
     });
   } catch {
