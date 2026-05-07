@@ -81,6 +81,8 @@ export default function StatsPage() {
   const [isAllPostsLoading, setIsAllPostsLoading] = useState(false);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
+  const hasFetched = useState(false);
+
   useEffect(() => {
     if (isAuthLoading) return;
     if (!user) {
@@ -95,9 +97,13 @@ export default function StatsPage() {
       return;
     }
 
-    fetchStats();
-    fetchAllPosts(1);
-  }, [user, isAuthLoading, showToast]);
+    if (!hasFetched[0]) {
+      hasFetched[1](true);
+      fetchStats();
+      fetchAllPosts(1);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isAuthLoading]);
 
   const fetchStats = async () => {
     try {
@@ -398,95 +404,87 @@ export default function StatsPage() {
           ) : allPosts.length === 0 ? (
             <p className="text-muted font-sans text-sm py-4">게시글이 없습니다</p>
           ) : (
-            <div className="space-y-0">
-              {/* 테이블 헤더 */}
-              <div className="grid grid-cols-12 gap-2 py-2 border-b-2 border-ink text-xs font-sans font-medium text-muted">
-                <div className="col-span-1">상태</div>
-                <div className="col-span-5">제목</div>
-                <div className="col-span-2">발행일</div>
-                <div className="col-span-1 text-right">조회</div>
-                <div className="col-span-3 text-right">작업</div>
+            <>
+              {/* 데스크톱 테이블 */}
+              <div className="hidden md:block">
+                <div className="grid grid-cols-12 gap-2 py-2 border-b-2 border-ink text-xs font-sans font-medium text-muted">
+                  <div className="col-span-1">상태</div>
+                  <div className="col-span-5">제목</div>
+                  <div className="col-span-2">발행일</div>
+                  <div className="col-span-1 text-right">조회</div>
+                  <div className="col-span-3 text-right">작업</div>
+                </div>
+                {allPosts.map((post) => (
+                  <div key={post.id} className="grid grid-cols-12 gap-2 py-3 border-b border-rule items-center">
+                    <div className="col-span-1">
+                      <span className={`px-1.5 py-0.5 rounded text-xs font-sans ${post.published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                        {post.published ? "발행" : "임시"}
+                      </span>
+                    </div>
+                    <div className="col-span-5">
+                      <span className="font-serif text-sm line-clamp-1">{post.title}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-sans text-xs text-muted">
+                        {(post.published_at ? new Date(post.published_at) : new Date(post.created_at)).toLocaleDateString("ko-KR", { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                      </span>
+                    </div>
+                    <div className="col-span-1 text-right">
+                      <span className="font-sans text-xs text-muted">{post.view_count.toLocaleString()}</span>
+                    </div>
+                    <div className="col-span-3 flex items-center justify-end gap-1">
+                      <button onClick={() => copyPostUrl(post.slug)} className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-sans transition-colors ${copiedSlug === post.slug ? 'bg-green-100 text-green-700' : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'}`} title="URL 복사">
+                        <Copy size={12} />
+                        {copiedSlug === post.slug ? '복사됨' : 'URL'}
+                      </button>
+                      <Link href={`/posts/${post.slug}`} target="_blank" className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors" title="새 탭에서 열기">
+                        <ExternalLink size={12} />
+                      </Link>
+                      <Link href={`/write?edit=${post.slug}`} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors" title="수정">
+                        수정
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {allPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="grid grid-cols-12 gap-2 py-3 border-b border-rule items-center"
-                >
-                  {/* 상태 */}
-                  <div className="col-span-1">
-                    <span
-                      className={`px-1.5 py-0.5 rounded text-xs font-sans ${
-                        post.published
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {post.published ? "발행" : "임시"}
-                    </span>
+              {/* 모바일 카드 */}
+              <div className="md:hidden space-y-3">
+                {allPosts.map((post) => (
+                  <div key={post.id} className="border border-rule rounded-lg p-3">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <span className={`shrink-0 px-1.5 py-0.5 rounded text-xs font-sans ${post.published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                        {post.published ? "발행" : "임시"}
+                      </span>
+                      <span className="font-sans text-xs text-muted">
+                        {(post.published_at ? new Date(post.published_at) : new Date(post.created_at)).toLocaleDateString("ko-KR", { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                      </span>
+                    </div>
+                    <p className="font-serif text-sm line-clamp-2 mb-3">{post.title}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-sans text-xs text-muted">조회 {post.view_count.toLocaleString()}</span>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => copyPostUrl(post.slug)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans transition-colors ${copiedSlug === post.slug ? 'bg-green-100 text-green-700' : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'}`}>
+                          <Copy size={14} />
+                          {copiedSlug === post.slug ? '복사됨' : 'URL 복사'}
+                        </button>
+                        <Link href={`/posts/${post.slug}`} target="_blank" className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors">
+                          <ExternalLink size={14} />
+                        </Link>
+                        <Link href={`/write?edit=${post.slug}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors">
+                          수정
+                        </Link>
+                      </div>
+                    </div>
                   </div>
-
-                  {/* 제목 */}
-                  <div className="col-span-5">
-                    <span className="font-serif text-sm line-clamp-1">
-                      {post.title}
-                    </span>
-                  </div>
-
-                  {/* 날짜 */}
-                  <div className="col-span-2">
-                    <span className="font-sans text-xs text-muted">
-                      {post.published_at
-                        ? new Date(post.published_at).toLocaleDateString("ko-KR", { year: 'numeric', month: '2-digit', day: '2-digit' })
-                        : new Date(post.created_at).toLocaleDateString("ko-KR", { year: 'numeric', month: '2-digit', day: '2-digit' })}
-                    </span>
-                  </div>
-
-                  {/* 조회수 */}
-                  <div className="col-span-1 text-right">
-                    <span className="font-sans text-xs text-muted">
-                      {post.view_count.toLocaleString()}
-                    </span>
-                  </div>
-
-                  {/* 작업 버튼 */}
-                  <div className="col-span-3 flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => copyPostUrl(post.slug)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-sans transition-colors ${
-                        copiedSlug === post.slug
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'
-                      }`}
-                      title="URL 복사"
-                    >
-                      <Copy size={12} />
-                      {copiedSlug === post.slug ? '복사됨' : 'URL'}
-                    </button>
-                    <Link
-                      href={`/posts/${post.slug}`}
-                      target="_blank"
-                      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors"
-                      title="새 탭에서 열기"
-                    >
-                      <ExternalLink size={12} />
-                    </Link>
-                    <Link
-                      href={`/write?edit=${post.slug}`}
-                      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors"
-                      title="수정"
-                    >
-                      수정
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
 
           {/* 페이지네이션 */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-rule">
+            <div className="flex items-center justify-center gap-1 sm:gap-2 mt-4 pt-4 border-t border-rule flex-wrap">
               <button
                 onClick={() => fetchAllPosts(allPostsPage - 1)}
                 disabled={allPostsPage <= 1 || isAllPostsLoading}
