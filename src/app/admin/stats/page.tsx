@@ -15,8 +15,13 @@ import {
   ImageIcon,
   Trash2,
   CheckSquare,
-  Square
+  Square,
+  Copy,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface OrphanedImage {
   name: string;
@@ -60,6 +65,22 @@ export default function StatsPage() {
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [isImageLoading, setIsImageLoading] = useState(false);
 
+  // 전체 글 목록 (페이지네이션)
+  const POSTS_PER_PAGE = 10;
+  const [allPosts, setAllPosts] = useState<Array<{
+    id: string;
+    title: string;
+    slug: string;
+    published: boolean;
+    published_at: string | null;
+    created_at: string;
+    view_count: number;
+  }>>([]);
+  const [allPostsTotal, setAllPostsTotal] = useState(0);
+  const [allPostsPage, setAllPostsPage] = useState(1);
+  const [isAllPostsLoading, setIsAllPostsLoading] = useState(false);
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+
   useEffect(() => {
     if (isAuthLoading) return;
     if (!user) {
@@ -75,6 +96,7 @@ export default function StatsPage() {
     }
 
     fetchStats();
+    fetchAllPosts(1);
   }, [user, isAuthLoading, showToast]);
 
   const fetchStats = async () => {
@@ -101,6 +123,43 @@ export default function StatsPage() {
       setIsLoading(false);
     }
   };
+
+  // 전체 글 목록 페이지네이션 조회
+  const fetchAllPosts = async (page: number) => {
+    if (!user?.id) return;
+    setIsAllPostsLoading(true);
+    try {
+      const from = (page - 1) * POSTS_PER_PAGE;
+      const to = from + POSTS_PER_PAGE - 1;
+
+      const { data, error, count } = await supabase
+        .from('posts')
+        .select('id, title, slug, published, published_at, created_at, view_count', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+      setAllPosts(data || []);
+      setAllPostsTotal(count || 0);
+      setAllPostsPage(page);
+    } catch (err) {
+      console.error('전체 글 목록 조회 실패:', err);
+    } finally {
+      setIsAllPostsLoading(false);
+    }
+  };
+
+  // URL 복사
+  const copyPostUrl = (slug: string) => {
+    const url = `${window.location.origin}/posts/${slug}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedSlug(slug);
+      showToast('URL이 복사되었습니다', 'success');
+      setTimeout(() => setCopiedSlug(null), 2000);
+    });
+  };
+
+  const totalPages = Math.ceil(allPostsTotal / POSTS_PER_PAGE);
 
   // 고아 이미지 조회
   const fetchOrphanImages = async () => {
@@ -321,23 +380,43 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* 최근 게시글 */}
-        <div className="bg-white border border-rule rounded-sm p-4">
-          <h2 className="font-sans text-sm font-medium text-ink mb-4">
-            최근 작성한 글
-          </h2>
-          <div className="space-y-3">
-            {stats.recentPosts.length === 0 ? (
-              <p className="text-muted font-sans text-sm">데이터가 없습니다</p>
-            ) : (
-              stats.recentPosts.map((post) => (
+        {/* 전체 게시글 (페이지네이션) */}
+        <div className="bg-white border border-rule rounded-sm p-4 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-sans text-sm font-medium text-ink">
+              전체 게시글 ({allPostsTotal}개)
+            </h2>
+            <span className="font-sans text-xs text-muted">
+              {allPostsPage} / {totalPages || 1} 페이지
+            </span>
+          </div>
+
+          {isAllPostsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 size={20} className="animate-spin text-muted" />
+            </div>
+          ) : allPosts.length === 0 ? (
+            <p className="text-muted font-sans text-sm py-4">게시글이 없습니다</p>
+          ) : (
+            <div className="space-y-0">
+              {/* 테이블 헤더 */}
+              <div className="grid grid-cols-12 gap-2 py-2 border-b-2 border-ink text-xs font-sans font-medium text-muted">
+                <div className="col-span-1">상태</div>
+                <div className="col-span-5">제목</div>
+                <div className="col-span-2">발행일</div>
+                <div className="col-span-1 text-right">조회</div>
+                <div className="col-span-3 text-right">작업</div>
+              </div>
+
+              {allPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="flex items-center justify-between py-2 border-b border-rule last:border-0"
+                  className="grid grid-cols-12 gap-2 py-3 border-b border-rule items-center"
                 >
-                  <div className="flex items-center gap-3">
+                  {/* 상태 */}
+                  <div className="col-span-1">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs font-sans ${
+                      className={`px-1.5 py-0.5 rounded text-xs font-sans ${
                         post.published
                           ? "bg-green-100 text-green-700"
                           : "bg-gray-100 text-gray-600"
@@ -345,25 +424,116 @@ export default function StatsPage() {
                     >
                       {post.published ? "발행" : "임시"}
                     </span>
+                  </div>
+
+                  {/* 제목 */}
+                  <div className="col-span-5">
+                    <span className="font-serif text-sm line-clamp-1">
+                      {post.title}
+                    </span>
+                  </div>
+
+                  {/* 날짜 */}
+                  <div className="col-span-2">
+                    <span className="font-sans text-xs text-muted">
+                      {post.published_at
+                        ? new Date(post.published_at).toLocaleDateString("ko-KR", { year: 'numeric', month: '2-digit', day: '2-digit' })
+                        : new Date(post.created_at).toLocaleDateString("ko-KR", { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                    </span>
+                  </div>
+
+                  {/* 조회수 */}
+                  <div className="col-span-1 text-right">
+                    <span className="font-sans text-xs text-muted">
+                      {post.view_count.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* 작업 버튼 */}
+                  <div className="col-span-3 flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => copyPostUrl(post.slug)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-sans transition-colors ${
+                        copiedSlug === post.slug
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'
+                      }`}
+                      title="URL 복사"
+                    >
+                      <Copy size={12} />
+                      {copiedSlug === post.slug ? '복사됨' : 'URL'}
+                    </button>
+                    <Link
+                      href={`/posts/${post.slug}`}
+                      target="_blank"
+                      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors"
+                      title="새 탭에서 열기"
+                    >
+                      <ExternalLink size={12} />
+                    </Link>
                     <Link
                       href={`/write?edit=${post.slug}`}
-                      className="font-serif text-sm hover:text-rust transition-colors line-clamp-1"
+                      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors"
+                      title="수정"
                     >
-                      {post.title}
+                      수정
                     </Link>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-sans text-xs text-muted">
-                      {new Date(post.created_at).toLocaleDateString("ko-KR")}
-                    </span>
-                    <span className="font-sans text-xs text-muted">
-                      {post.view_count.toLocaleString()}회
-                    </span>
-                  </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-rule">
+              <button
+                onClick={() => fetchAllPosts(allPostsPage - 1)}
+                disabled={allPostsPage <= 1 || isAllPostsLoading}
+                className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-sans border border-rule hover:bg-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={14} />
+                이전
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => Math.abs(p - allPostsPage) <= 2 || p === 1 || p === totalPages)
+                .reduce((acc: (number | string)[], p, idx, arr) => {
+                  if (idx > 0 && typeof arr[idx - 1] === 'number' && (p as number) - (arr[idx - 1] as number) > 1) {
+                    acc.push('...');
+                  }
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, idx) =>
+                  typeof p === 'string' ? (
+                    <span key={`dot-${idx}`} className="px-1 text-muted text-xs">...</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => fetchAllPosts(p)}
+                      disabled={isAllPostsLoading}
+                      className={`px-3 py-1.5 rounded text-xs font-sans border transition-colors ${
+                        p === allPostsPage
+                          ? 'bg-ink text-paper border-ink'
+                          : 'border-rule hover:bg-cream'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+
+              <button
+                onClick={() => fetchAllPosts(allPostsPage + 1)}
+                disabled={allPostsPage >= totalPages || isAllPostsLoading}
+                className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-sans border border-rule hover:bg-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                다음
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 이미지 저장소 관리 */}
