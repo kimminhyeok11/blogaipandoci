@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, memo } from "react";
+import { useState, memo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface PostActionsProps {
   postId: string;
@@ -16,15 +16,9 @@ interface PostActionsProps {
 function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
   const router = useRouter();
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
-
-  // 현재 사용자 확인
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }: any) => {
-      setCurrentUser(data.user?.id || null);
-    });
-  }, []);
+  const currentUser = user?.id || null;
 
   const handleDelete = async () => {
     if (!confirm("정말로 이 글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
@@ -32,7 +26,7 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
     }
 
     // 작성자 본인 확인 (API 호출 전 이중 검증)
-    if (currentUser !== authorId) {
+    if (!currentUser || currentUser !== authorId) {
       showToast("삭제 권한이 없습니다.", "error");
       return;
     }

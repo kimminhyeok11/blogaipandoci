@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, Mail, LogOut, Loader2, Edit3 } from "lucide-react";
-import { supabase, db } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { StickyNav } from "@/components/layout/StickyNav";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface UserProfile {
   id: string;
@@ -19,22 +20,24 @@ interface UserProfile {
 export default function ProfilePage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { user: authUser, isLoading: isAuthLoading } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        
-        if (!authUser) {
-          router.push("/login");
-          return;
-        }
+    if (isAuthLoading) return;
 
+    if (!authUser) {
+      router.push("/login");
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
         // 사용자 프로필 정보 가져오기
-        const { data: profile } = await db.users()
+        const { data: profile } = await supabase
+          .from('users')
           .select("nickname, avatar_url")
           .eq("id", authUser.id)
           .single();
@@ -44,7 +47,7 @@ export default function ProfilePage() {
           email: authUser.email || "",
           nickname: profile?.nickname || null,
           avatar_url: profile?.avatar_url || null,
-          created_at: authUser.created_at,
+          created_at: authUser.created_at || "",
         });
       } catch {
         showToast("프로필 로딩 실패", "error");
@@ -53,8 +56,8 @@ export default function ProfilePage() {
       }
     };
 
-    fetchUser();
-  }, [router]);
+    fetchProfile();
+  }, [authUser, isAuthLoading, router]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
