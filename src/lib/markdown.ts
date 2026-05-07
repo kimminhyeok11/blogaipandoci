@@ -117,12 +117,96 @@ marked.use({
   renderer: renderer as any,  // 타입 단언으로 v18 호환
 });
 
+// 불릿 문자를 마크다운 리스트로 변환하는 전처리
+function preprocessBullets(text: string): string {
+  // 다양한 불릿 문자 (•, ●, ○, ◦, ▪, ▸, ►, ◆, ■, □, ★, ☆, ➤, ➜, ⁃)를 마크다운 리스트로 변환
+  return text.replace(/^[ \t]*[•●○◦▪▸►◆■□★☆➤➜⁃]\s*/gm, '- ');
+}
+
+// YouTube URL에서 video ID 추출
+function extractYoutubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+// Instagram URL에서 포스트 ID 추출
+function extractInstagramId(url: string): string | null {
+  const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+// URL을 임베드로 변환하는 후처리
+function postprocessEmbeds(html: string): string {
+  // <p> 태그 내에 단독 URL만 있는 경우 임베드로 변환
+  // YouTube
+  html = html.replace(
+    /<p><a[^>]*href="(https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch|shorts)|youtu\.be)[^"]*)"[^>]*>[^<]*<\/a><\/p>/g,
+    (match, url) => {
+      const videoId = extractYoutubeId(url);
+      if (videoId) {
+        return `<div class="embed-container my-6"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full aspect-video rounded shadow-sm"></iframe></div>`;
+      }
+      return match;
+    }
+  );
+
+  // YouTube - 단순 텍스트 URL (링크 태그 없이 텍스트만 있는 경우)
+  html = html.replace(
+    /<p>(https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch|shorts)|youtu\.be)[^\s<]+)<\/p>/g,
+    (match, url) => {
+      const videoId = extractYoutubeId(url);
+      if (videoId) {
+        return `<div class="embed-container my-6"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full aspect-video rounded shadow-sm"></iframe></div>`;
+      }
+      return match;
+    }
+  );
+
+  // Instagram
+  html = html.replace(
+    /<p><a[^>]*href="(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[^"]*)"[^>]*>[^<]*<\/a><\/p>/g,
+    (match, url) => {
+      const postId = extractInstagramId(url);
+      if (postId) {
+        return `<div class="embed-container my-6"><iframe src="https://www.instagram.com/p/${postId}/embed" frameborder="0" scrolling="no" allowtransparency="true" class="w-full rounded shadow-sm" style="min-height:500px;"></iframe></div>`;
+      }
+      return match;
+    }
+  );
+
+  // Instagram - 단순 텍스트 URL
+  html = html.replace(
+    /<p>(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[^\s<]+)<\/p>/g,
+    (match, url) => {
+      const postId = extractInstagramId(url);
+      if (postId) {
+        return `<div class="embed-container my-6"><iframe src="https://www.instagram.com/p/${postId}/embed" frameborder="0" scrolling="no" allowtransparency="true" class="w-full rounded shadow-sm" style="min-height:500px;"></iframe></div>`;
+      }
+      return match;
+    }
+  );
+
+  return html;
+}
+
 // 마크다운 → HTML 변환 (에디터 & 상세페이지 공용)
 export function processMarkdown(text: string): string {
   if (!text) return "";
   try {
+    // 전처리: 불릿 문자 → 마크다운 리스트
+    const preprocessed = preprocessBullets(text);
     // marked v18 - 동기 파싱
-    return marked.parse(text, { async: false }) as string;
+    let html = marked.parse(preprocessed, { async: false }) as string;
+    // 후처리: URL → 임베드 변환
+    html = postprocessEmbeds(html);
+    return html;
   } catch {
     return text;
   }
