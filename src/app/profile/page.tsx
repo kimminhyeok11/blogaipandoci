@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Mail, LogOut, Loader2, Edit3 } from "lucide-react";
+import { User, Mail, LogOut, Loader2, Edit3, Shield } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { StickyNav } from "@/components/layout/StickyNav";
@@ -138,6 +138,16 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-3">
+            {authUser?.role === 'admin' && (
+              <Link
+                href="/admin/stats"
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-ink/80 transition-colors"
+              >
+                <Shield size={16} />
+                관리자 페이지
+              </Link>
+            )}
+
             <Link
               href="/write"
               className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-rust text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust-light transition-colors"
