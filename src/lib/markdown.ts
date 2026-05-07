@@ -117,20 +117,6 @@ marked.use({
   renderer: renderer as any,  // 타입 단언으로 v18 호환
 });
 
-// 한글 앞뒤 **볼드** 및 *이탤릭* 인식 보강
-// marked는 CJK 문자 앞뒤의 ** 를 word boundary로 인식 못하는 경우가 있음
-// 예: "가나다**볼드**라마바" → 바깥쪽에만 zero-width space 삽입
-function fixCjkEmphasis(text: string): string {
-  const ZWS = '\u200B'; // zero-width space
-  // 한글 바로 뒤에 여는 ** (볼드 시작): 한글]\u200B**텍스트**
-  text = text.replace(/([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])\*\*(?!\s|\*)/g, `$1${ZWS}**`);
-  // 닫는 ** 바로 뒤에 한글 (볼드 끝): **텍스트**\u200B[한글
-  text = text.replace(/(?<!\s|\*)\*\*([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])/g, `**${ZWS}$1`);
-  // 단일 * 이탤릭도 동일 처리
-  text = text.replace(/([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])\*(?!\*|\s)/g, `$1${ZWS}*`);
-  text = text.replace(/(?<!\*|\s)\*([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])/g, `*${ZWS}$1`);
-  return text;
-}
 
 // 단어/숫자 사이의 단일 ~ 를 취소선으로 인식하지 않도록 이스케이프
 function escapeInlineTilde(text: string): string {
@@ -233,18 +219,14 @@ function postprocessEmbeds(html: string): string {
 export function processMarkdown(text: string): string {
   if (!text) return "";
   try {
-    // 전처리: 한글 앞뒤 볼드/이탤릭 인식 보강
-    let preprocessed = fixCjkEmphasis(text);
     // 전처리: 단일 ~ 취소선 오인식 방지
-    preprocessed = escapeInlineTilde(preprocessed);
+    let preprocessed = escapeInlineTilde(text);
     // 전처리: 불릿 문자 → 마크다운 리스트
     preprocessed = preprocessBullets(preprocessed);
     // 전처리: 리스트 항목 사이 빈 줄 정리 (연속 리스트 인식)
     preprocessed = preprocessListGaps(preprocessed);
     // marked v18 - 동기 파싱
     let html = marked.parse(preprocessed, { async: false }) as string;
-    // 후처리: 전처리에서 삽입한 zero-width space 제거 (SEO 클린)
-    html = html.replace(/\u200B/g, '');
     // 후처리: URL → 임베드 변환
     html = postprocessEmbeds(html);
     return html;
