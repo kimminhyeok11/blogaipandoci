@@ -16,7 +16,7 @@ interface Post {
   published_at: string;
   view_count: number;
   user_id: string;
-  user?: { nickname: string };
+  user?: { nickname: string | null; email: string | null };
 }
 
 export default function HomePage() {
@@ -56,7 +56,7 @@ export default function HomePage() {
         // Popular posts (by view count)
         const { data: popularPosts } = await supabase
           .from("posts")
-          .select("id, title, excerpt, slug, published_at, view_count, user_id")
+          .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email)")
           .eq("published", true)
           .not("published_at", "is", null)
           .order("view_count", { ascending: false })
@@ -69,7 +69,7 @@ export default function HomePage() {
         // Latest posts (by date)
         const { data: latestPosts } = await supabase
           .from("posts")
-          .select("id, title, excerpt, slug, published_at, view_count, user_id")
+          .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email)")
           .eq("published", true)
           .not("published_at", "is", null)
           .order("published_at", { ascending: false })
@@ -174,7 +174,7 @@ export default function HomePage() {
             </h1>
             <p className="subheadline">{featuredPost.excerpt}</p>
             <div className="byline">
-              <span>{featuredPost.user?.nickname || "익명"}</span>
+              <span>{featuredPost.user?.nickname || featuredPost.user?.email?.split('@')[0] || "익명"}</span>
               <span className="byline-sep">|</span>
               <span>{new Date(featuredPost.published_at).toLocaleDateString("ko-KR")}</span>
               <span className="byline-sep">|</span>

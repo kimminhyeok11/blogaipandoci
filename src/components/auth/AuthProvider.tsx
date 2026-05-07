@@ -66,25 +66,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    // onAuthStateChange가 INITIAL_SESSION 이벤트로 초기 세션도 전달해줌
-    // 별도의 getSession() 호출 불필요 (lock 경쟁 방지)
+    // onAuthStateChange 콜백 내에서는 Supabase DB 호출 금지 (auth lock deadlock 방지)
+    // 세션만 동기적으로 세팅하고, role fetch는 별도 처리
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: any, currentSession: any) => {
+      (event: any, currentSession: any) => {
         if (!isMounted) return;
         
         console.log("Auth state changed:", event);
         setSession(currentSession);
         
         if (currentSession?.user) {
-          const role = await fetchUserRole(currentSession.user.id);
-          if (isMounted) {
-            setUser({ ...currentSession.user, role });
-          }
+          // 우선 role 없이 user 세팅 (즉시 로그인 상태 반영)
+          setUser((prev) => {
+            if (prev?.id === currentSession.user.id) return prev;
+            return { ...currentSession.user, role: prev?.role || 'user' };
+          });
         } else {
-          if (isMounted) setUser(null);
+          setUser(null);
         }
         
-        if (isMounted) setIsLoading(false);
+        setIsLoading(false);
       }
     );
 
@@ -92,7 +93,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserRole]);
+  }, []);
+
+  // session 변경 시 role을 별도로 fetch (auth lock 바깥에서)
+  useEffect(() => {
+    if (!session?.user) return;
+    
+    let cancelled = false;
+    fetchUserRole(session.user.id).then((role) => {
+      if (!cancelled) {
+        setUser((prev) => prev ? { ...prev, role } : null);
+      }
+    });
+    
+    return () => { cancelled = true; };
+  }, [session?.user?.id, fetchUserRole]);
 
   return (
     <AuthContext.Provider value={{ session, user, isLoading, refreshSession }}>

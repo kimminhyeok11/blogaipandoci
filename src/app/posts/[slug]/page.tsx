@@ -41,7 +41,7 @@ async function getPost(slug: string): Promise<Post | null> {
   
   const { data, error } = await supabase
     .from("posts")
-    .select("*, user:users(nickname, avatar_url)")
+    .select("*, user:users(nickname, avatar_url, email)")
     .eq("slug", decodedSlug)
     .eq("published", true)
     .not("published_at", "is", null)  // 메인페이지와 동일한 조건
@@ -168,6 +168,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const imgMatch = post.content?.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
   const firstImage = post.cover_image || imgMatch?.[1] || undefined;
   const postUrl = `${SITE_URL}/posts/${post.slug}/`;
+  const authorName = post.user?.nickname || post.user?.email?.split('@')[0] || "익명";
 
   return (
     <div className="min-h-screen bg-paper">
@@ -175,7 +176,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <ArticleSchema
         title={post.title}
         description={post.excerpt || undefined}
-        author={post.user?.nickname || "익명"}
+        author={authorName}
         authorId={post.user_id}
         datePublished={post.published_at || post.created_at}
         dateModified={post.updated_at || undefined}
@@ -202,7 +203,7 @@ export default async function PostPage({ params }: PostPageProps) {
           <h1 className="headline">{post.title}</h1>
           {post.excerpt && <p className="subheadline">{post.excerpt}</p>}
           <div className="byline">
-            <span>{post.user?.nickname || "익명"}</span>
+            <span>{authorName}</span>
             <span className="byline-sep">|</span>
             <span>
               {new Date(post.published_at || post.created_at).toLocaleDateString("ko-KR")}

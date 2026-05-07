@@ -44,7 +44,7 @@ async function getPosts(): Promise<Post[]> {
   
   const { data, error } = await supabase
     .from("posts")
-    .select("*, user:users(nickname)")
+    .select("*, user:users(nickname, email)")
     .eq("published", true)
     .not("published_at", "is", null)
     .order("published_at", { ascending: false });
@@ -110,7 +110,7 @@ export default async function PostsPage() {
                 <Link href={`/posts/${post.slug}`} className="block">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-sans text-2xs text-muted">
-                      {post.user?.nickname || "익명"}
+                      {post.user?.nickname || post.user?.email?.split('@')[0] || "익명"}
                     </span>
                     <span className="text-rule">·</span>
                     <span className="font-sans text-2xs text-muted">
