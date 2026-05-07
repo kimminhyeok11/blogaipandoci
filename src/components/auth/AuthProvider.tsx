@@ -66,6 +66,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
+    // 초기 세션 확인 (onAuthStateChange가 지연될 경우 대비)
+    supabase.auth.getSession().then((res: any) => {
+      if (!isMounted) return;
+      if (!res.data.session) {
+        setIsLoading(false);
+      }
+    });
+
     // onAuthStateChange 콜백 내에서는 Supabase DB 호출 금지 (auth lock deadlock 방지)
     // 세션만 동기적으로 세팅하고, role fetch는 별도 처리
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -83,9 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         } else {
           setUser(null);
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
@@ -96,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // session 변경 시 role을 별도로 fetch (auth lock 바깥에서)
+  // role fetch 완료 후 isLoading을 false로 설정
   useEffect(() => {
     if (!session?.user) return;
     
@@ -103,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchUserRole(session.user.id).then((role) => {
       if (!cancelled) {
         setUser((prev) => prev ? { ...prev, role } : null);
+        setIsLoading(false);
       }
     });
     
