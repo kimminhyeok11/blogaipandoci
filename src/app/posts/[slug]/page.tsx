@@ -25,6 +25,16 @@ function getServerSupabase() {
   return createClient(url, key);
 }
 
+// 서비스 역할 클라이언트 (RLS 우회 - 조회수 증가용)
+function getServiceSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
 
 interface PostPageProps {
   params: { slug: string };
@@ -53,6 +63,22 @@ async function getPost(slug: string): Promise<Post | null> {
   }
   
   console.log("[DEBUG] getPost - data found:", !!data);
+
+  // 조회수 증가 (service role로 RLS 우회, fire-and-forget)
+  if (data) {
+    try {
+      const serviceClient = getServiceSupabase();
+      if (serviceClient) {
+        await serviceClient
+          .from('posts')
+          .update({ view_count: ((data as any).view_count || 0) + 1 })
+          .eq('slug', decodedSlug);
+      }
+    } catch {
+      console.warn('View count increment failed');
+    }
+  }
+
   return data as Post;
 }
 
