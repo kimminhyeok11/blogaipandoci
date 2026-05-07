@@ -51,7 +51,7 @@ export async function GET(
         .eq("slug", slug)
         .single();
       
-      data = result.data;
+      data = result.data as any;
       error = result.error;
       
       // 작성자 본인만 접근 가능
