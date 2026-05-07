@@ -243,6 +243,8 @@ export function processMarkdown(text: string): string {
     preprocessed = preprocessListGaps(preprocessed);
     // marked v18 - 동기 파싱
     let html = marked.parse(preprocessed, { async: false }) as string;
+    // 후처리: 전처리에서 삽입한 zero-width space 제거 (SEO 클린)
+    html = html.replace(/\u200B/g, '');
     // 후처리: URL → 임베드 변환
     html = postprocessEmbeds(html);
     return html;
