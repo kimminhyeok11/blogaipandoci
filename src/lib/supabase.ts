@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database';
 import type { Post } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -7,11 +6,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // Supabase 클라이언트 (싱글톤) - 클라이언트용
-let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
+let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
 export const getSupabaseClient = () => {
   if (!supabaseInstance) {
-    supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -25,14 +24,14 @@ export const getSupabaseClient = () => {
 export const supabase = getSupabaseClient();
 
 // 서비스 역할 클라이언트 - 서버/API용 (RLS 우회)
-let supabaseServiceInstance: ReturnType<typeof createClient<Database>> | null = null;
+let supabaseServiceInstance: ReturnType<typeof createClient> | null = null;
 
 export const getServiceSupabase = () => {
   if (!supabaseServiceRoleKey) {
     throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
   }
   if (!supabaseServiceInstance) {
-    supabaseServiceInstance = createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
+    supabaseServiceInstance = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
