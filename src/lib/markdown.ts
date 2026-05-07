@@ -117,6 +117,13 @@ marked.use({
   renderer: renderer as any,  // 타입 단언으로 v18 호환
 });
 
+// 단어/숫자 사이의 단일 ~ 를 취소선으로 인식하지 않도록 이스케이프
+function escapeInlineTilde(text: string): string {
+  // "1~2", "3~6" 등 숫자~숫자 또는 단어~단어 패턴의 단일 ~ → HTML 엔티티로 변환
+  // ~~취소선~~ (더블 틸드)는 정상 동작하도록 유지
+  return text.replace(/(\w)~(?!~)(\w)/g, '$1&#126;$2');
+}
+
 // 불릿 문자를 마크다운 리스트로 변환하는 전처리
 function preprocessBullets(text: string): string {
   // 다양한 불릿 문자 (•, ●, ○, ◦, ▪, ▸, ►, ◆, ■, □, ★, ☆, ➤, ➜, ⁃)를 마크다운 리스트로 변환
@@ -211,8 +218,10 @@ function postprocessEmbeds(html: string): string {
 export function processMarkdown(text: string): string {
   if (!text) return "";
   try {
+    // 전처리: 단일 ~ 취소선 오인식 방지
+    let preprocessed = escapeInlineTilde(text);
     // 전처리: 불릿 문자 → 마크다운 리스트
-    let preprocessed = preprocessBullets(text);
+    preprocessed = preprocessBullets(preprocessed);
     // 전처리: 리스트 항목 사이 빈 줄 정리 (연속 리스트 인식)
     preprocessed = preprocessListGaps(preprocessed);
     // marked v18 - 동기 파싱
