@@ -554,41 +554,53 @@ export function MarkdownEditor({
     }
   }, [onImageUpload, showToast]);
 
-  // 클립보드 이미지 붙여넣기 처리
+  // 클립보드 붙여넣기 처리 (이미지 + 텍스트 불릿 자동 변환)
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
-    if (!onImageUpload) return;
-
     const items = e.clipboardData?.items;
     if (!items) return;
 
-    // 클립보드에서 이미지 파일 찾기
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      
-      // 이미지 타입 확인
-      if (item.type.indexOf("image") !== -1) {
-        e.preventDefault();
+    // 1. 이미지 파일 확인
+    if (onImageUpload) {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         
-        const blob = item.getAsFile();
-        if (!blob) continue;
+        if (item.type.indexOf("image") !== -1) {
+          e.preventDefault();
+          
+          const blob = item.getAsFile();
+          if (!blob) continue;
 
-        // File 객체 생성 (이름 포함)
-        const timestamp = Date.now();
-        const file = new File([blob], `pasted-image-${timestamp}.png`, { type: item.type });
+          const timestamp = Date.now();
+          const file = new File([blob], `pasted-image-${timestamp}.png`, { type: item.type });
 
-        setIsUploading(true);
-        try {
-          const url = await onImageUpload(file);
-          insertText(`![이미지](${url})`, "\n");
-          showToast("클립보드 이미지가 업로드되었습니다.", "success");
-        } catch (err) {
-          showToast("클립보드 이미지 업로드에 실패했습니다.", "error");
-          console.error("Clipboard paste error:", err);
-        } finally {
-          setIsUploading(false);
+          setIsUploading(true);
+          try {
+            const url = await onImageUpload(file);
+            insertText(`![이미지](${url})`, "\n");
+            showToast("클립보드 이미지가 업로드되었습니다.", "success");
+          } catch (err) {
+            showToast("클립보드 이미지 업로드에 실패했습니다.", "error");
+            console.error("Clipboard paste error:", err);
+          } finally {
+            setIsUploading(false);
+          }
+          
+          return;
         }
-        
-        return; // 첫 번째 이미지만 처리
+      }
+    }
+
+    // 2. 텍스트 붙여넣기: 불릿 문자 자동 변환
+    const pastedText = e.clipboardData?.getData('text/plain');
+    if (pastedText) {
+      // 불릿 문자 패턴 감지
+      const bulletPattern = /^[ \t]*[•●○◦▪▸►◆■□★☆➤➜⁃]\s*/m;
+      if (bulletPattern.test(pastedText)) {
+        e.preventDefault();
+        // 불릿 문자를 마크다운 리스트로 변환
+        const converted = pastedText.replace(/^[ \t]*[•●○◦▪▸►◆■□★☆➤➜⁃]\s*/gm, '- ');
+        insertText(converted, "");
+        return;
       }
     }
   }, [onImageUpload, insertText, showToast]);

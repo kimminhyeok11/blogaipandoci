@@ -123,6 +123,17 @@ function preprocessBullets(text: string): string {
   return text.replace(/^[ \t]*[•●○◦▪▸►◆■□★☆➤➜⁃]\s*/gm, '- ');
 }
 
+// 리스트 항목 사이의 중복 빈 줄을 제거하여 연속 리스트로 인식시키는 전처리
+function preprocessListGaps(text: string): string {
+  // 번호 리스트: "1. xxx\n\n\n2. xxx" → "1. xxx\n2. xxx"
+  text = text.replace(/^(\d+\.\s+.+)\n{2,}(?=\d+\.\s)/gm, '$1\n');
+  // 불릿 리스트: "- xxx\n\n\n- xxx" → "- xxx\n- xxx"  
+  text = text.replace(/^(-\s+.+)\n{2,}(?=-\s)/gm, '$1\n');
+  // 체크리스트: "- [ ] xxx\n\n\n- [ ] xxx" → "- [ ] xxx\n- [ ] xxx"
+  text = text.replace(/^(-\s*\[[ x]\]\s+.+)\n{2,}(?=-\s*\[[ x]\])/gm, '$1\n');
+  return text;
+}
+
 // YouTube URL에서 video ID 추출
 function extractYoutubeId(url: string): string | null {
   const patterns = [
@@ -201,7 +212,9 @@ export function processMarkdown(text: string): string {
   if (!text) return "";
   try {
     // 전처리: 불릿 문자 → 마크다운 리스트
-    const preprocessed = preprocessBullets(text);
+    let preprocessed = preprocessBullets(text);
+    // 전처리: 리스트 항목 사이 빈 줄 정리 (연속 리스트 인식)
+    preprocessed = preprocessListGaps(preprocessed);
     // marked v18 - 동기 파싱
     let html = marked.parse(preprocessed, { async: false }) as string;
     // 후처리: URL → 임베드 변환
