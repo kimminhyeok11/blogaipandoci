@@ -1,6 +1,84 @@
 import { NextResponse } from "next/server";
 import { supabase, getServiceSupabase } from "@/lib/supabase";
 
+// 불용어 (매칭에서 제외할 짧거나 의미 없는 단어)
+const STOP_WORDS = new Set([
+  '의', '가', '이', '은', '는', '을', '를', '에', '와', '과', '도', '로', '으로',
+  '에서', '까지', '부터', '대한', '위한', '통한', '대해', '관한', '있는', '없는',
+  '하는', '되는', '위해', '통해', '때문', '그리고', '하지만', '그래서', '또한',
+  '이런', '저런', '어떤', '모든', '위', '아래', '것', '수', '등', '중',
+  'the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for',
+  'of', 'and', 'or', 'but', 'not', 'with', 'by', 'from', 'how', 'what', 'why',
+]);
+
+// 제목에서 의미 있는 키워드 추출 (2글자 이상, 불용어 제외)
+function extractKeywords(title: string): string[] {
+  const cleaned = title.replace(/[^\w\sㄱ-ㅎㅏ-ㅣ가-힣]/g, ' ');
+  const words = cleaned.split(/\s+/).filter(w => w.length >= 2 && !STOP_WORDS.has(w));
+  return Array.from(new Set(words));
+}
+
+// 관련 글 찾기: 키워드 매칭 기반
+async function findRelatedPosts(
+  serviceSupabase: any,
+  title: string,
+  excludeSlug: string,
+  maxCount: number = 5
+): Promise<{ title: string; slug: string }[]> {
+  try {
+    const keywords = extractKeywords(title);
+    if (keywords.length === 0) return [];
+
+    // 기존 발행된 글 전체 조회 (제목 기준 매칭)
+    const { data: posts, error } = await serviceSupabase
+      .from('posts')
+      .select('title, slug')
+      .eq('published', true)
+      .not('published_at', 'is', null)
+      .neq('slug', excludeSlug)
+      .order('published_at', { ascending: false })
+      .limit(200);
+
+    if (error || !posts || posts.length === 0) return [];
+
+    // 각 글에 대해 키워드 매칭 점수 계산
+    const scored = posts.map((post: any) => {
+      const postTitle = (post.title || '').toLowerCase();
+      let score = 0;
+      for (const keyword of keywords) {
+        if (postTitle.includes(keyword.toLowerCase())) {
+          score += keyword.length; // 긴 키워드일수록 높은 점수
+        }
+      }
+      return { ...post, score };
+    });
+
+    // 점수 높은 순 정렬, 최소 1개 이상 매칭된 것만
+    return scored
+      .filter((p: any) => p.score > 0)
+      .sort((a: any, b: any) => b.score - a.score)
+      .slice(0, maxCount)
+      .map(({ title, slug }: any) => ({ title, slug }));
+  } catch (err) {
+    console.error('관련 글 검색 실패:', err);
+    return [];
+  }
+}
+
+// 본문 하단에 관련 글 링크 마크다운 삽입
+function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
+  if (relatedPosts.length === 0) return content;
+
+  // 기존에 관련 글 섹션이 있으면 제거 (재발행 시 중복 방지)
+  const cleaned = content.replace(/\n---\n\n### 📌 관련 글\n[\s\S]*$/, '');
+
+  const links = relatedPosts
+    .map(p => `- [${p.title}](/posts/${p.slug})`)
+    .join('\n');
+
+  return `${cleaned.trimEnd()}\n\n---\n\n### 📌 관련 글\n${links}\n`;
+}
+
 // GET /api/posts - 글 목록 조회
 export async function GET(request: Request) {
   try {
@@ -62,12 +140,19 @@ export async function POST(request: Request) {
 
     const serviceSupabase = getServiceSupabase();
 
+    // 발행 시 관련 글 자동 삽입
+    let finalContent = content;
+    if (published) {
+      const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
+      finalContent = appendRelatedLinks(content, relatedPosts);
+    }
+
     const { data, error } = await serviceSupabase
       .from("posts")
       .insert({
         title,
         slug,
-        content,
+        content: finalContent,
         excerpt,
         cover_image,
         cover_image_alt,
@@ -134,12 +219,19 @@ export async function PUT(request: Request) {
       );
     }
 
+    // 발행 시 관련 글 자동 삽입 (수정 시에도 갱신)
+    let finalContent = content;
+    if (published) {
+      const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
+      finalContent = appendRelatedLinks(content, relatedPosts);
+    }
+
     const { data, error } = await serviceSupabase
       .from("posts")
       .update({
         title,
         slug,
-        content,
+        content: finalContent,
         excerpt,
         cover_image,
         cover_image_alt,
