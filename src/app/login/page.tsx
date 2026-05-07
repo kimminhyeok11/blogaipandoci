@@ -63,9 +63,6 @@ export default function LoginPage() {
 
         if (signInError) throw signInError;
 
-        // 세션 강제 리프레시
-        await supabase.auth.getSession();
-
         router.push("/");
         router.refresh();
       } else {
