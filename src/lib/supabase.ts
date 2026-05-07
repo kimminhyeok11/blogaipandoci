@@ -8,12 +8,16 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClient = any;
 
-// Supabase 클라이언트 (싱글톤) - 클라이언트용
-let supabaseInstance: SupabaseClient = null;
+// globalThis를 사용하여 Next.js 청크 분리 환경에서도 진짜 싱글톤 보장
+const globalForSupabase = globalThis as unknown as {
+  __supabase_client?: SupabaseClient;
+  __supabase_service?: SupabaseClient;
+};
 
+// Supabase 클라이언트 (싱글톤) - 클라이언트용
 export const getSupabaseClient = (): SupabaseClient => {
-  if (!supabaseInstance) {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+  if (!globalForSupabase.__supabase_client) {
+    globalForSupabase.__supabase_client = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -21,27 +25,25 @@ export const getSupabaseClient = (): SupabaseClient => {
       },
     });
   }
-  return supabaseInstance;
+  return globalForSupabase.__supabase_client;
 };
 
 export const supabase: SupabaseClient = getSupabaseClient();
 
 // 서비스 역할 클라이언트 - 서버/API용 (RLS 우회)
-let supabaseServiceInstance: SupabaseClient = null;
-
 export const getServiceSupabase = (): SupabaseClient => {
   if (!supabaseServiceRoleKey) {
     throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
   }
-  if (!supabaseServiceInstance) {
-    supabaseServiceInstance = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  if (!globalForSupabase.__supabase_service) {
+    globalForSupabase.__supabase_service = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
     });
   }
-  return supabaseServiceInstance;
+  return globalForSupabase.__supabase_service;
 };
 
 
