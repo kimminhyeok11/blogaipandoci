@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { ViewCounter } from "@/components/posts/ViewCounter";
 import { createClient } from "@supabase/supabase-js";
 import { processMarkdown } from "@/lib/markdown";
 import type { Post } from "@/types";
@@ -23,16 +24,6 @@ function getServerSupabase() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
   return createClient(url, key);
-}
-
-// 서비스 역할 클라이언트 (RLS 우회 - 조회수 증가용)
-function getServiceSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
 }
 
 
@@ -63,24 +54,9 @@ async function getPost(slug: string): Promise<Post | null> {
   }
   
   console.log("[DEBUG] getPost - data found:", !!data);
-
-  // 조회수 증가 (service role로 RLS 우회, fire-and-forget)
-  if (data) {
-    try {
-      const serviceClient = getServiceSupabase();
-      if (serviceClient) {
-        await serviceClient
-          .from('posts')
-          .update({ view_count: ((data as any).view_count || 0) + 1 })
-          .eq('slug', decodedSlug);
-      }
-    } catch {
-      console.warn('View count increment failed');
-    }
-  }
-
   return data as Post;
 }
+
 
 // 관련 글 가져오기 (태그 기반 또는 최신글)
 async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
@@ -198,6 +174,8 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <div className="min-h-screen bg-paper">
+      {/* 조회수 증가 (클라이언트, 24시간 쿠키 중복 방지) */}
+      <ViewCounter slug={post.slug} />
       {/* 구조화 데이터 (JSON-LD) */}
       <ArticleSchema
         title={post.title}
