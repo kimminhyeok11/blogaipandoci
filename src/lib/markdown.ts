@@ -117,6 +117,20 @@ marked.use({
   renderer: renderer as any,  // 타입 단언으로 v18 호환
 });
 
+// 한글 앞뒤 **볼드** 및 *이탤릭* 인식 보강
+// marked는 CJK 문자 앞뒤의 ** 를 word boundary로 인식 못하는 경우가 있음
+// 예: "가나다**볼드**라마바" → zero-width space 삽입으로 해결
+function fixCjkEmphasis(text: string): string {
+  // 한글/CJK 문자 뒤에 **가 오는 경우: 사이에 공백 삽입
+  text = text.replace(/([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])\*\*/g, '$1 **');
+  // **뒤에 한글/CJK 문자가 오는 경우
+  text = text.replace(/\*\*([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])/g, '** $1');
+  // 단일 * 이탤릭도 동일 처리 (**를 먼저 처리했으므로 단일 *만 남음)
+  text = text.replace(/([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])\*(?!\*)/g, '$1 *');
+  text = text.replace(/(?<!\*)\*([\u3131-\u3163\uac00-\ud7a3\u4e00-\u9fff])/g, '* $1');
+  return text;
+}
+
 // 단어/숫자 사이의 단일 ~ 를 취소선으로 인식하지 않도록 이스케이프
 function escapeInlineTilde(text: string): string {
   // "1~2", "3~6" 등 숫자~숫자 또는 단어~단어 패턴의 단일 ~ → HTML 엔티티로 변환
@@ -218,8 +232,10 @@ function postprocessEmbeds(html: string): string {
 export function processMarkdown(text: string): string {
   if (!text) return "";
   try {
+    // 전처리: 한글 앞뒤 볼드/이탤릭 인식 보강
+    let preprocessed = fixCjkEmphasis(text);
     // 전처리: 단일 ~ 취소선 오인식 방지
-    let preprocessed = escapeInlineTilde(text);
+    preprocessed = escapeInlineTilde(preprocessed);
     // 전처리: 불릿 문자 → 마크다운 리스트
     preprocessed = preprocessBullets(preprocessed);
     // 전처리: 리스트 항목 사이 빈 줄 정리 (연속 리스트 인식)

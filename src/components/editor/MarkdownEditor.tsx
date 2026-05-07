@@ -39,6 +39,8 @@ export function MarkdownEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const prevTextRef = useRef<string>("");
   const { showToast } = useToast();
 
   // 통계 계산
@@ -756,9 +758,82 @@ export function MarkdownEditor({
           >
             {value ? (
               <div
-                className="markdown-preview font-serif text-base leading-loose text-ink"
+                ref={previewRef}
+                className="markdown-preview font-serif text-base leading-loose text-ink outline-none"
+                contentEditable
+                suppressContentEditableWarning
                 dangerouslySetInnerHTML={{
                   __html: processMarkdown(value)
+                }}
+                onInput={(e) => {
+                  // 미리보기에서 편집한 텍스트를 원본 마크다운에 반영
+                  const el = e.currentTarget;
+                  const newText = el.innerText;
+                  const oldText = prevTextRef.current;
+                  
+                  if (oldText && newText !== oldText) {
+                    // 이전 텍스트와 새 텍스트의 차이를 원본 마크다운에 반영
+                    // 줄 단위로 비교하여 변경된 부분 찾기
+                    const oldLines = oldText.split('\n');
+                    const newLines = newText.split('\n');
+                    let mdLines = value.split('\n');
+                    
+                    // 순수 텍스트 줄 → 마크다운 줄 매핑
+                    const mdPlainLines = mdLines.map(l => 
+                      l.replace(/^#{1,6}\s+/, '')
+                       .replace(/\*\*(.*?)\*\*/g, '$1')
+                       .replace(/\*(.*?)\*/g, '$1')
+                       .replace(/~~(.*?)~~/g, '$1')
+                       .replace(/`(.*?)`/g, '$1')
+                       .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+                       .replace(/^>\s*/, '')
+                       .replace(/^[-*+]\s+/, '')
+                       .replace(/^\d+\.\s+/, '')
+                       .replace(/^- \[[ x]\]\s+/, '')
+                       .trim()
+                    );
+                    
+                    for (let i = 0; i < Math.min(oldLines.length, newLines.length); i++) {
+                      const oldLine = oldLines[i].trim();
+                      const newLine = newLines[i].trim();
+                      if (oldLine !== newLine && oldLine.length > 0) {
+                        // 매핑된 마크다운 줄에서 해당 텍스트 찾기
+                        const mdIdx = mdPlainLines.findIndex(
+                          (pl, idx) => pl === oldLine && idx >= Math.max(0, i - 3) && idx <= i + 3
+                        );
+                        if (mdIdx >= 0) {
+                          // 마크다운 줄에서 순수 텍스트 부분만 교체
+                          const mdLine = mdLines[mdIdx];
+                          // 마크다운 구문은 유지하고 텍스트만 교체
+                          const replaced = mdLine.replace(oldLine, newLine);
+                          mdLines[mdIdx] = replaced;
+                        }
+                      }
+                    }
+                    
+                    // 줄이 삭제된 경우 (newLines가 더 짧음)
+                    if (newLines.length < oldLines.length) {
+                      for (let i = newLines.length; i < oldLines.length; i++) {
+                        const deletedLine = oldLines[i].trim();
+                        if (deletedLine.length === 0) continue;
+                        const mdIdx = mdPlainLines.findIndex(pl => pl === deletedLine);
+                        if (mdIdx >= 0) {
+                          mdLines.splice(mdIdx, 1);
+                          mdPlainLines.splice(mdIdx, 1);
+                        }
+                      }
+                    }
+                    
+                    onChange(mdLines.join('\n'));
+                  }
+                  
+                  prevTextRef.current = newText;
+                }}
+                onFocus={() => {
+                  // 미리보기 포커스 시 현재 텍스트 저장
+                  if (previewRef.current) {
+                    prevTextRef.current = previewRef.current.innerText;
+                  }
                 }}
               />
             ) : (
