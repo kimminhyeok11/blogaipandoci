@@ -6,7 +6,6 @@ import Link from "next/link";
 import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { RevisionHistory } from "@/components/editor/RevisionHistory";
@@ -159,17 +158,10 @@ function WritePageContent() {
 
   // 수정 모드: 기존 게시글 불러오기
   useEffect(() => {
-    if (!editSlug) return;
+    if (!editSlug || isAuthLoading || !user) return;
 
     const loadPost = async () => {
       try {
-        // 작성자 인증 확인
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          router.push("/posts");
-          return;
-        }
-
         // API로 글 조회 (RLS 우회)
         const response = await fetch(`/api/posts/${editSlug}?edit=true`, {
           headers: {
@@ -249,7 +241,7 @@ function WritePageContent() {
     };
 
     loadPost();
-  }, [editSlug, router]);
+  }, [editSlug, router, user, isAuthLoading]);
 
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
     try {
@@ -314,8 +306,8 @@ function WritePageContent() {
     setIsSubmitting(true);
 
     try {
-      // Check auth directly from supabase (more reliable than useAuth hook)
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      // AuthProvider의 user 사용 (auth lock 경쟁 방지)
+      const currentUser = user;
       console.log("[DEBUG] Submit - currentUser:", currentUser?.id);
       console.log("[DEBUG] Submit - isEditMode:", isEditMode, "postId:", postId);
       
@@ -460,16 +452,13 @@ function WritePageContent() {
 
   // 태그 저장 헬퍼 함수 (API 호출)
   const saveTags = async (postId: string, tagList: string[]) => {
-    if (!tagList.length) return;
-
-    const currentUser = await supabase.auth.getUser();
-    if (!currentUser.data.user) return;
+    if (!tagList.length || !user?.id) return;
 
     const response = await fetch("/api/tags", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${currentUser.data.user.id}`,
+        "Authorization": `Bearer ${user.id}`,
       },
       body: JSON.stringify({
         postId,
