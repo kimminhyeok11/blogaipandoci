@@ -46,6 +46,9 @@ function WritePageContent() {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [postId, setPostId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  // 기존 게시글 목록 (자동 내부 링크용)
+  const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
 
   // 자동 저장 키 생성 (수정 모드 vs 새 글)
   const getAutoSaveKey = (key: string) => {
@@ -154,6 +157,56 @@ function WritePageContent() {
       }
     }
   }, []);
+
+  // 기존 게시글 목록 로드 (자동 내부 링크용)
+  useEffect(() => {
+    const fetchExistingPosts = async () => {
+      try {
+        const response = await fetch('/api/posts?limit=100');
+        if (response.ok) {
+          const data = await response.json();
+          // 제목이 3자 이상인 게시글만 필터링
+          const posts = (data.posts || [])
+            .filter((post: any) => post.title && post.title.length >= 3)
+            .map((post: any) => ({ title: post.title, slug: post.slug }));
+          setExistingPosts(posts);
+        }
+      } catch (err) {
+        console.error('기존 게시글 로드 실패:', err);
+      }
+    };
+    
+    fetchExistingPosts();
+  }, []);
+
+  // 자동 내부 링크 삽입 함수
+  const autoInsertInternalLinks = useCallback((contentText: string): string => {
+    if (!existingPosts.length) return contentText;
+    
+    let processedContent = contentText;
+    
+    // 게시글 수가 많을 수 있으니, 길이순으로 정렬 (긴 제목 먼저 처리 - 부분 매칭 방지)
+    const sortedPosts = [...existingPosts].sort((a, b) => b.title.length - a.title.length);
+    
+    for (const post of sortedPosts) {
+      // 이미 링크가 걸린 텍스트는 제외하고 순수 텍스트만 매칭
+      const title = post.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 정규식 특수문자 이스케이프
+      
+      // 마크다운 링크 구문이 아닌 경우에만 변환
+      // [제목](링크) 형태가 아닌 제목 텍스트를 찾아서 변환
+      const regex = new RegExp(`(?<!\\[)${title}(?!\\]\\([^)]+\\))(?![^\\[]*\\]\\([^)]+\\))`, 'g');
+      
+      // 해당 제목이 본문에 있으면 링크로 변환 (단, 자신의 제목은 제외)
+      if (title !== title.trim() && processedContent.includes(post.title)) {
+        processedContent = processedContent.replace(
+          regex,
+          `[${post.title}](/posts/${post.slug})`
+        );
+      }
+    }
+    
+    return processedContent;
+  }, [existingPosts, title]);
 
   // 수정 모드: 기존 게시글 불러오기
   useEffect(() => {
@@ -331,6 +384,17 @@ function WritePageContent() {
 
       // 태그 파싱
       const tagList = tags.split(",").map(t => t.trim()).filter(Boolean);
+      
+      // 자동 내부 링크 삽입 (발행 시에만 적용)
+      let processedContent = content.trim();
+      if (published && existingPosts.length > 0) {
+        processedContent = autoInsertInternalLinks(processedContent);
+        // 링크가 삽입되었으면 content 상태도 업데이트 (에디터에 반영)
+        if (processedContent !== content.trim()) {
+          setContent(processedContent);
+          showToast('자동으로 관련 글 링크가 삽입되었습니다', 'info');
+        }
+      }
 
       if (isEditMode && postId) {
         // 수정 모드: API 호출
@@ -345,7 +409,7 @@ function WritePageContent() {
             id: postId,
             title: title.trim(),
             slug,
-            content: content.trim(),
+            content: processedContent,
             excerpt: finalExcerpt,
             published,
           }),
@@ -408,7 +472,7 @@ function WritePageContent() {
             user_id: currentUser.id,
             title: title.trim(),
             slug,
-            content: content.trim(),
+            content: processedContent,
             excerpt: finalExcerpt,
             published,
           }),
