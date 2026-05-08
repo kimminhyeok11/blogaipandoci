@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
+import { PostContent } from "@/components/posts/PostContent";
 import { createClient } from "@supabase/supabase-js";
 import { processMarkdown } from "@/lib/markdown";
 import type { Post } from "@/types";
@@ -233,10 +234,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Article Content */}
         <article className="article-body">
-          <div 
-            className="prose-journal font-serif text-base leading-loose text-[#2a2420]"
-            dangerouslySetInnerHTML={{ __html: processMarkdown(post.content) }}
-          />
+          <PostContent contentHtml={processMarkdown(post.content)} />
 
           <div className="ornament">— ✦ —</div>
 

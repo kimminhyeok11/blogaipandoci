@@ -772,59 +772,44 @@ export function MarkdownEditor({
                   const oldText = prevTextRef.current;
                   
                   if (oldText && newText !== oldText) {
-                    // 이전 텍스트와 새 텍스트의 차이를 원본 마크다운에 반영
-                    // 줄 단위로 비교하여 변경된 부분 찾기
-                    const oldLines = oldText.split('\n');
-                    const newLines = newText.split('\n');
-                    let mdLines = value.split('\n');
+                    let newMarkdown = value;
                     
-                    // 순수 텍스트 줄 → 마크다운 줄 매핑
-                    const mdPlainLines = mdLines.map(l => 
-                      l.replace(/^#{1,6}\s+/, '')
-                       .replace(/\*\*(.*?)\*\*/g, '$1')
-                       .replace(/\*(.*?)\*/g, '$1')
-                       .replace(/~~(.*?)~~/g, '$1')
-                       .replace(/`(.*?)`/g, '$1')
-                       .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-                       .replace(/^>\s*/, '')
-                       .replace(/^[-*+]\s+/, '')
-                       .replace(/^\d+\.\s+/, '')
-                       .replace(/^- \[[ x]\]\s+/, '')
-                       .trim()
-                    );
+                    // 단순 문자열 차이 찾기 (LCS 기반)
+                    const minLen = Math.min(oldText.length, newText.length);
+                    let start = 0;
+                    while (start < minLen && oldText[start] === newText[start]) start++;
                     
-                    for (let i = 0; i < Math.min(oldLines.length, newLines.length); i++) {
-                      const oldLine = oldLines[i].trim();
-                      const newLine = newLines[i].trim();
-                      if (oldLine !== newLine && oldLine.length > 0) {
-                        // 매핑된 마크다운 줄에서 해당 텍스트 찾기
-                        const mdIdx = mdPlainLines.findIndex(
-                          (pl, idx) => pl === oldLine && idx >= Math.max(0, i - 3) && idx <= i + 3
-                        );
-                        if (mdIdx >= 0) {
-                          // 마크다운 줄에서 순수 텍스트 부분만 교체
-                          const mdLine = mdLines[mdIdx];
-                          // 마크다운 구문은 유지하고 텍스트만 교체
-                          const replaced = mdLine.replace(oldLine, newLine);
-                          mdLines[mdIdx] = replaced;
+                    let oldEnd = oldText.length;
+                    let newEnd = newText.length;
+                    while (oldEnd > start && newEnd > start && oldText[oldEnd - 1] === newText[newEnd - 1]) {
+                      oldEnd--;
+                      newEnd--;
+                    }
+                    
+                    const deleted = oldText.slice(start, oldEnd);
+                    const inserted = newText.slice(start, newEnd);
+                    
+                    // 삭제된 텍스트를 원본 마크다운에서 찾아 교체
+                    if (deleted.length > 0) {
+                      // 볼드/이탤릭 등 마크다운 기호를 포함한 패턴으로도 시도
+                      const patterns = [
+                        deleted,
+                        `**${deleted}**`,
+                        `*${deleted}*`,
+                        `~~${deleted}~~`,
+                        `_${deleted}_`,
+                        `\`${deleted}\``,
+                      ];
+                      
+                      for (const pattern of patterns) {
+                        if (newMarkdown.includes(pattern)) {
+                          newMarkdown = newMarkdown.replace(pattern, inserted);
+                          break;
                         }
                       }
                     }
                     
-                    // 줄이 삭제된 경우 (newLines가 더 짧음)
-                    if (newLines.length < oldLines.length) {
-                      for (let i = newLines.length; i < oldLines.length; i++) {
-                        const deletedLine = oldLines[i].trim();
-                        if (deletedLine.length === 0) continue;
-                        const mdIdx = mdPlainLines.findIndex(pl => pl === deletedLine);
-                        if (mdIdx >= 0) {
-                          mdLines.splice(mdIdx, 1);
-                          mdPlainLines.splice(mdIdx, 1);
-                        }
-                      }
-                    }
-                    
-                    onChange(mdLines.join('\n'));
+                    onChange(newMarkdown);
                   }
                   
                   prevTextRef.current = newText;
