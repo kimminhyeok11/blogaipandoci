@@ -45,11 +45,11 @@ export function PostContent({ contentHtml }: PostContentProps) {
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = `
-      .post-content img {
+      .prose-journal img {
         cursor: zoom-in;
         transition: opacity 0.2s;
       }
-      .post-content img:hover {
+      .prose-journal img:hover {
         opacity: 0.9;
       }
     `;
@@ -62,7 +62,7 @@ export function PostContent({ contentHtml }: PostContentProps) {
   return (
     <>
       <div
-        className="post-content prose prose-lg max-w-none font-serif text-ink leading-loose"
+        className="prose-journal font-serif text-base leading-loose text-[#2a2420]"
         dangerouslySetInnerHTML={{ __html: contentHtml }}
         onClick={handleImageClick}
       />
