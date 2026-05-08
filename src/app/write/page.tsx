@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, Suspense, lazy } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
 import { useToast } from "@/components/ui/Toast";
@@ -43,7 +43,6 @@ function WritePageContent() {
   const [excerpt, setExcerpt] = useState("");
   const [tags, setTags] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [postId, setPostId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -519,18 +518,6 @@ function WritePageContent() {
               
               <button
                 type="button"
-                onClick={() => setShowPreview(!showPreview)}
-                className={cn(
-                  "hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors",
-                  showPreview ? "bg-rust text-paper" : "text-muted hover:bg-cream"
-                )}
-              >
-                <Eye size={14} />
-                미리보기
-              </button>
-
-              <button
-                type="button"
                 onClick={() => handleSubmit(false)}
                 disabled={isSubmitting}
                 className="px-3 py-1.5 border border-rule text-muted text-xs font-sans font-medium rounded-sm hover:border-muted transition-colors disabled:opacity-50"
@@ -558,13 +545,6 @@ function WritePageContent() {
             <div className="flex items-center gap-3 text-muted">
               <Loader2 size={24} className="animate-spin" />
               <span className="font-sans text-sm">글을 불러오는 중...</span>
-            </div>
-          </div>
-        ) : showPreview ? (
-          <div className="prose-journal bg-white border border-rule p-8 rounded-sm">
-            <h1 className="headline mb-4">{title || "제목 없음"}</h1>
-            <div className="whitespace-pre-wrap font-serif text-base leading-loose">
-              {content || "내용 없음"}
             </div>
           </div>
         ) : (
