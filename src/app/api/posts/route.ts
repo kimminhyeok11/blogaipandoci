@@ -11,14 +11,54 @@ const STOP_WORDS = new Set([
   'of', 'and', 'or', 'but', 'not', 'with', 'by', 'from', 'how', 'what', 'why',
 ]);
 
-// 제목에서 의미 있는 키워드 추출 (2글자 이상, 불용어 제외)
-function extractKeywords(title: string): string[] {
-  const cleaned = title.replace(/[^\w\sㄱ-ㅎㅏ-ㅣ가-힣]/g, ' ');
-  const words = cleaned.split(/\s+/).filter(w => w.length >= 2 && !STOP_WORDS.has(w));
-  return Array.from(new Set(words));
+// n-gram 집합 생성 (제목 유사도 계산용)
+function getNGrams(text: string, n: number = 2): Set<string> {
+  const normalized = text.toLowerCase().replace(/\s+/g, '');
+  const grams = new Set<string>();
+  for (let i = 0; i <= normalized.length - n; i++) {
+    grams.add(normalized.substring(i, i + n));
+  }
+  return grams;
 }
 
-// 관련 글 찾기: 키워드 매칭 기반
+// Jaccard 유사도 계산 (두 집합의 교집합/합집합)
+function jaccardSimilarity(setA: Set<string>, setB: Set<string>): number {
+  const intersection = new Set(Array.from(setA).filter(x => setB.has(x)));
+  const union = new Set([...Array.from(setA), ...Array.from(setB)]);
+  return union.size === 0 ? 0 : intersection.size / union.size;
+}
+
+// 제목 유사도 계산 (Jaccard + 부분 문자열 매칭)
+function calculateTitleSimilarity(titleA: string, titleB: string): number {
+  const a = titleA.toLowerCase();
+  const b = titleB.toLowerCase();
+  
+  // 1. Jaccard 유사도 (2-gram)
+  const gramsA = getNGrams(a, 2);
+  const gramsB = getNGrams(b, 2);
+  const jaccardScore = jaccardSimilarity(gramsA, gramsB);
+  
+  // 2. 부분 문자열 매칭 (포함 관계)
+  let substringScore = 0;
+  // 공백 제거한 제목끼리 비교
+  const aNoSpace = a.replace(/\s+/g, '');
+  const bNoSpace = b.replace(/\s+/g, '');
+  
+  if (aNoSpace.includes(bNoSpace) || bNoSpace.includes(aNoSpace)) {
+    substringScore = 0.5; // 하나가 다른 하나를 포함하면 높은 점수
+  }
+  
+  // 3. 키워드 매칭 (기존 로직 유지)
+  const keywordsA = a.split(/\s+/).filter(w => w.length >= 2 && !STOP_WORDS.has(w));
+  const keywordsB = b.split(/\s+/).filter(w => w.length >= 2 && !STOP_WORDS.has(w));
+  const commonKeywords = keywordsA.filter(k => keywordsB.includes(k));
+  const keywordScore = commonKeywords.length / Math.max(keywordsA.length, keywordsB.length, 1);
+  
+  // 종합 점수 (가중치: Jaccard 50% + 부분 매칭 30% + 키워드 20%)
+  return jaccardScore * 0.5 + substringScore * 0.3 + keywordScore * 0.2;
+}
+
+// 관련 글 찾기: 제목 유사도 기반
 async function findRelatedPosts(
   serviceSupabase: any,
   title: string,
@@ -26,10 +66,7 @@ async function findRelatedPosts(
   maxCount: number = 5
 ): Promise<{ title: string; slug: string }[]> {
   try {
-    const keywords = extractKeywords(title);
-    if (keywords.length === 0) return [];
-
-    // 기존 발행된 글 전체 조회 (제목 기준 매칭)
+    // 기존 발행된 글 전체 조회
     const { data: posts, error } = await serviceSupabase
       .from('posts')
       .select('title, slug')
@@ -41,21 +78,15 @@ async function findRelatedPosts(
 
     if (error || !posts || posts.length === 0) return [];
 
-    // 각 글에 대해 키워드 매칭 점수 계산
+    // 각 글에 대해 제목 유사도 계산
     const scored = posts.map((post: any) => {
-      const postTitle = (post.title || '').toLowerCase();
-      let score = 0;
-      for (const keyword of keywords) {
-        if (postTitle.includes(keyword.toLowerCase())) {
-          score += keyword.length; // 긴 키워드일수록 높은 점수
-        }
-      }
-      return { ...post, score };
+      const similarity = calculateTitleSimilarity(title, post.title || '');
+      return { ...post, score: similarity };
     });
 
-    // 점수 높은 순 정렬, 최소 1개 이상 매칭된 것만
+    // 유사도 높은 순 정렬, 최소 0.1 이상 매칭된 것만
     return scored
-      .filter((p: any) => p.score > 0)
+      .filter((p: any) => p.score >= 0.1)
       .sort((a: any, b: any) => b.score - a.score)
       .slice(0, maxCount)
       .map(({ title, slug }: any) => ({ title, slug }));

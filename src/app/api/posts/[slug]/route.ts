@@ -11,6 +11,9 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const isEditMode = searchParams.get("edit") === "true";
     
+    // URL 디코딩 (한글/특수문자 처리)
+    const decodedSlug = decodeURIComponent(slug);
+    
     const serviceSupabase = getServiceSupabase();
 
     // 조회수 증가 (서비스 역할로 RLS 우회) - 조회 모드일 때만
@@ -19,14 +22,14 @@ export async function GET(
         const { data: currentPost } = await serviceSupabase
           .from('posts')
           .select('view_count')
-          .eq('slug', slug)
+          .eq('slug', decodedSlug)
           .single();
         
         if (currentPost) {
           await (serviceSupabase as any)
             .from('posts')
             .update({ view_count: ((currentPost as any).view_count || 0) + 1 })
-            .eq('slug', slug);
+            .eq('slug', decodedSlug);
         }
       } catch {
         console.warn('View count increment failed');
@@ -48,7 +51,7 @@ export async function GET(
       const result = await serviceSupabase
         .from("posts")
         .select("*")
-        .eq("slug", slug)
+        .eq("slug", decodedSlug)
         .single();
       
       data = result.data as any;
@@ -63,7 +66,7 @@ export async function GET(
       const result = await supabase
         .from("posts")
         .select("*")
-        .eq("slug", slug)
+        .eq("slug", decodedSlug)
         .eq("published", true)
         .single();
       
@@ -97,6 +100,8 @@ export async function DELETE(
 ) {
   try {
     const { slug } = params;
+    // URL 디코딩 (한글/특수문자 처리)
+    const decodedSlug = decodeURIComponent(slug);
 
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -109,7 +114,7 @@ export async function DELETE(
     // 글 조회하여 소유자 확인
     const { data: post, error: fetchError } = await (serviceSupabase.from("posts") as any)
       .select("user_id")
-      .eq("slug", slug)
+      .eq("slug", decodedSlug)
       .single();
 
     if (fetchError || !post) {
@@ -123,7 +128,7 @@ export async function DELETE(
     // 글 삭제
     const { error } = await (serviceSupabase.from("posts") as any)
       .delete()
-      .eq("slug", slug);
+      .eq("slug", decodedSlug);
 
     if (error) throw error;
 
