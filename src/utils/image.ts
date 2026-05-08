@@ -40,10 +40,15 @@ export const convertToWebP = async (file: File): Promise<File> => {
 
 export const generateSlug = (text: string): string => {
   return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
+    .trim()
+    // 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈은 유지)
+    .replace(/[^\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\u3040-\u309F\u30A0-\u30FF\w\s-]/g, '')
+    // 공백을 하이픈으로 변환
     .replace(/\s+/g, '-')
+    // 연속된 하이픈 제거
     .replace(/-+/g, '-')
+    // 앞뒤 하이픈 제거
+    .replace(/^-+|-+$/g, '')
     .substring(0, 200);
 };
 
