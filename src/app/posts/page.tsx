@@ -135,14 +135,6 @@ export default async function PostsPage() {
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="border-t-3 border-double border-ink text-center py-6 px-4">
-        <div className="font-sans text-xs text-muted tracking-wider">
-          <p className="mb-2">法 BLOG · 깊이 있는 분석과 인사이트</p>
-          <p>© {new Date().getFullYear()} All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }
