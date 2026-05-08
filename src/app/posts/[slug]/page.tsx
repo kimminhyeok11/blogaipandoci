@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
 import { PostContent } from "@/components/posts/PostContent";
 import { createClient } from "@supabase/supabase-js";
-import { processMarkdown } from "@/lib/markdown";
 import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
 import { ShareButtons } from "@/components/posts/ShareButtons";
@@ -234,7 +233,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Article Content */}
         <article className="article-body">
-          <PostContent contentHtml={processMarkdown(post.content)} />
+          <PostContent contentMarkdown={post.content} />
 
           <div className="ornament">— ✦ —</div>
 

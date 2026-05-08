@@ -1,16 +1,20 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { ImageLightbox } from "@/components/ImageLightbox";
+import { processMarkdown } from "@/lib/markdown";
 
 interface PostContentProps {
-  contentHtml: string;
+  contentMarkdown: string;
 }
 
-export function PostContent({ contentHtml }: PostContentProps) {
+export function PostContent({ contentMarkdown }: PostContentProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [images, setImages] = useState<Array<{ src: string; alt?: string }>>([]);
+
+  // 클라이언트에서 마크다운 → HTML 변환
+  const contentHtml = useMemo(() => processMarkdown(contentMarkdown), [contentMarkdown]);
 
   // HTML에서 이미지 목록 추출
   useEffect(() => {
