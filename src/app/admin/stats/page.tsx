@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
@@ -24,6 +24,7 @@ import {
   Clock,
   Activity
 } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { supabase } from "@/lib/supabase";
 
 interface OrphanedImage {
@@ -94,7 +95,7 @@ export default function StatsPage() {
   const [isAllPostsLoading, setIsAllPostsLoading] = useState(false);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
-  const hasFetched = useState(false);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -110,8 +111,8 @@ export default function StatsPage() {
       return;
     }
 
-    if (!hasFetched[0]) {
-      hasFetched[1](true);
+    if (!hasFetched.current) {
+      hasFetched.current = true;
       fetchStats();
       fetchAllPosts(1);
     }
@@ -369,41 +370,50 @@ export default function StatsPage() {
             <TrendingUp size={16} />
             최근 30일 조회수 추이
           </h2>
-          {stats.dailyViewCounts ? (
-            <div className="relative">
-              {/* 차트 영역 */}
-              <div className="flex items-end gap-[2px] h-40 px-1">
-                {Object.entries(stats.dailyViewCounts).map(([date, count]) => {
-                  const maxCount = Math.max(...Object.values(stats.dailyViewCounts), 1);
-                  const height = Math.max((count / maxCount) * 100, 2);
-                  return (
-                    <div
-                      key={date}
-                      className="flex-1 group relative"
-                      title={`${date}: ${count}회`}
-                    >
-                      <div
-                        className="w-full bg-rust/70 hover:bg-rust rounded-t transition-colors cursor-pointer"
-                        style={{ height: `${height}%` }}
-                      />
-                      {/* 툴팁 */}
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
-                        <div className="bg-ink text-paper text-xs px-2 py-1 rounded whitespace-nowrap font-sans">
-                          {date}: {count}회
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {/* X축 라벨 */}
-              <div className="flex justify-between mt-2 px-1">
-                {Object.keys(stats.dailyViewCounts).filter((_, i, arr) => 
-                  i === 0 || i === Math.floor(arr.length / 2) || i === arr.length - 1
-                ).map(date => (
-                  <span key={date} className="text-xs text-muted font-sans">{date}</span>
-                ))}
-              </div>
+          {stats.dailyViewCounts && Object.keys(stats.dailyViewCounts).length > 0 ? (
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={Object.entries(stats.dailyViewCounts).map(([date, count]) => ({ date, count }))}
+                  margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
+                >
+                  <defs>
+                    <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#c45c26" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#c45c26" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 10, fill: '#6b6b6b' }}
+                    tickMargin={5}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 10, fill: '#6b6b6b' }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1a1a1a', 
+                      border: 'none', 
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      color: '#fff'
+                    }}
+                    formatter={(value: number) => [`${value}회`, '조회수']}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="#c45c26" 
+                    strokeWidth={2}
+                    fillOpacity={1} 
+                    fill="url(#colorViews)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           ) : (
             <p className="text-muted font-sans text-sm">조회 데이터가 없습니다</p>
