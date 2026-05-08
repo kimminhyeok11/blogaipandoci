@@ -470,14 +470,14 @@ export function MarkdownEditor({
       ? `[${imageMarkdown}](${link})`
       : imageMarkdown;
 
-    // 캡션이 있으면 figure 형태로 (HTML)
+    // 캡션이 있으면 figure 형태로 (HTML) - img 태그 직접 사용
     let insertContent;
     if (caption && !link) {
-      // 설명이 있고 링크 없음: figure 태그 사용
-      insertContent = `<figure class="my-6">\n${imageMarkdown}\n<figcaption class="text-center text-sm text-muted mt-2">${caption}</figcaption>\n</figure>`;
+      // 설명이 있고 링크 없음: figure 태그 사용 (img 태그 직접)
+      insertContent = `<figure class="my-6">\n<img src="${imageUrl}" alt="${alt}" loading="lazy" />\n<figcaption class="text-center text-sm text-muted mt-2">${caption}</figcaption>\n</figure>`;
     } else if (caption && link) {
       // 설명과 링크 둘 다 있음
-      insertContent = `<figure class="my-6">\n[${imageMarkdown}](${link})\n<figcaption class="text-center text-sm text-muted mt-2">${caption}</figcaption>\n</figure>`;
+      insertContent = `<figure class="my-6">\n<a href="${link}"><img src="${imageUrl}" alt="${alt}" loading="lazy" /></a>\n<figcaption class="text-center text-sm text-muted mt-2">${caption}</figcaption>\n</figure>`;
     } else {
       // 기본 마크다운
       insertContent = finalMarkdown;
