@@ -7,6 +7,7 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import { Analytics } from "@vercel/analytics/next";
 import { AdSenseScript } from "@/components/ads/AdSenseScript";
+import Link from "next/link";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
 
@@ -122,12 +123,59 @@ export default function RootLayout({
         <OrganizationSchema />
         <WebSiteSchema />
       </head>
-      <body className="antialiased min-h-screen font-serif">
+      <body className="antialiased min-h-screen font-serif flex flex-col">
         <AdSenseScript />
         <QueryProvider>
           <AuthProvider>
             <ToastProvider>
-              {children}
+              <div className="flex-grow">
+                {children}
+              </div>
+              {/* 공통 Footer */}
+              <footer className="border-t-3 border-double border-ink bg-paper">
+                <div className="max-w-content mx-auto px-4 sm:px-6 py-8">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+                    {/* 브랜드 */}
+                    <div className="col-span-2 md:col-span-1">
+                      <h3 className="font-serif text-lg font-bold text-ink mb-2">法 BLOG</h3>
+                      <p className="font-sans text-xs text-muted">
+                        법률·정책 사회 분석 미디어
+                      </p>
+                    </div>
+                    {/* 메뉴 */}
+                    <div>
+                      <h4 className="font-sans text-xs font-bold text-ink uppercase tracking-wider mb-3">메뉴</h4>
+                      <ul className="space-y-2 font-sans text-xs">
+                        <li><Link href="/posts" className="text-muted hover:text-rust transition-colors">모든 글</Link></li>
+                        <li><Link href="/categories" className="text-muted hover:text-rust transition-colors">카테고리</Link></li>
+                        <li><Link href="/tags" className="text-muted hover:text-rust transition-colors">태그</Link></li>
+                      </ul>
+                    </div>
+                    {/* 정보 */}
+                    <div>
+                      <h4 className="font-sans text-xs font-bold text-ink uppercase tracking-wider mb-3">정보</h4>
+                      <ul className="space-y-2 font-sans text-xs">
+                        <li><Link href="/about" className="text-muted hover:text-rust transition-colors">소개</Link></li>
+                        <li><Link href="/contact" className="text-muted hover:text-rust transition-colors">문의하기</Link></li>
+                        <li><Link href="/privacy" className="text-muted hover:text-rust transition-colors">개인정보처리방침</Link></li>
+                      </ul>
+                    </div>
+                    {/* 법적 */}
+                    <div>
+                      <h4 className="font-sans text-xs font-bold text-ink uppercase tracking-wider mb-3">법적 고지</h4>
+                      <ul className="space-y-2 font-sans text-xs">
+                        <li><Link href="/terms" className="text-muted hover:text-rust transition-colors">이용약관</Link></li>
+                      </ul>
+                    </div>
+                  </div>
+                  {/* 저작권 */}
+                  <div className="border-t border-rule pt-6 text-center">
+                    <p className="font-sans text-xs text-muted tracking-wider">
+                      © {new Date().getFullYear()} 法 BLOG. All rights reserved.
+                    </p>
+                  </div>
+                </div>
+              </footer>
             </ToastProvider>
           </AuthProvider>
         </QueryProvider>
