@@ -48,6 +48,9 @@ export function MarkdownEditor({
   const readTime = Math.max(1, Math.ceil(wordCount / 200)); // 분당 200단어 기준
   const lineCount = value ? value.split('\n').length : 1;
 
+  // 미리보기 HTML 메모이제이션 (성능 최적화)
+  const previewHtml = useMemo(() => processMarkdown(value), [value]);
+
   // 기본 텍스트 삽입 (선택 영역을 대체)
   const insertText = useCallback((before: string, after: string = "") => {
     const textarea = textareaRef.current;
@@ -759,9 +762,7 @@ export function MarkdownEditor({
               <div
                 ref={previewRef}
                 className="markdown-preview font-serif text-base leading-loose text-ink select-text"
-                dangerouslySetInnerHTML={{
-                  __html: useMemo(() => processMarkdown(value), [value])
-                }}
+                dangerouslySetInnerHTML={{ __html: previewHtml }}
               />
             ) : (
               <p className="text-muted italic">미리보기할 내용이 없습니다.</p>
