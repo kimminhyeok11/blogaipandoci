@@ -1,4 +1,5 @@
 import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 
 // marked 렌더러 커스터마이징 (v18 호환)
 const renderer = {
@@ -229,6 +230,20 @@ export function processMarkdown(text: string): string {
     let html = marked.parse(preprocessed, { async: false }) as string;
     // 후처리: URL → 임베드 변환
     html = postprocessEmbeds(html);
+    // 보안: XSS 방지 HTML 정제 (script 태그 등 제거)
+    html = DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: [
+        'p', 'br', 'strong', 'em', 'del', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'figure',
+        'figcaption', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'iframe',
+        'div', 'span'
+      ],
+      ALLOWED_ATTR: [
+        'href', 'title', 'alt', 'src', 'class', 'loading', 'target', 'rel',
+        'frameborder', 'allow', 'allowfullscreen', 'scrolling', 'style',
+        'width', 'height', 'start'
+      ],
+    });
     return html;
   } catch {
     return text;
