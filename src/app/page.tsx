@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import Link from "next/link";
 import { PenSquare, User, Search } from "lucide-react";
-import { AdSense } from "@/components/ads/AdSense";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
+
+// AdSense 지연 로딩 (코드 분할)
+const AdSense = lazy(() => import("@/components/ads/AdSense").then(mod => ({ default: mod.AdSense })));
 
 interface Post {
   id: string;
@@ -235,13 +237,15 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* 광고 */}
-          <div className="my-12">
-            <AdSense
-              slot="7498833217"
-              format="auto"
-              minHeight={250}
-            />
+          {/* 광고 - 지연 로딩 */}
+          <div className="my-12" style={{ minHeight: "250px" }}>
+            <Suspense fallback={<div className="w-full h-[250px] bg-cream rounded animate-pulse" />}>
+              <AdSense
+                slot="7498833217"
+                format="auto"
+                minHeight={250}
+              />
+            </Suspense>
           </div>
 
           <div className="mt-12 text-center">

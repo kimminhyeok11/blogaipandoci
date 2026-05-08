@@ -217,9 +217,12 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
         </section>
 
-        {/* Cover Image */}
+        {/* Cover Image - LCP 최적화 */}
         {post.cover_image && (
-          <div className="max-w-content mx-auto px-4 sm:px-6 mb-8 relative aspect-video max-h-[400px]">
+          <div 
+            className="max-w-content mx-auto px-4 sm:px-6 mb-8 relative bg-cream"
+            style={{ aspectRatio: "16/9", maxHeight: "400px" }}
+          >
             <Image
               src={post.cover_image}
               alt={post.cover_image_alt || post.title}
@@ -227,6 +230,8 @@ export default async function PostPage({ params }: PostPageProps) {
               className="object-cover rounded-sm"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               priority
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect fill='%23ede7d7' width='16' height='9'/%3E%3C/svg%3E"
             />
           </div>
         )}

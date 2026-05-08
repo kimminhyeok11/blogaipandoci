@@ -447,3 +447,20 @@ body {
     text-wrap: balance;
   }
 }
+
+/* 레이아웃 안정성 (CLS 방지) */
+.ads-container {
+  contain: layout;
+  content-visibility: auto;
+}
+
+/* 이미지 레이아웃 안정성 */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* aspect-ratio 지원 */
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}

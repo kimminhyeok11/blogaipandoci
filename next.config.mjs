@@ -7,6 +7,14 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // 레거시 JavaScript 폴리필 제거 (모던 브라우저 타겟)
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // 실험적 기능: 최신 JavaScript 출력
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
   images: {
     unoptimized: false,
     formats: ['image/webp', 'image/avif'],
