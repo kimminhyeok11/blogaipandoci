@@ -587,6 +587,20 @@ function WritePageContent() {
                 />
               )}
               
+              {/* 미리보기/편집 토글 버튼 */}
+              <button
+                type="button"
+                onClick={() => setPreview(!preview)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors ${
+                  preview 
+                    ? "bg-ink text-paper hover:bg-ink/90" 
+                    : "border border-rule text-muted hover:border-muted"
+                }`}
+              >
+                {preview ? <Edit3 size={14} /> : <Eye size={14} />}
+                {preview ? "편집" : "미리보기"}
+              </button>
+
               <button
                 type="button"
                 onClick={() => handleSubmit(false)}
@@ -609,33 +623,6 @@ function WritePageContent() {
           </div>
         </div>
       </header>
-
-      {/* 스마트 스티키 네비게이션 + 탭 버튼 */}
-      <StickyNav backHref="/" backLabel="홈으로">
-        {/* 미리보기/편집 탭 버튼 */}
-        <div className="flex items-center gap-1 bg-cream/50 rounded-sm p-1">
-          <button
-            type="button"
-            onClick={() => setPreview(false)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors ${
-              !preview ? "bg-ink text-paper" : "text-muted hover:text-ink hover:bg-paper"
-            }`}
-          >
-            <Edit3 size={14} />
-            편집
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreview(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors ${
-              preview ? "bg-ink text-paper" : "text-muted hover:text-ink hover:bg-paper"
-            }`}
-          >
-            <Eye size={14} />
-            미리보기
-          </button>
-        </div>
-      </StickyNav>
 
       <main className="max-w-content mx-auto px-4 sm:px-6 py-8">
         {isLoading ? (
@@ -694,6 +681,7 @@ function WritePageContent() {
               <MarkdownEditor
                 value={content}
                 onChange={setContent}
+                preview={preview}
                 placeholder="마크다운으로 글을 작성하세요...
 
 ## 제목을 이렇게 작성하세요
