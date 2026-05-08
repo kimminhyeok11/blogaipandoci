@@ -3,10 +3,14 @@ import DOMPurify from "isomorphic-dompurify";
 
 // marked 렌더러 커스터마이징 (v18 호환)
 const renderer = {
-  // 링크 새창에서 열기
+  // 링크 처리: 외부 링크는 새 탭, 내부 링크는 현재 탭
   link(this: any, token: { href: string; title?: string | null; tokens: any[] }) {
     const text = this.parser.parseInline(token.tokens);
-    return `<a href="${token.href}" class="text-rust underline hover:text-rust-light" target="_blank" rel="noopener noreferrer"${token.title ? ` title="${token.title}"` : ''}>${text}</a>`;
+    const href = token.href;
+    // 외부 링크 체크 (http://, https://, //로 시작)
+    const isExternal = /^https?:\/\/|^\/\//.test(href);
+    const targetAttr = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+    return `<a href="${href}" class="text-rust underline hover:text-rust-light"${targetAttr}${token.title ? ` title="${token.title}"` : ''}>${text}</a>`;
   },
 
   // 이미지 스타일링
