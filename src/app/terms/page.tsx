@@ -82,18 +82,34 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-bold mb-4">6. 면책사항</h2>
+              <h2 className="text-lg font-bold mb-4">6. 면책사항 및 책임의 한계</h2>
+              <p className="leading-loose mb-4">
+                본 사이트는 개인이 운영하는 콘텐츠 블로그로, 제공되는 모든 정보는 
+                일반적인 정보 제공 목적으로만 사용됩니다. 본 사이트의 정보는 
+                법률적 자문이나 전문적인 조언을 대체할 수 없으며, 
+                이용자는 자신의 판단과 책임 하에 콘텐츠를 이용해야 합니다.
+              </p>
+              <p className="leading-loose mb-4">
+                운영자는 다음에 대해 책임을 지지 않습니다:
+              </p>
+              <ul className="list-disc list-inside space-y-2 ml-4 mb-4">
+                <li>이용자가 작성한 콘텐츠의 정확성, 완전성, 신뢰성</li>
+                <li>본 사이트 정보를 바탕으로 한 이용자의 결정 및 그 결과</li>
+                <li>서비스 중단, 장애, 데이터 손실 등으로 인한 손해</li>
+                <li>제3자와의 분쟁이나 거래로 인한 손해</li>
+              </ul>
               <p className="leading-loose">
-                法 BLOG는 이용자가 작성한 콘텐츠의 정확성, 신뢰성에 대해 보증하지 않습니다.
-                이용자는 자신의 판단으로 콘텐츠를 이용해야 합니다.
+                법률 문제나 전문적인 상담이 필요한 경우, 반드시 해당 분야의 
+                전문가에게 문의하시기 바랍니다.
               </p>
             </section>
 
             <section>
               <h2 className="text-lg font-bold mb-4">7. 준거법 및 관할</h2>
               <p className="leading-loose">
-                본 약관은 대한민국 법률에 따라 해석되며,
-                분쟁 발생 시 서울중앙지방법원을 제1심 관할법원으로 합니다.
+                본 약관은 대한민국 법률에 따라 해석되며, 
+                분쟁 발생 시 서울중앙지방법원을 제1심 관할법원으로 합니다. 
+                다만, 해외 거주 이용자의 경우, 해당 국가의 적용 가능한 법률에 따를 수 있습니다.
               </p>
             </section>
 
@@ -103,14 +119,6 @@ export default function TermsPage() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t-3 border-double border-ink text-center py-6 px-4 mt-16">
-        <div className="font-sans text-xs text-muted tracking-wider">
-          <p className="mb-2">法 BLOG · 깊이 있는 분석과 인사이트</p>
-          <p>© {new Date().getFullYear()} All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }

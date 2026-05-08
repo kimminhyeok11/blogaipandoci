@@ -81,21 +81,21 @@ export default function ContactPage() {
               </div>
               <div className="grid gap-4">
                 <div className="bg-cream/30 p-6 rounded-sm border border-rule">
-                  <h3 className="font-bold text-ink mb-2">📰 기사 제보</h3>
+                  <h3 className="font-bold text-ink mb-2">기사 제보</h3>
                   <p className="text-ink/80 leading-relaxed text-sm">
                     다뤄주었으면 하는 사건이나 주제가 있다면 알려주세요. 
                     판례, 정책 변화, 사회적 이슈 등 모두 환영합니다.
                   </p>
                 </div>
                 <div className="bg-cream/30 p-6 rounded-sm border border-rule">
-                  <h3 className="font-bold text-ink mb-2">✏️ 오류 정정</h3>
+                  <h3 className="font-bold text-ink mb-2">오류 정정</h3>
                   <p className="text-ink/80 leading-relaxed text-sm">
                     사실 오류나 법률 해석 오류를 발견하셨다면 바로 알려주세요. 
                     확인 후 즉시 수정하겠습니다.
                   </p>
                 </div>
                 <div className="bg-cream/30 p-6 rounded-sm border border-rule">
-                  <h3 className="font-bold text-ink mb-2">🤝 제휴 및 협업</h3>
+                  <h3 className="font-bold text-ink mb-2">제휴 및 협업</h3>
                   <p className="text-ink/80 leading-relaxed text-sm">
                     데이터 제공, 전문가 인터뷰, 공동 기획 등 
                     다양한 형태의 협업을 제안해주세요.
@@ -106,14 +106,6 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t-3 border-double border-ink text-center py-6 px-4 mt-16">
-        <div className="font-sans text-xs text-muted tracking-wider">
-          <p className="mb-2">法 BLOG · 법률·정책 사회 분석 미디어</p>
-          <p>© {new Date().getFullYear()} All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }

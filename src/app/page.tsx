@@ -251,7 +251,7 @@ export default function HomePage() {
           <div className="mt-12 text-center">
             <Link
               href="/posts"
-              className="inline-flex items-center gap-2 px-6 py-3 border border-ink text-ink font-sans text-xs font-medium tracking-wider uppercase hover:bg-ink hover:text-paper transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust transition-colors"
             >
               모든 글 보기
               <span aria-hidden="true">→</span>
@@ -259,14 +259,6 @@ export default function HomePage() {
           </div>
         </section>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t-3 border-double border-ink text-center py-6 px-4">
-        <div className="font-sans text-xs text-muted tracking-wider">
-          <p className="mb-2">法 BLOG · 깊이 있는 분석과 인사이트</p>
-          <p>© {new Date().getFullYear()} All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }

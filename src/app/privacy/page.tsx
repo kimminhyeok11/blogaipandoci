@@ -85,20 +85,31 @@ export default function PrivacyPage() {
               </a>
             </section>
 
+            <section className="pt-8 border-t border-rule">
+              <h2 className="text-lg font-bold mb-4">6. 면책 조항</h2>
+              <p className="leading-loose mb-4">
+                본 사이트는 개인이 운영하는 콘텐츠 블로그입니다. 본 사이트에서 제공하는 정보는 
+                일반적인 정보 제공 목적으로만 사용되며, 법률적 자문이나 전문적인 조언을 
+                대체할 수 없습니다.
+              </p>
+              <p className="leading-loose mb-4">
+                운영자는 개인정보 보호와 관련하여 최선의 노력을 다하고 있으나, 
+                기술적 한계나 예측 불가능한 상황으로 인한 개인정보 침해에 대해 
+                책임을 지지 않습니다. 이용자는 자신의 개인정보 보호를 위해 
+                비밀번호 등 중요 정보를 안전하게 관리할 책임이 있습니다.
+              </p>
+              <p className="leading-loose">
+                본 개인정보처리방침은 관련 법령의 개정이나 서비스 변경에 따라 
+                수정될 수 있으며, 변경 시 사이트 내 공지사항을 통해 고지합니다.
+              </p>
+            </section>
+
             <p className="text-sm text-muted pt-8 border-t border-rule">
               최종 수정일: {new Date().toLocaleDateString("ko-KR")}
             </p>
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t-3 border-double border-ink text-center py-6 px-4 mt-16">
-        <div className="font-sans text-xs text-muted tracking-wider">
-          <p className="mb-2">法 BLOG · 깊이 있는 분석과 인사이트</p>
-          <p>© {new Date().getFullYear()} All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }
