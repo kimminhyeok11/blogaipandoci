@@ -78,10 +78,10 @@ export default function PrivacyPage() {
                 개인정보 관련 문의는 아래 이메일로 연락 주세요.
               </p>
               <a
-                href="mailto:privacy@blogaipandoci.vercel.app"
+                href="mailto:salad20c@gmail.com"
                 className="text-rust hover:underline"
               >
-                privacy@blogaipandoci.vercel.app
+                salad20c@gmail.com
               </a>
             </section>
 

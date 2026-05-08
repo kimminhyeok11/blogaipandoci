@@ -43,11 +43,11 @@ export default function ContactPage() {
                 글 관련 피드백, 오류 제보, 제휴 제안 등 어떤 내용이든 환영합니다.
               </p>
               <a
-                href="mailto:contact@blogaipandoci.vercel.app"
+                href="mailto:salad20c@gmail.com"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-rust text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust-light transition-colors"
               >
                 <Send size={16} />
-                contact@blogaipandoci.vercel.app
+                salad20c@gmail.com
               </a>
             </section>
 

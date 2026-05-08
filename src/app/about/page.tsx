@@ -144,11 +144,11 @@ export default function AboutPage() {
               아래 이메일로 연락 주세요. 24시간 내로 답변 드립니다.
             </p>
             <a
-              href="mailto:contact@blogaipandoci.vercel.app"
+              href="mailto:salad20c@gmail.com"
               className="inline-flex items-center gap-2 text-rust hover:text-rust-light transition-colors"
             >
               <Mail size={16} />
-              contact@blogaipandoci.vercel.app
+              salad20c@gmail.com
             </a>
           </section>
 
