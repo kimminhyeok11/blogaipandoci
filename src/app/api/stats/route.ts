@@ -1,29 +1,37 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 
-// GET /api/stats - 통계 데이터 조회
+// 관리자 권한 확인 헬퍼
+async function verifyAdmin(request: Request) {
+  const serviceSupabase = getServiceSupabase();
+  const authHeader = request.headers.get('authorization');
+  const userId = authHeader?.replace('Bearer ', '');
+  
+  if (!userId) return { error: "Unauthorized", status: 401, serviceSupabase };
+
+  const { data: userData, error: roleError } = await serviceSupabase
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .single() as { data: { role: string } | null; error: Error | null };
+
+  if (roleError || userData?.role !== 'admin') {
+    return { error: "Forbidden", status: 403, serviceSupabase };
+  }
+
+  return { error: null, status: 200, serviceSupabase };
+}
+
+// GET /api/stats - 통계 데이터 조회 (대시보드)
 export async function GET(request: Request) {
   try {
-    const serviceSupabase = getServiceSupabase();
-    
-    // 요청에서 사용자 ID 추출 (헤더 또는 쿼리 파라미터)
-    const authHeader = request.headers.get('authorization');
-    const userId = authHeader?.replace('Bearer ', '');
-    
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
+    const auth = await verifyAdmin(request);
+    if (auth.error) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
+    const serviceSupabase = auth.serviceSupabase;
 
-    // 관리자 권한 확인 (service role로 RLS 우회)
-    const { data: userData, error: roleError } = await serviceSupabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single() as { data: { role: string } | null; error: Error | null };
-
-    if (roleError || userData?.role !== 'admin') {
-      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
-    }
+    const now = new Date();
 
     // 총 게시글 수
     const { count: totalPosts } = await serviceSupabase
@@ -42,20 +50,65 @@ export async function GET(request: Request) {
       .select("*", { count: "exact", head: true })
       .eq("published", false);
 
-    // 총 조회수
+    // 총 조회수 (누적)
     const { data: viewStats } = await serviceSupabase
       .from("posts")
       .select("view_count");
-    
     const totalViews = viewStats?.reduce((sum: number, post: { view_count: number }) => sum + (post.view_count || 0), 0) || 0;
 
-    // 인기 게시글 TOP 5
+    // 오늘 조회수 (post_views 로그 기반)
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const { count: todayViews } = await serviceSupabase
+      .from("post_views")
+      .select("*", { count: "exact", head: true })
+      .gte("viewed_at", todayStart);
+
+    // 7일간 조회수
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const { count: weekViews } = await serviceSupabase
+      .from("post_views")
+      .select("*", { count: "exact", head: true })
+      .gte("viewed_at", sevenDaysAgo.toISOString());
+
+    // 30일간 조회수
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const { count: monthViews } = await serviceSupabase
+      .from("post_views")
+      .select("*", { count: "exact", head: true })
+      .gte("viewed_at", thirtyDaysAgo.toISOString());
+
+    // 최근 30일 일별 조회수 추이 (post_views 로그 기반)
+    const { data: dailyViewsRaw } = await serviceSupabase
+      .from("post_views")
+      .select("viewed_at")
+      .gte("viewed_at", thirtyDaysAgo.toISOString())
+      .order("viewed_at", { ascending: true });
+
+    const dailyViewCounts: Record<string, number> = {};
+    // 30일치 날짜 초기화
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = `${d.getMonth() + 1}/${d.getDate()}`;
+      dailyViewCounts[key] = 0;
+    }
+    dailyViewsRaw?.forEach((row: { viewed_at: string }) => {
+      const d = new Date(row.viewed_at);
+      const key = `${d.getMonth() + 1}/${d.getDate()}`;
+      if (dailyViewCounts[key] !== undefined) {
+        dailyViewCounts[key]++;
+      }
+    });
+
+    // 인기 게시글 TOP 10
     const { data: popularPosts } = await serviceSupabase
       .from("posts")
       .select("id, title, slug, view_count, published_at")
       .eq("published", true)
       .order("view_count", { ascending: false })
-      .limit(5);
+      .limit(10);
 
     // 최근 게시글 5개
     const { data: recentPosts } = await serviceSupabase
@@ -65,77 +118,53 @@ export async function GET(request: Request) {
       .limit(5);
 
     // 이번 달 게시글 수
-    const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const { count: thisMonthPosts } = await serviceSupabase
       .from("posts")
       .select("*", { count: "exact", head: true })
       .gte("created_at", firstDayOfMonth);
 
+    // 인기 태그 TOP 10 (조회수 기준)
+    const { data: tagData } = await serviceSupabase
+      .from("post_tags")
+      .select("tag_id, tags(name, slug), posts(view_count)")
+      .limit(500);
+
+    const tagViewMap: Record<string, { name: string; slug: string; views: number; count: number }> = {};
+    tagData?.forEach((row: any) => {
+      const tagName = row.tags?.name;
+      const tagSlug = row.tags?.slug;
+      const views = row.posts?.view_count || 0;
+      if (tagName) {
+        if (!tagViewMap[tagName]) {
+          tagViewMap[tagName] = { name: tagName, slug: tagSlug, views: 0, count: 0 };
+        }
+        tagViewMap[tagName].views += views;
+        tagViewMap[tagName].count++;
+      }
+    });
+    const popularTags = Object.values(tagViewMap)
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 10);
+
     return NextResponse.json({
       totalPosts: totalPosts || 0,
       publishedPosts: publishedPosts || 0,
       draftPosts: draftPosts || 0,
       totalViews,
+      todayViews: todayViews || 0,
+      weekViews: weekViews || 0,
+      monthViews: monthViews || 0,
       thisMonthPosts: thisMonthPosts || 0,
+      dailyViewCounts,
       popularPosts: popularPosts || [],
+      popularTags,
       recentPosts: recentPosts || [],
     });
   } catch (error) {
     console.error("Stats API error:", error);
     return NextResponse.json(
       { error: "Failed to fetch statistics" },
-      { status: 500 }
-    );
-  }
-}
-
-// POST /api/stats - 조회수 추이 데이터 (최근 30일)
-export async function POST(request: Request) {
-  try {
-    const serviceSupabase = getServiceSupabase();
-    
-    // 요청에서 사용자 ID 추출 (헤더)
-    const authHeader = request.headers.get('authorization');
-    const userId = authHeader?.replace('Bearer ', '');
-    
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
-    }
-
-    // 관리자 권한 확인 (service role로 RLS 우회)
-    const { data: userData, error: roleError } = await serviceSupabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single() as { data: { role: string } | null; error: Error | null };
-
-    if (roleError || userData?.role !== 'admin') {
-      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
-    }
-
-    // 최근 30일간의 게시글 생성 추이
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const { data: dailyStats } = await serviceSupabase
-      .from("posts")
-      .select("created_at")
-      .gte("created_at", thirtyDaysAgo.toISOString())
-      .order("created_at", { ascending: true });
-
-    // 일별 집계
-    const dailyCounts: Record<string, number> = {};
-    dailyStats?.forEach((post: { created_at: string }) => {
-      const date = new Date(post.created_at).toLocaleDateString("ko-KR");
-      dailyCounts[date] = (dailyCounts[date] || 0) + 1;
-    });
-
-    return NextResponse.json({ dailyStats: dailyCounts });
-  } catch (error) {
-    console.error("Daily stats API error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch daily statistics" },
       { status: 500 }
     );
   }

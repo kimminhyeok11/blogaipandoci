@@ -19,7 +19,10 @@ import {
   Copy,
   ChevronLeft,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Tag,
+  Clock,
+  Activity
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -36,13 +39,23 @@ interface StatsData {
   publishedPosts: number;
   draftPosts: number;
   totalViews: number;
+  todayViews: number;
+  weekViews: number;
+  monthViews: number;
   thisMonthPosts: number;
+  dailyViewCounts: Record<string, number>;
   popularPosts: Array<{
     id: string;
     title: string;
     slug: string;
     view_count: number;
     published_at: string;
+  }>;
+  popularTags: Array<{
+    name: string;
+    slug: string;
+    views: number;
+    count: number;
   }>;
   recentPosts: Array<{
     id: string;
@@ -302,7 +315,31 @@ export default function StatsPage() {
       </header>
 
       <main className="max-w-content mx-auto px-4 sm:px-6 py-8">
-        {/* 통계 카드 */}
+        {/* 조회수 대시보드 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            icon={<Clock size={20} />}
+            label="오늘 조회수"
+            value={stats.todayViews.toLocaleString()}
+          />
+          <StatCard
+            icon={<Activity size={20} />}
+            label="7일 조회수"
+            value={stats.weekViews.toLocaleString()}
+          />
+          <StatCard
+            icon={<TrendingUp size={20} />}
+            label="30일 조회수"
+            value={stats.monthViews.toLocaleString()}
+          />
+          <StatCard
+            icon={<Eye size={20} />}
+            label="누적 조회수"
+            value={stats.totalViews.toLocaleString()}
+          />
+        </div>
+
+        {/* 게시글 통계 카드 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard
             icon={<FileText size={20} />}
@@ -310,12 +347,7 @@ export default function StatsPage() {
             value={stats.totalPosts}
           />
           <StatCard
-            icon={<Eye size={20} />}
-            label="총 조회수"
-            value={stats.totalViews.toLocaleString()}
-          />
-          <StatCard
-            icon={<TrendingUp size={20} />}
+            icon={<BarChart3 size={20} />}
             label="발행된 글"
             value={stats.publishedPosts}
           />
@@ -324,25 +356,121 @@ export default function StatsPage() {
             label="이번 달 작성"
             value={stats.thisMonthPosts}
           />
+          <StatCard
+            icon={<FileText size={20} />}
+            label="임시저장"
+            value={stats.draftPosts}
+          />
         </div>
 
-        {/* 추가 정보 */}
+        {/* 30일 조회수 추이 차트 */}
+        <div className="bg-white border border-rule rounded-sm p-4 mb-6">
+          <h2 className="font-sans text-sm font-medium text-ink mb-4 flex items-center gap-2">
+            <TrendingUp size={16} />
+            최근 30일 조회수 추이
+          </h2>
+          {stats.dailyViewCounts ? (
+            <div className="relative">
+              {/* 차트 영역 */}
+              <div className="flex items-end gap-[2px] h-40 px-1">
+                {Object.entries(stats.dailyViewCounts).map(([date, count]) => {
+                  const maxCount = Math.max(...Object.values(stats.dailyViewCounts), 1);
+                  const height = Math.max((count / maxCount) * 100, 2);
+                  return (
+                    <div
+                      key={date}
+                      className="flex-1 group relative"
+                      title={`${date}: ${count}회`}
+                    >
+                      <div
+                        className="w-full bg-rust/70 hover:bg-rust rounded-t transition-colors cursor-pointer"
+                        style={{ height: `${height}%` }}
+                      />
+                      {/* 툴팁 */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
+                        <div className="bg-ink text-paper text-xs px-2 py-1 rounded whitespace-nowrap font-sans">
+                          {date}: {count}회
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* X축 라벨 */}
+              <div className="flex justify-between mt-2 px-1">
+                {Object.keys(stats.dailyViewCounts).filter((_, i, arr) => 
+                  i === 0 || i === Math.floor(arr.length / 2) || i === arr.length - 1
+                ).map(date => (
+                  <span key={date} className="text-xs text-muted font-sans">{date}</span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted font-sans text-sm">조회 데이터가 없습니다</p>
+          )}
+        </div>
+
+        {/* 인기 태그 + 게시글 상태 */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {/* 인기 태그 (키워드) */}
+          <div className="bg-white border border-rule rounded-sm p-4">
+            <h2 className="font-sans text-sm font-medium text-ink mb-4 flex items-center gap-2">
+              <Tag size={16} />
+              인기 키워드 (태그)
+            </h2>
+            <div className="space-y-2">
+              {stats.popularTags && stats.popularTags.length > 0 ? (
+                stats.popularTags.map((tag, index) => (
+                  <div key={tag.name} className="flex items-center justify-between py-1.5 border-b border-rule last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 flex items-center justify-center bg-rust/10 text-rust rounded text-xs font-medium">
+                        {index + 1}
+                      </span>
+                      <Link
+                        href={`/tags/${tag.slug}`}
+                        className="font-sans text-sm hover:text-rust transition-colors"
+                      >
+                        #{tag.name}
+                      </Link>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-sans text-xs text-muted">{tag.count}개 글</span>
+                      <span className="font-sans text-xs font-medium text-rust">{tag.views.toLocaleString()}회</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted font-sans text-sm">태그 데이터가 없습니다</p>
+              )}
+            </div>
+          </div>
+
+          {/* 게시글 상태 */}
           <div className="bg-white border border-rule rounded-sm p-4">
             <h2 className="font-sans text-sm font-medium text-ink mb-4 flex items-center gap-2">
               <BarChart3 size={16} />
               게시글 상태
             </h2>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-sm">
                 <span className="text-muted font-sans">발행됨</span>
-                <span className="font-medium">{stats.publishedPosts}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 rounded-full" style={{ width: `${stats.totalPosts > 0 ? (stats.publishedPosts / stats.totalPosts) * 100 : 0}%` }} />
+                  </div>
+                  <span className="font-medium w-8 text-right">{stats.publishedPosts}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between items-center text-sm">
                 <span className="text-muted font-sans">임시저장</span>
-                <span className="font-medium">{stats.draftPosts}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${stats.totalPosts > 0 ? (stats.draftPosts / stats.totalPosts) * 100 : 0}%` }} />
+                  </div>
+                  <span className="font-medium w-8 text-right">{stats.draftPosts}</span>
+                </div>
               </div>
-              <div className="border-t border-rule pt-2 mt-2">
+              <div className="border-t border-rule pt-3 mt-3">
                 <div className="flex justify-between text-sm font-medium">
                   <span>합계</span>
                   <span>{stats.totalPosts}</span>
@@ -352,10 +480,11 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* 인기 게시글 TOP 5 */}
+        {/* 인기 게시글 TOP 10 */}
         <div className="bg-white border border-rule rounded-sm p-4 mb-6">
-          <h2 className="font-sans text-sm font-medium text-ink mb-4">
-            인기 게시글 TOP 5
+          <h2 className="font-sans text-sm font-medium text-ink mb-4 flex items-center gap-2">
+            <Eye size={16} />
+            인기 게시글 TOP 10
           </h2>
           <div className="space-y-3">
             {stats.popularPosts.length === 0 ? (
@@ -367,7 +496,9 @@ export default function StatsPage() {
                   className="flex items-center justify-between py-2 border-b border-rule last:border-0"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 flex items-center justify-center bg-cream rounded-full text-xs font-medium">
+                    <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium ${
+                      index < 3 ? 'bg-rust/10 text-rust' : 'bg-cream text-ink'
+                    }`}>
                       {index + 1}
                     </span>
                     <Link
@@ -377,7 +508,7 @@ export default function StatsPage() {
                       {post.title}
                     </Link>
                   </div>
-                  <span className="font-sans text-xs text-muted">
+                  <span className="font-sans text-xs text-muted whitespace-nowrap ml-2">
                     {post.view_count.toLocaleString()}회
                   </span>
                 </div>
