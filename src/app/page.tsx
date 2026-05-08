@@ -239,8 +239,8 @@ export default function HomePage() {
           <div className="my-12">
             <AdSense
               slot="7498833217"
-              style={{ minHeight: "250px" }}
               format="auto"
+              minHeight={250}
             />
           </div>
 

@@ -4,16 +4,27 @@ import { useEffect } from "react";
 
 export function AdSenseScript() {
   useEffect(() => {
-    // 클라이언트에서만 스크립트 동적 삽입
-    const script = document.createElement("script");
-    script.async = true;
-    script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112";
-    script.crossOrigin = "anonymous";
-    document.head.appendChild(script);
+    // 이미 로드되었으면 스킵
+    if (document.querySelector('script[src*="adsbygoogle"]')) return;
+
+    // 페이지 로드 완료 후 지연 로딩 (성능 최적화)
+    const loadAdSense = () => {
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112";
+      script.crossOrigin = "anonymous";
+      document.head.appendChild(script);
+    };
+
+    // 페이지 완전 로드 후 실행
+    if (document.readyState === "complete") {
+      loadAdSense();
+    } else {
+      window.addEventListener("load", loadAdSense, { once: true });
+    }
 
     return () => {
-      // cleanup
-      document.head.removeChild(script);
+      window.removeEventListener("load", loadAdSense);
     };
   }, []);
 

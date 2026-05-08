@@ -9,6 +9,8 @@ interface AdSenseProps {
   layout?: string;
   layoutKey?: string;
   responsive?: boolean;
+  /** 광고 컨테이너 최소 높이 (CLS 방지) */
+  minHeight?: number;
 }
 
 export function AdSense({
@@ -18,6 +20,7 @@ export function AdSense({
   layout,
   layoutKey,
   responsive = true,
+  minHeight = 250,
 }: AdSenseProps) {
   const adRef = useRef<HTMLModElement>(null);
   const isLoaded = useRef(false);
@@ -45,20 +48,29 @@ export function AdSense({
   }, []);
 
   return (
-    <ins
-      ref={adRef}
-      className="adsbygoogle"
-      style={{
-        display: "block",
-        ...style,
+    <div 
+      className="ads-container"
+      style={{ 
+        minHeight: `${minHeight}px`,
+        width: "100%",
+        overflow: "hidden",
       }}
-      data-ad-client="ca-pub-5239497835591112"
-      data-ad-slot={slot}
-      data-ad-format={format}
-      data-full-width-responsive={responsive ? "true" : "false"}
-      {...(layout && { "data-ad-layout": layout })}
-      {...(layoutKey && { "data-ad-layout-key": layoutKey })}
-    />
+    >
+      <ins
+        ref={adRef}
+        className="adsbygoogle"
+        style={{
+          display: "block",
+          ...style,
+        }}
+        data-ad-client="ca-pub-5239497835591112"
+        data-ad-slot={slot}
+        data-ad-format={format}
+        data-full-width-responsive={responsive ? "true" : "false"}
+        {...(layout && { "data-ad-layout": layout })}
+        {...(layoutKey && { "data-ad-layout-key": layoutKey })}
+      />
+    </div>
   );
 }
 
