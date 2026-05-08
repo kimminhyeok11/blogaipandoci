@@ -56,24 +56,22 @@ export async function GET(request: Request) {
       .select("view_count");
     const totalViews = viewStats?.reduce((sum: number, post: { view_count: number }) => sum + (post.view_count || 0), 0) || 0;
 
-    // 오늘 조회수 (post_views 로그 기반)
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    // 오늘 조회수 (post_views 로그 기반) - UTC 기준 오늘 자정
+    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
     const { count: todayViews } = await serviceSupabase
       .from("post_views")
       .select("*", { count: "exact", head: true })
       .gte("viewed_at", todayStart);
 
-    // 7일간 조회수
-    const sevenDaysAgo = new Date(now);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    // 7일간 조회수 - UTC 기준
+    const sevenDaysAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 7));
     const { count: weekViews } = await serviceSupabase
       .from("post_views")
       .select("*", { count: "exact", head: true })
       .gte("viewed_at", sevenDaysAgo.toISOString());
 
-    // 30일간 조회수
-    const thirtyDaysAgo = new Date(now);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // 30일간 조회수 - UTC 기준
+    const thirtyDaysAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 30));
     const { count: monthViews } = await serviceSupabase
       .from("post_views")
       .select("*", { count: "exact", head: true })
