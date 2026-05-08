@@ -9,6 +9,7 @@ interface StickyNavProps {
   backHref?: string;
   backLabel?: string;
   showFullNav?: boolean;
+  children?: React.ReactNode;
 }
 
 // throttle 유틸리티
@@ -23,7 +24,7 @@ function throttle<T extends (...args: any[]) => void>(func: T, limit: number): T
   }) as T;
 }
 
-export function StickyNav({ backHref = "/", backLabel = "홈으로", showFullNav = false }: StickyNavProps) {
+export function StickyNav({ backHref = "/", backLabel = "홈으로", showFullNav = false, children }: StickyNavProps) {
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
@@ -102,6 +103,7 @@ export function StickyNav({ backHref = "/", backLabel = "홈으로", showFullNav
             )}
           </div>
           <div className="flex items-center gap-3">
+            {children}
             <Link
               href="/search"
               className="p-2 text-muted hover:text-rust transition-colors"

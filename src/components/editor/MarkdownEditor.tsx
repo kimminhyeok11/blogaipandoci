@@ -13,6 +13,8 @@ interface MarkdownEditorProps {
   minHeight?: string;
   maxHeight?: string;
   onImageUpload?: (file: File) => Promise<string>;
+  preview?: boolean;
+  onPreviewChange?: (preview: boolean) => void;
 }
 
 export function MarkdownEditor({
@@ -22,8 +24,19 @@ export function MarkdownEditor({
   minHeight = "400px",
   maxHeight = "800px",
   onImageUpload,
+  preview: externalPreview,
+  onPreviewChange,
 }: MarkdownEditorProps) {
-  const [preview, setPreview] = useState(false);
+  const [internalPreview, setInternalPreview] = useState(false);
+  const isControlled = externalPreview !== undefined;
+  const preview = isControlled ? externalPreview : internalPreview;
+  const setPreview = (v: boolean) => {
+    if (isControlled) {
+      onPreviewChange?.(v);
+    } else {
+      setInternalPreview(v);
+    }
+  };
   const [isUploading, setIsUploading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -719,17 +732,6 @@ export function MarkdownEditor({
           {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
         </button>
 
-        <button
-          type="button"
-          onClick={() => setPreview(!preview)}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors",
-            preview ? "bg-rust text-paper" : "text-muted hover:text-ink hover:bg-paper"
-          )}
-        >
-          {preview ? <Edit3 size={14} /> : <Eye size={14} />}
-          {preview ? "편집" : "미리보기"}
-        </button>
       </div>
 
       {/* Editor Area - 드래그앤드롭 + 전체화면 지원 */}

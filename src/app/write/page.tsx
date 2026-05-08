@@ -3,12 +3,13 @@
 import { useState, useCallback, useEffect, Suspense, lazy } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Edit3, Eye } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { RevisionHistory } from "@/components/editor/RevisionHistory";
+import { StickyNav } from "@/components/layout/StickyNav";
 
 // IndexNow 알림 헬퍼
 const notifyIndexNow = async (path: string) => {
@@ -46,6 +47,7 @@ function WritePageContent() {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [postId, setPostId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [preview, setPreview] = useState(false); // 에디터 미리보기 상태
   
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
@@ -607,6 +609,33 @@ function WritePageContent() {
           </div>
         </div>
       </header>
+
+      {/* 스마트 스티키 네비게이션 + 탭 버튼 */}
+      <StickyNav backHref="/" backLabel="홈으로">
+        {/* 미리보기/편집 탭 버튼 */}
+        <div className="flex items-center gap-1 bg-cream/50 rounded-sm p-1">
+          <button
+            type="button"
+            onClick={() => setPreview(false)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors ${
+              !preview ? "bg-ink text-paper" : "text-muted hover:text-ink hover:bg-paper"
+            }`}
+          >
+            <Edit3 size={14} />
+            편집
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreview(true)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors ${
+              preview ? "bg-ink text-paper" : "text-muted hover:text-ink hover:bg-paper"
+            }`}
+          >
+            <Eye size={14} />
+            미리보기
+          </button>
+        </div>
+      </StickyNav>
 
       <main className="max-w-content mx-auto px-4 sm:px-6 py-8">
         {isLoading ? (
