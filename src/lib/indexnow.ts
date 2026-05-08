@@ -28,7 +28,7 @@ export async function notifyIndexNow(
     };
   }
 
-  // 키 파일 위치 (루트에 있다고 가정)
+  // 키 파일 위치 (미들웨어에서 .txt 요청 처리)
   const keyLocation = `https://${host}/${key}.txt`;
 
   const payload: IndexNowRequest = {

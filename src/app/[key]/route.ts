@@ -1,0 +1,32 @@
+import { NextResponse } from "next/server";
+
+/**
+ * IndexNow 키 파일 제공 (정적 경로)
+ * https://www.indexnow.org/documentation
+ * 
+ * GET /<key>.txt
+ * IndexNow 봇이 루트에서 키 파일을 찾을 때 호출
+ */
+export async function GET(
+  request: Request,
+  { params }: { params: { key: string } }
+) {
+  const validKey = process.env.INDEXNOW_KEY;
+  
+  if (!validKey) {
+    return new NextResponse("IndexNow key not configured", { status: 404 });
+  }
+  
+  // 요청된 키가 유효한 키와 일치하는지 확인
+  if (params.key && params.key === validKey) {
+    // 키 파일 내용 반환 (키 값 그대로)
+    return new NextResponse(validKey, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+    });
+  }
+  
+  // 키가 일치하지 않으면 404
+  return new NextResponse("Invalid key", { status: 404 });
+}
