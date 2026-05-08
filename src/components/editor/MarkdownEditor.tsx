@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading, Code, Eye, Edit3, CheckSquare, ChevronDown, Maximize2, Minimize2, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { processMarkdown } from "@/lib/markdown";
@@ -40,7 +40,6 @@ export function MarkdownEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const prevTextRef = useRef<string>("");
   const { showToast } = useToast();
 
   // 통계 계산
@@ -759,66 +758,9 @@ export function MarkdownEditor({
             {value ? (
               <div
                 ref={previewRef}
-                className="markdown-preview font-serif text-base leading-loose text-ink outline-none"
-                contentEditable
-                suppressContentEditableWarning
+                className="markdown-preview font-serif text-base leading-loose text-ink select-text"
                 dangerouslySetInnerHTML={{
-                  __html: processMarkdown(value)
-                }}
-                onInput={(e) => {
-                  // 미리보기에서 편집한 텍스트를 원본 마크다운에 반영
-                  const el = e.currentTarget;
-                  const newText = el.innerText;
-                  const oldText = prevTextRef.current;
-                  
-                  if (oldText && newText !== oldText) {
-                    let newMarkdown = value;
-                    
-                    // 단순 문자열 차이 찾기 (LCS 기반)
-                    const minLen = Math.min(oldText.length, newText.length);
-                    let start = 0;
-                    while (start < minLen && oldText[start] === newText[start]) start++;
-                    
-                    let oldEnd = oldText.length;
-                    let newEnd = newText.length;
-                    while (oldEnd > start && newEnd > start && oldText[oldEnd - 1] === newText[newEnd - 1]) {
-                      oldEnd--;
-                      newEnd--;
-                    }
-                    
-                    const deleted = oldText.slice(start, oldEnd);
-                    const inserted = newText.slice(start, newEnd);
-                    
-                    // 삭제된 텍스트를 원본 마크다운에서 찾아 교체
-                    if (deleted.length > 0) {
-                      // 볼드/이탤릭 등 마크다운 기호를 포함한 패턴으로도 시도
-                      const patterns = [
-                        deleted,
-                        `**${deleted}**`,
-                        `*${deleted}*`,
-                        `~~${deleted}~~`,
-                        `_${deleted}_`,
-                        `\`${deleted}\``,
-                      ];
-                      
-                      for (const pattern of patterns) {
-                        if (newMarkdown.includes(pattern)) {
-                          newMarkdown = newMarkdown.replace(pattern, inserted);
-                          break;
-                        }
-                      }
-                    }
-                    
-                    onChange(newMarkdown);
-                  }
-                  
-                  prevTextRef.current = newText;
-                }}
-                onFocus={() => {
-                  // 미리보기 포커스 시 현재 텍스트 저장
-                  if (previewRef.current) {
-                    prevTextRef.current = previewRef.current.innerText;
-                  }
+                  __html: useMemo(() => processMarkdown(value), [value])
                 }}
               />
             ) : (
