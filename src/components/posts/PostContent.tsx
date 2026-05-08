@@ -34,10 +34,18 @@ export function PostContent({ contentMarkdown }: PostContentProps) {
   const handleImageClick = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.tagName === "IMG") {
+      // 링크 안에 있는 이미지는 라이트박스 대신 원래 링크 동작 유지
+      const parentLink = target.closest('a');
+      if (parentLink) {
+        return; // 원래 링크 이동 허용
+      }
+      
       const imgSrc = target.getAttribute("src");
       if (imgSrc) {
         const index = images.findIndex((img) => img.src === imgSrc);
         if (index >= 0) {
+          e.preventDefault();
+          e.stopPropagation();
           setCurrentImageIndex(index);
           setLightboxOpen(true);
         }
@@ -49,12 +57,16 @@ export function PostContent({ contentMarkdown }: PostContentProps) {
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = `
-      .prose-journal img {
+      .prose-journal img:not(a img) {
         cursor: zoom-in;
         transition: opacity 0.2s;
       }
-      .prose-journal img:hover {
+      .prose-journal img:not(a img):hover {
         opacity: 0.9;
+      }
+      /* 링크 안 이미지는 기본 커서 */
+      .prose-journal a img {
+        cursor: pointer;
       }
     `;
     document.head.appendChild(style);
