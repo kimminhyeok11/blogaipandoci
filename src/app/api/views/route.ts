@@ -25,6 +25,24 @@ export async function POST(request: Request) {
     // IP 해시 생성
     const forwarded = request.headers.get("x-forwarded-for");
     const ip = forwarded?.split(",")[0]?.trim() || "unknown";
+    
+    // 제외 IP 체크 (환경 변수 EXCLUDED_IPS에 쉼표로 구분하여 설정)
+    const excludedIps = process.env.EXCLUDED_IPS?.split(',').map(s => s.trim()) || [];
+    if (excludedIps.includes(ip)) {
+      // 제외 IP는 조회수 증가하지 않음
+      const { data } = await serviceSupabase
+        .from("posts")
+        .select("view_count")
+        .eq("slug", slug)
+        .eq("published", true)
+        .single();
+      return NextResponse.json({ 
+        success: true, 
+        view_count: data?.view_count || 0,
+        excluded: true 
+      });
+    }
+    
     const ipHash = hashIP(ip);
 
     const { data } = await serviceSupabase
