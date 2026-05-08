@@ -180,7 +180,7 @@ function WritePageContent() {
   }, []);
 
   // 자동 내부 링크 삽입 함수
-  const autoInsertInternalLinks = useCallback((contentText: string): string => {
+  const autoInsertInternalLinks = useCallback((contentText: string, currentSlug?: string): string => {
     if (!existingPosts.length) return contentText;
     
     let processedContent = contentText;
@@ -189,24 +189,27 @@ function WritePageContent() {
     const sortedPosts = [...existingPosts].sort((a, b) => b.title.length - a.title.length);
     
     for (const post of sortedPosts) {
+      // 자기 자신은 링크하지 않음
+      if (currentSlug && post.slug === currentSlug) continue;
+      
+      // 본문에 해당 제목이 없으면 스킵
+      if (!processedContent.includes(post.title)) continue;
+      
       // 이미 링크가 걸린 텍스트는 제외하고 순수 텍스트만 매칭
-      const title = post.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 정규식 특수문자 이스케이프
+      const escapedTitle = post.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 정규식 특수문자 이스케이프
       
       // 마크다운 링크 구문이 아닌 경우에만 변환
       // [제목](링크) 형태가 아닌 제목 텍스트를 찾아서 변환
-      const regex = new RegExp(`(?<!\\[)${title}(?!\\]\\([^)]+\\))(?![^\\[]*\\]\\([^)]+\\))`, 'g');
+      const regex = new RegExp(`(?<!\\[)${escapedTitle}(?!\\]\\([^)]+\\))(?![^\\[]*\\]\\([^)]+\\))`, 'g');
       
-      // 해당 제목이 본문에 있으면 링크로 변환 (단, 자신의 제목은 제외)
-      if (title !== title.trim() && processedContent.includes(post.title)) {
-        processedContent = processedContent.replace(
-          regex,
-          `[${post.title}](/posts/${post.slug})`
-        );
-      }
+      processedContent = processedContent.replace(
+        regex,
+        `[${post.title}](/posts/${post.slug})`
+      );
     }
     
     return processedContent;
-  }, [existingPosts, title]);
+  }, [existingPosts]);
 
   // 수정 모드: 기존 게시글 불러오기
   useEffect(() => {
@@ -388,7 +391,9 @@ function WritePageContent() {
       // 자동 내부 링크 삽입 (발행 시에만 적용)
       let processedContent = content.trim();
       if (published && existingPosts.length > 0) {
-        processedContent = autoInsertInternalLinks(processedContent);
+        // 수정 모드: editSlug, 신규: 생성된 slug
+        const currentSlug = isEditMode ? editSlug : slug;
+        processedContent = autoInsertInternalLinks(processedContent, currentSlug || undefined);
         // 링크가 삽입되었으면 content 상태도 업데이트 (에디터에 반영)
         if (processedContent !== content.trim()) {
           setContent(processedContent);
