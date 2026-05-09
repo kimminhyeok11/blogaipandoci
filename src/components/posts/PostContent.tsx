@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { processMarkdown } from "@/lib/markdown";
 
@@ -23,6 +23,9 @@ export function PostContent({ contentMarkdown, onTocExtract }: PostContentProps)
   // 클라이언트에서 마크다운 → HTML 변환
   const contentHtml = useMemo(() => processMarkdown(contentMarkdown), [contentMarkdown]);
 
+  // 헤딩 카운터 ref (ID 생성용)
+  const headingCounter = useRef(0);
+  
   // HTML에서 이미지 목록 및 헤딩(TOC) 추출
   useEffect(() => {
     const parser = new DOMParser();
@@ -36,14 +39,17 @@ export function PostContent({ contentMarkdown, onTocExtract }: PostContentProps)
     })).filter(img => img.src);
     setImages(imgList);
     
-    // TOC 추출 (h2, h3만)
+    // TOC 추출 (h2, h3만) - contentHtml 처리 전에 먼저 추출
     const headings = doc.querySelectorAll("h2, h3");
     const toc: TocItem[] = Array.from(headings).map((heading, index) => {
       const text = heading.textContent || "";
       const level = heading.tagName === "H2" ? 2 : 3;
-      const id = `heading-${index}`;
+      const id = `toc-heading-${index}`;
       return { id, text, level };
     }).filter(item => item.text.trim().length > 0);
+    
+    // 카운터 리셋
+    headingCounter.current = 0;
     
     onTocExtract?.(toc);
   }, [contentHtml, onTocExtract]);
@@ -97,8 +103,8 @@ export function PostContent({ contentMarkdown, onTocExtract }: PostContentProps)
     <>
       <div
         className="prose-journal font-serif text-base leading-loose text-[#2a2420]"
-        dangerouslySetInnerHTML={{ __html: contentHtml.replace(/<(h[23])>([^<]+)<\/\1>/g, (match, tag, text, index) => {
-          const id = `heading-${Math.floor(index / 2)}`;
+        dangerouslySetInnerHTML={{ __html: contentHtml.replace(/<(h[23])>([^<]+)<\/\1>/g, (match, tag, text) => {
+          const id = `toc-heading-${headingCounter.current++}`;
           return `<${tag} id="${id}">${text}</${tag}>`;
         }) }}
         onClick={handleImageClick}

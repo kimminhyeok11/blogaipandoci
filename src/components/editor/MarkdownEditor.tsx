@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, forwardRef, useImperativeHandle } from "react";
 import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading, Code, Eye, Edit3, CheckSquare, ChevronDown, Maximize2, Minimize2, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { processMarkdown } from "@/lib/markdown";
 import { useToast } from "@/components/ui/Toast";
+
+export interface MarkdownEditorRef {
+  saveScrollPosition: () => { editor: number; preview: number };
+  restoreScrollPosition: (positions: { editor: number; preview: number }) => void;
+}
 
 interface MarkdownEditorProps {
   value: string;
@@ -17,7 +22,7 @@ interface MarkdownEditorProps {
   onPreviewChange?: (preview: boolean) => void;
 }
 
-export function MarkdownEditor({
+export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(function MarkdownEditorInternal({
   value,
   onChange,
   placeholder = "마크다운으로 글을 작성하세요...",
@@ -26,7 +31,7 @@ export function MarkdownEditor({
   onImageUpload,
   preview: externalPreview,
   onPreviewChange,
-}: MarkdownEditorProps) {
+}: MarkdownEditorProps, ref) {
   const [internalPreview, setInternalPreview] = useState(false);
   const isControlled = externalPreview !== undefined;
   const preview = isControlled ? externalPreview : internalPreview;
@@ -54,6 +59,22 @@ export function MarkdownEditor({
   const editorRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+  
+  // 스크롤 위치 저장/복원 메서드 노출
+  useImperativeHandle(ref, () => ({
+    saveScrollPosition: () => ({
+      editor: textareaRef.current?.scrollTop || 0,
+      preview: previewRef.current?.scrollTop || 0,
+    }),
+    restoreScrollPosition: (positions) => {
+      if (textareaRef.current) {
+        textareaRef.current.scrollTop = positions.editor;
+      }
+      if (previewRef.current) {
+        previewRef.current.scrollTop = positions.preview;
+      }
+    },
+  }));
 
   // 통계 계산
   const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
@@ -902,4 +923,4 @@ export function MarkdownEditor({
       )}
     </div>
   );
-}
+});

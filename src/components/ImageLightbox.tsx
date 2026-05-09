@@ -67,7 +67,8 @@ export function ImageLightbox({ images, initialIndex, isOpen, onClose }: ImageLi
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center"
+      className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center overflow-auto"
+      style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
       onClick={handleContainerClick}
     >
       {/* 닫기 버튼 - 1초 후 숨김, 클릭 시 표시 */}
@@ -116,15 +117,18 @@ export function ImageLightbox({ images, initialIndex, isOpen, onClose }: ImageLi
         </button>
       )}
 
-      {/* 이미지 컨테이너 - 클릭으로 닫기 방지 */}
+      {/* 이미지 컨테이너 - 브라우저 확대/축소 허용 */}
       <div 
-        className="max-w-[90vw] max-h-[80vh] flex flex-col items-center"
+        className="max-w-[90vw] max-h-[80vh] flex flex-col items-center touch-auto"
+        style={{ touchAction: 'manipulation' }}
         onClick={(e) => e.stopPropagation()}
       >
         <img
           src={currentImage.src}
           alt={currentImage.alt || ""}
           className="max-w-full max-h-[70vh] object-contain"
+          style={{ touchAction: 'pinch-zoom' }}
+          draggable={false}
         />
         
         {/* 이미지 정보 - 이미지 밖으로 이동 */}
