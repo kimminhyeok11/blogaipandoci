@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense, lazy } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense, lazy } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Loader2, Edit3, Eye } from "lucide-react";
@@ -48,6 +48,16 @@ function WritePageContent() {
   const [postId, setPostId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [preview, setPreview] = useState(false); // 에디터 미리보기 상태
+  const scrollPositionRef = useRef<number>(0); // 스크롤 위치 저장용
+  
+  // 미리보기/편집 전환 시 스크롤 위치 복원
+  useEffect(() => {
+    // DOM 업데이트 후 스크롤 위치 복원
+    const timeout = setTimeout(() => {
+      window.scrollTo(0, scrollPositionRef.current);
+    }, 50);
+    return () => clearTimeout(timeout);
+  }, [preview]);
   
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
@@ -590,7 +600,11 @@ function WritePageContent() {
               {/* 미리보기/편집 토글 버튼 */}
               <button
                 type="button"
-                onClick={() => setPreview(!preview)}
+                onClick={() => {
+                  // 현재 스크롤 위치 저장
+                  scrollPositionRef.current = window.scrollY;
+                  setPreview(!preview);
+                }}
                 className={`px-2 py-1 text-xs font-sans font-medium rounded-sm transition-colors ${
                   preview 
                     ? "bg-ink text-paper hover:bg-ink/90" 
