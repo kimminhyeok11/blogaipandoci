@@ -402,7 +402,7 @@ export default function StatsPage() {
                       fontSize: '12px',
                       color: '#fff'
                     }}
-                    formatter={(value: number) => [`${value}회`, '조회수']}
+                    formatter={(value) => [typeof value === 'number' ? `${value}회` : '0회', '조회수']}
                   />
                   <Area 
                     type="monotone" 
