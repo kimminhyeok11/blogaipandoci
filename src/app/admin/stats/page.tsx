@@ -169,12 +169,12 @@ export default function StatsPage() {
     }
   };
 
-  // URL 복사
+  // URL 복사 (슬래시 포함 - 네이버 색인용)
   const copyPostUrl = (slug: string) => {
-    const url = `${window.location.origin}/posts/${slug}`;
+    const url = `${window.location.origin}/posts/${slug}/`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedSlug(slug);
-      showToast('URL이 복사되었습니다', 'success');
+      showToast('URL이 복사되었습니다 (슬래시 포함)', 'success');
       setTimeout(() => setCopiedSlug(null), 2000);
     });
   };
