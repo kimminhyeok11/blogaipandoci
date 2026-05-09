@@ -4,11 +4,18 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { processMarkdown } from "@/lib/markdown";
 
-interface PostContentProps {
-  contentMarkdown: string;
+export interface TocItem {
+  id: string;
+  text: string;
+  level: number;
 }
 
-export function PostContent({ contentMarkdown }: PostContentProps) {
+interface PostContentProps {
+  contentMarkdown: string;
+  onTocExtract?: (toc: TocItem[]) => void;
+}
+
+export function PostContent({ contentMarkdown, onTocExtract }: PostContentProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [images, setImages] = useState<Array<{ src: string; alt?: string }>>([]);
@@ -16,19 +23,30 @@ export function PostContent({ contentMarkdown }: PostContentProps) {
   // 클라이언트에서 마크다운 → HTML 변환
   const contentHtml = useMemo(() => processMarkdown(contentMarkdown), [contentMarkdown]);
 
-  // HTML에서 이미지 목록 추출
+  // HTML에서 이미지 목록 및 헤딩(TOC) 추출
   useEffect(() => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(contentHtml, "text/html");
-    const imgElements = doc.querySelectorAll("img");
     
+    // 이미지 추출
+    const imgElements = doc.querySelectorAll("img");
     const imgList = Array.from(imgElements).map((img) => ({
       src: img.getAttribute("src") || "",
       alt: img.getAttribute("alt") || "",
-    })).filter(img => img.src); // 빈 src 제거
-    
+    })).filter(img => img.src);
     setImages(imgList);
-  }, [contentHtml]);
+    
+    // TOC 추출 (h2, h3만)
+    const headings = doc.querySelectorAll("h2, h3");
+    const toc: TocItem[] = Array.from(headings).map((heading, index) => {
+      const text = heading.textContent || "";
+      const level = heading.tagName === "H2" ? 2 : 3;
+      const id = `heading-${index}`;
+      return { id, text, level };
+    }).filter(item => item.text.trim().length > 0);
+    
+    onTocExtract?.(toc);
+  }, [contentHtml, onTocExtract]);
 
   // 이미지 클릭 핸들러
   const handleImageClick = useCallback((e: React.MouseEvent) => {
@@ -79,7 +97,10 @@ export function PostContent({ contentMarkdown }: PostContentProps) {
     <>
       <div
         className="prose-journal font-serif text-base leading-loose text-[#2a2420]"
-        dangerouslySetInnerHTML={{ __html: contentHtml }}
+        dangerouslySetInnerHTML={{ __html: contentHtml.replace(/<(h[23])>([^<]+)<\/\1>/g, (match, tag, text, index) => {
+          const id = `heading-${Math.floor(index / 2)}`;
+          return `<${tag} id="${id}">${text}</${tag}>`;
+        }) }}
         onClick={handleImageClick}
       />
       <ImageLightbox

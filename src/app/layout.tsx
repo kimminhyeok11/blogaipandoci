@@ -7,6 +7,7 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import { Analytics } from "@vercel/analytics/next";
 import { AdSenseScript } from "@/components/ads/AdSenseScript";
+import { ScrollRestoration } from "@/components/utils/ScrollRestoration";
 import Link from "next/link";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
@@ -128,6 +129,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <ToastProvider>
+              <ScrollRestoration />
               <div className="flex-grow">
                 {children}
               </div>

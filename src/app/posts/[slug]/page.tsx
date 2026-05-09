@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
-import { PostContent } from "@/components/posts/PostContent";
+import { PostContentWithToc } from "@/components/posts/PostContentWithToc";
 import { createClient } from "@supabase/supabase-js";
 import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
@@ -133,22 +133,31 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       publishedTime: post.published_at || undefined,
       modifiedTime: post.updated_at || undefined,
       authors: post.user?.nickname ? [post.user.nickname] : undefined,
-      images: post.cover_image
-        ? [
-            {
+      images: [
+        post.cover_image
+          ? {
               url: post.cover_image,
               width: 1200,
               height: 630,
               alt: post.cover_image_alt || post.title,
+            }
+          : {
+              url: `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&subtitle=${encodeURIComponent(description)}`,
+              width: 1200,
+              height: 630,
+              alt: post.title,
             },
-          ]
-        : undefined,
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description,
-      images: post.cover_image ? [post.cover_image] : undefined,
+      images: [
+        post.cover_image
+          ? post.cover_image
+          : `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&subtitle=${encodeURIComponent(description)}`,
+      ],
     },
     alternates: {
       canonical: postUrl,
@@ -238,7 +247,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Article Content */}
         <article className="article-body">
-          <PostContent contentMarkdown={post.content} />
+          <PostContentWithToc contentMarkdown={post.content} />
 
           <div className="ornament">— ✦ —</div>
 
