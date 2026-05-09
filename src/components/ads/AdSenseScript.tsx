@@ -16,11 +16,15 @@ export function AdSenseScript() {
       document.head.appendChild(script);
     };
 
-    // 페이지 완전 로드 후 실행
+    // 페이지 완전 로드 후 3초 지연 로딩 (성능 우선)
+    const loadWithDelay = () => {
+      setTimeout(loadAdSense, 3000);
+    };
+    
     if (document.readyState === "complete") {
-      loadAdSense();
+      loadWithDelay();
     } else {
-      window.addEventListener("load", loadAdSense, { once: true });
+      window.addEventListener("load", loadWithDelay, { once: true });
     }
 
     return () => {

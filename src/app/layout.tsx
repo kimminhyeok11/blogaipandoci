@@ -14,16 +14,20 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.verc
 
 const notoSerifKR = Noto_Serif_KR({
   subsets: ["latin"],
-  weight: ["400", "600", "700", "900"],
+  weight: ["400", "700"], // 600, 900 제거로 파일 수 감소
   variable: "--font-serif",
   display: "swap",
+  adjustFontFallback: false,
+  preload: true,
 });
 
 const notoSansKR = Noto_Sans_KR({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
+  weight: ["400", "500"], // 300, 700 제거로 파일 수 감소
   variable: "--font-sans",
   display: "swap",
+  adjustFontFallback: false,
+  preload: true,
 });
 
 const dmMono = DM_Mono({
@@ -31,6 +35,8 @@ const dmMono = DM_Mono({
   weight: ["400", "500"],
   variable: "--font-mono",
   display: "swap",
+  adjustFontFallback: false, // CSS 크기 감소
+  preload: false, // 사용 빈도 낮음, 지연 로드
 });
 
 export const viewport: Viewport = {
@@ -117,10 +123,11 @@ export default function RootLayout({
     <html lang="ko" className={`${notoSerifKR.variable} ${notoSansKR.variable} ${dmMono.variable}`} suppressHydrationWarning>
       <head>
         <meta name="google-adsense-account" content="ca-pub-5239497835591112" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Note: Google Fonts CDN 미사용 - Next.js next/font로 최적화된 폰트 사용 */}
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
+        {/* Supabase Storage 이미지 최적화 */}
+        <link rel="preconnect" href="https://mcgrkxsgifcvfubsnzur.supabase.co" />
         <OrganizationSchema />
         <WebSiteSchema />
       </head>
