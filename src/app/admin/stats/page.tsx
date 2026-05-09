@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
@@ -33,6 +33,18 @@ interface OrphanedImage {
   url: string;
   size: number;
   created_at: string;
+}
+
+// 임시저장 항목 타입
+interface AutoSaveItem {
+  key: string;           // localStorage 키 (blog_draft_xxx 또는 blog_edit_슬러그_xxx)
+  type: 'new' | 'edit'; // 새 글 vs 수정
+  title: string;
+  content: string;
+  excerpt: string;
+  tags: string;
+  timestamp: string;
+  editSlug?: string;   // 수정 모드일 때 원본 슬러그
 }
 
 interface StatsData {
@@ -95,6 +107,10 @@ export default function StatsPage() {
   const [isAllPostsLoading, setIsAllPostsLoading] = useState(false);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
+  // 임시저장 관리 상태
+  const [autoSaves, setAutoSaves] = useState<AutoSaveItem[]>([]);
+  const [selectedAutoSaves, setSelectedAutoSaves] = useState<Set<string>>(new Set());
+
   const hasFetched = useRef(false);
 
   useEffect(() => {
@@ -113,8 +129,13 @@ export default function StatsPage() {
 
     if (!hasFetched.current) {
       hasFetched.current = true;
-      fetchStats();
-      fetchAllPosts(1);
+      // 병렬 호출 + 개별 에러 처리
+      Promise.all([
+        fetchStats().catch(err => console.error('통계 조회 실패:', err)),
+        fetchAllPosts(1).catch(err => console.error('글 목록 조회 실패:', err))
+      ]);
+      // 임시저장 목록 로드
+      fetchAutoSaves();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isAuthLoading]);
@@ -169,13 +190,125 @@ export default function StatsPage() {
     }
   };
 
+  // localStorage에서 임시저장 목록 조회
+  const fetchAutoSaves = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    
+    const saves: AutoSaveItem[] = [];
+    
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      
+      // 임시저장 키 패턴: blog_draft_xxx 또는 blog_edit_슬러그_xxx
+      if (key.startsWith('blog_draft_') || key.startsWith('blog_edit_')) {
+        const timestamp = localStorage.getItem(key.replace('_title', '_timestamp') || '');
+        const title = localStorage.getItem(key) || '';
+        
+        // title 키만 처리 (중복 방지)
+        if (key.endsWith('_title')) {
+          const baseKey = key.replace('_title', '');
+          const type = baseKey.startsWith('blog_draft') ? 'new' : 'edit';
+          const editSlug = type === 'edit' 
+            ? baseKey.replace('blog_edit_', '').replace(/_title|_content|_excerpt|_tags|_timestamp/g, '')
+            : undefined;
+          
+          saves.push({
+            key: baseKey,
+            type,
+            title: title || '(제목 없음)',
+            content: localStorage.getItem(`${baseKey}_content`) || '',
+            excerpt: localStorage.getItem(`${baseKey}_excerpt`) || '',
+            tags: localStorage.getItem(`${baseKey}_tags`) || '',
+            timestamp: timestamp || new Date().toISOString(),
+            editSlug,
+          });
+        }
+      }
+    }
+    
+    // 최신순 정렬
+    saves.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    setAutoSaves(saves);
+  }, []);
+
+  // 개별 임시저장 삭제
+  const deleteAutoSave = (key: string) => {
+    localStorage.removeItem(`${key}_title`);
+    localStorage.removeItem(`${key}_content`);
+    localStorage.removeItem(`${key}_excerpt`);
+    localStorage.removeItem(`${key}_tags`);
+    localStorage.removeItem(`${key}_timestamp`);
+    
+    fetchAutoSaves();
+    showToast('임시저장이 삭제되었습니다', 'success');
+  };
+
+  // 선택된 임시저장 일괄 삭제
+  const deleteSelectedAutoSaves = () => {
+    selectedAutoSaves.forEach(key => {
+      localStorage.removeItem(`${key}_title`);
+      localStorage.removeItem(`${key}_content`);
+      localStorage.removeItem(`${key}_excerpt`);
+      localStorage.removeItem(`${key}_tags`);
+      localStorage.removeItem(`${key}_timestamp`);
+    });
+    
+    setSelectedAutoSaves(new Set());
+    fetchAutoSaves();
+    showToast(`${selectedAutoSaves.size}개의 임시저장이 삭제되었습니다`, 'success');
+  };
+
+  // 전체 임시저장 삭제
+  const deleteAllAutoSaves = () => {
+    if (!confirm('모든 임시저장을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+    
+    autoSaves.forEach(item => {
+      localStorage.removeItem(`${item.key}_title`);
+      localStorage.removeItem(`${item.key}_content`);
+      localStorage.removeItem(`${item.key}_excerpt`);
+      localStorage.removeItem(`${item.key}_tags`);
+      localStorage.removeItem(`${item.key}_timestamp`);
+    });
+    
+    setSelectedAutoSaves(new Set());
+    fetchAutoSaves();
+    showToast('모든 임시저장이 삭제되었습니다', 'success');
+  };
+
+  // 임시저장 선택 토글
+  const toggleAutoSaveSelection = (key: string) => {
+    const newSelected = new Set(selectedAutoSaves);
+    if (newSelected.has(key)) {
+      newSelected.delete(key);
+    } else {
+      newSelected.add(key);
+    }
+    setSelectedAutoSaves(newSelected);
+  };
+
+  // 이어쓰기 - 임시저장으로 글쓰기 페이지 이동
+  const continueWriting = (item: AutoSaveItem) => {
+    if (item.type === 'edit' && item.editSlug) {
+      window.location.href = `/write?edit=${item.editSlug}`;
+    } else {
+      window.location.href = '/write';
+    }
+  };
+
   // URL 복사 (슬래시 포함 - 네이버 색인용)
   const copyPostUrl = (slug: string) => {
+    if (typeof window === 'undefined') {
+      showToast('브라우저 환경에서만 사용 가능합니다', 'error');
+      return;
+    }
     const url = `${window.location.origin}/posts/${slug}/`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedSlug(slug);
       showToast('URL이 복사되었습니다 (슬래시 포함)', 'success');
       setTimeout(() => setCopiedSlug(null), 2000);
+    }).catch(() => {
+      showToast('URL 복사에 실패했습니다', 'error');
     });
   };
 
@@ -671,6 +804,94 @@ export default function StatsPage() {
                 다음
                 <ChevronRight size={14} />
               </button>
+            </div>
+          )}
+        </div>
+
+        {/* 임시저장 관리 */}
+        <div className="bg-white border border-rule rounded-sm p-4 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-sans text-sm font-medium text-ink">
+              임시저장 관리 ({autoSaves.length}개)
+            </h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchAutoSaves}
+                className="px-3 py-1.5 border border-rule text-muted text-xs font-sans rounded-sm hover:border-muted transition-colors"
+              >
+                새로고침
+              </button>
+              {selectedAutoSaves.size > 0 && (
+                <button
+                  onClick={deleteSelectedAutoSaves}
+                  className="px-3 py-1.5 bg-rust text-white text-xs font-sans rounded-sm hover:bg-red-700 transition-colors flex items-center gap-1"
+                >
+                  <Trash2 size={12} />
+                  {selectedAutoSaves.size}개 삭제
+                </button>
+              )}
+              {autoSaves.length > 0 && (
+                <button
+                  onClick={deleteAllAutoSaves}
+                  className="px-3 py-1.5 border border-rule text-muted text-xs font-sans rounded-sm hover:border-muted transition-colors"
+                >
+                  전체 삭제
+                </button>
+              )}
+            </div>
+          </div>
+
+          {autoSaves.length > 0 ? (
+            <div className="space-y-2">
+              {autoSaves.map((item) => (
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between p-3 bg-paper border border-rule rounded-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => toggleAutoSaveSelection(item.key)}
+                      className="text-muted hover:text-ink transition-colors"
+                    >
+                      {selectedAutoSaves.has(item.key) ? <CheckSquare size={16} className="text-rust" /> : <Square size={16} />}
+                    </button>
+                    <div>
+                      <p className="font-sans text-sm text-ink line-clamp-1">
+                        {item.type === 'edit' ? (
+                          <span className="text-rust mr-1">[수정]</span>
+                        ) : (
+                          <span className="text-blue-600 mr-1">[새글]</span>
+                        )}
+                        {item.title}
+                      </p>
+                      <p className="font-sans text-xs text-muted">
+                        {new Date(item.timestamp).toLocaleString('ko-KR')} · 
+                        {item.content.length > 0 ? `${item.content.length}자` : '내용 없음'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => continueWriting(item)}
+                      className="px-3 py-1.5 bg-ink text-paper text-xs font-sans rounded-sm hover:bg-ink/90 transition-colors"
+                    >
+                      이어쓰기
+                    </button>
+                    <button
+                      onClick={() => deleteAutoSave(item.key)}
+                      className="p-1.5 text-muted hover:text-rust transition-colors"
+                      title="삭제"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-paper border border-rule rounded-sm">
+              <FileText size={32} className="text-muted mx-auto mb-2" />
+              <p className="text-muted font-sans text-sm">임시저장된 글이 없습니다</p>
             </div>
           )}
         </div>
