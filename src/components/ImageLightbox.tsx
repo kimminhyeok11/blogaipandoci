@@ -15,6 +15,7 @@ interface ImageLightboxProps {
 
 export function ImageLightbox({ images, initialIndex, isOpen, onClose }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [showControls, setShowControls] = useState(true); // 화살표/닫기 버튼 표시 상태
 
   // 키보드 이벤트 처리
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -43,67 +44,106 @@ export function ImageLightbox({ images, initialIndex, isOpen, onClose }: ImageLi
     setCurrentIndex(initialIndex);
   }, [initialIndex]);
 
+  // 화살표/닫기 버튼 자동 숨김 타이머
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    // 1초 후 화살표 숨김
+    const timer = setTimeout(() => {
+      setShowControls(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [isOpen, currentIndex]); // 이미지 변경 시마다 타이머 리셋
+
   if (!isOpen || images.length === 0) return null;
 
   const currentImage = images[currentIndex];
 
+  // 화면 클릭 시 컨트롤 토글
+  const handleContainerClick = () => {
+    setShowControls((prev) => !prev);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
-      {/* 닫기 버튼 */}
+    <div 
+      className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center"
+      onClick={handleContainerClick}
+    >
+      {/* 닫기 버튼 - 1초 후 숨김, 클릭 시 표시 */}
       <button
-        onClick={onClose}
-        className="absolute top-4 right-4 p-2 text-white/80 hover:text-white transition-colors z-50"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className={`absolute top-4 right-4 p-2 text-white/80 hover:text-white transition-all duration-300 z-50 ${
+          showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
         aria-label="닫기"
       >
         <X size={32} />
       </button>
 
-      {/* 이전 버튼 */}
+      {/* 이전 버튼 - 1초 후 숨김 */}
       {images.length > 1 && (
         <button
-          onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))}
-          className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white/80 hover:text-white transition-colors z-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+          }}
+          className={`absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white/80 hover:text-white transition-all duration-300 z-40 ${
+            showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
           aria-label="이전 이미지"
         >
           <ChevronLeft size={48} />
         </button>
       )}
 
-      {/* 다음 버튼 */}
+      {/* 다음 버튼 - 1초 후 숨김 */}
       {images.length > 1 && (
         <button
-          onClick={() => setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0))}
-          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/80 hover:text-white transition-colors z-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+          }}
+          className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/80 hover:text-white transition-all duration-300 z-40 ${
+            showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
           aria-label="다음 이미지"
         >
           <ChevronRight size={48} />
         </button>
       )}
 
-      {/* 이미지 컨테이너 */}
-      <div className="relative max-w-[90vw] max-h-[90vh]">
+      {/* 이미지 컨테이너 - 클릭으로 닫기 방지 */}
+      <div 
+        className="max-w-[90vw] max-h-[80vh] flex flex-col items-center"
+        onClick={(e) => e.stopPropagation()}
+      >
         <img
           src={currentImage.src}
           alt={currentImage.alt || ""}
-          className="max-w-full max-h-[85vh] object-contain"
+          className="max-w-full max-h-[70vh] object-contain"
         />
         
-        {/* 이미지 정보 */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-          <p className="text-white/80 text-sm font-sans">
+        {/* 이미지 정보 - 이미지 밖으로 이동 */}
+        <div className="mt-4 px-4 py-2 text-center max-w-[90vw]">
+          <p className="text-white/80 text-sm font-sans leading-relaxed">
             {currentImage.alt || ""}
           </p>
-          <p className="text-white/60 text-xs font-sans mt-1">
+          <p className="text-white/60 text-xs font-sans mt-2">
             {currentIndex + 1} / {images.length}
           </p>
         </div>
       </div>
 
-      {/* 배경 클릭으로 닫기 */}
-      <div 
-        className="absolute inset-0 -z-10" 
-        onClick={onClose}
-      />
+      {/* 안내 메시지 - 컨트롤 숨김 시 표시 */}
+      {!showControls && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 text-xs font-sans animate-pulse">
+          화면 클릭으로 메뉴 표시
+        </div>
+      )}
     </div>
   );
 }
