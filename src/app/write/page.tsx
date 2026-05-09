@@ -591,33 +591,31 @@ function WritePageContent() {
               <button
                 type="button"
                 onClick={() => setPreview(!preview)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors ${
+                className={`px-2 py-1 text-xs font-sans font-medium rounded-sm transition-colors ${
                   preview 
                     ? "bg-ink text-paper hover:bg-ink/90" 
                     : "border border-rule text-muted hover:border-muted"
                 }`}
               >
-                {preview ? <Edit3 size={14} /> : <Eye size={14} />}
-                {preview ? "편집" : "미리보기"}
+                {preview ? "작성" : "보기"}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleSubmit(false)}
                 disabled={isSubmitting}
-                className="px-3 py-1.5 border border-rule text-muted text-xs font-sans font-medium rounded-sm hover:border-muted transition-colors disabled:opacity-50"
+                className="px-2 py-1 border border-rule text-muted text-xs font-sans font-medium rounded-sm hover:border-muted transition-colors disabled:opacity-50"
               >
-                {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : "임시저장"}
+                {isSubmitting ? "..." : "임시"}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleSubmit(true)}
                 disabled={isSubmitting}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors disabled:opacity-50"
+                className="px-3 py-1 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors disabled:opacity-50"
               >
-                <Save size={14} />
-                {isEditMode ? "수정완료" : "발행하기"}
+                {isEditMode ? "저장" : "발행"}
               </button>
             </div>
           </div>
