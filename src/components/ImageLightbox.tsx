@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 interface ImageLightboxProps {
   images: Array<{
@@ -16,6 +16,13 @@ interface ImageLightboxProps {
 export function ImageLightbox({ images, initialIndex, isOpen, onClose }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [showControls, setShowControls] = useState(true); // 화살표/닫기 버튼 표시 상태
+  
+  // 줌 상태
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // 키보드 이벤트 처리
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -42,7 +49,65 @@ export function ImageLightbox({ images, initialIndex, isOpen, onClose }: ImageLi
   // initialIndex 변경 시 현재 인덱스 업데이트
   useEffect(() => {
     setCurrentIndex(initialIndex);
+    // 이미지 변경 시 줌 리셋
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
   }, [initialIndex]);
+
+  // 줌 인
+  const zoomIn = useCallback(() => {
+    setScale(prev => Math.min(prev * 1.3, 5));
+  }, []);
+
+  // 줌 아웃
+  const zoomOut = useCallback(() => {
+    setScale(prev => {
+      const newScale = Math.max(prev / 1.3, 1);
+      if (newScale === 1) {
+        setPosition({ x: 0, y: 0 }); // 원래 크기로 돌아가면 위치도 리셋
+      }
+      return newScale;
+    });
+  }, []);
+
+  // 줌 리셋
+  const zoomReset = useCallback(() => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  }, []);
+
+  // 마우스 휠 줌
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      zoomIn();
+    } else {
+      zoomOut();
+    }
+  }, [zoomIn, zoomOut]);
+
+  // 드래그 시작
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (scale > 1) {
+      setIsDragging(true);
+      dragStart.current = { x: e.clientX - position.x, y: e.clientY - position.y };
+    }
+  }, [scale, position]);
+
+  // 드래그 이동
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isDragging && scale > 1) {
+      setPosition({
+        x: e.clientX - dragStart.current.x,
+        y: e.clientY - dragStart.current.y
+      });
+    }
+  }, [isDragging, scale]);
+
+  // 드래그 종료
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
   // 화살표/닫기 버튼 자동 숨김 타이머
   useEffect(() => {
@@ -117,17 +182,61 @@ export function ImageLightbox({ images, initialIndex, isOpen, onClose }: ImageLi
         </button>
       )}
 
-      {/* 이미지 컨테이너 - 브라우저 확대/축소 허용 */}
+      {/* 줌 컨트롤 버튼 */}
+      <div className={`absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-2 z-50 transition-all duration-300 ${
+        showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}>
+        <button
+          onClick={(e) => { e.stopPropagation(); zoomOut(); }}
+          className="p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+          aria-label="축소"
+        >
+          <ZoomOut size={20} />
+        </button>
+        <span className="text-white text-sm font-sans px-2 min-w-[50px] text-center">
+          {Math.round(scale * 100)}%
+        </span>
+        <button
+          onClick={(e) => { e.stopPropagation(); zoomIn(); }}
+          className="p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+          aria-label="확대"
+        >
+          <ZoomIn size={20} />
+        </button>
+        {scale !== 1 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); zoomReset(); }}
+            className="p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+            aria-label="원래 크기"
+          >
+            <RotateCcw size={20} />
+          </button>
+        )}
+      </div>
+
+      {/* 이미지 컨테이너 - 줌/드래그 지원 */}
       <div 
-        className="max-w-[90vw] max-h-[80vh] flex flex-col items-center touch-auto"
-        style={{ touchAction: 'manipulation' }}
+        ref={containerRef}
+        className="max-w-[90vw] max-h-[80vh] flex flex-col items-center overflow-hidden cursor-move"
+        style={{ 
+          touchAction: 'none',
+          cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
+        }}
         onClick={(e) => e.stopPropagation()}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
         <img
           src={currentImage.src}
           alt={currentImage.alt || ""}
-          className="max-w-full max-h-[70vh] object-contain"
-          style={{ touchAction: 'pinch-zoom' }}
+          className="max-w-full max-h-[70vh] object-contain transition-transform duration-200"
+          style={{ 
+            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+            transformOrigin: 'center center'
+          }}
           draggable={false}
         />
         
