@@ -10,8 +10,8 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // .txt로 끝나는 경로 처리 (IndexNow 키 파일)
-  if (pathname.endsWith('.txt')) {
+  // .txt로 끝나는 경로 처리 (IndexNow 키 파일) - robots.txt는 제외
+  if (pathname.endsWith('.txt') && pathname !== '/robots.txt') {
     const validKey = process.env.INDEXNOW_KEY;
     
     if (!validKey) {
