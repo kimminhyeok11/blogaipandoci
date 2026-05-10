@@ -102,9 +102,7 @@ export const metadata: Metadata = {
   other: {
     "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || "",
   },
-  alternates: {
-    canonical: SITE_URL,
-  },
+  // 주의: 각 페이지에서 개별 canonical 설정 필요 (전역 설정 시 SEO 문제)
   icons: {
     icon: [
       { url: "/icon.png", sizes: "32x32", type: "image/png" },

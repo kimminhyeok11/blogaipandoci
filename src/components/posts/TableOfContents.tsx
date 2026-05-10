@@ -58,12 +58,8 @@ export function TableOfContents({ items }: TableOfContentsProps) {
   if (items.length < 3) return null; // 헤딩이 3개 미만이면 TOC 표시 안 함
 
   return (
-    <aside className="hidden xl:block absolute" style={{ 
-      left: 'calc(50% + 400px)', // 본문 중심에서 오른쪽으로
-      top: '0',
-      width: '240px',
-    }}>
-      <div className="sticky top-24 bg-paper border border-rule rounded-sm p-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+    <aside className="w-full">
+      <div className="bg-paper border border-rule rounded-sm p-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 w-full text-left mb-2"

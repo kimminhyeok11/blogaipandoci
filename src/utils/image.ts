@@ -39,7 +39,7 @@ export const convertToWebP = async (file: File): Promise<File> => {
 };
 
 export const generateSlug = (text: string): string => {
-  return text
+  const slug = text
     .trim()
     // 특수문자 제거 (한글, 영문, 숫자, 공백, 하이픈은 유지)
     .replace(/[^\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\u3040-\u309F\u30A0-\u30FF\w\s-]/g, '')
@@ -50,6 +50,26 @@ export const generateSlug = (text: string): string => {
     // 앞뒤 하이픈 제거
     .replace(/^-+|-+$/g, '')
     .substring(0, 200);
+  
+  // slug가 비어있거나 너무 짧은 경우 (한글만 있거나 특수문자만 제거된 경우)
+  if (slug.length < 2) {
+    // 원문에서 영문/숫자 추출 시도
+    const fallback = text
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 100);
+    
+    if (fallback.length >= 2) {
+      return fallback;
+    }
+    
+    // 그래도 없으면 "post" + timestamp 반환
+    return `post-${Date.now().toString(36).slice(-8)}`;
+  }
+  
+  return slug;
 };
 
 export const truncateText = (text: string, maxLength: number): string => {

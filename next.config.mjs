@@ -28,7 +28,8 @@ const nextConfig = {
       },
     ],
   },
-  trailingSlash: true,
+  // trailingSlash 제거 - 리다이렉트 루프 방지
+  trailingSlash: false,
   generateEtags: true,
   compress: true,
   poweredByHeader: false,

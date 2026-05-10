@@ -389,14 +389,18 @@ function WritePageContent() {
         return;
       }
 
-      // 고유한 slug 생성 (중복 방지를 위해 타임스탬프 추가)
+      // 고유한 slug 생성
       let slug: string;
       if (isEditMode) {
         slug = editSlug!;
       } else {
-        const baseSlug = generateSlug(title);
-        const timestamp = Date.now().toString(36).slice(-6);
-        slug = `${baseSlug}-${timestamp}`;
+        slug = generateSlug(title);
+        // generateSlug가 fallback으로 이미 timestamp 포함 가능성 있음
+        // 추가 중복 방지를 위해 짧은 suffix 추가
+        if (!slug.includes('-') || slug.length < 10) {
+          const timestamp = Date.now().toString(36).slice(-4);
+          slug = `${slug}-${timestamp}`;
+        }
       }
       
       // Auto-generate excerpt if not provided
