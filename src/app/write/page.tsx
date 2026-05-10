@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, Suspense, lazy, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense, lazy } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, Edit3, Eye, Heading, Image as ImageIcon, Link as LinkIcon, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Loader2, Heading, Image as ImageIcon, Link as LinkIcon, MoreHorizontal } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
 import { useToast } from "@/components/ui/Toast";
@@ -48,7 +48,9 @@ function WritePageContent() {
   const [postId, setPostId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [preview, setPreview] = useState(false); // 에디터 미리보기 상태
+  const [showHeadingMenu, setShowHeadingMenu] = useState(false); // H태그 메뉴 상태
   const [showMoreMenu, setShowMoreMenu] = useState(false); // 더보기 메뉴 상태
+  const headingMenuRef = useRef<HTMLDivElement>(null); // H태그 메뉴 ref
   const moreMenuRef = useRef<HTMLDivElement>(null); // 더보기 메뉴 ref
   const editorRef = useRef<MarkdownEditorRef>(null); // MarkdownEditor ref (툴바용)
   
@@ -216,9 +218,12 @@ function WritePageContent() {
     return processedContent;
   }, [existingPosts]);
 
-  // 더보기 메뉴 외부 클릭 시 닫기
+  // 메뉴 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      if (headingMenuRef.current && !headingMenuRef.current.contains(e.target as Node)) {
+        setShowHeadingMenu(false);
+      }
       if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
         setShowMoreMenu(false);
       }
@@ -578,16 +583,36 @@ function WritePageContent() {
             
             <div className="h-6 w-px bg-rule mx-2" />
             
-            {/* 주요 툴 3개: H태그, 이미지, 링크 */}
+            {/* 주요 툴 3개: H태그(드롭다운), 이미지, 링크 */}
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => editorRef.current?.insertHeading?.(2)}
-                className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
-                title="제목 (Ctrl+2)"
-              >
-                <Heading size={18} />
-              </button>
+              <div ref={headingMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowHeadingMenu(!showHeadingMenu)}
+                  className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
+                  title="제목"
+                >
+                  <Heading size={18} />
+                </button>
+                {showHeadingMenu && (
+                  <div className="absolute top-full left-0 mt-1 bg-white border border-rule rounded-sm shadow-lg z-50 py-1 min-w-[80px]">
+                    {[1, 2, 3].map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => {
+                          editorRef.current?.insertHeading?.(level);
+                          setShowHeadingMenu(false);
+                        }}
+                        className="w-full px-3 py-1.5 text-left text-sm hover:bg-cream flex items-center gap-2"
+                      >
+                        <span className="font-bold text-muted">{'#'.repeat(level)}</span>
+                        <span className="text-xs text-muted">H{level}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => document.getElementById('image-upload')?.click()}
@@ -734,11 +759,11 @@ function WritePageContent() {
         </div>
       </header>
 
-      {/* 티스토리 스타일: 상단바 + 입력영역 2단 레이아웃 */}
+      {/* 티스토리 스타일: 상단바 + 입력영역 + 하단상태바 3단 레이아웃 */}
       {!isLoading ? (
-        <main className="w-full px-6 sm:px-12 lg:px-24 xl:px-32">
+        <main className="flex-1 flex flex-col w-full px-6 sm:px-12 lg:px-24 xl:px-32 min-h-0">
           {/* 메타 정보 영역 - 배경으로 구분 */}
-          <div className="py-8 border-b-2 border-rule">
+          <div className="py-8 border-b-2 border-rule flex-shrink-0">
             {/* 제목 */}
             <input
               type="text"
@@ -748,48 +773,63 @@ function WritePageContent() {
               className="w-full text-3xl sm:text-4xl font-black text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0 mb-4"
             />
 
-            {/* 태그/요약 - 구분선으로 구분 */}
-            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-8">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted font-sans font-medium">태그</span>
+            {/* 태그/요약 - 모바일 최적화 스택 레이아웃 */}
+            <div className="flex flex-col gap-3 sm:gap-4">
+              {/* 태그 */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-xs sm:text-sm font-sans font-medium text-muted whitespace-nowrap w-10 sm:w-12">태그</span>
                 <input
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
-                  placeholder="저작권, 판례, 기술"
-                  className="flex-1 font-sans text-ink placeholder-muted/50 bg-transparent border-b border-rule/30 focus:border-rust focus:outline-none py-1"
+                  placeholder="저작권, 판례, 기술 (쉼표로 구분)"
+                  className="flex-1 font-sans text-sm text-ink placeholder:text-muted/40 bg-transparent border-b-2 border-rule/20 focus:border-rust focus:outline-none py-2 transition-colors"
                 />
               </div>
-              <div className="flex items-center gap-2 text-sm flex-1">
-                <span className="text-muted font-sans font-medium">요약</span>
+              {/* 요약 */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-xs sm:text-sm font-sans font-medium text-muted whitespace-nowrap w-10 sm:w-12">요약</span>
                 <input
                   type="text"
                   value={excerpt}
                   onChange={(e) => setExcerpt(e.target.value)}
-                  placeholder="미입력 시 자동 생성"
-                  className="flex-1 font-sans text-ink placeholder-muted/50 bg-transparent border-b border-rule/30 focus:border-rust focus:outline-none py-1"
+                  placeholder="미입력 시 본문에서 자동 생성됩니다"
+                  className="flex-1 font-sans text-sm text-ink placeholder:text-muted/40 bg-transparent border-b-2 border-rule/20 focus:border-rust focus:outline-none py-2 transition-colors"
                 />
               </div>
             </div>
           </div>
 
-          {/* 본문 에디터 - 페이지 전체가 입력 영역 */}
-          <div className="py-4">
+          {/* 본문 에디터 - flex-1로 남은 공간 채움 */}
+          <div className="flex-1 py-4 min-h-0 overflow-auto">
             <MarkdownEditor
               ref={editorRef}
               value={content}
               onChange={setContent}
               preview={preview}
               placeholder="마크다운으로 글을 작성하세요..."
-              minHeight="calc(100vh - 400px)"
-              maxHeight="none"
-              showToolbar={false}
+              minHeight="300px"
               onImageUpload={handleImageUpload}
             />
           </div>
+
+          {/* 하단 상태바 - 고정 */}
+          <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-t border-rule/30 bg-cream/30 text-xs font-sans text-muted">
+            <div className="flex items-center gap-3">
+              <span>0 자</span>
+              <span className="hidden sm:inline">0 단어</span>
+              <span className="hidden sm:inline">1 줄</span>
+              <span className="hidden md:inline text-rust">약 1분 소요</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline opacity-60">Tab: 들여쓰기</span>
+              <span className="hidden sm:inline opacity-60">Shift+Tab: 내어쓰기</span>
+              <span className="hidden md:inline opacity-60">드래그로 이미지 업로드</span>
+            </div>
+          </div>
         </main>
       ) : (
-        <div className="flex items-center justify-center py-20">
+        <div className="flex items-center justify-center py-20 flex-1">
           <div className="flex items-center gap-3 text-muted">
             <Loader2 size={24} className="animate-spin" />
             <span className="font-sans text-sm">글을 불러오는 중...</span>
