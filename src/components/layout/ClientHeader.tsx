@@ -46,36 +46,52 @@ export function ClientHeader() {
         })}
       </div>
 
-      {/* Utility Navigation */}
-      <nav className="mt-3 pt-3 border-t border-rule">
-        <ul className="masthead-nav">
-          <li className="masthead-nav-item">
-            <Link href="/write" className="masthead-nav-link">
-              <PenSquare className="inline-block mr-1" size={12} />
-              <span>글쓰기</span>
+      {/* Utility Navigation - 아이콘만 최소화 */}
+      <nav className="mt-2 pt-2 border-t border-rule">
+        <ul className="flex items-center justify-center gap-6">
+          <li>
+            <Link 
+              href="/write" 
+              className="p-1 text-ink hover:text-rust transition-colors"
+              title="글쓰기"
+            >
+              <PenSquare size={16} />
             </Link>
           </li>
-          <li className="masthead-nav-item">
-            <Link href="/posts" className="masthead-nav-link">
-              <span>모든 글</span>
+          <li>
+            <Link 
+              href="/posts" 
+              className="p-1 text-ink hover:text-rust transition-colors"
+              title="모든 글"
+            >
+              <span className="font-sans text-xs font-medium">ALL</span>
             </Link>
           </li>
-          <li className="masthead-nav-item">
-            <Link href="/search" className="masthead-nav-link">
-              <Search className="inline-block mr-1" size={12} />
-              <span>검색</span>
+          <li>
+            <Link 
+              href="/search" 
+              className="p-1 text-ink hover:text-rust transition-colors"
+              title="검색"
+            >
+              <Search size={16} />
             </Link>
           </li>
-          <li className="masthead-nav-item">
+          <li>
             {user ? (
-              <Link href="/profile" className="masthead-nav-link">
-                <User className="inline-block mr-1" size={12} />
-                <span>프로필</span>
+              <Link 
+                href="/profile" 
+                className="p-1 text-ink hover:text-rust transition-colors"
+                title="프로필"
+              >
+                <User size={16} />
               </Link>
             ) : (
-              <Link href="/auth" className="masthead-nav-link">
-                <User className="inline-block mr-1" size={12} />
-                <span>로그인</span>
+              <Link 
+                href="/auth" 
+                className="p-1 text-ink hover:text-rust transition-colors"
+                title="로그인"
+              >
+                <User size={16} />
               </Link>
             )}
           </li>
