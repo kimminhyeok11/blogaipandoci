@@ -1,14 +1,12 @@
-"use client";
-
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import Link from "next/link";
-import { PenSquare, User, Search } from "lucide-react";
+import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/Toast";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { PenSquare, User, Search } from "lucide-react";
+import { ClientHeader } from "@/components/layout/ClientHeader";
+import { AdSense } from "@/components/ads/AdSense";
 
-// AdSense 지연 로딩 (코드 분할)
-const AdSense = lazy(() => import("@/components/ads/AdSense").then(mod => ({ default: mod.AdSense })));
+// ISR: 1시간마다 재생성
+export const revalidate = 3600;
 
 interface Post {
   id: string;
@@ -21,183 +19,87 @@ interface Post {
   user?: { nickname: string | null; email: string | null };
 }
 
-export default function HomePage() {
-  const [featuredPost, setFeaturedPost] = useState<Post | null>(null);
-  const [recentPosts, setRecentPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const { showToast } = useToast();
-  const { user } = useAuth();
+async function getPosts() {
+  try {
+    // Popular posts (by view count)
+    const { data: popularPosts } = await supabase
+      .from("posts")
+      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email)")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .order("view_count", { ascending: false })
+      .limit(1);
 
-  // 스마트 스티키 헤더 - 스크롤 감지
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // 스크롤 다운 시 헤더 숨김 (100px 이상 스크롤했을 때)
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsHeaderVisible(false);
-      } else {
-        // 스크롤 업 시 헤더 표시
-        setIsHeaderVisible(true);
-      }
-      
-      setLastScrollY(currentScrollY);
+    // Latest posts (by date)
+    const { data: latestPosts } = await supabase
+      .from("posts")
+      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email)")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false })
+      .limit(10);
+
+    return {
+      featuredPost: popularPosts?.[0] || null,
+      recentPosts: latestPosts || []
     };
+  } catch (err) {
+    console.error("Failed to fetch posts:", err);
+    return { featuredPost: null, recentPosts: [] };
+  }
+}
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
-
-  // Fetch posts on mount
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setIsLoading(true);
-      try {
-        // Popular posts (by view count)
-        const { data: popularPosts } = await supabase
-          .from("posts")
-          .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email)")
-          .eq("published", true)
-          .not("published_at", "is", null)
-          .order("view_count", { ascending: false })
-          .limit(1);
-
-        if (popularPosts && popularPosts.length > 0) {
-          setFeaturedPost(popularPosts[0]);
-        }
-
-        // Latest posts (by date) - SEO: 더 많은 콘텐츠 노출
-        const { data: latestPosts } = await supabase
-          .from("posts")
-          .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email)")
-          .eq("published", true)
-          .not("published_at", "is", null)
-          .order("published_at", { ascending: false })
-          .limit(10);
-
-        if (latestPosts) {
-          setRecentPosts(latestPosts);
-        }
-      } catch (err) {
-        console.error("Failed to fetch posts:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, []);
+export default async function HomePage() {
+  const { featuredPost, recentPosts } = await getPosts();
 
   return (
     <div className="min-h-screen bg-paper">
-      {/* Masthead Header - Smart Sticky */}
-      <header 
-        className={`masthead fixed top-0 left-0 right-0 z-50 bg-paper transition-transform duration-300 ${
-          isHeaderVisible ? "translate-y-0" : "-translate-y-full"
-        }`}
-      >
-        <div className="masthead-pub">Deep Analysis and Insights</div>
-        <Link href="/" className="masthead-title">
-          法 BLOG
-        </Link>
-        <div className="masthead-date" suppressHydrationWarning>
-          {new Date().toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </div>
-      </header>
+      {/* Client Header with Auth and Scroll Effects */}
+      <ClientHeader />
 
       {/* Spacer for fixed header */}
-      <div className="h-[120px]" />
-
-      {/* Navigation */}
-      <nav className="border-b border-rule bg-paper sticky top-0 z-40">
-        <div className="max-w-content mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-12">
-            <div className="flex items-center gap-6">
-              <Link href="/" className="font-sans text-xs font-medium text-ink hover:text-rust transition-colors">
-                홈
-              </Link>
-              <Link href="/posts" className="font-sans text-xs font-medium text-muted hover:text-rust transition-colors">
-                모든 글
-              </Link>
-              <Link href="/tags" className="font-sans text-xs font-medium text-muted hover:text-rust transition-colors">
-                태그
-              </Link>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/search"
-                className="p-2 text-muted hover:text-rust transition-colors"
-                aria-label="검색"
-              >
-                <Search size={18} />
-              </Link>
-              <Link
-                href="/write"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors"
-              >
-                <PenSquare size={14} />
-                <span className="hidden sm:inline">글쓰기</span>
-              </Link>
-              <Link
-                href={user ? "/profile" : "/login"}
-                className="p-2 text-muted hover:text-rust transition-colors"
-                aria-label={user ? "마이페이지" : "로그인"}
-              >
-                <User size={18} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <div className="h-[180px]" />
 
       <main>
-        {/* Hero / Featured Post - Dynamic from Supabase */}
-        {isLoading ? (
-          <section className="hero">
-            <div className="animate-pulse space-y-4">
-              <div className="h-4 bg-cream rounded w-24 mx-auto" />
-              <div className="h-12 bg-cream rounded w-3/4 mx-auto" />
-              <div className="h-6 bg-cream rounded w-1/2 mx-auto" />
+        {/* Hero Section - Featured Post */}
+        {featuredPost ? (
+          <section className="relative min-h-[60vh] flex items-center justify-center px-4 sm:px-6 py-16 border-b border-rule">
+            <div className="max-w-content mx-auto text-center">
+              <div className="section-label">심층 분석</div>
+              <h1 className="headline">
+                {featuredPost.title.split(",")[0] || featuredPost.title},
+                <br />
+                <em>{featuredPost.title.split(",")[1]?.trim() || "인기 글"}</em>
+              </h1>
+              <p className="subheadline">{featuredPost.excerpt}</p>
+              <div className="byline">
+                <span>{featuredPost.user?.nickname || featuredPost.user?.email?.split("@")[0] || "익명"}</span>
+                <span className="byline-sep">|</span>
+                <span suppressHydrationWarning>
+                  {new Date(featuredPost.published_at).toLocaleDateString("ko-KR")}
+                </span>
+                <span className="byline-sep">|</span>
+                <span>{featuredPost.view_count.toLocaleString()} 회 읽음</span>
+              </div>
+              <Link
+                href={`/posts/${featuredPost.slug}`}
+                className="inline-block mt-6 px-6 py-2 border-2 border-ink text-ink font-sans text-xs font-medium tracking-wider uppercase hover:bg-ink hover:text-paper transition-colors"
+              >
+                자세히 읽기
+              </Link>
             </div>
-          </section>
-        ) : featuredPost ? (
-          <section className="hero">
-            <div className="section-label">심층 분석</div>
-            <h1 className="headline">
-              {featuredPost.title.split(",")[0] || featuredPost.title},
-              <br />
-              <em>{featuredPost.title.split(",")[1]?.trim() || "인기 글"}</em>
-            </h1>
-            <p className="subheadline">{featuredPost.excerpt}</p>
-            <div className="byline">
-              <span>{featuredPost.user?.nickname || featuredPost.user?.email?.split('@')[0] || "익명"}</span>
-              <span className="byline-sep">|</span>
-              <span suppressHydrationWarning>{new Date(featuredPost.published_at).toLocaleDateString("ko-KR")}</span>
-              <span className="byline-sep">|</span>
-              <span>{featuredPost.view_count.toLocaleString()} 회 읽음</span>
-            </div>
-            <Link
-              href={`/posts/${featuredPost.slug}`}
-              className="inline-block mt-6 px-6 py-2 border-2 border-ink text-ink font-sans text-xs font-medium tracking-wider uppercase hover:bg-ink hover:text-paper transition-colors"
-            >
-              자세히 읽기
-            </Link>
           </section>
         ) : (
-          <section className="hero">
-            <div className="section-label">블로그</div>
-            <h1 className="headline">
-              法 BLOG,
-              <br />
-              <em>깊이 있는 분석</em>
-            </h1>
-            <p className="subheadline">아직 발행된 글이 없습니다.</p>
+          <section className="relative min-h-[40vh] flex items-center justify-center px-4 sm:px-6 py-16 border-b border-rule">
+            <div className="max-w-content mx-auto text-center">
+              <div className="section-label">Welcome</div>
+              <h1 className="headline">
+                法 BLOG,
+                <br />
+                <em>Deep Analysis</em>
+              </h1>
+              <p className="subheadline">아직 발행된 글이 없습니다.</p>
+            </div>
           </section>
         )}
 
@@ -211,7 +113,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-8">
-            {recentPosts.map((post) => (
+            {recentPosts.map((post: Post) => (
               <article
                 key={post.id}
                 className="group border-b border-rule pb-8 last:border-0"
