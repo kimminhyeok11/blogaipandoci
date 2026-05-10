@@ -222,7 +222,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       setPendingImageFile(file);
       setImageUrl(url);
       setImageAlt(defaultAlt);
-      setImageCaption(defaultAlt);
+      setImageCaption("");
       setImageLink("");
       setShowImageModal(true);
     } catch (err) {
@@ -301,14 +301,13 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     const caption = imageCaption.trim();
     const link = imageLink.trim();
 
-    let markdown = `![${alt}](${imageUrl})`;
+    // 캡션을 title 속성으로 포함
+    let markdown = caption 
+      ? `![${alt}](${imageUrl} "${caption}")` 
+      : `![${alt}](${imageUrl})`;
     
     if (link) {
       markdown = `[${markdown}](${link})`;
-    }
-    
-    if (caption) {
-      markdown += `\n*${caption}*`;
     }
 
     insertText(markdown, '\n\n');
