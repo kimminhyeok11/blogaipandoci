@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useMemo, forwardRef, useImperativeHandle } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, forwardRef, useImperativeHandle } from "react";
 import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { processMarkdown } from "@/lib/markdown";
@@ -36,6 +36,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 }: MarkdownEditorProps, ref) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  
+  // 클라이언트 렌더링 확인 (hydration 오류 방지)
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   // 이미지 모달 상태
   const [showImageModal, setShowImageModal] = useState(false);
@@ -363,10 +369,14 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
         {preview ? (
           <div className="prose-journal bg-paper min-h-[200px]">
             {value ? (
-              <div
-                className="markdown-preview font-serif text-base leading-loose text-ink select-text p-4"
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
-              />
+              isClient ? (
+                <div
+                  className="markdown-preview font-serif text-base leading-loose text-ink select-text p-4"
+                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                />
+              ) : (
+                <div className="p-4 text-muted">미리보기 로딩 중...</div>
+              )
             ) : (
               <p className="text-muted italic p-4">미리보기할 내용이 없습니다.</p>
             )}
