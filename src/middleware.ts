@@ -43,8 +43,8 @@ export function middleware(request: NextRequest) {
 // 미들웨어가 적용될 경로 설정
 export const config = {
   matcher: [
-    // .txt 파일 (IndexNow 키 파일)
-    '/:key.txt',
+    // .txt 파일 (IndexNow 키 파일) - robots.txt는 제외
+    '/:key((?!robots$)[^/]+).txt',
     // API routes 제외
     '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],

@@ -97,8 +97,11 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",
+  google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",
+  other: {
+    "msvalidate.01": "737EFBBC1764E783BE209003B3B1DC8F",
   },
+},
   other: {
     "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || "",
   },
