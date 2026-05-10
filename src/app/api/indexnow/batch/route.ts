@@ -1,41 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getServiceSupabase } from "@/lib/supabase";
 import { notifyIndexNow } from "@/lib/indexnow";
 
 const BATCH_SIZE = 100; // Bing Webmaster Tools 한 번에 최대 100개
 
+// 관리자 권한 확인 헬퍼
+async function verifyAdmin(request: NextRequest) {
+  const serviceSupabase = getServiceSupabase();
+  const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+  const userId = authHeader?.replace('Bearer ', '');
+  
+  if (!userId) return { error: "인증이 필요합니다", status: 401, serviceSupabase };
+
+  const { data: userData, error: roleError } = await serviceSupabase
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .single() as { data: { role: string } | null; error: Error | null };
+
+  if (roleError || userData?.role !== 'admin') {
+    return { error: "관리자 권한이 필요합니다", status: 403, serviceSupabase };
+  }
+
+  return { error: null, status: 200, serviceSupabase };
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // 인증 확인
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    // 관리자 권한 확인
+    const auth = await verifyAdmin(request);
+    if (auth.error) {
       return NextResponse.json(
-        { success: false, message: "인증이 필요합니다" },
-        { status: 401 }
+        { success: false, message: auth.error },
+        { status: auth.status }
       );
     }
-
-    const userId = authHeader.replace("Bearer ", "");
-    
-    // Supabase 클라이언트 생성
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
-    // 사용자 권한 확인
-    const { data: user, error: userError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (userError || user?.role !== "admin") {
-      return NextResponse.json(
-        { success: false, message: "관리자 권한이 필요합니다" },
-        { status: 403 }
-      );
-    }
+    const supabase = auth.serviceSupabase;
 
     // 발행된 게시글 100개 조회
     const { data: posts, error: postsError } = await supabase
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     // URL 목록 생성
     const baseUrl = "https://lawtiphub.com";
-    const urls = posts.map((post) => `${baseUrl}/posts/${post.slug}/`);
+    const urls = posts.map((post: { slug: string }) => `${baseUrl}/posts/${post.slug}/`);
 
     // 홈페이지도 포함
     urls.unshift(`${baseUrl}/`);
