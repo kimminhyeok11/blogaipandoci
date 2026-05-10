@@ -109,7 +109,7 @@ export default async function TagPage({ params }: TagPageProps) {
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-sans text-2xs text-rust">#{tag}</span>
                     <span className="text-rule">·</span>
-                    <span className="font-sans text-2xs text-muted">
+                    <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
                       {new Date(post.published_at).toLocaleDateString("ko-KR")}
                     </span>
                     <span className="text-rule">·</span>
