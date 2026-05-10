@@ -735,7 +735,7 @@ function WritePageContent() {
                   : "border border-rule text-muted hover:border-muted"
               }`}
             >
-              {preview ? "작성" : "보기"}
+              {preview ? "편집" : "보기"}
             </button>
 
             <button

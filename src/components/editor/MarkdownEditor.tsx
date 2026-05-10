@@ -56,8 +56,36 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   const editorRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
   
+  // 커서 위치 저장 (보기/편집 전환 시)
+  const savedCursorPos = useRef<{ start: number; end: number } | null>(null);
+  
   // 미리보기 HTML
   const previewHtml = useMemo(() => processMarkdown(value), [value]);
+  
+  // 보기/편집 모드 전환 시 커서 위치 저장/복원
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    
+    if (preview) {
+      // 보기 모드로 전환: 커서 위치 저장
+      savedCursorPos.current = {
+        start: textarea.selectionStart,
+        end: textarea.selectionEnd
+      };
+    } else {
+      // 편집 모드로 전환: 커서 위치 복원
+      if (savedCursorPos.current) {
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(
+            savedCursorPos.current!.start,
+            savedCursorPos.current!.end
+          );
+        }, 0);
+      }
+    }
+  }, [preview]);
 
   // 기본 텍스트 삽입
   const insertText = useCallback((before: string, after: string = "") => {
