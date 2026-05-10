@@ -125,6 +125,8 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${notoSerifKR.variable} ${notoSansKR.variable} ${dmMono.variable}`} suppressHydrationWarning>
       <head>
+        {/* SEO용 sr-only H1 - 메인 주제 명시 */}
+        <h1 className="sr-only">법률·정책·사회 분석 블로그 - 法 BLOG</h1>
         <meta name="google-adsense-account" content="ca-pub-5239497835591112" />
         {/* Note: Google Fonts CDN 미사용 - Next.js next/font로 최적화된 폰트 사용 */}
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
@@ -180,8 +182,15 @@ export default function RootLayout({
                       </ul>
                     </div>
                   </div>
+                  {/* 법적 고지 - YMYL 사이트 필수 */}
+                  <div className="border-t border-rule pt-4 pb-4 bg-cream/30">
+                    <p className="font-sans text-2xs text-muted text-center leading-relaxed px-4">
+                      ※ 본 사이트는 일반 정보 제공 목적이며 법률 자문이 아닙니다.<br className="hidden sm:block" />
+                      ※ 구체적 사건은 변호사 상담이 필요할 수 있습니다.
+                    </p>
+                  </div>
                   {/* 저작권 */}
-                  <div className="border-t border-rule pt-6 text-center">
+                  <div className="border-t border-rule pt-4 text-center">
                     <p className="font-sans text-xs text-muted tracking-wider">
                       © {new Date().getFullYear()} 法 BLOG. All rights reserved.
                     </p>
