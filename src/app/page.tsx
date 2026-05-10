@@ -68,14 +68,14 @@ export default function HomePage() {
           setFeaturedPost(popularPosts[0]);
         }
 
-        // Latest posts (by date)
+        // Latest posts (by date) - SEO: 더 많은 콘텐츠 노출
         const { data: latestPosts } = await supabase
           .from("posts")
           .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email)")
           .eq("published", true)
           .not("published_at", "is", null)
           .order("published_at", { ascending: false })
-          .limit(5);
+          .limit(10);
 
         if (latestPosts) {
           setRecentPosts(latestPosts);

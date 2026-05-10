@@ -10,10 +10,10 @@ interface RelatedPostsProps {
 }
 
 export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
-  // 현재 글 제외하고 최대 4개 표시
+  // 현재 글 제외하고 최대 6개 표시 (SEO: 더 많은 내부링크)
   const relatedPosts = posts
     .filter((post) => post.id !== currentPostId)
-    .slice(0, 4);
+    .slice(0, 6);
 
   if (relatedPosts.length === 0) return null;
 

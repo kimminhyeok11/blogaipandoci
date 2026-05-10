@@ -80,7 +80,7 @@ export default async function PostsPage() {
       {/* Navigation - 스마트 스티키 헤더 */}
       <StickyNav backHref="/" backLabel="홈으로" />
 
-      <main className="max-w-content mx-auto px-4 sm:px-6 py-12">
+      <main className="max-w-content mx-auto px-4 sm:px-6 py-12 pb-20">
         <div className="mb-8">
           <h1 className="text-2xl font-black text-ink mb-2">모든 글</h1>
           <p className="font-sans text-sm text-muted">
