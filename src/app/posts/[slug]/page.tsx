@@ -9,8 +9,6 @@ import type { Post } from "@/types";
 import { PostActions } from "@/components/posts/PostActions";
 import { ShareButtons } from "@/components/posts/ShareButtons";
 import { RelatedPosts } from "@/components/posts/RelatedPosts";
-import { PostContent } from "@/components/posts/PostContent";
-import { TocSidebar } from "@/components/posts/TocSidebar";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import { StickyNav } from "@/components/layout/StickyNav";
 
@@ -298,30 +296,15 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
         )}
 
-        {/* Article Content with TOC - 레이아웃 개선 */}
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col xl:flex-row gap-8 justify-center">
-            {/* 본문 영역 */}
-            <article className="flex-1 min-w-0 xl:max-w-3xl">
-              {/* 본문 내용 - max-w-article로 중앙 정렬 */}
-              <div className="article-body-content">
-                <PostContent contentMarkdown={post.content} />
-              </div>
+        {/* Article Content */}
+        <article className="article-body">
+          <PostContentWithToc contentMarkdown={post.content} />
 
-              <div className="ornament">— ✦ —</div>
+          <div className="ornament">— ✦ —</div>
 
-              {/* Share */}
-              <ShareButtons title={post.title} />
-            </article>
-
-            {/* TOC 사이드바 - xl 이상에서만 표시, sticky */}
-            <aside className="hidden xl:block w-72 flex-shrink-0">
-              <div className="sticky top-24">
-                <TocSidebar contentMarkdown={post.content} />
-              </div>
-            </aside>
-          </div>
-        </div>
+          {/* Share */}
+          <ShareButtons title={post.title} />
+        </article>
 
         {/* Related Posts - 이어서 읽기 */}
         <RelatedPosts posts={relatedPosts} currentPostId={post.id} />
