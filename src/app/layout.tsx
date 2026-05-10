@@ -110,10 +110,7 @@ export const metadata: Metadata = {
     "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || "",
   },
   icons: {
-    icon: [
-      { url: "/icon.png", sizes: "32x32", type: "image/png" },
-    ],
-    shortcut: "/favicon.ico.ico",
+    icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
 };
