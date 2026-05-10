@@ -130,6 +130,15 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     }, 0);
   }, [value, onChange]);
 
+  // textarea 자동 높이 조절 (클라이언트에서만 실행)
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }, [value]);
+
   // 선택한 텍스트 감싸기 (선택 영역 유지) - Bold, Italic 등에 사용
   const wrapText = useCallback((before: string, after: string) => {
     const textarea = textareaRef.current;
@@ -829,17 +838,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
           <textarea
             ref={textareaRef}
             value={value}
-            onChange={(e) => {
-              onChange(e.target.value);
-              // 자동 높이 조절
-              const target = e.target;
-              target.style.height = 'auto';
-              target.style.height = target.scrollHeight + 'px';
-            }}
+            onChange={(e) => onChange(e.target.value)}
             onPaste={handlePaste}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={1}
+            suppressHydrationWarning
             className={cn(
               "w-full text-ink font-serif text-base leading-loose focus:outline-none focus:ring-0 overflow-hidden",
               showToolbar ? "p-4 bg-paper focus:ring-2 focus:ring-rust/20" : "p-0 bg-transparent",
