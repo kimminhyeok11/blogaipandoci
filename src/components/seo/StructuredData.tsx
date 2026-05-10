@@ -95,7 +95,7 @@ export function ArticleSchema({
   );
 }
 
-// BreadcrumbList: 검색 결과에 경로 표시
+// BreadcrumbList: 검색 결과에 경로 표시 (게시글에서 사용)
 interface BreadcrumbItem {
   name: string;
   url: string;
@@ -115,6 +115,28 @@ export function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
       name: item.name,
       item: item.url,
     })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// Homepage Breadcrumb: 메인페이지용 간단한 브레드크럼
+export function HomepageBreadcrumbSchema() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL,
+      },
+    ],
   };
   return (
     <script

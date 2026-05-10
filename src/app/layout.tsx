@@ -4,7 +4,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
-import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
+import { OrganizationSchema, WebSiteSchema, HomepageBreadcrumbSchema } from "@/components/seo/StructuredData";
 import { Analytics } from "@vercel/analytics/next";
 import { AdSenseScript } from "@/components/ads/AdSenseScript";
 import { ScrollRestoration } from "@/components/utils/ScrollRestoration";
@@ -135,6 +135,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://mcgrkxsgifcvfubsnzur.supabase.co" />
         <OrganizationSchema />
         <WebSiteSchema />
+        <HomepageBreadcrumbSchema />
       </head>
       <body className="antialiased min-h-screen font-serif flex flex-col">
         <AdSenseScript />
@@ -170,6 +171,7 @@ export default function RootLayout({
                       <h4 className="font-sans text-xs font-bold text-ink uppercase tracking-wider mb-3">정보</h4>
                       <ul className="space-y-2 font-sans text-xs">
                         <li><Link href="/about" className="text-muted hover:text-rust transition-colors">소개</Link></li>
+                        <li><Link href="/author" className="text-muted hover:text-rust transition-colors">작성자 정보</Link></li>
                         <li><Link href="/contact" className="text-muted hover:text-rust transition-colors">문의하기</Link></li>
                         <li><Link href="/privacy" className="text-muted hover:text-rust transition-colors">개인정보처리방침</Link></li>
                       </ul>

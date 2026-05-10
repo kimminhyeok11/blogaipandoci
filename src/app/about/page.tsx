@@ -4,8 +4,11 @@ import { Mail, BookOpen, Users, Target, BarChart3, FileText } from "lucide-react
 import { StickyNav } from "@/components/layout/StickyNav";
 
 export const metadata: Metadata = {
-  title: "소개 | 法 BLOG",
-  description: "법률·정책 사회 분석 미디어 法 BLOG는 공공데이터와 판례를 기반으로 시민의 권리와 사회 변화에 대한 깊이 있는 인사이트를 제공합니다.",
+  title: "소개 | 法 BLOG - 생활형 법률·정책 미디어",
+  description: "생활형 법률·정책 이슈를 분석하는 독립 미디어. 실제 판례·뉴스·공공자료를 기반으로 현실적인 법률 정보를 쉽게 전달합니다. 법률 자문이 아닌 일반 정보 제공 목적입니다.",
+  alternates: {
+    canonical: "/about",
+  },
 };
 
 export default function AboutPage() {
@@ -31,6 +34,27 @@ export default function AboutPage() {
         </p>
 
         <div className="prose-journal max-w-2xl mx-auto space-y-12">
+          {/* EEAT: 전문성 및 운영 목적 */}
+          <section className="bg-rust/5 p-8 rounded-sm border border-rust/20">
+            <div className="flex items-center gap-3 mb-6">
+              <BookOpen className="text-rust" size={28} />
+              <h2 className="text-xl font-bold text-ink">운영 목적 및 전문성</h2>
+            </div>
+            <p className="text-ink leading-loose mb-4 text-lg">
+              <strong>生활형 법률·정책 이슈를 분석하는 독립 미디어입니다.</strong>
+            </p>
+            <p className="text-ink leading-loose mb-4">
+              실제 판례·뉴스·공공자료를 기반으로 현실적인 법률 정보를 쉽게 전달합니다.
+              법률 전문가가 아닌 시민의 관점에서, 데이터와 객관적 사실에 근거한 분석을 지향합니다.
+            </p>
+            <div className="bg-paper p-4 rounded-sm border border-rule mt-4">
+              <p className="text-sm text-muted font-sans">
+                <strong>참고 자료:</strong> 대법원 판례DB, 국가법령정보센터, 공공데이터포털, 
+                언론 보도 및 학술 논문 등을 인용하여 작성됩니다.
+              </p>
+            </div>
+          </section>
+
           {/* 포지션 선언 */}
           <section className="bg-rust/5 p-8 rounded-sm border border-rust/20">
             <div className="flex items-center gap-3 mb-6">
