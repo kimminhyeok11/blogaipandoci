@@ -12,6 +12,7 @@ import { RelatedPosts } from "@/components/posts/RelatedPosts";
 import { PostContent } from "@/components/posts/PostContent";
 import { TocSidebar } from "@/components/posts/TocSidebar";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
+import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
@@ -225,7 +226,14 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 export default async function PostPage({ params }: PostPageProps) {
   const decodedSlug = decodeURIComponent(params.slug);
 
-  // 잘못된 slug 패턴 감지 시 301 리다이렉트 시도
+  // 1. 정확한 매핑 테이블 확인 (가장 우선)
+  const mappedSlug = getMappedSlug(decodedSlug);
+  if (mappedSlug) {
+    // 301 영구 리다이렉트
+    permanentRedirect(`/posts/${mappedSlug}`);
+  }
+
+  // 2. 잘못된 slug 패턴 감지 시 제목 추론 시도
   if (isInvalidSlugPattern(decodedSlug)) {
     const correctPost = await findPostByTitleGuess(decodedSlug);
 
