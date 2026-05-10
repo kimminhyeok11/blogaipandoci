@@ -49,6 +49,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: "/",
+  },
   title: {
     default: "法 BLOG - 법률, 기술, 비즈니스 깊이 있는 분석",
     template: "%s | 法 BLOG",
@@ -105,12 +108,11 @@ export const metadata: Metadata = {
   other: {
     "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || "",
   },
-  // 주의: 각 페이지에서 개별 canonical 설정 필요 (전역 설정 시 SEO 문제)
   icons: {
     icon: [
       { url: "/icon.png", sizes: "32x32", type: "image/png" },
     ],
-    shortcut: "/favicon.ico.jpg",
+    shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
 };
