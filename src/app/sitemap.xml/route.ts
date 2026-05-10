@@ -54,7 +54,8 @@ function extractImages(content: string | null, coverImage: string | null): strin
 }
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+  // 환경변수 무시하고 신규 도메인 강제 사용 (전환 기간 동안)
+  const baseUrl = "https://lawtiphub.com";
 
   // 정적 페이지
   const staticPages = [
@@ -127,7 +128,7 @@ ${postXml}
   return new Response(sitemap, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, s-maxage=3600",
+      "Cache-Control": "public, max-age=60, s-maxage=60", // 도메인 전환 기간 동안 짧게 캐시
     },
   });
 }
