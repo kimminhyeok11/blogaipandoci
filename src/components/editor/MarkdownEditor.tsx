@@ -864,8 +864,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
         )}
       </div>
 
-      {/* Status Bar - 상세 통계 */}
-      <div className="flex items-center justify-between px-3 py-2 border-t border-rule bg-cream text-xs font-sans text-muted">
+      {/* Status Bar - 글자수/단어수/줄수 (항상 표시) */}
+      <div className={cn(
+        "flex items-center justify-between px-4 py-2 text-xs font-sans text-muted",
+        showToolbar ? "border-t border-rule bg-cream" : "border-t border-rule/30 bg-transparent"
+      )}>
         <div className="flex items-center gap-3">
           <span title="글자 수">{charCount.toLocaleString()} 자</span>
           <span className="hidden sm:inline" title="단어 수">{wordCount.toLocaleString()} 단어</span>
@@ -873,9 +876,9 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
           <span className="hidden md:inline text-rust">약 {readTime}분 소요</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="hidden sm:inline">Tab: 들여쓰기</span>
-          <span className="hidden sm:inline">Shift+Tab: 내어쓰기</span>
-          <span className="hidden md:inline">드래그로 이미지 업로드</span>
+          <span className="hidden sm:inline opacity-60">Tab: 들여쓰기</span>
+          <span className="hidden sm:inline opacity-60">Shift+Tab: 내어쓰기</span>
+          <span className="hidden md:inline opacity-60">드래그로 이미지 업로드</span>
         </div>
       </div>
 

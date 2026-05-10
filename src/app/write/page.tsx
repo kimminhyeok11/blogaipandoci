@@ -9,7 +9,6 @@ import { generateSlug } from "@/utils/image";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { RevisionHistory } from "@/components/editor/RevisionHistory";
-import { StickyNav } from "@/components/layout/StickyNav";
 
 // IndexNow 알림 헬퍼
 const notifyIndexNow = async (path: string) => {
@@ -692,51 +691,59 @@ function WritePageContent() {
         </div>
       </header>
 
-      {/* 티스토리 스타일: 풀그리드 단일 페이지 레이아웃 */}
+      {/* 티스토리 스타일: 상단바 + 입력영역 2단 레이아웃 */}
       {!isLoading ? (
-        <main className="w-full px-4 sm:px-8 lg:px-16">
-          {/* 제목 - 페이지 전체 너비로 통합 */}
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="제목을 입력하세요"
-            className="w-full mt-8 mb-2 text-3xl sm:text-4xl font-black text-ink placeholder-muted/40 bg-transparent border-none focus:outline-none focus:ring-0"
-          />
+        <main className="w-full px-6 sm:px-12 lg:px-24 xl:px-32">
+          {/* 메타 정보 영역 - 배경으로 구분 */}
+          <div className="py-8 border-b-2 border-rule">
+            {/* 제목 */}
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="제목을 입력하세요"
+              className="w-full text-3xl sm:text-4xl font-black text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0 mb-4"
+            />
 
-          {/* 태그/요약 - 제목 아래 2컬럼 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 pb-6 border-b border-rule/30">
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="태그: 저작권, 판례, 기술"
-              className="text-sm font-sans text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0"
-            />
-            <input
-              type="text"
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              placeholder="요약: 미입력 시 자동 생성"
-              className="text-sm font-sans text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0 text-right"
-            />
+            {/* 태그/요약 - 구분선으로 구분 */}
+            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-8">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted font-sans font-medium">태그</span>
+                <input
+                  type="text"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="저작권, 판례, 기술"
+                  className="flex-1 font-sans text-ink placeholder-muted/50 bg-transparent border-b border-rule/30 focus:border-rust focus:outline-none py-1"
+                />
+              </div>
+              <div className="flex items-center gap-2 text-sm flex-1">
+                <span className="text-muted font-sans font-medium">요약</span>
+                <input
+                  type="text"
+                  value={excerpt}
+                  onChange={(e) => setExcerpt(e.target.value)}
+                  placeholder="미입력 시 자동 생성"
+                  className="flex-1 font-sans text-ink placeholder-muted/50 bg-transparent border-b border-rule/30 focus:border-rust focus:outline-none py-1"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* 본문 에디터 - 툴바 없이, 페이지 전체가 입력 영역 */}
-          <MarkdownEditor
-            ref={editorRef}
-            value={content}
-            onChange={setContent}
-            preview={preview}
-            placeholder="마크다운으로 글을 작성하세요..."
-            minHeight="calc(100vh - 300px)"
-            maxHeight="none"
-            showToolbar={false}
-            onImageUpload={handleImageUpload}
-          />
-
-          {/* 하단 여백 */}
-          <div className="h-32" />
+          {/* 본문 에디터 - 페이지 전체가 입력 영역 */}
+          <div className="py-4">
+            <MarkdownEditor
+              ref={editorRef}
+              value={content}
+              onChange={setContent}
+              preview={preview}
+              placeholder="마크다운으로 글을 작성하세요..."
+              minHeight="calc(100vh - 400px)"
+              maxHeight="none"
+              showToolbar={false}
+              onImageUpload={handleImageUpload}
+            />
+          </div>
         </main>
       ) : (
         <div className="flex items-center justify-center py-20">
