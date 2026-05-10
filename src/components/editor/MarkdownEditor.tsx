@@ -16,7 +16,7 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   minHeight?: string;
-  maxHeight?: string;
+  maxHeight?: string | null; // null = 제한 없음 (페이지 스크롤 모드)
   onImageUpload?: (file: File) => Promise<string>;
   preview?: boolean;
   onPreviewChange?: (preview: boolean) => void;
@@ -45,6 +45,9 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   const [isUploading, setIsUploading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // 페이지 스크롤 모드 여부 (maxHeight가 null이거나 'none'인 경우)
+  const isPageScrollMode = !maxHeight || maxHeight === 'none';
   
   // 이미지 모달 상태
   const [showImageModal, setShowImageModal] = useState(false);
@@ -776,10 +779,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
         {preview ? (
           <div
             className={cn(
-              "prose-journal p-4 overflow-y-auto bg-paper",
-              isFullscreen && "h-[calc(100vh-120px)]"
+              "prose-journal p-4 bg-paper",
+              !isPageScrollMode && "overflow-y-auto", // maxHeight 있을 때만 내부 스크롤
+              isFullscreen && "h-[calc(100vh-120px)] overflow-y-auto"
             )}
-            style={!isFullscreen ? { minHeight, maxHeight } : undefined}
+            style={!isFullscreen ? { minHeight, ...(maxHeight && maxHeight !== 'none' ? { maxHeight } : {}) } : undefined}
           >
             {value ? (
               <div
@@ -800,10 +804,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             className={cn(
-              "w-full p-4 bg-paper text-ink font-serif text-base leading-loose resize-y focus:outline-none focus:ring-2 focus:ring-rust/20",
-              isFullscreen && "h-[calc(100vh-120px)] resize-none"
+              "w-full p-4 bg-paper text-ink font-serif text-base leading-loose focus:outline-none focus:ring-2 focus:ring-rust/20",
+              !isPageScrollMode && "resize-y", // maxHeight 있을 때만 리사이즈 허용
+              isFullscreen && "h-[calc(100vh-120px)] resize-none overflow-y-auto"
             )}
-            style={!isFullscreen ? { minHeight, maxHeight } : undefined}
+            style={!isFullscreen ? { minHeight, ...(maxHeight && maxHeight !== 'none' ? { maxHeight } : {}) } : undefined}
             spellCheck={false}
           />
         )}
