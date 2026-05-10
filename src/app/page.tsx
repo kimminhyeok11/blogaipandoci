@@ -102,7 +102,7 @@ export default function HomePage() {
         <Link href="/" className="masthead-title">
           法 BLOG
         </Link>
-        <div className="masthead-date">
+        <div className="masthead-date" suppressHydrationWarning>
           {new Date().toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
@@ -178,7 +178,7 @@ export default function HomePage() {
             <div className="byline">
               <span>{featuredPost.user?.nickname || featuredPost.user?.email?.split('@')[0] || "익명"}</span>
               <span className="byline-sep">|</span>
-              <span>{new Date(featuredPost.published_at).toLocaleDateString("ko-KR")}</span>
+              <span suppressHydrationWarning>{new Date(featuredPost.published_at).toLocaleDateString("ko-KR")}</span>
               <span className="byline-sep">|</span>
               <span>{featuredPost.view_count.toLocaleString()} 회 읽음</span>
             </div>
@@ -222,7 +222,7 @@ export default function HomePage() {
                       심층 분석
                     </span>
                     <span className="text-rule">·</span>
-                    <span className="font-sans text-2xs text-muted">
+                    <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
                       {new Date(post.published_at).toLocaleDateString("ko-KR")}
                     </span>
                   </div>
