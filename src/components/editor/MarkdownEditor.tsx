@@ -7,8 +7,6 @@ import { processMarkdown } from "@/lib/markdown";
 import { useToast } from "@/components/ui/Toast";
 
 export interface MarkdownEditorRef {
-  saveScrollPosition: () => { editor: number; preview: number };
-  restoreScrollPosition: (positions: { editor: number; preview: number }) => void;
   insertHeading: (level: number) => void;
   insertImage: (file?: File) => void;
   insertLink: () => void;
@@ -68,28 +66,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
   
-  // 스크롤 위치 저장/복원 메서드 노출
-  // 페이지 스크롤 모드: window.scrollY 사용, 내부 스크롤 모드: element.scrollTop 사용
+  // 툴바용 메서드만 노출
   useImperativeHandle(ref, () => ({
-    saveScrollPosition: () => {
-      if (isPageScrollMode) {
-        return { editor: window.scrollY, preview: window.scrollY };
-      }
-      return {
-        editor: textareaRef.current?.scrollTop || 0,
-        preview: previewRef.current?.scrollTop || 0,
-      };
-    },
-    restoreScrollPosition: (positions) => {
-      if (!isPageScrollMode) {
-        if (textareaRef.current) textareaRef.current.scrollTop = positions.editor;
-        if (previewRef.current) previewRef.current.scrollTop = positions.preview;
-      }
-    },
     insertHeading,
     insertImage: (file?: File) => {
       if (file && onImageUpload) {
-        // 이미지 업로드 처리
         setIsUploading(true);
         onImageUpload(file).then(url => {
           insertText(`![${file.name}](${url})`, '');
@@ -129,15 +110,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       textarea.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
   }, [value, onChange]);
-
-  // textarea 자동 높이 조절 (클라이언트에서만 실행)
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
-  }, [value]);
 
   // 선택한 텍스트 감싸기 (선택 영역 유지) - Bold, Italic 등에 사용
   const wrapText = useCallback((before: string, after: string) => {

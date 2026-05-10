@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, Suspense, lazy } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense, lazy, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Loader2, Edit3, Eye, Heading, Image as ImageIcon, Link as LinkIcon, MoreHorizontal } from "lucide-react";
@@ -48,23 +48,10 @@ function WritePageContent() {
   const [postId, setPostId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [preview, setPreview] = useState(false); // 에디터 미리보기 상태
-  const pageScrollRef = useRef<number>(0); // 페이지 스크롤 위치 저장용
-  const editorScrollRef = useRef<{ editor: number; preview: number }>({ editor: 0, preview: 0 }); // 에디터 내부 스크롤 저장용
-  const editorRef = useRef<MarkdownEditorRef>(null); // MarkdownEditor ref
+  const editorRef = useRef<MarkdownEditorRef>(null); // MarkdownEditor ref (툴바용)
   
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
-
-  // 미리보기/편집 전환 시 스크롤 위치 복원 (페이지 + 에디터)
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      // 페이지 스크롤 복원
-      window.scrollTo(0, pageScrollRef.current);
-      // 에디터 내부 스크롤 복원
-      editorRef.current?.restoreScrollPosition(editorScrollRef.current);
-    }, 50);
-    return () => clearTimeout(timeout);
-  }, [preview]);
 
   // 자동 저장 키 생성 (수정 모드 vs 새 글)
   const getAutoSaveKey = (key: string) => {
@@ -654,13 +641,7 @@ function WritePageContent() {
             {/* 미리보기/편집 토글 */}
             <button
               type="button"
-              onClick={() => {
-                pageScrollRef.current = window.scrollY;
-                if (editorRef.current) {
-                  editorScrollRef.current = editorRef.current.saveScrollPosition();
-                }
-                setPreview(!preview);
-              }}
+              onClick={() => setPreview(!preview)}
               className={`px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors ${
                 preview 
                   ? "bg-ink text-paper" 
