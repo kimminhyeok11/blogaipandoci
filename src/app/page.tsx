@@ -127,6 +127,10 @@ export default async function HomePage() {
                     <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
                       {new Date(post.published_at).toLocaleDateString("ko-KR")}
                     </span>
+                    <span className="text-rule">·</span>
+                    <span className="font-sans text-2xs text-muted">
+                      {post.user?.nickname || post.user?.email?.split("@")[0] || "익명"}
+                    </span>
                   </div>
                   <h3 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">
                     {post.title}
