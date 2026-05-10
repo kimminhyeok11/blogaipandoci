@@ -661,13 +661,13 @@ function WritePageContent() {
             </div>
           ) : (
             <>
-              {/* Title Input */}
+              {/* Title Input - 본문과 통일된 스타일 */}
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="제목을 입력하세요"
-                className="w-full bg-transparent text-2xl sm:text-3xl font-black text-ink placeholder-muted border-b-2 border-rule pb-3 focus:outline-none focus:border-rust transition-colors"
+                className="w-full bg-paper text-2xl sm:text-3xl font-black text-ink placeholder-muted border-b-2 border-rule pb-3 px-4 -mx-4 focus:outline-none focus:border-rust transition-colors"
               />
 
               {/* Tags & Excerpt Grid */}

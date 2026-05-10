@@ -815,16 +815,26 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
           <textarea
             ref={textareaRef}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              onChange(e.target.value);
+              // 자동 높이 조절
+              const target = e.target;
+              target.style.height = 'auto';
+              target.style.height = target.scrollHeight + 'px';
+            }}
             onPaste={handlePaste}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
+            rows={1}
             className={cn(
-              "w-full p-4 bg-paper text-ink font-serif text-base leading-loose focus:outline-none focus:ring-2 focus:ring-rust/20",
-              !isPageScrollMode && "resize-y", // maxHeight 있을 때만 리사이즈 허용
+              "w-full p-4 bg-paper text-ink font-serif text-base leading-loose focus:outline-none focus:ring-2 focus:ring-rust/20 overflow-hidden",
               isFullscreen && "h-[calc(100vh-120px)] resize-none overflow-y-auto"
             )}
-            style={!isFullscreen ? { minHeight, ...(maxHeight && maxHeight !== 'none' ? { maxHeight } : {}) } : undefined}
+            style={{ 
+              minHeight: isFullscreen ? undefined : '200px',
+              height: 'auto',
+              resize: 'none'
+            }}
             spellCheck={false}
           />
         )}
