@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
 import { PostContentWithToc } from "@/components/posts/PostContentWithToc";
 import { createClient } from "@supabase/supabase-js";
@@ -31,30 +31,67 @@ interface PostPageProps {
   params: { slug: string };
 }
 
+// 잘못된 slug 패턴 확인
+function isInvalidSlugPattern(slug: string): boolean {
+  // 하이픈으로 시작
+  if (slug.startsWith('-')) return true;
+  // 연속된 하이픈
+  if (slug.includes('--')) return true;
+  // 한글 없이 숫자+하이픈만
+  const hasKorean = /[\uAC00-\uD7AF]/.test(slug);
+  const hasEnglish = /[a-zA-Z]/.test(slug);
+  if (!hasKorean && !hasEnglish && /^[\d-]+$/.test(slug)) return true;
+  return false;
+}
+
 async function getPost(slug: string): Promise<Post | null> {
   const supabase = getServerSupabase();
   if (!supabase) return null;
-  
+
   // URL 디코딩 (한글/특수문자 처리)
   const decodedSlug = decodeURIComponent(slug);
-  console.log("[DEBUG] getPost - original slug:", slug);
-  console.log("[DEBUG] getPost - decoded slug:", decodedSlug);
-  
+
   const { data, error } = await supabase
     .from("posts")
     .select("*, user:users(nickname, avatar_url, email)")
     .eq("slug", decodedSlug)
     .eq("published", true)
-    .not("published_at", "is", null)  // 메인페이지와 동일한 조건
+    .not("published_at", "is", null)
     .single();
 
   if (error) {
-    console.error("[DEBUG] getPost error:", error);
     return null;
   }
-  
-  console.log("[DEBUG] getPost - data found:", !!data);
+
   return data as Post;
+}
+
+// 제목으로 게시글 찾기 (slug 변경 후 301 리다이렉트용)
+async function findPostByTitleGuess(slug: string): Promise<Post | null> {
+  const supabase = getServerSupabase();
+  if (!supabase) return null;
+
+  // slug에서 숫자 추출 (타임스탬프 부분)
+  const timestampMatch = slug.match(/([a-z0-9]{4,6})$/);
+
+  if (timestampMatch) {
+    // 유사한 slug 패턴을 가진 최근 게시글 검색
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*, user:users(nickname, avatar_url, email)')
+      .eq('published', true)
+      .not('published_at', 'is', null)
+      .ilike('slug', `%${timestampMatch[1]}`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!error && data) {
+      return data as Post;
+    }
+  }
+
+  return null;
 }
 
 
@@ -166,6 +203,20 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 }
 
 export default async function PostPage({ params }: PostPageProps) {
+  const decodedSlug = decodeURIComponent(params.slug);
+
+  // 잘못된 slug 패턴 감지 시 301 리다이렉트 시도
+  if (isInvalidSlugPattern(decodedSlug)) {
+    const correctPost = await findPostByTitleGuess(decodedSlug);
+
+    if (correctPost) {
+      // 301 영구 리다이렉트 (SEO 가치 전달)
+      permanentRedirect(`/posts/${correctPost.slug}`);
+    }
+    // 찾지 못하면 404
+    notFound();
+  }
+
   const post = await getPost(params.slug);
 
   if (!post) {
