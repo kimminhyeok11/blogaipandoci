@@ -22,7 +22,8 @@ import {
   ExternalLink,
   Tag,
   Clock,
-  Activity
+  Activity,
+  Send
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { supabase } from "@/lib/supabase";
@@ -90,6 +91,10 @@ export default function StatsPage() {
   const [orphanImages, setOrphanImages] = useState<OrphanedImage[]>([]);
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [isImageLoading, setIsImageLoading] = useState(false);
+
+  // IndexNow 제출 상태
+  const [isIndexNowLoading, setIsIndexNowLoading] = useState(false);
+  const [indexNowResult, setIndexNowResult] = useState<{success: boolean; message: string; count?: number} | null>(null);
 
   // 전체 글 목록 (페이지네이션)
   const POSTS_PER_PAGE = 10;
@@ -806,6 +811,71 @@ export default function StatsPage() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* IndexNow 일괄 제출 */}
+        <div className="bg-white border border-rule rounded-sm p-4 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-sans text-sm font-medium text-ink flex items-center gap-2">
+                <Send size={16} />
+                Bing IndexNow 일괄 제출
+              </h2>
+              <p className="text-xs text-muted font-sans mt-1">
+                발행된 게시글 100개를 Bing 검색엔진에 한 번에 알립니다
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                if (!confirm('발행된 게시글 100개를 Bing에 일괄 제출하시겠습니까?')) return;
+                
+                setIsIndexNowLoading(true);
+                setIndexNowResult(null);
+                
+                try {
+                  const response = await fetch('/api/indexnow/batch', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${user?.id}` }
+                  });
+                  
+                  const result = await response.json();
+                  setIndexNowResult(result);
+                  
+                  if (result.success) {
+                    showToast(`${result.count}개 URL 제출 완료`, 'success');
+                  } else {
+                    showToast(result.message, 'error');
+                  }
+                } catch (error) {
+                  showToast('IndexNow 제출 중 오류 발생', 'error');
+                } finally {
+                  setIsIndexNowLoading(false);
+                }
+              }}
+              disabled={isIndexNowLoading}
+              className="px-4 py-2 bg-blue-600 text-white text-xs font-sans rounded-sm hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+            >
+              <Send size={14} />
+              {isIndexNowLoading ? '제출 중...' : '100개 일괄 제출'}
+            </button>
+          </div>
+
+          {indexNowResult && (
+            <div className={`p-3 rounded-sm text-sm font-sans ${indexNowResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {indexNowResult.message}
+              {indexNowResult.count && <span className="ml-1">({indexNowResult.count}개 URL)</span>}
+            </div>
+          )}
+
+          <div className="mt-4 p-3 bg-paper border border-rule rounded-sm">
+            <p className="text-xs text-muted font-sans mb-2">💡 수동 제출 방법 (Bing Webmaster Tools):</p>
+            <ol className="text-xs text-muted font-sans list-decimal list-inside space-y-1">
+              <li>https://www.bing.com/webmasters 접속</li>
+              <li>lawtiphub.com 사이트 선택</li>
+              <li>왼쪽 메뉴: URL 제출 → URL 일괄 제출</li>
+              <li>100개 URL을 줄바꿈으로 구분하여 붙여넣기</li>
+            </ol>
+          </div>
         </div>
 
         {/* 임시저장 관리 */}
