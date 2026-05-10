@@ -10,6 +10,11 @@ export interface MarkdownEditorRef {
   insertHeading: (level: number) => void;
   insertImage: (file?: File) => void;
   insertLink: () => void;
+  insertBold: () => void;
+  insertItalic: () => void;
+  insertQuote: () => void;
+  insertUnorderedList: () => void;
+  insertOrderedList: () => void;
 }
 
 interface MarkdownEditorProps {
@@ -66,7 +71,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
   
-  // 툴바용 메서드만 노출
+  // 툴바용 메서드 노출
   useImperativeHandle(ref, () => ({
     insertHeading,
     insertImage: (file?: File) => {
@@ -81,6 +86,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       }
     },
     insertLink,
+    insertBold,
+    insertItalic,
+    insertQuote,
+    insertUnorderedList,
+    insertOrderedList,
   }));
 
   // 통계 계산

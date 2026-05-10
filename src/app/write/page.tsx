@@ -48,6 +48,8 @@ function WritePageContent() {
   const [postId, setPostId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [preview, setPreview] = useState(false); // 에디터 미리보기 상태
+  const [showMoreMenu, setShowMoreMenu] = useState(false); // 더보기 메뉴 상태
+  const moreMenuRef = useRef<HTMLDivElement>(null); // 더보기 메뉴 ref
   const editorRef = useRef<MarkdownEditorRef>(null); // MarkdownEditor ref (툴바용)
   
   // 기존 게시글 목록 (자동 내부 링크용)
@@ -213,6 +215,17 @@ function WritePageContent() {
     
     return processedContent;
   }, [existingPosts]);
+
+  // 더보기 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // 수정 모드: 기존 게시글 불러오기
   useEffect(() => {
@@ -630,13 +643,62 @@ function WritePageContent() {
             )}
             
             {/* 더보기 메뉴 (나머지 툴들) */}
-            <button
-              type="button"
-              className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
-              title="더 많은 도구"
-            >
-              <MoreHorizontal size={18} />
-            </button>
+            <div ref={moreMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
+                title="더 많은 도구"
+              >
+                <MoreHorizontal size={18} />
+              </button>
+              
+              {showMoreMenu && (
+                <div className="absolute top-full right-0 mt-1 bg-white border border-rule rounded-sm shadow-lg z-50 py-1 min-w-[140px]">
+                  <button
+                    type="button"
+                    onClick={() => { editorRef.current?.insertBold?.(); setShowMoreMenu(false); }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
+                  >
+                    <span className="font-bold">B</span>
+                    <span>굵게 (Ctrl+B)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { editorRef.current?.insertItalic?.(); setShowMoreMenu(false); }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
+                  >
+                    <span className="italic">I</span>
+                    <span>기울임 (Ctrl+I)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { editorRef.current?.insertQuote?.(); setShowMoreMenu(false); }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
+                  >
+                    <span className="text-muted">"</span>
+                    <span>인용 (Ctrl+.)</span>
+                  </button>
+                  <div className="border-t border-rule my-1" />
+                  <button
+                    type="button"
+                    onClick={() => { editorRef.current?.insertUnorderedList?.(); setShowMoreMenu(false); }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
+                  >
+                    <span className="text-muted">•</span>
+                    <span>목록</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { editorRef.current?.insertOrderedList?.(); setShowMoreMenu(false); }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
+                  >
+                    <span className="text-muted">1.</span>
+                    <span>번호 목록</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* 미리보기/편집 토글 */}
             <button
