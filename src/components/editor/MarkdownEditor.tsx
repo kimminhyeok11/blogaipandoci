@@ -9,6 +9,9 @@ import { useToast } from "@/components/ui/Toast";
 export interface MarkdownEditorRef {
   saveScrollPosition: () => { editor: number; preview: number };
   restoreScrollPosition: (positions: { editor: number; preview: number }) => void;
+  insertHeading: (level: number) => void;
+  insertImage: (file?: File) => void;
+  insertLink: () => void;
 }
 
 interface MarkdownEditorProps {
@@ -20,6 +23,7 @@ interface MarkdownEditorProps {
   onImageUpload?: (file: File) => Promise<string>;
   preview?: boolean;
   onPreviewChange?: (preview: boolean) => void;
+  showToolbar?: boolean; // 툴바 표시 여부 (기본값: true)
 }
 
 export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(function MarkdownEditorInternal({
@@ -31,6 +35,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   onImageUpload,
   preview: externalPreview,
   onPreviewChange,
+  showToolbar = true,
 }: MarkdownEditorProps, ref) {
   const [internalPreview, setInternalPreview] = useState(false);
   const isControlled = externalPreview !== undefined;
@@ -68,31 +73,33 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   useImperativeHandle(ref, () => ({
     saveScrollPosition: () => {
       if (isPageScrollMode) {
-        // 페이지 스크롤 모드: window.scrollY 저장
-        return {
-          editor: window.scrollY,
-          preview: window.scrollY,
-        };
+        return { editor: window.scrollY, preview: window.scrollY };
       }
-      // 내부 스크롤 모드: element scrollTop 저장
       return {
         editor: textareaRef.current?.scrollTop || 0,
         preview: previewRef.current?.scrollTop || 0,
       };
     },
     restoreScrollPosition: (positions) => {
-      // 페이지 스크롤 모드: 부모(write/page.tsx)가 window.scrollTo로 관리하므로 무시
-      // 내부 스크롤 모드(maxHeight 제한 있음): element scrollTop 설정
       if (!isPageScrollMode) {
-        if (textareaRef.current) {
-          textareaRef.current.scrollTop = positions.editor;
-        }
-        if (previewRef.current) {
-          previewRef.current.scrollTop = positions.preview;
-        }
+        if (textareaRef.current) textareaRef.current.scrollTop = positions.editor;
+        if (previewRef.current) previewRef.current.scrollTop = positions.preview;
       }
-      // 페이지 스크롤 모드에서는 아무것도 하지 않음 (중복 방지)
     },
+    insertHeading,
+    insertImage: (file?: File) => {
+      if (file && onImageUpload) {
+        // 이미지 업로드 처리
+        setIsUploading(true);
+        onImageUpload(file).then(url => {
+          insertText(`![${file.name}](${url})`, '');
+          setIsUploading(false);
+        }).catch(() => setIsUploading(false));
+      } else {
+        fileInputRef.current?.click();
+      }
+    },
+    insertLink,
   }));
 
   // 통계 계산
@@ -690,89 +697,94 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   }, []);
 
   return (
-    <div className="border border-rule rounded-sm bg-white overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex items-center gap-1 p-2 border-b border-rule bg-cream flex-wrap">
-        {/* 제목 드롭다운 */}
-        <div ref={headingMenuRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setShowHeadingMenu(!showHeadingMenu)}
-            className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation flex items-center gap-0.5"
-            title="제목 (Ctrl+1~6)"
-            aria-label="제목"
-          >
-            <Heading size={18} />
-            <ChevronDown size={14} />
-          </button>
-          {showHeadingMenu && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-rule rounded-sm shadow-lg z-10 py-1 min-w-[80px]">
-              {[1, 2, 3, 4, 5, 6].map((level) => (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => {
-                    insertHeading(level);
-                    setShowHeadingMenu(false);
-                  }}
-                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-cream flex items-center gap-2"
-                >
-                  <span className="font-bold text-muted">{'#'.repeat(level)}</span>
-                  <span className="text-xs text-muted">Ctrl+{level}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+    <div className={cn(
+      "bg-transparent",
+      showToolbar && "border border-rule rounded-sm bg-white overflow-hidden"
+    )}>
+      {/* Toolbar - 조건부 렌더링 */}
+      {showToolbar && (
+        <div className="flex items-center gap-1 p-2 border-b border-rule bg-cream flex-wrap">
+          {/* 제목 드롭다운 */}
+          <div ref={headingMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setShowHeadingMenu(!showHeadingMenu)}
+              className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation flex items-center gap-0.5"
+              title="제목 (Ctrl+1~6)"
+              aria-label="제목"
+            >
+              <Heading size={18} />
+              <ChevronDown size={14} />
+            </button>
+            {showHeadingMenu && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-rule rounded-sm shadow-lg z-10 py-1 min-w-[80px]">
+                {[1, 2, 3, 4, 5, 6].map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => {
+                      insertHeading(level);
+                      setShowHeadingMenu(false);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-sm hover:bg-cream flex items-center gap-2"
+                  >
+                    <span className="font-bold text-muted">{'#'.repeat(level)}</span>
+                    <span className="text-xs text-muted">Ctrl+{level}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {toolbarButtons.map(({ icon: Icon, action, title }) => (
+          {toolbarButtons.map(({ icon: Icon, action, title }) => (
+            <button
+              key={title}
+              type="button"
+              onClick={action}
+              className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation"
+              title={title}
+              aria-label={title}
+            >
+              <Icon size={18} />
+            </button>
+          ))}
+          
+          <div className="w-px h-6 bg-rule mx-1" />
+          
           <button
-            key={title}
             type="button"
-            onClick={action}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation disabled:opacity-50"
+            title="이미지 업로드"
+            aria-label="이미지 업로드"
+          >
+            <ImageIcon size={18} />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+            aria-hidden="true"
+          />
+
+          <div className="flex-1" />
+
+          {/* 전체 화면 토글 */}
+          <button
+            type="button"
+            onClick={toggleFullscreen}
             className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation"
-            title={title}
-            aria-label={title}
+            title={isFullscreen ? "전체 화면 종료 (Esc)" : "전체 화면 (F11)"}
+            aria-label={isFullscreen ? "전체 화면 종료" : "전체 화면"}
           >
-            <Icon size={18} />
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
           </button>
-        ))}
-        
-        <div className="w-px h-6 bg-rule mx-1" />
-        
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation disabled:opacity-50"
-          title="이미지 업로드"
-          aria-label="이미지 업로드"
-        >
-          <ImageIcon size={18} />
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageSelect}
-          className="hidden"
-          aria-hidden="true"
-        />
 
-        <div className="flex-1" />
-
-        {/* 전체 화면 토글 */}
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          className="p-2 text-muted hover:text-ink hover:bg-paper rounded-sm transition-colors touch-manipulation"
-          title={isFullscreen ? "전체 화면 종료 (Esc)" : "전체 화면 (F11)"}
-          aria-label={isFullscreen ? "전체 화면 종료" : "전체 화면"}
-        >
-          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-        </button>
-
-      </div>
+        </div>
+      )}
 
       {/* Editor Area - 드래그앤드롭 + 전체화면 지원 */}
       <div 

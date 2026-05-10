@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, Suspense, lazy } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, Edit3, Eye } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Edit3, Eye, Heading, Image as ImageIcon, Link as LinkIcon, MoreHorizontal } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
 import { useToast } from "@/components/ui/Toast";
@@ -564,137 +564,179 @@ function WritePageContent() {
   return (
     <div className="min-h-screen bg-paper">
       {/* Header */}
+      {/* 상단 헤더: 툴바 + 액션 버튼 통합 */}
       <header className="sticky top-0 z-50 bg-paper border-b border-rule">
-        <div className="max-w-content mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className="p-2 text-muted hover:text-ink transition-colors"
-                aria-label="뒤로 가기"
-              >
-                <ArrowLeft size={20} />
-              </Link>
-              <h1 className="font-sans text-sm font-medium text-ink">
-                {isEditMode ? "글 수정하기" : "새 글 작성"}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* 자동 저장 상태 표시 */}
-              {lastSaved && (
-                <span className="hidden sm:block font-sans text-xs text-muted mr-2">
-                  {lastSaved.toLocaleTimeString('ko-KR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })} 자동 저장됨
-                </span>
-              )}
-              
-              {/* 글 히스토리 (수정 모드에서만) */}
-              {isEditMode && (
-                <RevisionHistory
-                  slug={editSlug}
-                  currentContent={content}
-                  currentTitle={title}
-                  currentExcerpt={excerpt}
-                  onRestore={(revision) => {
-                    setTitle(revision.title);
-                    setContent(revision.content);
-                    setExcerpt(revision.excerpt);
-                  }}
-                />
-              )}
-              
-              {/* 미리보기/편집 토글 버튼 */}
+        <div className="flex items-center justify-between h-14 px-4 sm:px-8">
+          {/* 좌측: 뒤로가기 + 툴바 */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="p-2 text-muted hover:text-ink transition-colors"
+              aria-label="뒤로 가기"
+            >
+              <ArrowLeft size={20} />
+            </Link>
+            
+            <div className="h-6 w-px bg-rule mx-2" />
+            
+            {/* 주요 툴 3개: H태그, 이미지, 링크 */}
+            <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => {
-                  // 페이지 스크롤 위치 저장
-                  pageScrollRef.current = window.scrollY;
-                  // 에디터 내부 스크롤 위치 저장
-                  if (editorRef.current) {
-                    editorScrollRef.current = editorRef.current.saveScrollPosition();
+                onClick={() => editorRef.current?.insertHeading?.(2)}
+                className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
+                title="제목 (Ctrl+2)"
+              >
+                <Heading size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => document.getElementById('image-upload')?.click()}
+                className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
+                title="이미지 업로드"
+              >
+                <ImageIcon size={18} />
+              </button>
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && editorRef.current?.insertImage) {
+                    editorRef.current.insertImage(file);
                   }
-                  setPreview(!preview);
                 }}
-                className={`px-2 py-1 text-xs font-sans font-medium rounded-sm transition-colors ${
-                  preview 
-                    ? "bg-ink text-paper hover:bg-ink/90" 
-                    : "border border-rule text-muted hover:border-muted"
-                }`}
-              >
-                {preview ? "작성" : "보기"}
-              </button>
-
+              />
               <button
                 type="button"
-                onClick={() => handleSubmit(false)}
-                disabled={isSubmitting}
-                className="px-2 py-1 border border-rule text-muted text-xs font-sans font-medium rounded-sm hover:border-muted transition-colors disabled:opacity-50"
+                onClick={() => editorRef.current?.insertLink?.()}
+                className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
+                title="링크 (Ctrl+K)"
               >
-                {isSubmitting ? "..." : "임시"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSubmit(true)}
-                disabled={isSubmitting}
-                className="px-3 py-1 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors disabled:opacity-50"
-              >
-                {isEditMode ? "저장" : "발행"}
+                <LinkIcon size={18} />
               </button>
             </div>
+          </div>
+
+          {/* 우측: 액션 버튼들 */}
+          <div className="flex items-center gap-2">
+            {/* 자동 저장 상태 */}
+            {lastSaved && (
+              <span className="hidden lg:block font-sans text-xs text-muted mr-2">
+                {lastSaved.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 저장됨
+              </span>
+            )}
+            
+            {isEditMode && (
+              <RevisionHistory
+                slug={editSlug}
+                currentContent={content}
+                currentTitle={title}
+                currentExcerpt={excerpt}
+                onRestore={(revision) => {
+                  setTitle(revision.title);
+                  setContent(revision.content);
+                  setExcerpt(revision.excerpt);
+                }}
+              />
+            )}
+            
+            {/* 더보기 메뉴 (나머지 툴들) */}
+            <button
+              type="button"
+              className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
+              title="더 많은 도구"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+
+            {/* 미리보기/편집 토글 */}
+            <button
+              type="button"
+              onClick={() => {
+                pageScrollRef.current = window.scrollY;
+                if (editorRef.current) {
+                  editorScrollRef.current = editorRef.current.saveScrollPosition();
+                }
+                setPreview(!preview);
+              }}
+              className={`px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors ${
+                preview 
+                  ? "bg-ink text-paper" 
+                  : "border border-rule text-muted hover:border-muted"
+              }`}
+            >
+              {preview ? "작성" : "보기"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSubmit(false)}
+              disabled={isSubmitting}
+              className="px-3 py-1.5 border border-rule text-muted text-xs font-sans font-medium rounded-sm hover:border-muted transition-colors disabled:opacity-50"
+            >
+              임시
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSubmit(true)}
+              disabled={isSubmitting}
+              className="px-4 py-1.5 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors disabled:opacity-50"
+            >
+              {isEditMode ? "저장" : "발행"}
+            </button>
           </div>
         </div>
       </header>
 
-      {/* 티스토리 스타일: 단일 페이지 레이아웃 */}
+      {/* 티스토리 스타일: 풀그리드 단일 페이지 레이아웃 */}
       {!isLoading ? (
-        <main className="max-w-content mx-auto px-4 sm:px-6">
-          {/* 제목 - 헤더 바로 아래, 페이지에 통합 */}
+        <main className="w-full px-4 sm:px-8 lg:px-16">
+          {/* 제목 - 페이지 전체 너비로 통합 */}
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="제목을 입력하세요"
-            className="w-full mt-6 mb-4 text-2xl sm:text-3xl font-black text-ink placeholder-muted/50 border-b border-rule/50 pb-3 focus:outline-none focus:border-rust transition-colors bg-transparent"
+            className="w-full mt-8 mb-2 text-3xl sm:text-4xl font-black text-ink placeholder-muted/40 bg-transparent border-none focus:outline-none focus:ring-0"
           />
 
-          {/* 본문 에디터 - 페이지 전체가 입력 영역 */}
+          {/* 태그/요약 - 제목 아래 2컬럼 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 pb-6 border-b border-rule/30">
+            <input
+              type="text"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="태그: 저작권, 판례, 기술"
+              className="text-sm font-sans text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0"
+            />
+            <input
+              type="text"
+              value={excerpt}
+              onChange={(e) => setExcerpt(e.target.value)}
+              placeholder="요약: 미입력 시 자동 생성"
+              className="text-sm font-sans text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0 text-right"
+            />
+          </div>
+
+          {/* 본문 에디터 - 툴바 없이, 페이지 전체가 입력 영역 */}
           <MarkdownEditor
             ref={editorRef}
             value={content}
             onChange={setContent}
             preview={preview}
             placeholder="마크다운으로 글을 작성하세요..."
-            minHeight="calc(100vh - 280px)"
+            minHeight="calc(100vh - 300px)"
             maxHeight="none"
+            showToolbar={false}
             onImageUpload={handleImageUpload}
           />
 
-          {/* 메타 정보 - 본문 아래에 위치 (토글 가능) */}
-          <div className="mt-8 pt-6 border-t border-rule/50 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="태그: 저작권, 판례, 기술 (쉼표로 구분)"
-                className="w-full px-3 py-2 text-sm font-sans text-ink placeholder-muted/60 border border-rule/50 rounded-sm focus:outline-none focus:border-rust transition-colors bg-transparent"
-              />
-              <input
-                type="text"
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-                placeholder="요약: 글의 핵심 내용을 1-2문장으로 (미입력 시 자동 생성)"
-                className="w-full px-3 py-2 text-sm font-sans text-ink placeholder-muted/60 border border-rule/50 rounded-sm focus:outline-none focus:border-rust transition-colors bg-transparent"
-              />
-            </div>
-          </div>
-
           {/* 하단 여백 */}
-          <div className="h-20" />
+          <div className="h-32" />
         </main>
       ) : (
         <div className="flex items-center justify-center py-20">
