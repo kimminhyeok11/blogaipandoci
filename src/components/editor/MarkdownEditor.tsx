@@ -791,6 +791,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
         ref={editorRef}
         className={cn(
           "relative",
+          showToolbar && "bg-paper p-4",
+          !showToolbar && "bg-transparent p-0",
           isDragging && "ring-2 ring-rust ring-inset"
         )}
         onDragOver={handleDragOver}
@@ -807,8 +809,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
         {preview ? (
           <div
             className={cn(
-              "prose-journal p-4 bg-paper",
-              !isPageScrollMode && "overflow-y-auto", // maxHeight 있을 때만 내부 스크롤
+              showToolbar ? "prose-journal" : "",
+              !isPageScrollMode && "overflow-y-auto",
               isFullscreen && "h-[calc(100vh-120px)] overflow-y-auto"
             )}
             style={!isFullscreen ? { minHeight, ...(maxHeight && maxHeight !== 'none' ? { maxHeight } : {}) } : undefined}
@@ -839,11 +841,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
             placeholder={placeholder}
             rows={1}
             className={cn(
-              "w-full p-4 bg-paper text-ink font-serif text-base leading-loose focus:outline-none focus:ring-2 focus:ring-rust/20 overflow-hidden",
+              "w-full text-ink font-serif text-base leading-loose focus:outline-none focus:ring-0 overflow-hidden",
+              showToolbar ? "p-4 bg-paper focus:ring-2 focus:ring-rust/20" : "p-0 bg-transparent",
               isFullscreen && "h-[calc(100vh-120px)] resize-none overflow-y-auto"
             )}
             style={{ 
-              minHeight: isFullscreen ? undefined : '200px',
+              minHeight: isFullscreen ? undefined : '300px',
               height: 'auto',
               resize: 'none'
             }}
