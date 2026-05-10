@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Post } from "@/types";
 import { StickyNav } from "@/components/layout/StickyNav";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 export const metadata: Metadata = {
   title: "모든 글",

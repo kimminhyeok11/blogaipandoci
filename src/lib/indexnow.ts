@@ -14,7 +14,7 @@ interface IndexNowRequest {
  * IndexNow API로 URL 변경사항을 검색엔진에 알림
  * @param urls 알릴 URL 목록 (최대 10,000개)
  * @param key IndexNow 인증 키
- * @param host 사이트 도메인 (예: blogaipandoci.vercel.app)
+ * @param host 사이트 도메인 (예: lawtiphub.com)
  */
 export async function notifyIndexNow(
   urls: string[],

@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
               fontWeight: "500",
             }}
           >
-            blogaipandoci.vercel.app
+            lawtiphub.com
           </div>
         </div>
       ),

@@ -4,7 +4,7 @@
 
 ## 🚀 데모
 
-**사이트**: https://blogaipandoci.vercel.app
+**사이트**: https://lawtiphub.com
 
 ## ✨ 주요 기능
 

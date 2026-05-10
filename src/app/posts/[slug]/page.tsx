@@ -12,7 +12,7 @@ import { RelatedPosts } from "@/components/posts/RelatedPosts";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import { StickyNav } from "@/components/layout/StickyNav";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 // 동적 렌더링 - 데이터 변경 시 즉시 반영
 export const dynamic = 'force-dynamic';

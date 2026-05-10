@@ -10,7 +10,7 @@
   package = "@netlify/plugin-nextjs"
 
 [context.production.environment]
-  NEXT_PUBLIC_SITE_URL = "https://blogaipandoci.vercel.app"
+  NEXT_PUBLIC_SITE_URL = "https://lawtiphub.com"
 
 [context.deploy-preview.environment]
-  NEXT_PUBLIC_SITE_URL = "https://deploy-preview.blogaipandoci.vercel.app"
+  NEXT_PUBLIC_SITE_URL = "https://deploy-preview.lawtiphub.com"

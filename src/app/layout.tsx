@@ -10,7 +10,7 @@ import { AdSenseScript } from "@/components/ads/AdSenseScript";
 import { ScrollRestoration } from "@/components/utils/ScrollRestoration";
 import Link from "next/link";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 const notoSerifKR = Noto_Serif_KR({
   subsets: ["latin"],

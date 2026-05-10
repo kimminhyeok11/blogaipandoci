@@ -2,7 +2,7 @@
 // 사용법: node test-indexnow.mjs
 
 const INDEXNOW_KEY = "d69e5cf2d78353c1c09c08c163ae690b";
-const HOST = "blogaipandoci.vercel.app";
+const HOST = "lawtiphub.com";
 const TEST_URL = `https://${HOST}/`;  // 실제 존재하는 홈페이지 URL로 테스트
 
 async function testIndexNow() {

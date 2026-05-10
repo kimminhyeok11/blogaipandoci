@@ -54,7 +54,7 @@ function extractImages(content: string | null, coverImage: string | null): strin
 }
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
   // 정적 페이지
   const staticPages = [

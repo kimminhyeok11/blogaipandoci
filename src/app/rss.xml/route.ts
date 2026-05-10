@@ -10,7 +10,7 @@ interface RssPost {
 }
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://blogaipandoci.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
   // 최신 게시글 20개 가져오기
   const { data } = await supabase
