@@ -1,11 +1,10 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Tag, Loader2 } from "lucide-react";
+import { Tag } from "lucide-react";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/Toast";
+
+// ISR: 1시간마다 재생성
+export const revalidate = 3600;
 
 interface TagData {
   name: string;
@@ -13,37 +12,29 @@ interface TagData {
   count: number;
 }
 
-export default function TagsPage() {
-  const [tags, setTags] = useState<TagData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { showToast } = useToast();
+async function getTags(): Promise<TagData[]> {
+  try {
+    const { data: tagData, error } = await supabase
+      .from("tags")
+      .select("name, slug, post_tags(count)");
 
-  useEffect(() => {
-    const fetchTags = async () => {
-      try {
-        // tags 테이블과 post_tags 조인하여 게시글 수 계산
-        const { data: tagData, error } = await supabase
-          .from("tags")
-          .select("name, slug, post_tags(count)");
+    if (error) throw error;
 
-        if (error) throw error;
+    return (tagData || [])
+      .map((tag: any) => ({
+        name: tag.name,
+        slug: tag.slug,
+        count: tag.post_tags?.[0]?.count || 0,
+      }))
+      .sort((a: TagData, b: TagData) => b.count - a.count);
+  } catch (err) {
+    console.error("Failed to fetch tags:", err);
+    return [];
+  }
+}
 
-        const formattedTags = (tagData || []).map((tag: any) => ({
-          name: tag.name,
-          slug: tag.slug,
-          count: tag.post_tags?.[0]?.count || 0,
-        })).sort((a: any, b: any) => b.count - a.count);
-
-        setTags(formattedTags);
-      } catch {
-        showToast("태그 로딩 실패", "error");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTags();
-  }, []);
+export default async function TagsPage() {
+  const tags = await getTags();
 
   return (
     <div className="min-h-screen bg-paper">
@@ -67,11 +58,7 @@ export default function TagsPage() {
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="animate-spin text-rust" size={32} />
-          </div>
-        ) : tags.length === 0 ? (
+        {tags.length === 0 ? (
           <div className="text-center py-16 border border-rule bg-cream rounded-sm">
             <p className="font-sans text-sm text-muted">
               아직 태그가 없습니다.
