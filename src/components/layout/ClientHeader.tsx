@@ -87,7 +87,7 @@ export function ClientHeader() {
               </Link>
             ) : (
               <Link 
-                href="/auth" 
+                href="/login" 
                 className="p-1 text-ink hover:text-rust transition-colors"
                 title="로그인"
               >
