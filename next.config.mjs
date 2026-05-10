@@ -74,6 +74,22 @@ const nextConfig = {
       },
     ];
   },
+  // 301 리다이렉트: 기존 vercel.app → 새 도메인
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'blogaipandoci.vercel.app',
+          },
+        ],
+        destination: 'https://lawtiphub.com/:path*',
+        permanent: true, // 301 리다이렉트
+      },
+    ];
+  },
 };
 
 export default nextConfig;
