@@ -64,18 +64,34 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   const { showToast } = useToast();
   
   // 스크롤 위치 저장/복원 메서드 노출
+  // 페이지 스크롤 모드: window.scrollY 사용, 내부 스크롤 모드: element.scrollTop 사용
   useImperativeHandle(ref, () => ({
-    saveScrollPosition: () => ({
-      editor: textareaRef.current?.scrollTop || 0,
-      preview: previewRef.current?.scrollTop || 0,
-    }),
+    saveScrollPosition: () => {
+      if (isPageScrollMode) {
+        // 페이지 스크롤 모드: window.scrollY 저장
+        return {
+          editor: window.scrollY,
+          preview: window.scrollY,
+        };
+      }
+      // 내부 스크롤 모드: element scrollTop 저장
+      return {
+        editor: textareaRef.current?.scrollTop || 0,
+        preview: previewRef.current?.scrollTop || 0,
+      };
+    },
     restoreScrollPosition: (positions) => {
-      if (textareaRef.current) {
-        textareaRef.current.scrollTop = positions.editor;
+      // 페이지 스크롤 모드: 부모(write/page.tsx)가 window.scrollTo로 관리하므로 무시
+      // 내부 스크롤 모드(maxHeight 제한 있음): element scrollTop 설정
+      if (!isPageScrollMode) {
+        if (textareaRef.current) {
+          textareaRef.current.scrollTop = positions.editor;
+        }
+        if (previewRef.current) {
+          previewRef.current.scrollTop = positions.preview;
+        }
       }
-      if (previewRef.current) {
-        previewRef.current.scrollTop = positions.preview;
-      }
+      // 페이지 스크롤 모드에서는 아무것도 하지 않음 (중복 방지)
     },
   }));
 
