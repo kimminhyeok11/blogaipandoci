@@ -649,94 +649,61 @@ function WritePageContent() {
         </div>
       </header>
 
-      {/* 상단 고정 영역: 메타 정보 (제목/태그/요약) */}
-      <div className="sticky top-14 z-40 bg-paper border-b border-rule">
-        <div className="max-w-content mx-auto px-4 sm:px-6 py-4 space-y-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-3 text-muted">
-                <Loader2 size={24} className="animate-spin" />
-                <span className="font-sans text-sm">글을 불러오는 중...</span>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Title Input - 본문과 통일된 스타일 */}
+      {/* 티스토리 스타일: 단일 페이지 레이아웃 */}
+      {!isLoading ? (
+        <main className="max-w-content mx-auto px-4 sm:px-6">
+          {/* 제목 - 헤더 바로 아래, 페이지에 통합 */}
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="제목을 입력하세요"
+            className="w-full mt-6 mb-4 text-2xl sm:text-3xl font-black text-ink placeholder-muted/50 border-b border-rule/50 pb-3 focus:outline-none focus:border-rust transition-colors bg-transparent"
+          />
+
+          {/* 본문 에디터 - 페이지 전체가 입력 영역 */}
+          <MarkdownEditor
+            ref={editorRef}
+            value={content}
+            onChange={setContent}
+            preview={preview}
+            placeholder="마크다운으로 글을 작성하세요..."
+            minHeight="calc(100vh - 280px)"
+            maxHeight="none"
+            onImageUpload={handleImageUpload}
+          />
+
+          {/* 메타 정보 - 본문 아래에 위치 (토글 가능) */}
+          <div className="mt-8 pt-6 border-t border-rule/50 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="제목을 입력하세요"
-                className="w-full bg-paper text-2xl sm:text-3xl font-black text-ink placeholder-muted border-b-2 border-rule pb-3 px-4 -mx-4 focus:outline-none focus:border-rust transition-colors"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="태그: 저작권, 판례, 기술 (쉼표로 구분)"
+                className="w-full px-3 py-2 text-sm font-sans text-ink placeholder-muted/60 border border-rule/50 rounded-sm focus:outline-none focus:border-rust transition-colors bg-transparent"
               />
-
-              {/* Tags & Excerpt Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Tags Input */}
-                <div>
-                  <label className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
-                    태그 (쉼표로 구분)
-                  </label>
-                  <input
-                    type="text"
-                    value={tags}
-                    onChange={(e) => setTags(e.target.value)}
-                    placeholder="예: 저작권, 판례, 기술"
-                    className="w-full px-3 py-2 bg-cream border border-rule rounded-sm text-sm font-sans text-ink placeholder-muted focus:outline-none focus:border-rust transition-colors"
-                  />
-                </div>
-
-                {/* Excerpt Input */}
-                <div>
-                  <label className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
-                    요약 (미입력 시 자동 생성)
-                  </label>
-                  <input
-                    type="text"
-                    value={excerpt}
-                    onChange={(e) => setExcerpt(e.target.value)}
-                    placeholder="글의 핵심 내용을 1-2문장으로 요약해주세요"
-                    className="w-full px-3 py-2 bg-cream border border-rule rounded-sm text-sm font-sans text-ink placeholder-muted focus:outline-none focus:border-rust transition-colors"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* 중단 본문 영역: 페이지 스크롤로 자연스럽게 늘어남 */}
-      <main className="max-w-content mx-auto px-4 sm:px-6 py-6 pb-20">
-        {!isLoading && (
-          <div>
-            <label className="block font-sans text-xs font-medium text-muted mb-3 uppercase tracking-wider">
-              내용
-            </label>
-            <MarkdownEditor
-              ref={editorRef}
-              value={content}
-              onChange={setContent}
-              preview={preview}
-              placeholder="마크다운으로 글을 작성하세요...
-
-## 제목을 이렇게 작성하세요
-
-**굵은 글씨**와 *기울임*을 사용할 수 있습니다.
-
-> 인용구도 이렇게 작성할 수 있습니다.
-
-- 목록 아이템
-- 또 다른 아이템
-
-1. 번호 목록
-2. 두 번째 항목"
-              minHeight="calc(100vh - 400px)"
-              maxHeight="none"
-              onImageUpload={handleImageUpload}
-            />
+              <input
+                type="text"
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                placeholder="요약: 글의 핵심 내용을 1-2문장으로 (미입력 시 자동 생성)"
+                className="w-full px-3 py-2 text-sm font-sans text-ink placeholder-muted/60 border border-rule/50 rounded-sm focus:outline-none focus:border-rust transition-colors bg-transparent"
+              />
+            </div>
           </div>
-        )}
-      </main>
+
+          {/* 하단 여백 */}
+          <div className="h-20" />
+        </main>
+      ) : (
+        <div className="flex items-center justify-center py-20">
+          <div className="flex items-center gap-3 text-muted">
+            <Loader2 size={24} className="animate-spin" />
+            <span className="font-sans text-sm">글을 불러오는 중...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
