@@ -74,7 +74,7 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
   if (!supabase) return null;
 
   // slug에서 숫자 추출 (타임스탬프 부분)
-  const timestampMatch = slug.match(/([a-z0-9]{4,6})$/);
+  const timestampMatch = slug.match(/([a-z0-9]{4,8})$/);
 
   if (timestampMatch) {
     // 유사한 slug 패턴을 가진 최근 게시글 검색
@@ -84,6 +84,24 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
       .eq('published', true)
       .not('published_at', 'is', null)
       .ilike('slug', `%${timestampMatch[1]}`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!error && data) {
+      return data as Post;
+    }
+  }
+
+  // slug가 짧거나 무의미한 경우 (예: "-", "abc", "post123")
+  // 제목 키워드로 검색
+  if (slug.length < 5 || slug === '-' || /^[a-z0-9]{1,4}$/i.test(slug)) {
+    // 일반적인 키워드로 최신 글 검색
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*, user:users(nickname, avatar_url, email)')
+      .eq('published', true)
+      .not('published_at', 'is', null)
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
