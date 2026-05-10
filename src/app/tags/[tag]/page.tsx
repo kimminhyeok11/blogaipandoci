@@ -1,11 +1,6 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { Tag, Loader2 } from "lucide-react";
+import { Tag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/Toast";
 import { StickyNav } from "@/components/layout/StickyNav";
 
 interface Post {
@@ -17,63 +12,55 @@ interface Post {
   view_count: number;
 }
 
-export default function TagPage() {
-  const params = useParams();
-  const tag = decodeURIComponent(params.tag as string);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { showToast } = useToast();
+interface TagPageProps {
+  params: { tag: string };
+}
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        // 1. 태그 slug로 tag_id 찾기
-        const { data: tagData, error: tagError } = await (supabase
-          .from("tags") as any)
-          .select("id")
-          .eq("slug", tag)
-          .single();
+async function getPostsByTag(tagSlug: string): Promise<Post[]> {
+  try {
+    // 1. 태그 slug로 tag_id 찾기
+    const { data: tagData, error: tagError } = await (supabase
+      .from("tags") as any)
+      .select("id")
+      .eq("slug", tagSlug)
+      .single();
 
-        if (tagError || !tagData) {
-          setPosts([]);
-          setIsLoading(false);
-          return;
-        }
+    if (tagError || !tagData) {
+      return [];
+    }
 
-        // 2. post_tags로 해당 태그의 게시글 ID 찾기
-        const { data: postTags, error: postTagsError } = await (supabase
-          .from("post_tags") as any)
-          .select("post_id")
-          .eq("tag_id", tagData.id);
+    // 2. post_tags로 해당 태그의 게시글 ID 찾기
+    const { data: postTags, error: postTagsError } = await (supabase
+      .from("post_tags") as any)
+      .select("post_id")
+      .eq("tag_id", tagData.id);
 
-        if (postTagsError || !postTags?.length) {
-          setPosts([]);
-          setIsLoading(false);
-          return;
-        }
+    if (postTagsError || !postTags?.length) {
+      return [];
+    }
 
-        const postIds = postTags.map((pt: any) => pt.post_id);
+    const postIds = postTags.map((pt: any) => pt.post_id);
 
-        // 3. posts 테이블에서 게시글 정보 가져오기
-        const { data, error } = await supabase
-          .from("posts")
-          .select("id, title, excerpt, slug, published_at, view_count")
-          .eq("published", true)
-          .not("published_at", "is", null)
-          .in("id", postIds)
-          .order("published_at", { ascending: false });
+    // 3. posts 테이블에서 게시글 정보 가져오기
+    const { data, error } = await supabase
+      .from("posts")
+      .select("id, title, excerpt, slug, published_at, view_count")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .in("id", postIds)
+      .order("published_at", { ascending: false });
 
-        if (error) throw error;
-        setPosts(data || []);
-      } catch {
-        showToast("글 로딩 실패", "error");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Error fetching posts by tag:", error);
+    return [];
+  }
+}
 
-    fetchPosts();
-  }, [tag]);
+export default async function TagPage({ params }: TagPageProps) {
+  const tag = decodeURIComponent(params.tag);
+  const posts = await getPostsByTag(tag);
 
   return (
     <div className="min-h-screen bg-paper">
@@ -95,15 +82,11 @@ export default function TagPage() {
             <h1 className="text-2xl font-black text-ink">#{tag}</h1>
           </div>
           <p className="font-sans text-sm text-muted">
-            {isLoading ? "불러오는 중..." : `총 ${posts.length}개의 글`}
+            {`총 ${posts.length}개의 글`}
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="animate-spin text-rust" size={32} />
-          </div>
-        ) : posts.length === 0 ? (
+        {posts.length === 0 ? (
           <div className="text-center py-16 border border-rule bg-cream rounded-sm">
             <p className="font-sans text-sm text-muted mb-4">
               이 태그의 글이 없습니다.
