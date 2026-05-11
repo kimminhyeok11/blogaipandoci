@@ -114,10 +114,10 @@ function WritePageContent() {
   useEffect(() => {
     if (!title && !content) return;
     
-    // 30초마다 자동 저장
+    // 10초마다 자동 저장 (사용자 피드백 개선)
     const interval = setInterval(() => {
       saveToLocalStorage();
-    }, 30000);
+    }, 10000);
 
     // 페이지 숨겨질 때도 저장 (모바일 백그라운드)
     const handleVisibilityChange = () => {
@@ -570,7 +570,7 @@ function WritePageContent() {
       {/* Header */}
       {/* 상단 헤더: 툴바 + 액션 버튼 통합 */}
       <header className="sticky top-0 z-50 bg-paper border-b border-rule">
-        <div className="flex items-center justify-between h-14 px-4 sm:px-8">
+        <div className="flex items-center justify-between h-12 px-4 sm:px-6 lg:px-8">
           {/* 좌측: 뒤로가기 + 툴바 */}
           <div className="flex items-center gap-2">
             <Link
@@ -761,54 +761,74 @@ function WritePageContent() {
 
       {/* 티스토리 스타일: 상단바 + 입력영역 + 하단상태바 3단 레이아웃 */}
       {!isLoading ? (
-        <main className="flex-1 flex flex-col w-full px-6 sm:px-12 lg:px-24 xl:px-32 min-h-0">
-          {/* 메타 정보 영역 - 배경으로 구분 */}
-          <div className="py-8 border-b-2 border-rule flex-shrink-0">
+        <main className="flex-1 flex flex-col w-full min-h-0">
+          {/* 메타 정보 영역 - 풀그리드 너비 */}
+          <div className="px-4 sm:px-6 lg:px-8 py-6 border-b-2 border-rule flex-shrink-0">
             {/* 제목 */}
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="제목을 입력하세요"
-              className="w-full text-3xl sm:text-4xl font-black text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0 mb-4"
+              className="w-full text-2xl sm:text-3xl font-black text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0 mb-3"
             />
 
-            {/* 태그/요약 - 모바일 최적화 스택 레이아웃 */}
-            <div className="flex flex-col gap-3 sm:gap-4">
+            {/* 태그/요약 - 가로 레이아웃 */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
               {/* 태그 */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <span className="text-xs sm:text-sm font-sans font-medium text-muted whitespace-nowrap w-10 sm:w-12">태그</span>
+              <div className="flex items-center gap-2 flex-1">
+                <span className="text-xs font-sans font-medium text-muted whitespace-nowrap">태그</span>
                 <input
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   placeholder="저작권, 판례, 기술 (쉼표로 구분)"
-                  className="flex-1 font-sans text-sm text-ink placeholder:text-muted/40 bg-transparent border-b-2 border-rule/20 focus:border-rust focus:outline-none py-2 transition-colors"
+                  className="flex-1 font-sans text-sm text-ink placeholder:text-muted/40 bg-transparent border-b-2 border-rule/20 focus:border-rust focus:outline-none py-1.5 transition-colors"
                 />
               </div>
               {/* 요약 */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <span className="text-xs sm:text-sm font-sans font-medium text-muted whitespace-nowrap w-10 sm:w-12">요약</span>
+              <div className="flex items-center gap-2 flex-1">
+                <span className="text-xs font-sans font-medium text-muted whitespace-nowrap">요약</span>
                 <input
                   type="text"
                   value={excerpt}
                   onChange={(e) => setExcerpt(e.target.value)}
                   placeholder="미입력 시 본문에서 자동 생성됩니다"
-                  className="flex-1 font-sans text-sm text-ink placeholder:text-muted/40 bg-transparent border-b-2 border-rule/20 focus:border-rust focus:outline-none py-2 transition-colors"
+                  className="flex-1 font-sans text-sm text-ink placeholder:text-muted/40 bg-transparent border-b-2 border-rule/20 focus:border-rust focus:outline-none py-1.5 transition-colors"
                 />
               </div>
             </div>
           </div>
 
-          {/* 본문 에디터 - flex-1로 남은 공간 채움 */}
-          <div className="flex-1 py-4 min-h-0 overflow-auto">
+          {/* 본문 에디터 - 페이지 전체가 입력칸 */}
+          <div className="flex-1 min-h-0 overflow-auto px-4 sm:px-6 lg:px-8 pb-12">
             <MarkdownEditor
               ref={editorRef}
               value={content}
               onChange={setContent}
               preview={preview}
               placeholder="마크다운으로 글을 작성하세요..."
-        </div>
+            />
+          </div>
+
+          {/* 하단 고정 글자수 바 */}
+          <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between h-12 px-4 sm:px-6 lg:px-8 border-t border-rule bg-paper/95 backdrop-blur-sm text-xs text-muted">
+            <div className="flex items-center gap-4">
+              <span className="font-medium text-ink">{content.length.toLocaleString()} 글자</span>
+              <span className="hidden sm:inline">{content.trim() ? content.trim().split(/\s+/).length.toLocaleString() : 0} 단어</span>
+              <span className="hidden sm:inline">{content.split('\n').length} 줄</span>
+              <span className="hidden md:inline text-rust">약 {Math.ceil(content.length / 500)}분 소요</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline opacity-60">Tab: 들여쓰기</span>
+              <span className="hidden md:inline opacity-60">Shift+Tab: 내어쓰기</span>
+            </div>
+          </div>
+        </main>
+      ) : (
+        <main className="flex-1 flex items-center justify-center">
+          <span className="text-muted">로딩 중...</span>
+        </main>
       )}
     </div>
   );

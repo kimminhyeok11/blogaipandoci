@@ -125,11 +125,82 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     
     setTimeout(() => {
       textarea.focus();
-      const newStart = start + before.length;
-      const newEnd = newStart + selectedText.length;
-      textarea.setSelectionRange(newStart, newEnd);
+      const newCursorPos = end + before.length + after.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
   }, [value, onChange, insertText]);
+
+  // 키보드 단축키 및 Tab 처리
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Tab: 들여쓰기 / Shift+Tab: 내어쓰기
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const lines = value.substring(0, start).split('\n');
+      const currentLineStart = value.lastIndexOf('\n', start - 1) + 1;
+      
+      if (e.shiftKey) {
+        // 내어쓰기
+        const currentLine = value.substring(currentLineStart, end);
+        const newLine = currentLine.replace(/^  /, '').replace(/^\t/, '');
+        const newValue = value.substring(0, currentLineStart) + newLine + value.substring(end);
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.setSelectionRange(start - (currentLine.length - newLine.length), end - (currentLine.length - newLine.length));
+        }, 0);
+      } else {
+        // 들여쓰기
+        const newValue = value.substring(0, start) + '  ' + value.substring(end);
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.setSelectionRange(start + 2, end + 2);
+        }, 0);
+      }
+      return;
+    }
+
+    // Ctrl/Cmd + B: 굵게
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+      e.preventDefault();
+      wrapText('**', '**');
+      return;
+    }
+
+    // Ctrl/Cmd + I: 기울임
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+      e.preventDefault();
+      wrapText('*', '*');
+      return;
+    }
+
+    // Ctrl/Cmd + K: 링크
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = value.substring(start, end) || '링크텍스트';
+      insertText(`[${selectedText}](`, ')');
+      return;
+    }
+
+    // Ctrl/Cmd + Shift + K: 코드 블록
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'K') {
+      e.preventDefault();
+      wrapText('```\n', '\n```');
+      return;
+    }
+
+    // Ctrl/Cmd + .: 인용구
+    if ((e.ctrlKey || e.metaKey) && e.key === '.') {
+      e.preventDefault();
+      insertText('> ', '');
+      return;
+    }
+  }, [value, onChange, insertText, wrapText]);
 
   // 제목 삽입
   const insertHeading = useCallback((level: number = 2) => {
@@ -414,12 +485,13 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onPaste={handlePaste}
+            onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={1}
             suppressHydrationWarning
             className="w-full p-0 bg-transparent text-ink font-serif text-base leading-loose focus:outline-none focus:ring-0 resize-none min-h-[300px]"
             style={{ minHeight }}
-            spellCheck={false}
+            spellCheck={true}
           />
         )}
         
