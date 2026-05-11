@@ -348,11 +348,22 @@ body {
   margin-top: 1.5rem;
 }
 
+.prose-journal .table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
 .prose-journal table {
   width: 100%;
-  min-width: 500px;
+  min-width: min(500px, 100vw - 2rem);
   border-collapse: collapse;
   font-size: 0.875rem;
+}
+
+/* 표가 큰 경우 전체 콘텐츠를 확장하여 일관된 너비 유지 */
+.prose-journal:has(.table-wrapper) {
+  min-width: min-content;
 }
 
 .prose-journal th {
@@ -482,4 +493,13 @@ img {
 /* aspect-ratio 지원 */
 .aspect-video {
   aspect-ratio: 16 / 9;
+}
+
+/* 스크롤바 숨김 유틸리티 */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

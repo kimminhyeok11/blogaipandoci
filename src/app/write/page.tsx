@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, Suspense, lazy } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Heading, Image as ImageIcon, Link as LinkIcon, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Loader2, Heading, Image as ImageIcon, Link as LinkIcon, MoreHorizontal, Pencil, Eye, Save, Check, Send } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { generateSlug } from "@/utils/image";
 import { useToast } from "@/components/ui/Toast";
@@ -567,10 +567,9 @@ function WritePageContent() {
 
   return (
     <div className="min-h-screen bg-paper">
-      {/* Header */}
-      {/* 상단 헤더: 툴바 + 액션 버튼 통합 */}
-      <header className="sticky top-0 z-50 bg-paper border-b border-rule">
-        <div className="flex items-center justify-between h-12 px-4 sm:px-6 lg:px-8">
+      {/* Header - 고정 + 모바일 스크롤 */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-paper border-b border-rule">
+        <div className="flex items-center h-12 px-3 sm:px-4 overflow-x-auto scrollbar-hide">
           {/* 좌측: 뒤로가기 + 툴바 */}
           <div className="flex items-center gap-2">
             <Link
@@ -725,35 +724,38 @@ function WritePageContent() {
               )}
             </div>
 
-            {/* 미리보기/편집 토글 */}
+            {/* 미리보기/편집 토글 - 미니멀 아이콘 */}
             <button
               type="button"
               onClick={() => setPreview(!preview)}
-              className={`px-3 py-1.5 text-xs font-sans font-medium rounded-sm transition-colors ${
+              title={preview ? "편집" : "보기"}
+              className={`p-2 rounded-sm transition-colors ${
                 preview 
                   ? "bg-ink text-paper" 
                   : "border border-rule text-muted hover:border-muted"
               }`}
             >
-              {preview ? "편집" : "보기"}
+              {preview ? <Pencil size={16} /> : <Eye size={16} />}
             </button>
 
             <button
               type="button"
               onClick={() => handleSubmit(false)}
               disabled={isSubmitting}
-              className="px-3 py-1.5 border border-rule text-muted text-xs font-sans font-medium rounded-sm hover:border-muted transition-colors disabled:opacity-50"
+              title="임시저장"
+              className="p-2 border border-rule text-muted rounded-sm hover:border-muted transition-colors disabled:opacity-50"
             >
-              임시
+              <Save size={16} />
             </button>
 
             <button
               type="button"
               onClick={() => handleSubmit(true)}
               disabled={isSubmitting}
-              className="px-4 py-1.5 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors disabled:opacity-50"
+              title={isEditMode ? "저장" : "발행"}
+              className="p-2 bg-rust text-paper rounded-sm hover:bg-rust-light transition-colors disabled:opacity-50"
             >
-              {isEditMode ? "저장" : "발행"}
+              {isEditMode ? <Check size={16} /> : <Send size={16} />}
             </button>
           </div>
         </div>
@@ -761,7 +763,7 @@ function WritePageContent() {
 
       {/* 티스토리 스타일: 상단바 + 입력영역 + 하단상태바 3단 레이아웃 */}
       {!isLoading ? (
-        <main className="flex-1 flex flex-col w-full min-h-0">
+        <main className="flex-1 flex flex-col w-full min-h-0 pt-12">
           {/* 메타 정보 영역 - 풀그리드 너비 */}
           <div className="px-4 sm:px-6 lg:px-8 py-6 border-b-2 border-rule flex-shrink-0">
             {/* 제목 */}
@@ -808,6 +810,7 @@ function WritePageContent() {
               onChange={setContent}
               preview={preview}
               placeholder="마크다운으로 글을 작성하세요..."
+              onImageUpload={handleImageUpload}
             />
           </div>
 
