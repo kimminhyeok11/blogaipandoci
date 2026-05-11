@@ -142,8 +142,8 @@ function WritePageContent() {
 
   // 페이지 로드 시 복원 확인
   useEffect(() => {
-    // 수정 모드에서는 기존 글을 먼저 로드하고, 임시 저장이 있으면 확인
-    if (isEditMode) return; // 수정 모드는 기존 로직에서 처리
+    // 새 글쓰기 모드에서만 임시저장 확인 (수정 모드는 editSlug 기반 키 사용)
+    if (isEditMode) return;
 
     const saved = loadFromLocalStorage();
     if (saved?.hasData) {
@@ -393,17 +393,17 @@ function WritePageContent() {
         return;
       }
 
-      // 고유한 slug 생성
+      // 고유한 slug 생성 (최대 25자)
       let slug: string;
       if (isEditMode) {
         slug = editSlug!;
       } else {
         slug = generateSlug(title);
         // generateSlug가 fallback으로 이미 timestamp 포함 가능성 있음
-        // 추가 중복 방지를 위해 짧은 suffix 추가
+        // 추가 중복 방지를 위해 짧은 suffix 추가 (총 25자 이내)
         if (!slug.includes('-') || slug.length < 10) {
           const timestamp = Date.now().toString(36).slice(-4);
-          slug = `${slug}-${timestamp}`;
+          slug = `${slug}-${timestamp}`.slice(0, 25);
         }
       }
       
@@ -808,32 +808,6 @@ function WritePageContent() {
               onChange={setContent}
               preview={preview}
               placeholder="마크다운으로 글을 작성하세요..."
-              minHeight="300px"
-              onImageUpload={handleImageUpload}
-            />
-          </div>
-
-          {/* 하단 상태바 - 고정 */}
-          <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-t border-rule/30 bg-cream/30 text-xs font-sans text-muted">
-            <div className="flex items-center gap-3">
-              <span>0 자</span>
-              <span className="hidden sm:inline">0 단어</span>
-              <span className="hidden sm:inline">1 줄</span>
-              <span className="hidden md:inline text-rust">약 1분 소요</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:inline opacity-60">Tab: 들여쓰기</span>
-              <span className="hidden sm:inline opacity-60">Shift+Tab: 내어쓰기</span>
-              <span className="hidden md:inline opacity-60">드래그로 이미지 업로드</span>
-            </div>
-          </div>
-        </main>
-      ) : (
-        <div className="flex items-center justify-center py-20 flex-1">
-          <div className="flex items-center gap-3 text-muted">
-            <Loader2 size={24} className="animate-spin" />
-            <span className="font-sans text-sm">글을 불러오는 중...</span>
-          </div>
         </div>
       )}
     </div>

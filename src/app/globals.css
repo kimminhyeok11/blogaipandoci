@@ -341,11 +341,17 @@ body {
   color: var(--muted);
 }
 
+/* 테이블 컨테이너 - 화면 넘치면 가로 스크롤 */
+.prose-journal .table-container {
+  overflow-x: auto;
+  max-width: 100%;
+  margin-top: 1.5rem;
+}
+
 .prose-journal table {
   width: 100%;
+  min-width: 500px;
   border-collapse: collapse;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
   font-size: 0.875rem;
 }
 
