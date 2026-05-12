@@ -43,13 +43,18 @@ export function useAutoSave(editSlug: string | null) {
     const savedTags = localStorage.getItem(getAutoSaveKey("tags"));
     const savedTimestamp = localStorage.getItem(getAutoSaveKey("timestamp"));
 
-    if (savedTitle || savedContent || savedExcerpt || savedTags) {
+    const hasRealContent = !!(savedTitle?.trim() || savedContent?.trim());
+    if (hasRealContent) {
+      const ts = savedTimestamp ? new Date(savedTimestamp) : null;
+      const formattedTimestamp = ts
+        ? ts.toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+        : null;
       return {
         title: savedTitle ?? "",
         content: savedContent ?? "",
         excerpt: savedExcerpt ?? "",
         tags: savedTags ?? "",
-        timestamp: savedTimestamp ? new Date(savedTimestamp) : null,
+        timestamp: formattedTimestamp,
         hasData: true,
       };
     }
@@ -69,8 +74,8 @@ export function useAutoSave(editSlug: string | null) {
 
   useEffect(() => {
     const saved = load();
-    if (saved?.timestamp) {
-      setLastSaved(saved.timestamp);
+    if (saved?.hasData) {
+      setLastSaved(new Date());
     }
   }, [load]);
 

@@ -61,9 +61,9 @@ function WritePageContent() {
 
   // localStorage에 임시 저장
   const saveToLocalStorage = useCallback(() => {
-    if (isEditMode && !hasContent) return;
+    if (!hasContent) return;
     autoSave.save({ title, content, excerpt, tags });
-  }, [isEditMode, hasContent, title, content, excerpt, tags, autoSave]);
+  }, [hasContent, title, content, excerpt, tags, autoSave]);
 
   // 자동 저장 (30초마다 + 내용 변경 시)
   useEffect(() => {
