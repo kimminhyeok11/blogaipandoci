@@ -301,16 +301,16 @@ export default function StatsPage() {
     }
   };
 
-  // URL 복사 (슬래시 포함 - 네이버 색인용)
+  // URL 복사 (trailing slash 없음 - canonical과 통일)
   const copyPostUrl = (slug: string) => {
     if (typeof window === 'undefined') {
       showToast('브라우저 환경에서만 사용 가능합니다', 'error');
       return;
     }
-    const url = `${window.location.origin}/posts/${slug}/`;
+    const url = `${window.location.origin}/posts/${slug}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedSlug(slug);
-      showToast('URL이 복사되었습니다 (슬래시 포함)', 'success');
+      showToast('URL이 복사되었습니다', 'success');
       setTimeout(() => setCopiedSlug(null), 2000);
     }).catch(() => {
       showToast('URL 복사에 실패했습니다', 'error');
