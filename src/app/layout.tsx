@@ -15,7 +15,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 const notoSerifKR = Noto_Serif_KR({
   subsets: ["latin"],
-  weight: ["400", "700"], // 600, 900 제거로 파일 수 감소
+  weight: ["400", "700"],
   variable: "--font-serif",
   display: "swap",
   adjustFontFallback: false,
@@ -24,7 +24,7 @@ const notoSerifKR = Noto_Serif_KR({
 
 const notoSansKR = Noto_Sans_KR({
   subsets: ["latin"],
-  weight: ["400", "500"], // 300, 700 제거로 파일 수 감소
+  weight: ["400", "500"],
   variable: "--font-sans",
   display: "swap",
   adjustFontFallback: false,
@@ -127,10 +127,7 @@ export default function RootLayout({
         <h1 className="sr-only">법률·정책·사회 분석 블로그 - 法 BLOG</h1>
         <meta name="google-adsense-account" content="ca-pub-5239497835591112" />
         {/* Note: Google Fonts CDN 미사용 - Next.js next/font로 최적화된 폰트 사용 */}
-        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
-        {/* Supabase Storage 이미지 최적화 */}
-        <link rel="preconnect" href="https://mcgrkxsgifcvfubsnzur.supabase.co" />
         <OrganizationSchema />
         <WebSiteSchema />
       </head>
