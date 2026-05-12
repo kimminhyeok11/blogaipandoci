@@ -73,16 +73,30 @@ export function ArticleSchema({
     author: {
       "@type": "Person",
       name: author || "익명",
-      ...(authorId && { url: `${SITE_URL}/profile/` }),
+      ...(authorId && { url: `${SITE_URL}/profile` }),
     },
     ...(datePublished && { datePublished }),
     dateModified: dateModified || datePublished,
     url,
-    ...(image && { image }),
+    ...(image && {
+      image: [
+        {
+          "@type": "ImageObject",
+          url: image,
+          width: 1200,
+          height: 630,
+        },
+      ],
+    }),
     publisher: {
       "@type": "Organization",
       name: SITE_NAME,
-      logo: `${SITE_URL}/icon.png`,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/icon.png`,
+        width: 512,
+        height: 512,
+      },
     },
     ...(tags.length > 0 && { keywords: tags.join(", ") }),
     inLanguage: "ko",
