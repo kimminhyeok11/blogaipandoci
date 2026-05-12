@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import { PenSquare, User, Search } from "lucide-react";
 import { ClientHeader } from "@/components/layout/ClientHeader";
+import { HomepageBreadcrumbSchema } from "@/components/seo/StructuredData";
 import { AdSense } from "@/components/ads/AdSense";
 
 // ISR: 1시간마다 재생성
@@ -54,6 +55,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-paper">
+      <HomepageBreadcrumbSchema />
       {/* Client Header with Auth and Scroll Effects */}
       <ClientHeader />
 

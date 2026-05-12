@@ -4,7 +4,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
-import { OrganizationSchema, WebSiteSchema, HomepageBreadcrumbSchema } from "@/components/seo/StructuredData";
+import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import { Analytics } from "@vercel/analytics/next";
 import { AdSenseScript } from "@/components/ads/AdSenseScript";
 import { ScrollRestoration } from "@/components/utils/ScrollRestoration";
@@ -133,7 +133,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://mcgrkxsgifcvfubsnzur.supabase.co" />
         <OrganizationSchema />
         <WebSiteSchema />
-        <HomepageBreadcrumbSchema />
       </head>
       <body className="antialiased min-h-screen font-serif flex flex-col">
         <AdSenseScript />
