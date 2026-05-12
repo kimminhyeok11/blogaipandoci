@@ -29,8 +29,9 @@ export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
         {relatedPosts.map((post) => (
           <Link
             key={post.id}
-            href={`/posts/${post.slug}/`}
+            href={`/posts/${post.slug}`}
             className="group block bg-paper border border-ink/10 rounded-sm overflow-hidden hover:border-rust/30 transition-colors"
+            aria-label={post.title}
           >
             <div className="flex gap-3 p-3">
               {/* 썸네일 */}
@@ -84,10 +85,10 @@ export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
       {/* 더보기 버튼 */}
       <div className="text-center mt-6 mb-8">
         <Link
-          href="/posts/"
+          href="/posts"
           className="inline-block px-6 py-2 text-sm font-sans text-rust border border-rust/30 rounded-sm hover:bg-rust/5 transition-colors"
         >
-          전체 글 목록 보기 →
+          전체 글 목록 보기
         </Link>
       </div>
     </section>

@@ -84,6 +84,7 @@ export default async function HomePage() {
               <Link
                 href={`/posts/${featuredPost.slug}`}
                 className="inline-block mt-6 px-6 py-2 border-2 border-ink text-ink font-sans text-xs font-medium tracking-wider uppercase hover:bg-ink hover:text-paper transition-colors"
+                aria-label={`${featuredPost.title} 자세히 읽기`}
               >
                 자세히 읽기
               </Link>

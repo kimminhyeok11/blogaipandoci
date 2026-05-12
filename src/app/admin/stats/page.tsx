@@ -716,8 +716,9 @@ export default function StatsPage() {
                         <Copy size={12} />
                         {copiedSlug === post.slug ? '복사됨' : 'URL'}
                       </button>
-                      <Link href={`/posts/${post.slug}`} target="_blank" className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors" title="새 탭에서 열기">
+                      <Link href={`/posts/${post.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors" title="새 탭에서 열기">
                         <ExternalLink size={12} />
+                        <span className="sr-only">{post.title} 새 탭에서 열기</span>
                       </Link>
                       <Link href={`/write?edit=${post.slug}`} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors" title="수정">
                         수정
@@ -747,8 +748,9 @@ export default function StatsPage() {
                           <Copy size={14} />
                           {copiedSlug === post.slug ? '복사됨' : 'URL 복사'}
                         </button>
-                        <Link href={`/posts/${post.slug}`} target="_blank" className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors">
+                        <Link href={`/posts/${post.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors">
                           <ExternalLink size={14} />
+                          <span className="sr-only">{post.title} 새 탭에서 열기</span>
                         </Link>
                         <Link href={`/write?edit=${post.slug}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors">
                           수정
