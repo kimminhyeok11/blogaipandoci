@@ -497,7 +497,7 @@ export default function StatsPage() {
           />
           <StatCard
             icon={<FileText size={20} />}
-            label="임시저장"
+            label="비공개 글"
             value={stats.draftPosts}
           />
         </div>
@@ -610,7 +610,7 @@ export default function StatsPage() {
                 </div>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-muted font-sans">임시저장</span>
+                <span className="text-muted font-sans">비공개 글</span>
                 <div className="flex items-center gap-2">
                   <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${stats.totalPosts > 0 ? (stats.draftPosts / stats.totalPosts) * 100 : 0}%` }} />
