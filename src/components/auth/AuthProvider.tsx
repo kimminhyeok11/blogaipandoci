@@ -80,7 +80,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (event: any, currentSession: any) => {
         if (!isMounted) return;
         
-        console.log("Auth state changed:", event);
         setSession(currentSession);
         
         if (currentSession?.user) {

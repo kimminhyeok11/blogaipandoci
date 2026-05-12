@@ -55,6 +55,7 @@ export function useAutoSave(editSlug: string | null) {
         excerpt: savedExcerpt ?? "",
         tags: savedTags ?? "",
         timestamp: formattedTimestamp,
+        rawTimestamp: savedTimestamp ?? null,
         hasData: true,
       };
     }

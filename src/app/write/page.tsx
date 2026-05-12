@@ -210,7 +210,7 @@ function WritePageContent() {
         const saved = autoSave.load();
         if (saved?.hasData) {
           const postUpdatedAt = new Date(post.updated_at);
-          const savedTime = saved.timestamp ? new Date(saved.timestamp) : null;
+          const savedTime = saved.rawTimestamp ? new Date(saved.rawTimestamp) : null;
           
           // 임시 저장이 더 최신이면 확인
           if (savedTime && savedTime > postUpdatedAt) {
