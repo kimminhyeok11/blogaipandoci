@@ -3,33 +3,36 @@
 import { useState, useCallback, useEffect, useRef, Suspense, lazy } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Heading, Image as ImageIcon, Link as LinkIcon, MoreHorizontal, Pencil, Eye, Save, Check, Send } from "lucide-react";
-import { cn } from "@/utils/cn";
+import { ArrowLeft, Heading, Image as ImageIcon, Link as LinkIcon, MoreHorizontal, Pencil, Eye, Save, Check, Send, Loader2 } from "lucide-react";
 import { generateSlug } from "@/utils/image";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { WriteEditor } from "./components/WriteEditor";
 import { RevisionHistory } from "@/components/editor/RevisionHistory";
+import { useWriteForm } from "./hooks/useWriteForm";
+import { useAutoSave } from "./hooks/useAutoSave";
 
 // IndexNow 알림 헬퍼
 const notifyIndexNow = async (path: string) => {
   try {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
     const url = `${siteUrl}${path}`;
-    
+
     await fetch("/api/indexnow-notify/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ urls: [url] }),
     });
   } catch (err) {
-    // IndexNow 실패는 사용자에게 표시하지 않음 (백그라운드 처리)
     console.error("IndexNow notification failed:", err);
   }
 };
 
-// MarkdownEditor 동적 임포트 (코드 분할)
+// MarkdownEditor 동적 임포트
 import type { MarkdownEditorRef } from "@/components/editor/MarkdownEditor";
-const MarkdownEditor = lazy(() => import("@/components/editor/MarkdownEditor").then(mod => ({ default: mod.MarkdownEditor })));
+const MarkdownEditor = lazy(() =>
+  import("@/components/editor/MarkdownEditor").then((mod) => ({ default: mod.MarkdownEditor }))
+);
 
 function WritePageContent() {
   const router = useRouter();
@@ -38,77 +41,29 @@ function WritePageContent() {
   const isEditMode = !!editSlug;
   const { showToast } = useToast();
   const { user, isLoading: isAuthLoading } = useAuth();
+  const editorRef = useRef<MarkdownEditorRef>(null);
 
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [excerpt, setExcerpt] = useState("");
-  const [tags, setTags] = useState("");
+  // 폼 상태 관리
+  const form = useWriteForm();
+  const { title, setTitle, content, setContent, excerpt, setExcerpt, tags, setTags, hasContent, setForm } = form;
+
+  // 자동 저장
+  const autoSave = useAutoSave(editSlug);
+  const { lastSaved } = autoSave;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [postId, setPostId] = useState<string | null>(null);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [preview, setPreview] = useState(false); // 에디터 미리보기 상태
-  const [showHeadingMenu, setShowHeadingMenu] = useState(false); // H태그 메뉴 상태
-  const [showMoreMenu, setShowMoreMenu] = useState(false); // 더보기 메뉴 상태
-  const headingMenuRef = useRef<HTMLDivElement>(null); // H태그 메뉴 ref
-  const moreMenuRef = useRef<HTMLDivElement>(null); // 더보기 메뉴 ref
-  const editorRef = useRef<MarkdownEditorRef>(null); // MarkdownEditor ref (툴바용)
-  
+  const [preview, setPreview] = useState(false);
+
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
 
-  // 자동 저장 키 생성 (수정 모드 vs 새 글)
-  const getAutoSaveKey = (key: string) => {
-    return editSlug ? `blog_edit_${editSlug}_${key}` : `blog_draft_${key}`;
-  };
-
   // localStorage에 임시 저장
   const saveToLocalStorage = useCallback(() => {
-    if (isEditMode && !title && !content) return; // 수정 모드에서 데이터 없으면 스킵
-    
-    localStorage.setItem(getAutoSaveKey('title'), title);
-    localStorage.setItem(getAutoSaveKey('content'), content);
-    localStorage.setItem(getAutoSaveKey('excerpt'), excerpt);
-    localStorage.setItem(getAutoSaveKey('tags'), tags);
-    localStorage.setItem(getAutoSaveKey('timestamp'), new Date().toISOString());
-    setLastSaved(new Date());
-  }, [title, content, excerpt, tags, editSlug, isEditMode]);
-
-  // localStorage에서 복원
-  const loadFromLocalStorage = useCallback(() => {
-    const savedTitle = localStorage.getItem(getAutoSaveKey('title'));
-    const savedContent = localStorage.getItem(getAutoSaveKey('content'));
-    const savedExcerpt = localStorage.getItem(getAutoSaveKey('excerpt'));
-    const savedTags = localStorage.getItem(getAutoSaveKey('tags'));
-    const savedTimestamp = localStorage.getItem(getAutoSaveKey('timestamp'));
-
-    if (savedTitle || savedContent) {
-      const timestamp = savedTimestamp ? new Date(savedTimestamp) : null;
-      const timeStr = timestamp?.toLocaleTimeString('ko-KR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-      
-      return {
-        title: savedTitle || '',
-        content: savedContent || '',
-        excerpt: savedExcerpt || '',
-        tags: savedTags || '',
-        timestamp: timeStr,
-        hasData: !!(savedTitle || savedContent)
-      };
-    }
-    return null;
-  }, [editSlug]);
-
-  // localStorage 정리
-  const clearLocalStorage = useCallback(() => {
-    localStorage.removeItem(getAutoSaveKey('title'));
-    localStorage.removeItem(getAutoSaveKey('content'));
-    localStorage.removeItem(getAutoSaveKey('excerpt'));
-    localStorage.removeItem(getAutoSaveKey('tags'));
-    localStorage.removeItem(getAutoSaveKey('timestamp'));
-  }, [editSlug]);
+    if (isEditMode && !hasContent) return;
+    autoSave.save({ title, content, excerpt, tags });
+  }, [isEditMode, hasContent, title, content, excerpt, tags, autoSave]);
 
   // 자동 저장 (30초마다 + 내용 변경 시)
   useEffect(() => {
@@ -145,7 +100,7 @@ function WritePageContent() {
     // 새 글쓰기 모드에서만 임시저장 확인 (수정 모드는 editSlug 기반 키 사용)
     if (isEditMode) return;
 
-    const saved = loadFromLocalStorage();
+    const saved = autoSave.load();
     if (saved?.hasData) {
       const confirmed = window.confirm(
         `${saved.timestamp || '이전'}에 저장된 임시 글이 있습니다.\n\n` +
@@ -160,10 +115,10 @@ function WritePageContent() {
         setTags(saved.tags);
         showToast('임시 저장된 글을 불러왔습니다', 'success');
       } else {
-        clearLocalStorage();
+        autoSave.clear();
       }
     }
-  }, []);
+  }, [autoSave]);
 
   // 기존 게시글 목록 로드 (자동 내부 링크용)
   useEffect(() => {
@@ -218,23 +173,9 @@ function WritePageContent() {
     return processedContent;
   }, [existingPosts]);
 
-  // 메뉴 외부 클릭 시 닫기
+  // 수정 모드일 때 글 로드
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (headingMenuRef.current && !headingMenuRef.current.contains(e.target as Node)) {
-        setShowHeadingMenu(false);
-      }
-      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
-        setShowMoreMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // 수정 모드: 기존 게시글 불러오기
-  useEffect(() => {
-    if (!editSlug || isAuthLoading || !user) return;
+    if (!editSlug || !user || isAuthLoading) return;
 
     const loadPost = async () => {
       try {
@@ -266,7 +207,7 @@ function WritePageContent() {
         setPostId(post.id);
         
         // 임시 저장된 데이터가 있는지 확인
-        const saved = loadFromLocalStorage();
+        const saved = autoSave.load();
         if (saved?.hasData) {
           const postUpdatedAt = new Date(post.updated_at);
           const savedTime = saved.timestamp ? new Date(saved.timestamp) : null;
@@ -288,7 +229,7 @@ function WritePageContent() {
               setTitle(post.title);
               setContent(post.content);
               setExcerpt(post.excerpt || "");
-              clearLocalStorage();
+              autoSave.clear();
             }
           } else {
             setTitle(post.title);
@@ -459,7 +400,7 @@ function WritePageContent() {
         showToast(published ? "글이 수정되었습니다." : "임시 저장되었습니다.", "success");
         
         // 임시 저장 데이터 정리
-        clearLocalStorage();
+        autoSave.clear();
         
         // 히스토리 저장 (수정 시)
         if (postId && user?.id) {
@@ -525,7 +466,7 @@ function WritePageContent() {
         showToast(published ? "글이 발행되었습니다." : "임시 저장되었습니다.", "success");
         
         // 임시 저장 데이터 정리
-        clearLocalStorage();
+        autoSave.clear();
         
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
@@ -570,7 +511,7 @@ function WritePageContent() {
       {/* Header - 고정 + 모바일 스크롤 */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-paper border-b border-rule">
         <div className="flex items-center h-12 px-3 sm:px-4 overflow-x-auto scrollbar-hide">
-          {/* 좌측: 뒤로가기 + 툴바 */}
+          {/* 좌측: 뒤로가기만 */}
           <div className="flex items-center gap-2">
             <Link
               href="/"
@@ -579,68 +520,6 @@ function WritePageContent() {
             >
               <ArrowLeft size={20} />
             </Link>
-            
-            <div className="h-6 w-px bg-rule mx-2" />
-            
-            {/* 주요 툴 3개: H태그(드롭다운), 이미지, 링크 */}
-            <div className="flex items-center gap-1">
-              <div ref={headingMenuRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowHeadingMenu(!showHeadingMenu)}
-                  className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
-                  title="제목"
-                >
-                  <Heading size={18} />
-                </button>
-                {showHeadingMenu && (
-                  <div className="absolute top-full left-0 mt-1 bg-white border border-rule rounded-sm shadow-lg z-50 py-1 min-w-[80px]">
-                    {[1, 2, 3].map((level) => (
-                      <button
-                        key={level}
-                        type="button"
-                        onClick={() => {
-                          editorRef.current?.insertHeading?.(level);
-                          setShowHeadingMenu(false);
-                        }}
-                        className="w-full px-3 py-1.5 text-left text-sm hover:bg-cream flex items-center gap-2"
-                      >
-                        <span className="font-bold text-muted">{'#'.repeat(level)}</span>
-                        <span className="text-xs text-muted">H{level}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => document.getElementById('image-upload')?.click()}
-                className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
-                title="이미지 업로드"
-              >
-                <ImageIcon size={18} />
-              </button>
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file && editorRef.current?.insertImage) {
-                    editorRef.current.insertImage(file);
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => editorRef.current?.insertLink?.()}
-                className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
-                title="링크 (Ctrl+K)"
-              >
-                <LinkIcon size={18} />
-              </button>
-            </div>
           </div>
 
           {/* 우측: 액션 버튼들 */}
@@ -665,64 +544,6 @@ function WritePageContent() {
                 }}
               />
             )}
-            
-            {/* 더보기 메뉴 (나머지 툴들) */}
-            <div ref={moreMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setShowMoreMenu(!showMoreMenu)}
-                className="p-2 text-muted hover:text-ink hover:bg-cream rounded-sm transition-colors"
-                title="더 많은 도구"
-              >
-                <MoreHorizontal size={18} />
-              </button>
-              
-              {showMoreMenu && (
-                <div className="absolute top-full right-0 mt-1 bg-white border border-rule rounded-sm shadow-lg z-50 py-1 min-w-[140px]">
-                  <button
-                    type="button"
-                    onClick={() => { editorRef.current?.insertBold?.(); setShowMoreMenu(false); }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
-                  >
-                    <span className="font-bold">B</span>
-                    <span>굵게 (Ctrl+B)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { editorRef.current?.insertItalic?.(); setShowMoreMenu(false); }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
-                  >
-                    <span className="italic">I</span>
-                    <span>기울임 (Ctrl+I)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { editorRef.current?.insertQuote?.(); setShowMoreMenu(false); }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
-                  >
-                    <span className="text-muted">"</span>
-                    <span>인용 (Ctrl+.)</span>
-                  </button>
-                  <div className="border-t border-rule my-1" />
-                  <button
-                    type="button"
-                    onClick={() => { editorRef.current?.insertUnorderedList?.(); setShowMoreMenu(false); }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
-                  >
-                    <span className="text-muted">•</span>
-                    <span>목록</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { editorRef.current?.insertOrderedList?.(); setShowMoreMenu(false); }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-cream flex items-center gap-2"
-                  >
-                    <span className="text-muted">1.</span>
-                    <span>번호 목록</span>
-                  </button>
-                </div>
-              )}
-            </div>
 
             {/* 미리보기/편집 토글 - 미니멀 아이콘 */}
             <button
@@ -768,6 +589,8 @@ function WritePageContent() {
           <div className="px-4 sm:px-6 lg:px-8 py-6 border-b-2 border-rule flex-shrink-0">
             {/* 제목 */}
             <input
+              id="post-title"
+              name="post-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -781,6 +604,8 @@ function WritePageContent() {
               <div className="flex items-center gap-2 flex-1">
                 <span className="text-xs font-sans font-medium text-muted whitespace-nowrap">태그</span>
                 <input
+                  id="post-tags"
+                  name="post-tags"
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
@@ -792,6 +617,8 @@ function WritePageContent() {
               <div className="flex items-center gap-2 flex-1">
                 <span className="text-xs font-sans font-medium text-muted whitespace-nowrap">요약</span>
                 <input
+                  id="post-excerpt"
+                  name="post-excerpt"
                   type="text"
                   value={excerpt}
                   onChange={(e) => setExcerpt(e.target.value)}
@@ -802,17 +629,14 @@ function WritePageContent() {
             </div>
           </div>
 
-          {/* 본문 에디터 - 페이지 전체가 입력칸 */}
-          <div className="flex-1 min-h-0 overflow-auto px-4 sm:px-6 lg:px-8 pb-12">
-            <MarkdownEditor
-              ref={editorRef}
-              value={content}
-              onChange={setContent}
-              preview={preview}
-              placeholder="마크다운으로 글을 작성하세요..."
-              onImageUpload={handleImageUpload}
-            />
-          </div>
+          {/* 본문 에디터 - WriteEditor (툴바 포함) */}
+          <WriteEditor
+            ref={editorRef}
+            content={content}
+            setContent={setContent}
+            preview={preview}
+            onImageUpload={handleImageUpload}
+          />
 
           {/* 하단 고정 글자수 바 */}
           <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between h-12 px-4 sm:px-6 lg:px-8 border-t border-rule bg-paper/95 backdrop-blur-sm text-xs text-muted">

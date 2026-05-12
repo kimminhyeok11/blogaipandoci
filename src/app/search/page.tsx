@@ -84,6 +84,8 @@ export default function SearchPage() {
         
         <div className="relative mb-8">
           <input
+            id="search-query"
+            name="search-query"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

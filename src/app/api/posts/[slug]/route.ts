@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase, getServiceSupabase } from "@/lib/supabase";
 
 // GET /api/posts/[slug] - 글 상세 조회
@@ -131,6 +132,11 @@ export async function DELETE(
       .eq("slug", decodedSlug);
 
     if (error) throw error;
+
+    // 캐시 즉시 갱신
+    revalidatePath("/");
+    revalidatePath("/posts");
+    revalidatePath(`/posts/${decodedSlug}`);
 
     return NextResponse.json({ success: true });
   } catch (error) {

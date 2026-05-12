@@ -59,6 +59,7 @@ export function AdSense({
       <ins
         ref={adRef}
         className="adsbygoogle"
+        suppressHydrationWarning
         style={{
           display: "block",
           ...style,

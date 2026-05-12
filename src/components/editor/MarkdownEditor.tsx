@@ -24,6 +24,7 @@ interface MarkdownEditorProps {
   minHeight?: string;
   onImageUpload?: (file: File) => Promise<string>;
   preview?: boolean;
+  className?: string;
 }
 
 export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(function MarkdownEditorInternal({
@@ -33,6 +34,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   minHeight = "400px",
   onImageUpload,
   preview = false,
+  className = "",
 }: MarkdownEditorProps, ref) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -489,8 +491,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
             placeholder={placeholder}
             rows={1}
             suppressHydrationWarning
-            className="w-full p-0 bg-transparent text-ink font-serif text-base leading-loose focus:outline-none focus:ring-0 resize-none min-h-[300px]"
-            style={{ minHeight }}
+            className={`w-full p-0 bg-transparent text-ink font-serif text-base leading-loose focus:outline-none focus:ring-0 resize-none ${className || "min-h-[300px]"}`}
             spellCheck={true}
           />
         )}
@@ -536,10 +537,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
               )}
               
               <div>
-                <label className="block font-sans text-sm font-medium text-ink mb-1">
+                <label htmlFor="image-alt" className="block font-sans text-sm font-medium text-ink mb-1">
                   설명 (alt 텍스트)
                 </label>
                 <input
+                  id="image-alt"
+                  name="image-alt"
                   type="text"
                   value={imageAlt}
                   onChange={(e) => {
@@ -552,10 +555,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
               </div>
               
               <div>
-                <label className="block font-sans text-sm font-medium text-ink mb-1">
+                <label htmlFor="image-caption" className="block font-sans text-sm font-medium text-ink mb-1">
                   캡션 (선택사항)
                 </label>
                 <input
+                  id="image-caption"
+                  name="image-caption"
                   type="text"
                   value={imageCaption}
                   onChange={(e) => setImageCaption(e.target.value)}
@@ -565,10 +570,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
               </div>
               
               <div>
-                <label className="block font-sans text-sm font-medium text-ink mb-1">
+                <label htmlFor="image-link" className="block font-sans text-sm font-medium text-ink mb-1">
                   링크 (선택사항)
                 </label>
                 <input
+                  id="image-link"
+                  name="image-link"
                   type="text"
                   value={imageLink}
                   onChange={(e) => setImageLink(e.target.value)}

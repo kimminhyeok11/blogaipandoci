@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase, getServiceSupabase } from "@/lib/supabase";
 
 // 불용어 (매칭에서 제외할 짧거나 의미 없는 단어)
@@ -202,6 +203,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // 캐시 즉시 갱신
+    if (published) {
+      revalidatePath("/");
+      revalidatePath("/posts");
+      revalidatePath(`/posts/${slug}`);
+      revalidatePath("/tags");
+      revalidatePath("/categories");
+    }
+
     return NextResponse.json({ data });
   } catch (error) {
     console.error("Failed to create post:", error);
@@ -281,6 +291,13 @@ export async function PUT(request: Request) {
         { status: 500 }
       );
     }
+
+    // 캐시 즉시 갱신
+    revalidatePath("/");
+    revalidatePath("/posts");
+    revalidatePath(`/posts/${slug}`);
+    revalidatePath("/tags");
+    revalidatePath("/categories");
 
     return NextResponse.json({ data });
   } catch (error) {

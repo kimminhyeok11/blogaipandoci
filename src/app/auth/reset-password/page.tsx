@@ -134,12 +134,14 @@ export default function ResetPasswordPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
+              <label htmlFor="new-password" className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
                 새 비밀번호
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} />
                 <input
+                  id="new-password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -161,12 +163,14 @@ export default function ResetPasswordPage() {
             </div>
 
             <div>
-              <label className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
+              <label htmlFor="confirm-password" className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
                 비밀번호 확인
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} />
                 <input
+                  id="confirm-password"
+                  name="confirm-password"
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
