@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { User, Calendar, FileText, Mail } from "lucide-react";
 import { StickyNav } from "@/components/layout/StickyNav";
+import { PersonSchema } from "@/components/seo/StructuredData";
 
 export const metadata: Metadata = {
   title: "작성자 정보 | 法 BLOG",
@@ -14,6 +15,11 @@ export const metadata: Metadata = {
 export default function AuthorPage() {
   return (
     <div className="min-h-screen bg-paper">
+      <PersonSchema
+        name="法 BLOG 편집팀"
+        description="법률·정책·사회 분야 심층 분석 콘텐츠를 작성합니다. 실제 사례와 판례를 기반으로 독자가 실생활에서 활용할 수 있는 정보를 제공합니다."
+        url="https://lawtiphub.com/author"
+      />
       {/* Header */}
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>

@@ -67,13 +67,13 @@ export function ArticleSchema({
 }: ArticleSchemaProps) {
   const schema = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: title.slice(0, 110),
     ...(description && { description }),
     author: {
       "@type": "Person",
       name: author || "익명",
-      ...(authorId && { url: `${SITE_URL}/profile` }),
+      url: `${SITE_URL}/author`,
     },
     ...(datePublished && { datePublished }),
     dateModified: dateModified || datePublished,
@@ -128,6 +128,92 @@ export function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
       position: index + 1,
       name: item.name,
       item: item.url,
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// Person: 작성자 페이지 E-E-A-T 강화
+interface PersonSchemaProps {
+  name: string;
+  description?: string;
+  url?: string;
+  sameAs?: string[];
+}
+
+export function PersonSchema({ name, description, url, sameAs = [] }: PersonSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name,
+    url: url || `${SITE_URL}/author`,
+    ...(description && { description }),
+    ...(sameAs.length > 0 && { sameAs }),
+    worksFor: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// FAQPage: 법률 Q&A 콘텐츠 리치 결과
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export function FAQSchema({ items }: { items: FAQItem[] }) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// CollectionPage: 태그/카테고리 페이지 주제 권위 강화
+interface CollectionPageSchemaProps {
+  name: string;
+  description?: string;
+  url: string;
+  items: Array<{ name: string; url: string }>;
+}
+
+export function CollectionPageSchema({ name, description, url, items }: CollectionPageSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name,
+    url,
+    ...(description && { description }),
+    hasPart: items.map((item) => ({
+      "@type": "BlogPosting",
+      headline: item.name,
+      url: item.url,
     })),
   };
   return (

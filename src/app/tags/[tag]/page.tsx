@@ -2,6 +2,9 @@ import Link from "next/link";
 import { Tag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { StickyNav } from "@/components/layout/StickyNav";
+import { CollectionPageSchema } from "@/components/seo/StructuredData";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 interface Post {
   id: string;
@@ -64,6 +67,14 @@ export default async function TagPage({ params }: TagPageProps) {
 
   return (
     <div className="min-h-screen bg-paper">
+      {posts.length > 0 && (
+        <CollectionPageSchema
+          name={`#${tag} 관련 글 모음`}
+          description={`${tag} 주제의 법률·정책·사회 분석 글 ${posts.length}개`}
+          url={`${SITE_URL}/tags/${encodeURIComponent(tag)}`}
+          items={posts.map((p) => ({ name: p.title, url: `${SITE_URL}/posts/${p.slug}` }))}
+        />
+      )}
       {/* Header */}
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>
