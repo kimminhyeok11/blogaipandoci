@@ -165,7 +165,7 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const post = await getPost(params.slug);
-  const postUrl = `${SITE_URL}/posts/${params.slug}/`;
+  const postUrl = `${SITE_URL}/posts/${params.slug}`;
 
   if (!post) {
     return {
@@ -256,7 +256,7 @@ export default async function PostPage({ params }: PostPageProps) {
   // 본문에서 첫 이미지 추출 (Article Schema용)
   const imgMatch = post.content?.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
   const firstImage = post.cover_image || imgMatch?.[1] || undefined;
-  const postUrl = `${SITE_URL}/posts/${post.slug}/`;
+  const postUrl = `${SITE_URL}/posts/${post.slug}`;
   const authorName = post.user?.nickname || post.user?.email?.split('@')[0] || "익명";
 
   return (
@@ -277,7 +277,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <BreadcrumbSchema
         items={[
           { name: "홈", url: SITE_URL },
-          { name: "글 목록", url: `${SITE_URL}/posts/` },
+          { name: "글 목록", url: `${SITE_URL}/posts` },
           { name: post.title, url: postUrl },
         ]}
       />

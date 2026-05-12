@@ -59,13 +59,13 @@ export async function GET() {
 
   // 정적 페이지
   const staticPages = [
-    { url: `${baseUrl}/`, changefreq: "daily", priority: "1.0" },
-    { url: `${baseUrl}/posts/`, changefreq: "daily", priority: "0.9" },
-    { url: `${baseUrl}/about/`, changefreq: "monthly", priority: "0.7" },
-    { url: `${baseUrl}/tags/`, changefreq: "weekly", priority: "0.7" },
-    { url: `${baseUrl}/search/`, changefreq: "weekly", priority: "0.6" },
-    { url: `${baseUrl}/privacy/`, changefreq: "yearly", priority: "0.3" },
-    { url: `${baseUrl}/terms/`, changefreq: "yearly", priority: "0.3" },
+    { url: `${baseUrl}`, changefreq: "daily", priority: "1.0" },
+    { url: `${baseUrl}/posts`, changefreq: "daily", priority: "0.9" },
+    { url: `${baseUrl}/about`, changefreq: "monthly", priority: "0.7" },
+    { url: `${baseUrl}/tags`, changefreq: "weekly", priority: "0.7" },
+    { url: `${baseUrl}/search`, changefreq: "weekly", priority: "0.6" },
+    { url: `${baseUrl}/privacy`, changefreq: "yearly", priority: "0.3" },
+    { url: `${baseUrl}/terms`, changefreq: "yearly", priority: "0.3" },
   ];
 
   const staticXml = staticPages
@@ -108,7 +108,7 @@ export async function GET() {
           .join("\n");
 
         return `  <url>
-    <loc>${escapeXml(`${baseUrl}/posts/${post.slug}/`)}</loc>
+    <loc>${escapeXml(`${baseUrl}/posts/${post.slug}`)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

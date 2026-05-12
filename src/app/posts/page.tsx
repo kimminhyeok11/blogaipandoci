@@ -14,10 +14,10 @@ export const metadata: Metadata = {
     description: "법률, 기술, 비즈니스에 관한 法 BLOG의 모든 게시글을 확인하세요.",
     type: "website",
     locale: "ko_KR",
-    url: `${SITE_URL}/posts/`,
+    url: `${SITE_URL}/posts`,
   },
   alternates: {
-    canonical: `${SITE_URL}/posts/`,
+    canonical: `${SITE_URL}/posts`,
   },
 };
 
