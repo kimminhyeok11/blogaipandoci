@@ -18,7 +18,7 @@ export function AdSenseScript() {
 
     // 페이지 완전 로드 후 3초 지연 로딩 (성능 우선)
     const loadWithDelay = () => {
-      setTimeout(loadAdSense, 3000);
+      setTimeout(loadAdSense, 5000);
     };
     
     if (document.readyState === "complete") {
