@@ -352,7 +352,11 @@ export default async function PostPage({ params }: PostPageProps) {
               <div className="ornament">— ✦ —</div>
 
               {/* Share */}
-              <ShareButtons title={post.title} />
+              <ShareButtons
+                title={post.title}
+                description={post.meta_description || post.excerpt || undefined}
+                imageUrl={post.cover_image || undefined}
+              />
             </article>
 
             {/* TOC 사이드바 - xl 이상에서만 표시, sticky */}

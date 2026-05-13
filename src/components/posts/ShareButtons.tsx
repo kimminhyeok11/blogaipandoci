@@ -5,9 +5,11 @@ import { Check, Copy, Share2 } from "lucide-react";
 
 interface ShareButtonsProps {
   title: string;
+  description?: string;
+  imageUrl?: string;
 }
 
-function ShareButtonsComponent({ title }: ShareButtonsProps) {
+function ShareButtonsComponent({ title, description, imageUrl }: ShareButtonsProps) {
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -34,18 +36,38 @@ function ShareButtonsComponent({ title }: ShareButtonsProps) {
   };
 
   const handleKakaoShare = () => {
-    // layout.tsx에서 Kakao SDK가 전역 로드됨 - sendScrap으로 OG 미리보기 자동 크롤링
-    const kakao = (window as Window & { Kakao?: { Share: { sendScrap: (opts: { requestUrl: string }) => void } } }).Kakao;
+    // layout.tsx에서 Kakao SDK 전역 로드됨 - sendDefault로 직접 내용 지정 (크롤링 없음)
+    type KakaoSDK = { Share: { sendDefault: (opts: object) => void } };
+    const kakao = (window as Window & { Kakao?: KakaoSDK }).Kakao;
     if (kakao?.Share) {
-      kakao.Share.sendScrap({ requestUrl: shareUrl });
+      kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title,
+          description: description || title,
+          imageUrl: imageUrl || 'https://lawtiphub.com/opengraph-image.png',
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl,
+          },
+        },
+        buttons: [
+          {
+            title: '자세히 보기',
+            link: {
+              mobileWebUrl: shareUrl,
+              webUrl: shareUrl,
+            },
+          },
+        ],
+      });
     } else {
-      // SDK 미로드 폴백 - 모바일: 카카오톡 앱 스킴, PC: URL 복사
+      // SDK 미로드 폴백
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
         window.location.href = `kakaolink://send?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}`;
       } else {
         navigator.clipboard.writeText(shareUrl).catch(() => {});
-        alert('카카오 JS 키가 설정되지 않았습니다.\n환경변수 NEXT_PUBLIC_KAKAO_JS_KEY를 설정해주세요.');
       }
     }
   };
