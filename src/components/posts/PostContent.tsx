@@ -26,9 +26,9 @@ export function PostContent({ contentMarkdown, onTocExtract }: PostContentProps)
   // heading ID 포함된 최종 HTML을 useMemo로 고정 (서버/클라이언트 동일 보장)
   const processedHtml = useMemo(() => {
     let counter = 0;
-    return contentHtml.replace(/<(h[23])>([^<]+)<\/\1>/g, (match, tag, text) => {
+    return contentHtml.replace(/<(h[23])>([\s\S]+?)<\/\1>/g, (match, tag, inner) => {
       const id = `toc-heading-${counter++}`;
-      return `<${tag} id="${id}">${text}</${tag}>`;
+      return `<${tag} id="${id}">${inner}</${tag}>`;
     });
   }, [contentHtml]);
 
