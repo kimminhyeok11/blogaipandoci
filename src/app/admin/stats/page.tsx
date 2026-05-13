@@ -307,7 +307,7 @@ export default function StatsPage() {
       showToast('브라우저 환경에서만 사용 가능합니다', 'error');
       return;
     }
-    const url = `${window.location.origin}/posts/${slug}`;
+    const url = `${window.location.origin}/posts/${encodeURIComponent(slug)}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedSlug(slug);
       showToast('URL이 복사되었습니다', 'success');
