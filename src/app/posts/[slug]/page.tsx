@@ -57,7 +57,7 @@ async function getPost(slug: string): Promise<Post | null> {
 
   const { data, error } = await supabase
     .from("posts")
-    .select("*, user:users(nickname, avatar_url, email)")
+    .select("*, user:users(nickname, avatar_url, email, role)")
     .eq("slug", decodedSlug)
     .eq("published", true)
     .not("published_at", "is", null)
@@ -82,7 +82,7 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
     // 유사한 slug 패턴을 가진 최근 게시글 검색
     const { data, error } = await supabase
       .from('posts')
-      .select('*, user:users(nickname, avatar_url, email)')
+      .select('*, user:users(nickname, avatar_url, email, role)')
       .eq('published', true)
       .not('published_at', 'is', null)
       .ilike('slug', `%${timestampMatch[1]}`)
@@ -101,7 +101,7 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
     // 일반적인 키워드로 최신 글 검색
     const { data, error } = await supabase
       .from('posts')
-      .select('*, user:users(nickname, avatar_url, email)')
+      .select('*, user:users(nickname, avatar_url, email, role)')
       .eq('published', true)
       .not('published_at', 'is', null)
       .order('created_at', { ascending: false })
@@ -304,7 +304,13 @@ export default async function PostPage({ params }: PostPageProps) {
           <h1 className="headline">{post.title}</h1>
           {post.excerpt && <p className="subheadline">{post.excerpt}</p>}
           <div className="byline">
-            <span>{authorName}</span>
+            {post.user?.role === "admin" ? (
+              <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
+                {authorName}
+              </Link>
+            ) : (
+              <span>{authorName}</span>
+            )}
             <span className="byline-sep">|</span>
             <span>
               {new Date(post.published_at || post.created_at).toLocaleDateString("ko-KR")}

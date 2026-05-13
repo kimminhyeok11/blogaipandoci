@@ -19,7 +19,7 @@ interface Post {
   published_at: string;
   view_count: number;
   user_id: string;
-  user?: { nickname: string | null; email: string | null };
+  user?: { nickname: string | null; email: string | null; role?: string | null };
 }
 
 function getSupabase() {
@@ -32,7 +32,7 @@ async function getPosts() {
     // Popular posts (by view count)
     const { data: popularPosts } = await supabase
       .from("posts")
-      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email)")
+      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email, role)")
       .eq("published", true)
       .not("published_at", "is", null)
       .order("view_count", { ascending: false })
@@ -41,7 +41,7 @@ async function getPosts() {
     // Latest posts (by date)
     const { data: latestPosts } = await supabase
       .from("posts")
-      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email)")
+      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email, role)")
       .eq("published", true)
       .not("published_at", "is", null)
       .order("published_at", { ascending: false })
@@ -82,7 +82,13 @@ export default async function HomePage() {
               </h1>
               <p className="subheadline">{featuredPost.excerpt}</p>
               <div className="byline">
-                <span>{featuredPost.user?.nickname || featuredPost.user?.email?.split("@")[0] || "익명"}</span>
+                {featuredPost.user?.role === "admin" ? (
+                  <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
+                    {featuredPost.user?.nickname || featuredPost.user?.email?.split("@")[0] || "익명"}
+                  </Link>
+                ) : (
+                  <span>{featuredPost.user?.nickname || featuredPost.user?.email?.split("@")[0] || "익명"}</span>
+                )}
                 <span className="byline-sep">|</span>
                 <span suppressHydrationWarning>
                   {new Date(featuredPost.published_at).toLocaleDateString("ko-KR")}
@@ -139,7 +145,13 @@ export default async function HomePage() {
                     </span>
                     <span className="text-rule">·</span>
                     <span className="font-sans text-2xs text-muted">
-                      {post.user?.nickname || post.user?.email?.split("@")[0] || "익명"}
+                      {post.user?.role === "admin" ? (
+                        <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
+                          {post.user?.nickname || post.user?.email?.split("@")[0] || "익명"}
+                        </Link>
+                      ) : (
+                        post.user?.nickname || post.user?.email?.split("@")[0] || "익명"
+                      )}
                     </span>
                   </div>
                   <h3 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">

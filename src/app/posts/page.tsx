@@ -48,7 +48,7 @@ async function getPosts(page: number): Promise<{ posts: Post[]; total: number }>
 
   const { data, error, count } = await supabase
     .from("posts")
-    .select("*, user:users(nickname, email)", { count: "exact" })
+    .select("*, user:users(nickname, email, role)", { count: "exact" })
     .eq("published", true)
     .not("published_at", "is", null)
     .order("published_at", { ascending: false })
@@ -119,7 +119,13 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
                 <Link href={`/posts/${post.slug}`} className="block">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-sans text-2xs text-muted">
-                      {post.user?.nickname || post.user?.email?.split('@')[0] || "익명"}
+                      {post.user?.role === "admin" ? (
+                        <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
+                          {post.user?.nickname || post.user?.email?.split('@')[0] || "익명"}
+                        </Link>
+                      ) : (
+                        post.user?.nickname || post.user?.email?.split('@')[0] || "익명"
+                      )}
                     </span>
                     <span className="text-rule">·</span>
                     <span className="font-sans text-2xs text-muted">
