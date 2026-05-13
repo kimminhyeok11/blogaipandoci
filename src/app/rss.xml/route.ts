@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
 
 interface RssPost {
   title: string;
@@ -12,6 +12,7 @@ interface RssPost {
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
+  const supabase = (() => { try { return getServiceSupabase(); } catch { return anonSupabase; } })();
   // 최신 게시글 20개 가져오기
   const { data } = await supabase
     .from("posts")
