@@ -2,9 +2,18 @@ import Link from "next/link";
 import { Tag } from "lucide-react";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { supabase } from "@/lib/supabase";
+import type { Metadata } from "next";
 
 // ISR: 1시간마다 재생성
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "태그 목록 | 法 BLOG",
+  description: "法 BLOG의 모든 태그 목록입니다.",
+  alternates: {
+    canonical: "/tags",
+  },
+};
 
 interface TagData {
   name: string;

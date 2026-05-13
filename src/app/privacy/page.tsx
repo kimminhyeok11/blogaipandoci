@@ -6,6 +6,9 @@ import { StickyNav } from "@/components/layout/StickyNav";
 export const metadata: Metadata = {
   title: "개인정보처리방침 | 法 BLOG",
   description: "法 BLOG의 개인정보처리방침입니다.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 export default function PrivacyPage() {

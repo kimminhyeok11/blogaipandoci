@@ -6,6 +6,9 @@ import { StickyNav } from "@/components/layout/StickyNav";
 export const metadata: Metadata = {
   title: "이용약관 | 法 BLOG",
   description: "法 BLOG의 이용약관입니다.",
+  alternates: {
+    canonical: "/terms",
+  },
 };
 
 export default function TermsPage() {
