@@ -130,7 +130,7 @@ body {
 
   /* 공통 버튼 */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-rust text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust-light transition-colors;
   }
 
   .btn-accent {
@@ -138,7 +138,7 @@ body {
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-rule text-ink font-sans text-sm font-medium rounded-sm hover:border-rust hover:text-rust transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-rust text-rust font-sans text-sm font-medium rounded-sm hover:bg-rust hover:text-paper transition-colors;
   }
 }
 
