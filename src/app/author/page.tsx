@@ -25,7 +25,7 @@ export default function AuthorPage() {
   return (
     <div className="min-h-screen bg-paper">
       <PersonSchema
-        name="法 BLOG 편집팀"
+        name="salad20c"
         description="법률·정책·사회 분야 심층 분석 콘텐츠를 작성합니다. 실제 사례와 판례를 기반으로 독자가 실생활에서 활용할 수 있는 정보를 제공합니다."
         url="https://lawtiphub.com/author"
       />
@@ -55,7 +55,7 @@ export default function AuthorPage() {
               <h2 className="text-xl font-bold text-ink">운영 및 작성</h2>
             </div>
             <p className="text-ink leading-loose mb-4">
-              <strong>法 BLOG 편집팀</strong>이 직접 콘텐츠를 기획·작성·검수합니다.
+              <strong>salad20c</strong>이 직접 콘텐츠를 기획·작성·검수합니다.
             </p>
             <p className="text-ink leading-loose mb-4">
               모든 글은 공개된 법령, 판례, 공공자료를 기반으로 작성되며,
