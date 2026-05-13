@@ -3,6 +3,9 @@ import { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import type { Post } from "@/types";
 import { StickyNav } from "@/components/layout/StickyNav";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+const PAGE_SIZE = 20;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
@@ -39,27 +42,33 @@ function getServerSupabase() {
   return createClient(url, key);
 }
 
-async function getPosts(): Promise<Post[]> {
+async function getPosts(page: number): Promise<{ posts: Post[]; total: number }> {
   const supabase = getServerSupabase();
-  if (!supabase) return [];
-  
-  const { data, error } = await supabase
+  if (!supabase) return { posts: [], total: 0 };
+
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  const { data, error, count } = await supabase
     .from("posts")
-    .select("*, user:users(nickname, email)")
+    .select("*, user:users(nickname, email)", { count: "exact" })
     .eq("published", true)
     .not("published_at", "is", null)
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .range(from, to);
 
   if (error) {
     console.error("Posts fetch error:", error);
-    return [];
+    return { posts: [], total: 0 };
   }
 
-  return data || [];
+  return { posts: data || [], total: count || 0 };
 }
 
-export default async function PostsPage() {
-  const posts = await getPosts();
+export default async function PostsPage({ searchParams }: { searchParams: { page?: string } }) {
+  const page = Math.max(1, parseInt(searchParams.page || "1", 10));
+  const { posts, total } = await getPosts(page);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="min-h-screen bg-paper">
@@ -102,6 +111,7 @@ export default async function PostsPage() {
             </Link>
           </div>
         ) : (
+          <>
           <div className="grid gap-6">
             {posts.map((post) => (
               <article
@@ -134,6 +144,55 @@ export default async function PostsPage() {
               </article>
             ))}
           </div>
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <nav className="flex items-center justify-center gap-2 mt-10" aria-label="페이지 탐색">
+              {page > 1 && (
+                <Link
+                  href={`/posts?page=${page - 1}`}
+                  className="flex items-center gap-1 px-3 py-2 text-sm font-sans text-muted border border-rule rounded-sm hover:text-rust hover:border-rust/30 transition-colors"
+                >
+                  <ChevronLeft size={14} />
+                  이전
+                </Link>
+              )}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push("...");
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, idx) =>
+                  p === "..." ? (
+                    <span key={`ellipsis-${idx}`} className="px-2 text-muted font-sans text-sm">…</span>
+                  ) : (
+                    <Link
+                      key={p}
+                      href={`/posts?page=${p}`}
+                      className={`px-3 py-2 text-sm font-sans rounded-sm border transition-colors ${
+                        p === page
+                          ? "bg-rust text-paper border-rust"
+                          : "text-muted border-rule hover:text-rust hover:border-rust/30"
+                      }`}
+                    >
+                      {p}
+                    </Link>
+                  )
+                )}
+              {page < totalPages && (
+                <Link
+                  href={`/posts?page=${page + 1}`}
+                  className="flex items-center gap-1 px-3 py-2 text-sm font-sans text-muted border border-rule rounded-sm hover:text-rust hover:border-rust/30 transition-colors"
+                >
+                  다음
+                  <ChevronRight size={14} />
+                </Link>
+              )}
+            </nav>
+          )}
+          </>
         )}
       </main>
     </div>

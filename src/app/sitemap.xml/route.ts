@@ -62,6 +62,7 @@ export async function GET() {
     { url: `${baseUrl}`, changefreq: "daily", priority: "1.0" },
     { url: `${baseUrl}/posts`, changefreq: "daily", priority: "0.9" },
     { url: `${baseUrl}/about`, changefreq: "monthly", priority: "0.7" },
+    { url: `${baseUrl}/contact`, changefreq: "yearly", priority: "0.5" },
     { url: `${baseUrl}/tags`, changefreq: "weekly", priority: "0.7" },
     { url: `${baseUrl}/privacy`, changefreq: "yearly", priority: "0.3" },
     { url: `${baseUrl}/terms`, changefreq: "yearly", priority: "0.3" },

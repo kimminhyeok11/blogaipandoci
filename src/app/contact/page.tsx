@@ -5,7 +5,19 @@ import { StickyNav } from "@/components/layout/StickyNav";
 
 export const metadata: Metadata = {
   title: "문의하기 | 法 BLOG",
-  description: "法 BLOG에 대한 문의, 제보, 제휴 제안을 받고 있습니다. 24시간 내로 답변 드립니다.",
+  description: "法 BLOG에 대한 문의, 제보, 제휴 제안을 받고 있습니다. 사실 오류 제보, 기사 제안, 전문가 협업 등 어떤 내용이든 24시간 내로 답변 드립니다.",
+  openGraph: {
+    title: "문의하기 | 法 BLOG",
+    description: "法 BLOG에 대한 문의, 제보, 제휴 제안을 받고 있습니다. 사실 오류 제보, 기사 제안, 전문가 협업 등 어떤 내용이든 24시간 내로 답변 드립니다.",
+    type: "website",
+    locale: "ko_KR",
+    url: "/contact",
+    siteName: "法 BLOG",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "法 BLOG 문의하기" }],
+  },
+  alternates: {
+    canonical: "/contact",
+  },
 };
 
 export default function ContactPage() {
