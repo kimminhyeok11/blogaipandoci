@@ -31,7 +31,6 @@ export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
             key={post.id}
             href={`/posts/${post.slug}`}
             className="group block bg-paper border border-ink/10 rounded-sm overflow-hidden hover:border-rust/30 transition-colors"
-            aria-label={post.title}
           >
             <div className="flex gap-3 p-3">
               {/* 썸네일 */}
