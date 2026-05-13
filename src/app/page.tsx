@@ -98,7 +98,7 @@ export default async function HomePage() {
               </div>
               <Link
                 href={`/posts/${featuredPost.slug}`}
-                className="btn-outline mt-6 text-xs tracking-wider uppercase"
+                className="btn-outline mt-6 tracking-wider uppercase"
                 aria-label={`${featuredPost.title} 자세히 읽기`}
               >
                 자세히 읽기

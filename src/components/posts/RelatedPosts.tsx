@@ -85,7 +85,7 @@ export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
       <div className="text-center mt-6 mb-8">
         <Link
           href="/posts"
-          className="inline-block px-6 py-2 text-sm font-sans text-rust border border-rust/30 rounded-sm hover:bg-rust/5 transition-colors"
+          className="btn-outline"
         >
           전체 글 목록 보기
         </Link>

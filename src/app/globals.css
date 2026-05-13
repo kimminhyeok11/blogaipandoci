@@ -128,9 +128,9 @@ body {
     @apply bg-ink text-paper max-w-content mx-auto p-10 grid grid-cols-1 md:grid-cols-3 gap-0 border-t-4 border-rust;
   }
 
-  /* 공통 버튼 */
+  /* 공통 버튼 - 사이트 톤: 베이지 배경 / 검정 텍스트 / rust 포인트 */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-rust text-rust font-sans text-sm font-medium rounded-sm hover:bg-rust hover:text-paper transition-colors;
   }
 
   .btn-accent {
@@ -138,7 +138,7 @@ body {
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-ink text-ink font-sans text-sm font-medium rounded-sm hover:bg-ink hover:text-paper transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-rule text-ink font-sans text-sm font-medium rounded-sm hover:border-rust hover:text-rust transition-colors;
   }
 }
 
