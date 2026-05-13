@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { supabase } from "@/lib/supabase";
+import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
 import { PenSquare, User, Search } from "lucide-react";
 import { HomepageBreadcrumbSchema } from "@/components/seo/StructuredData";
 
@@ -22,7 +22,12 @@ interface Post {
   user?: { nickname: string | null; email: string | null };
 }
 
+function getSupabase() {
+  try { return getServiceSupabase(); } catch { return anonSupabase; }
+}
+
 async function getPosts() {
+  const supabase = getSupabase();
   try {
     // Popular posts (by view count)
     const { data: popularPosts } = await supabase

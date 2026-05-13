@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Metadata } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { getServiceSupabase } from "@/lib/supabase";
 import type { Post } from "@/types";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -29,17 +29,14 @@ export const metadata: Metadata = {
 // searchParams 사용으로 동적 렌더링 (ISR 불가)
 export const dynamic = "force-dynamic";
 
-// 서버용 Supabase 클라이언트 생성
+// 서버용 Supabase 클라이언트 (service role - RLS 우회, users.nickname 조회 가능)
 function getServerSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!url || !key) {
-    console.error("Supabase 환경변수 누락");
+  try {
+    return getServiceSupabase();
+  } catch {
+    console.error("Supabase service role key 누락");
     return null;
   }
-  
-  return createClient(url, key);
 }
 
 async function getPosts(page: number): Promise<{ posts: Post[]; total: number }> {

@@ -4,7 +4,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
-import { createClient } from "@supabase/supabase-js";
+import { getServiceSupabase } from "@/lib/supabase";
 import type { Post } from "@/types";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import { getMappedSlug } from "@/lib/slug-mapping";
@@ -21,12 +21,13 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 // ISR: 1시간마다 재생성
 export const revalidate = 3600;
 
-// 서버용 Supabase 클라이언트 생성
+// 서버용 Supabase 클라이언트 (service role - RLS 우회, users.nickname 조회 가능)
 function getServerSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
+  try {
+    return getServiceSupabase();
+  } catch {
+    return null;
+  }
 }
 
 
