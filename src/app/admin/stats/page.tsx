@@ -110,7 +110,7 @@ export default function StatsPage() {
   const [allPostsTotal, setAllPostsTotal] = useState(0);
   const [allPostsPage, setAllPostsPage] = useState(1);
   const [isAllPostsLoading, setIsAllPostsLoading] = useState(false);
-  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const [copiedSlug, setCopiedSlug] = useState<{ slug: string; type: 'encoded' | 'decoded' } | null>(null);
 
   // 임시저장 관리 상태
   const [autoSaves, setAutoSaves] = useState<AutoSaveItem[]>([]);
@@ -301,16 +301,19 @@ export default function StatsPage() {
     }
   };
 
-  // URL 복사 (trailing slash 없음 - canonical과 통일)
-  const copyPostUrl = (slug: string) => {
+  // URL 복사 - 인코딩(네이버용) / 디코딩(구글용)
+  const copyPostUrl = (slug: string, encoded: boolean) => {
     if (typeof window === 'undefined') {
       showToast('브라우저 환경에서만 사용 가능합니다', 'error');
       return;
     }
-    const url = `${window.location.origin}/posts/${encodeURIComponent(slug)}`;
+    const url = encoded
+      ? `${window.location.origin}/posts/${encodeURIComponent(slug)}`
+      : `${window.location.origin}/posts/${slug}`;
+    const type = encoded ? 'encoded' : 'decoded';
     navigator.clipboard.writeText(url).then(() => {
-      setCopiedSlug(slug);
-      showToast('URL이 복사되었습니다', 'success');
+      setCopiedSlug({ slug, type });
+      showToast(encoded ? '인코딩 URL 복사됨 (네이버용)' : '한글 URL 복사됨 (구글용)', 'success');
       setTimeout(() => setCopiedSlug(null), 2000);
     }).catch(() => {
       showToast('URL 복사에 실패했습니다', 'error');
@@ -712,9 +715,13 @@ export default function StatsPage() {
                       <span className="font-sans text-xs text-muted">{post.view_count.toLocaleString()}</span>
                     </div>
                     <div className="col-span-3 flex items-center justify-end gap-1">
-                      <button onClick={() => copyPostUrl(post.slug)} className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-sans transition-colors ${copiedSlug === post.slug ? 'bg-green-100 text-green-700' : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'}`} title="URL 복사">
+                      <button onClick={() => copyPostUrl(post.slug, true)} className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-sans transition-colors ${copiedSlug?.slug === post.slug && copiedSlug.type === 'encoded' ? 'bg-green-100 text-green-700' : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'}`} title="인코딩 URL 복사 (네이버용)">
                         <Copy size={12} />
-                        {copiedSlug === post.slug ? '복사됨' : 'URL'}
+                        {copiedSlug?.slug === post.slug && copiedSlug.type === 'encoded' ? '복사됨' : 'N'}
+                      </button>
+                      <button onClick={() => copyPostUrl(post.slug, false)} className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-sans transition-colors ${copiedSlug?.slug === post.slug && copiedSlug.type === 'decoded' ? 'bg-green-100 text-green-700' : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'}`} title="한글 URL 복사 (구글용)">
+                        <Copy size={12} />
+                        {copiedSlug?.slug === post.slug && copiedSlug.type === 'decoded' ? '복사됨' : 'G'}
                       </button>
                       <Link href={`/posts/${post.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-2 py-1 rounded text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors" title="새 탭에서 열기">
                         <ExternalLink size={12} />
@@ -744,9 +751,13 @@ export default function StatsPage() {
                     <div className="flex items-center justify-between">
                       <span className="font-sans text-xs text-muted">조회 {post.view_count.toLocaleString()}</span>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => copyPostUrl(post.slug)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans transition-colors ${copiedSlug === post.slug ? 'bg-green-100 text-green-700' : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'}`}>
+                        <button onClick={() => copyPostUrl(post.slug, true)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans transition-colors ${copiedSlug?.slug === post.slug && copiedSlug.type === 'encoded' ? 'bg-green-100 text-green-700' : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'}`} title="인코딩 URL (네이버용)">
                           <Copy size={14} />
-                          {copiedSlug === post.slug ? '복사됨' : 'URL 복사'}
+                          {copiedSlug?.slug === post.slug && copiedSlug.type === 'encoded' ? '복사됨' : '네이버'}
+                        </button>
+                        <button onClick={() => copyPostUrl(post.slug, false)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans transition-colors ${copiedSlug?.slug === post.slug && copiedSlug.type === 'decoded' ? 'bg-green-100 text-green-700' : 'bg-cream hover:bg-rust/10 text-muted hover:text-rust'}`} title="한글 URL (구글용)">
+                          <Copy size={14} />
+                          {copiedSlug?.slug === post.slug && copiedSlug.type === 'decoded' ? '복사됨' : '구글'}
                         </button>
                         <Link href={`/posts/${post.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-sans bg-cream hover:bg-rust/10 text-muted hover:text-rust transition-colors">
                           <ExternalLink size={14} />
