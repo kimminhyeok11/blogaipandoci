@@ -174,10 +174,18 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     };
   }
 
-  const description = (post.meta_description || post.excerpt || "").slice(0, 150);
+  const rawDesc = post.meta_description || post.excerpt || "";
+  const description = rawDesc.length >= 120
+    ? rawDesc.slice(0, 155)
+    : rawDesc.length > 0
+      ? `${rawDesc} — ${post.title}`.slice(0, 155)
+      : post.title.slice(0, 155);
+
+  const rawTitle = post.meta_title || post.title;
+  const title = rawTitle.length > 55 ? `${rawTitle.slice(0, 52)}...` : rawTitle;
 
   return {
-    title: post.meta_title || post.title,
+    title,
     description,
     keywords: post.title.split(" ").filter((w: string) => w.length > 1),
     authors: post.user?.nickname ? [{ name: post.user.nickname }] : undefined,

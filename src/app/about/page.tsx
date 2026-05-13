@@ -6,6 +6,15 @@ import { StickyNav } from "@/components/layout/StickyNav";
 export const metadata: Metadata = {
   title: "소개 | 法 BLOG - 생활형 법률·정책 미디어",
   description: "생활형 법률·정책 이슈를 분석하는 독립 미디어. 실제 판례·뉴스·공공자료를 기반으로 현실적인 법률 정보를 쉽게 전달합니다. 법률 자문이 아닌 일반 정보 제공 목적입니다.",
+  openGraph: {
+    title: "소개 | 法 BLOG",
+    description: "생활형 법률·정책 이슈를 분석하는 독립 미디어. 실제 판례·뉴스·공공자료를 기반으로 현실적인 법률 정보를 쉽게 전달합니다.",
+    type: "website",
+    locale: "ko_KR",
+    url: "/about",
+    siteName: "法 BLOG",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "法 BLOG 소개" }],
+  },
   alternates: {
     canonical: "/about",
   },

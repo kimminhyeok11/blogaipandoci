@@ -9,7 +9,16 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "태그 목록 | 法 BLOG",
-  description: "法 BLOG의 모든 태그 목록입니다.",
+  description: "法 BLOG의 모든 태그 목록입니다. 법률, 정책, 사회 분야별로 분류된 심층 분석 콘텐츠를 주제별로 탐색하세요.",
+  openGraph: {
+    title: "태그 목록 | 法 BLOG",
+    description: "法 BLOG의 모든 태그 목록입니다. 법률, 정책, 사회 분야별로 분류된 심층 분석 콘텐츠를 주제별로 탐색하세요.",
+    type: "website",
+    locale: "ko_KR",
+    url: "/tags",
+    siteName: "法 BLOG",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "法 BLOG 태그 목록" }],
+  },
   alternates: {
     canonical: "/tags",
   },

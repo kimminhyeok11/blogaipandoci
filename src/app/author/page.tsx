@@ -6,7 +6,16 @@ import { PersonSchema } from "@/components/seo/StructuredData";
 
 export const metadata: Metadata = {
   title: "작성자 정보 | 法 BLOG",
-  description: "法 BLOG 콘텐츠 작성 및 편집 정책, 정보 출처 및 검증 프로세스를 안내합니다.",
+  description: "法 BLOG 콘텐츠 작성 및 편집 정책, 정보 출의 및 검증 프로세스를 안내합니다. 실제 판례와 공공자료를 기반으로 신뢰할 수 있는 법률 콘텐츠를 제공합니다.",
+  openGraph: {
+    title: "작성자 정보 | 法 BLOG",
+    description: "法 BLOG 콘텐츠 작성 및 편집 정책, 정보 출의 및 검증 프로세스를 안내합니다. 실제 판례와 공공자료를 기반으로 신뢰할 수 있는 법률 콘텐츠를 제공합니다.",
+    type: "website",
+    locale: "ko_KR",
+    url: "/author",
+    siteName: "法 BLOG",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "法 BLOG 작성자 정보" }],
+  },
   alternates: {
     canonical: "/author",
   },

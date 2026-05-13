@@ -7,17 +7,19 @@ import { StickyNav } from "@/components/layout/StickyNav";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 export const metadata: Metadata = {
-  title: "모든 글",
-  description: "법률, 기술, 비즈니스에 관한 法 BLOG의 모든 게시글을 확인하세요.",
+  title: "전체 글 목록 | 법률·정책·사회 분석",
+  description: "법률, 기술, 비즈니스에 관한 法 BLOG의 모든 게시글을 확인하세요. 실제 판례와 사례를 기반으로 한 심층 분석 콘텐츠를 제공합니다.",
   openGraph: {
-    title: "모든 글 | 法 BLOG",
-    description: "법률, 기술, 비즈니스에 관한 法 BLOG의 모든 게시글을 확인하세요.",
+    title: "전체 글 목록 | 法 BLOG",
+    description: "법률, 기술, 비즈니스에 관한 法 BLOG의 모든 게시글을 확인하세요. 실제 판례와 사례를 기반으로 한 심층 분석 콘텐츠를 제공합니다.",
     type: "website",
     locale: "ko_KR",
-    url: `${SITE_URL}/posts`,
+    url: "/posts",
+    siteName: "法 BLOG",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "法 BLOG 전체 글 목록" }],
   },
   alternates: {
-    canonical: `${SITE_URL}/posts`,
+    canonical: "/posts",
   },
 };
 

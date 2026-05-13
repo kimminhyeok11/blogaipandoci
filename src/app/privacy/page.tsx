@@ -6,6 +6,15 @@ import { StickyNav } from "@/components/layout/StickyNav";
 export const metadata: Metadata = {
   title: "개인정보처리방침 | 法 BLOG",
   description: "法 BLOG의 개인정보처리방침입니다. 수집하는 개인정보 항목, 이용 목적, 보유 기간, 제3자 제공 여부 등 법률 블로그 운영에 관한 개인정보 보호 정책을 안내합니다.",
+  openGraph: {
+    title: "개인정보처리방침 | 法 BLOG",
+    description: "法 BLOG의 개인정보처리방침입니다. 수집하는 개인정보 항목, 이용 목적, 보유 기간, 제3자 제공 여부 등을 안내합니다.",
+    type: "website",
+    locale: "ko_KR",
+    url: "/privacy",
+    siteName: "法 BLOG",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "法 BLOG 개인정보처리방침" }],
+  },
   alternates: {
     canonical: "/privacy",
   },
