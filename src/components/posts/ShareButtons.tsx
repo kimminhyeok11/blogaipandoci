@@ -62,29 +62,13 @@ function ShareButtonsComponent({ title }: ShareButtonsProps) {
   };
 
   const handleKakaoShare = () => {
-    const KAKAO_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
-    if (!KAKAO_KEY) {
-      // SDK 키 없으면 카카오 웹 공유 페이지로 폴백 (OG 미리보기 없음)
-      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(shareUrl)}`, '_blank', 'width=550,height=520');
-      return;
-    }
-    // Kakao SDK 동적 로드 후 sendDefault (OG 이미지+제목+설명 자동 크롤링)
-    const kakao = (window as Window & { Kakao?: { isInitialized: () => boolean; init: (key: string) => void; Share: { sendScrap: (opts: { requestUrl: string }) => void } } }).Kakao;
-    if (kakao) {
-      if (!kakao.isInitialized()) kakao.init(KAKAO_KEY);
+    // layout.tsx에서 Kakao SDK가 전역 로드됨 - sendScrap으로 OG 미리보기 자동 크롤링
+    const kakao = (window as Window & { Kakao?: { Share: { sendScrap: (opts: { requestUrl: string }) => void } } }).Kakao;
+    if (kakao?.Share) {
       kakao.Share.sendScrap({ requestUrl: shareUrl });
     } else {
-      const script = document.createElement('script');
-      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
-      script.crossOrigin = 'anonymous';
-      script.onload = () => {
-        const k = (window as Window & { Kakao?: { isInitialized: () => boolean; init: (key: string) => void; Share: { sendScrap: (opts: { requestUrl: string }) => void } } }).Kakao;
-        if (k) {
-          if (!k.isInitialized()) k.init(KAKAO_KEY);
-          k.Share.sendScrap({ requestUrl: shareUrl });
-        }
-      };
-      document.head.appendChild(script);
+      // SDK 미로드 폴백
+      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(shareUrl)}`, '_blank', 'width=550,height=520');
     }
   };
 

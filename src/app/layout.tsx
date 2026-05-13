@@ -145,6 +145,22 @@ export default function RootLayout({
           </AuthProvider>
         </QueryProvider>
         <Analytics />
+        {/* Kakao JS SDK - 카카오 공유 OG 미리보기용 */}
+        {process.env.NEXT_PUBLIC_KAKAO_JS_KEY && (
+          <>
+            <Script
+              src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+              crossOrigin="anonymous"
+              strategy="afterInteractive"
+              onLoad={() => {
+                const kakao = (window as Window & { Kakao?: { isInitialized: () => boolean; init: (k: string) => void } }).Kakao;
+                if (kakao && !kakao.isInitialized()) {
+                  kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY!);
+                }
+              }}
+            />
+          </>
+        )}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-DKZVK5XQ5J"
           strategy="afterInteractive"
