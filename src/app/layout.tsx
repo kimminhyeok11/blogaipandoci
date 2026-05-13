@@ -147,16 +147,21 @@ export default function RootLayout({
         <Analytics />
         {/* Kakao JS SDK - 카카오 공유 OG 미리보기용 */}
         {process.env.NEXT_PUBLIC_KAKAO_JS_KEY && (
-          <>
-            <Script
-              src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
-              crossOrigin="anonymous"
-              strategy="afterInteractive"
-            />
-            <Script id="kakao-init" strategy="afterInteractive">
-              {`if(window.Kakao && !window.Kakao.isInitialized()){window.Kakao.init('${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}');}`}
-            </Script>
-          </>
+          <Script id="kakao-sdk-init" strategy="afterInteractive">
+            {`
+              (function() {
+                var s = document.createElement('script');
+                s.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+                s.crossOrigin = 'anonymous';
+                s.onload = function() {
+                  if (window.Kakao && !window.Kakao.isInitialized()) {
+                    window.Kakao.init('${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}');
+                  }
+                };
+                document.head.appendChild(s);
+              })();
+            `}
+          </Script>
         )}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-DKZVK5XQ5J"
