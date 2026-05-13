@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import { PenSquare, User, Search } from "lucide-react";
-import { ClientHeader } from "@/components/layout/ClientHeader";
 import { HomepageBreadcrumbSchema } from "@/components/seo/StructuredData";
-import { AdSense } from "@/components/ads/AdSense";
+
+const ClientHeader = dynamic(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
+const AdSense = dynamic(() => import("@/components/ads/AdSense").then(m => ({ default: m.AdSense })), { ssr: false });
 
 // ISR: 1시간마다 재생성
 export const revalidate = 3600;

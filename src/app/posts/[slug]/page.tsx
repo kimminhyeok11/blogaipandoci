@@ -1,19 +1,20 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
-import { PostContentWithToc } from "@/components/posts/PostContentWithToc";
 import { createClient } from "@supabase/supabase-js";
 import type { Post } from "@/types";
-import { PostActions } from "@/components/posts/PostActions";
-import { ShareButtons } from "@/components/posts/ShareButtons";
-import { RelatedPosts } from "@/components/posts/RelatedPosts";
-import { PostContent } from "@/components/posts/PostContent";
-import { TocSidebar } from "@/components/posts/TocSidebar";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
+
+const PostContent = dynamic(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })), { ssr: false });
+const TocSidebar = dynamic(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })), { ssr: false });
+const PostActions = dynamic(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
+const ShareButtons = dynamic(() => import("@/components/posts/ShareButtons").then(m => ({ default: m.ShareButtons })), { ssr: false });
+const RelatedPosts = dynamic(() => import("@/components/posts/RelatedPosts").then(m => ({ default: m.RelatedPosts })), { ssr: false });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 

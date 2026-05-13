@@ -124,8 +124,6 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${notoSerifKR.variable} ${notoSansKR.variable} ${dmMono.variable}`} suppressHydrationWarning>
       <head>
-        {/* SEO용 sr-only H1 - 메인 주제 명시 */}
-        <h1 className="sr-only">법률·정책·사회 분석 블로그 - 法 BLOG</h1>
         <meta name="google-adsense-account" content="ca-pub-5239497835591112" />
         {/* Note: Google Fonts CDN 미사용 - Next.js next/font로 최적화된 폰트 사용 */}
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
