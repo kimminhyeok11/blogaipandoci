@@ -26,8 +26,8 @@ export const metadata: Metadata = {
   },
 };
 
-// ISR: 1시간마다 재생성
-export const revalidate = 3600;
+// searchParams 사용으로 동적 렌더링 (ISR 불가)
+export const dynamic = "force-dynamic";
 
 // 서버용 Supabase 클라이언트 생성
 function getServerSupabase() {

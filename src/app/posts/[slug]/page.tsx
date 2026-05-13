@@ -10,8 +10,8 @@ import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
 
-const PostContent = dynamic(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })), { ssr: false });
-const TocSidebar = dynamic(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })), { ssr: false });
+const PostContent = dynamic(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })));
+const TocSidebar = dynamic(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
 const PostActions = dynamic(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
 const ShareButtons = dynamic(() => import("@/components/posts/ShareButtons").then(m => ({ default: m.ShareButtons })), { ssr: false });
 const RelatedPosts = dynamic(() => import("@/components/posts/RelatedPosts").then(m => ({ default: m.RelatedPosts })), { ssr: false });
