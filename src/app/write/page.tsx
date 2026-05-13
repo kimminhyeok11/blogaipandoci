@@ -53,6 +53,7 @@ function WritePageContent() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
+  const [draftBanner, setDraftBanner] = useState<{ timestamp: string; data: { title: string; content: string; excerpt: string; tags: string } } | null>(null);
   const [postId, setPostId] = useState<string | null>(null);
   const [preview, setPreview] = useState(false);
 
@@ -95,30 +96,15 @@ function WritePageContent() {
     };
   }, [saveToLocalStorage, title, content]);
 
-  // 페이지 로드 시 복원 확인
+  // 페이지 로드 시 복원 배너 표시 (새 글 모드)
   useEffect(() => {
-    // 새 글쓰기 모드에서만 임시저장 확인 (수정 모드는 editSlug 기반 키 사용)
     if (isEditMode) return;
-
     const saved = autoSave.load();
     if (saved?.hasData) {
-      const confirmed = window.confirm(
-        `${saved.timestamp || '이전'}에 저장된 임시 글이 있습니다.\n\n` +
-        `제목: ${saved.title.slice(0, 30)}${saved.title.length > 30 ? '...' : ''}\n\n` +
-        `불러오시겠습니까? (취소 시 임시 글은 삭제됩니다)`
-      );
-      
-      if (confirmed) {
-        setTitle(saved.title);
-        setContent(saved.content);
-        setExcerpt(saved.excerpt);
-        setTags(saved.tags);
-        showToast('임시 저장된 글을 불러왔습니다', 'success');
-      } else {
-        autoSave.clear();
-      }
+      setDraftBanner({ timestamp: saved.timestamp || '이전', data: { title: saved.title, content: saved.content, excerpt: saved.excerpt, tags: saved.tags } });
     }
-  }, [autoSave]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 기존 게시글 목록 로드 (자동 내부 링크용)
   useEffect(() => {
@@ -205,41 +191,19 @@ function WritePageContent() {
         }
 
         setPostId(post.id);
-        
-        // 임시 저장된 데이터가 있는지 확인
+                // 임시 저장된 데이터가 있는지 확인
         const saved = autoSave.load();
+        setTitle(post.title);
+        setContent(post.content);
+        setExcerpt(post.excerpt || "");
         if (saved?.hasData) {
           const postUpdatedAt = new Date(post.updated_at);
           const savedTime = saved.rawTimestamp ? new Date(saved.rawTimestamp) : null;
-          
-          // 임시 저장이 더 최신이면 확인
           if (savedTime && savedTime > postUpdatedAt) {
-            const confirmed = window.confirm(
-              `${saved.timestamp}에 임시 저장된 수정 내용이 있습니다.\n\n` +
-              `임시 저장 내용을 불러오시겠습니까? (취소 시 서버 저장된 버전을 사용합니다)`
-            );
-            
-            if (confirmed) {
-              setTitle(saved.title);
-              setContent(saved.content);
-              setExcerpt(saved.excerpt);
-              setTags(saved.tags);
-              showToast('임시 저장된 수정 내용을 불러왔습니다', 'success');
-            } else {
-              setTitle(post.title);
-              setContent(post.content);
-              setExcerpt(post.excerpt || "");
-              autoSave.clear();
-            }
+            setDraftBanner({ timestamp: saved.timestamp || '이전', data: { title: saved.title, content: saved.content, excerpt: saved.excerpt, tags: saved.tags } });
           } else {
-            setTitle(post.title);
-            setContent(post.content);
-            setExcerpt(post.excerpt || "");
+            autoSave.clear();
           }
-        } else {
-          setTitle(post.title);
-          setContent(post.content);
-          setExcerpt(post.excerpt || "");
         }
 
         // 기존 태그 로드 (API 호출)
@@ -585,6 +549,39 @@ function WritePageContent() {
       {/* 티스토리 스타일: 상단바 + 입력영역 + 하단상태바 3단 레이아웃 */}
       {!isLoading ? (
         <main className="flex-1 flex flex-col w-full min-h-0 pt-12">
+          {/* 임시저장 복원 배너 */}
+          {draftBanner && (
+            <div className="flex items-center gap-3 px-4 sm:px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-sm font-sans">
+              <span className="text-amber-800 flex-1">
+                <strong>{draftBanner.timestamp}</strong>에 임시저장된 내용이 있습니다.
+                {draftBanner.data.title && <span className="text-amber-600 ml-1">({draftBanner.data.title.slice(0, 20)}{draftBanner.data.title.length > 20 ? '…' : ''})</span>}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setTitle(draftBanner.data.title);
+                  setContent(draftBanner.data.content);
+                  setExcerpt(draftBanner.data.excerpt);
+                  setTags(draftBanner.data.tags);
+                  setDraftBanner(null);
+                  showToast('임시저장 내용을 불러왔습니다', 'success');
+                }}
+                className="px-3 py-1 bg-amber-600 text-white rounded-sm text-xs font-medium hover:bg-amber-700 transition-colors whitespace-nowrap"
+              >
+                불러오기
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  autoSave.clear();
+                  setDraftBanner(null);
+                }}
+                className="px-3 py-1 border border-amber-300 text-amber-700 rounded-sm text-xs font-medium hover:bg-amber-100 transition-colors whitespace-nowrap"
+              >
+                삭제
+              </button>
+            </div>
+          )}
           {/* 메타 정보 영역 - 풀그리드 너비 */}
           <div className="px-4 sm:px-6 lg:px-8 py-6 border-b-2 border-rule flex-shrink-0">
             {/* 제목 */}
