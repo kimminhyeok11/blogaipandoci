@@ -6,9 +6,16 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
+        // Googlebot 전용 규칙 - 콘텐츠 페이지 명시적 허용
+        userAgent: "Googlebot",
+        allow: ["/", "/posts/", "/tags/", "/about", "/author", "/contact", "/privacy", "/terms"],
+        disallow: ["/login", "/write", "/api/", "/admin/", "/profile/", "/search", "/categories", "/auth/"],
+      },
+      {
+        // 일반 봇 규칙
         userAgent: "*",
-        allow: "/",
-        disallow: ["/login", "/write", "/api/", "/admin/", "/profile", "/search", "/categories"],
+        allow: ["/", "/posts/", "/tags/"],
+        disallow: ["/login", "/write", "/api/", "/admin/", "/profile/", "/search", "/categories", "/auth/"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

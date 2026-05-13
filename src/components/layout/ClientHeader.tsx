@@ -54,6 +54,7 @@ export function ClientHeader() {
               href="/write" 
               className="p-1 text-ink hover:text-rust transition-colors"
               title="글쓰기"
+              rel="nofollow"
             >
               <PenSquare size={16} />
             </Link>
@@ -72,6 +73,7 @@ export function ClientHeader() {
               href="/search" 
               className="p-1 text-ink hover:text-rust transition-colors"
               title="검색"
+              rel="nofollow"
             >
               <Search size={16} />
             </Link>
@@ -82,6 +84,7 @@ export function ClientHeader() {
                 href="/profile" 
                 className="p-1 text-ink hover:text-rust transition-colors"
                 title="프로필"
+                rel="nofollow"
               >
                 <User size={16} />
               </Link>
@@ -90,6 +93,7 @@ export function ClientHeader() {
                 href="/login" 
                 className="p-1 text-ink hover:text-rust transition-colors"
                 title="로그인"
+                rel="nofollow"
               >
                 <User size={16} />
               </Link>
