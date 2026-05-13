@@ -39,8 +39,14 @@ function ShareButtonsComponent({ title }: ShareButtonsProps) {
     if (kakao?.Share) {
       kakao.Share.sendScrap({ requestUrl: shareUrl });
     } else {
-      // SDK 미로드 폴백
-      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(shareUrl)}`, '_blank', 'width=550,height=520');
+      // SDK 미로드 폴백 - 모바일: 카카오톡 앱 스킴, PC: URL 복사
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        window.location.href = `kakaolink://send?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}`;
+      } else {
+        navigator.clipboard.writeText(shareUrl).catch(() => {});
+        alert('카카오 JS 키가 설정되지 않았습니다.\n환경변수 NEXT_PUBLIC_KAKAO_JS_KEY를 설정해주세요.');
+      }
     }
   };
 
