@@ -42,14 +42,14 @@ export default function Error({
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={reset}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-rust text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust-light transition-colors"
+              className="btn-accent"
             >
               <RefreshCw size={16} />
               다시 시도
             </button>
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-rule text-ink font-sans text-sm font-medium rounded-sm hover:border-rust hover:text-rust transition-colors"
+              className="btn-outline"
             >
               홈으로 돌아가기
             </Link>

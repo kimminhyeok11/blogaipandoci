@@ -56,7 +56,7 @@ export default function ContactPage() {
               </p>
               <a
                 href="mailto:salad20c@gmail.com"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-rust text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust-light transition-colors"
+                className="btn-accent"
               >
                 <Send size={16} />
                 salad20c@gmail.com

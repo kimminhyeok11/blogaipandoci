@@ -98,7 +98,7 @@ export default async function HomePage() {
               </div>
               <Link
                 href={`/posts/${featuredPost.slug}`}
-                className="inline-block mt-6 px-6 py-2 border-2 border-ink text-ink font-sans text-xs font-medium tracking-wider uppercase hover:bg-ink hover:text-paper transition-colors"
+                className="btn-outline mt-6 text-xs tracking-wider uppercase"
                 aria-label={`${featuredPost.title} 자세히 읽기`}
               >
                 자세히 읽기
@@ -179,7 +179,7 @@ export default async function HomePage() {
           <div className="mt-12 text-center">
             <Link
               href="/posts"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust transition-colors"
+              className="btn-primary"
             >
               모든 글 보기
               <span aria-hidden="true">→</span>

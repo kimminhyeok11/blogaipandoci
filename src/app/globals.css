@@ -127,6 +127,19 @@ body {
   .verdict-box {
     @apply bg-ink text-paper max-w-content mx-auto p-10 grid grid-cols-1 md:grid-cols-3 gap-0 border-t-4 border-rust;
   }
+
+  /* 공통 버튼 */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust transition-colors;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-rust text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust-light transition-colors;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-rule text-ink font-sans text-sm font-medium rounded-sm hover:border-rust hover:text-rust transition-colors;
+  }
 }
 
 /* 마크다운 콘텐츠 스타일 — @layer 밖에서 정의하여 Preflight/글로벌 리셋보다 높은 우선순위 보장 */

@@ -156,7 +156,7 @@ export default function AuthorPage() {
           <div className="text-center pt-8 border-t border-rule">
             <Link
               href="/posts"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust transition-colors"
+              className="btn-primary"
             >
               모든 글 보기
             </Link>

@@ -31,13 +31,13 @@ export default function NotFound() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust transition-colors"
+              className="btn-primary"
             >
               홈으로 돌아가기
             </Link>
             <Link
               href="/posts"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-cream text-ink font-sans text-sm font-medium rounded-sm hover:bg-rust hover:text-paper transition-colors"
+              className="btn-outline"
             >
               모든 글 보기
             </Link>
