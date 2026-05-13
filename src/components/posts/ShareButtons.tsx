@@ -12,7 +12,10 @@ function ShareButtonsComponent({ title }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setShareUrl(window.location.href);
+    // 한글 slug가 디코딩된 상태면 인코딩된 canonical URL로 통일
+    const { origin, pathname, search, hash } = window.location;
+    const encodedPath = pathname.split('/').map(seg => encodeURIComponent(decodeURIComponent(seg))).join('/');
+    setShareUrl(`${origin}${encodedPath}${search}${hash}`);
   }, []);
 
   const openShareWindow = (url: string) => {
@@ -59,8 +62,30 @@ function ShareButtonsComponent({ title }: ShareButtonsProps) {
   };
 
   const handleKakaoShare = () => {
-    const url = `https://share.kakao.com/talk/link?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}`;
-    openShareWindow(url);
+    const KAKAO_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
+    if (!KAKAO_KEY) {
+      // SDK 키 없으면 카카오 웹 공유 페이지로 폴백 (OG 미리보기 없음)
+      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(shareUrl)}`, '_blank', 'width=550,height=520');
+      return;
+    }
+    // Kakao SDK 동적 로드 후 sendDefault (OG 이미지+제목+설명 자동 크롤링)
+    const kakao = (window as Window & { Kakao?: { isInitialized: () => boolean; init: (key: string) => void; Share: { sendScrap: (opts: { requestUrl: string }) => void } } }).Kakao;
+    if (kakao) {
+      if (!kakao.isInitialized()) kakao.init(KAKAO_KEY);
+      kakao.Share.sendScrap({ requestUrl: shareUrl });
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+      script.crossOrigin = 'anonymous';
+      script.onload = () => {
+        const k = (window as Window & { Kakao?: { isInitialized: () => boolean; init: (key: string) => void; Share: { sendScrap: (opts: { requestUrl: string }) => void } } }).Kakao;
+        if (k) {
+          if (!k.isInitialized()) k.init(KAKAO_KEY);
+          k.Share.sendScrap({ requestUrl: shareUrl });
+        }
+      };
+      document.head.appendChild(script);
+    }
   };
 
   const handleNaverShare = () => {
