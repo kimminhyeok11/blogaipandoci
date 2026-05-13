@@ -108,7 +108,7 @@ export async function GET() {
           .join("\n");
 
         return `  <url>
-    <loc>${escapeXml(`${baseUrl}/posts/${post.slug}`)}</loc>
+    <loc>${escapeXml(`${baseUrl}/posts/${encodeURIComponent(post.slug)}`)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
