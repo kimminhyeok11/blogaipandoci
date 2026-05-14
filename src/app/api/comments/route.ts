@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       post_id,
       content,
       parent_id,
+      user_id,
       nickname,
       is_anonymous,
       question_type,
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
         post_id,
         content: maskedContent,
         parent_id: parent_id || null,
-        user_id: null, // 익명 허용
+        user_id: user_id || null,
         nickname: nickname || "익명",
         is_anonymous: is_anonymous || true,
         status,

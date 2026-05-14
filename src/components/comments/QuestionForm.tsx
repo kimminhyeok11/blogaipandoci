@@ -72,6 +72,7 @@ export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
           post_id: postId,
           content: formData.content,
           nickname: dbNickname || user?.email?.split("@")[0] || "익명",
+          user_id: user?.id || null,
           is_anonymous: false,
           question_type: formData.whoProblem,
           topic_tags: [...formData.currentSituation, ...formData.procedure],
@@ -94,7 +95,7 @@ export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, postId, user, showToast, onSuccess]);
+  }, [formData, postId, user, dbNickname, showToast, onSuccess]);
 
   // 비로그인 시 로그인 유도 UI
   if (!user) {
