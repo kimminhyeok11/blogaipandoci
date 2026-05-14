@@ -120,29 +120,43 @@ export default function ProfilePage() {
       return;
     }
     setIsWithdrawing(true);
+
+    const clearSession = async () => {
+      try { await supabase.auth.signOut({ scope: "global" }); } catch {}
+      Object.keys(localStorage).forEach((k) => { if (k.startsWith("sb-")) localStorage.removeItem(k); });
+    };
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("세션 만료");
+      if (!session?.access_token) {
+        // 세션이 없어도 로컬 잔여 토큰 정리 후 홈으로
+        await clearSession();
+        window.location.href = "/";
+        return;
+      }
+
       const res = await fetch("/api/users/me", {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${session.access_token}` },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
 
-      // 모든 기기 세션 강제 무효화 (global scope)
-      await supabase.auth.signOut({ scope: "global" });
+      // API 성공/실패 무관하게 항상 세션 삭제
+      await clearSession();
 
-      // 브라우저에 남은 Supabase 세션 토큰 완전 삭제
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith("sb-")) localStorage.removeItem(key);
-      });
+      if (!res.ok) {
+        // API 실패 = Supabase에서 계정 삭제 실패 → 에러 메시지 표시 후 홈 이동
+        showToast("탈퇴 처리 중 오류: " + (data.error || "알 수 없는 오류"), "error");
+        window.location.href = "/";
+        return;
+      }
 
       showToast("탈퇴가 완료되었습니다.", "success");
-      // 페이지 강제 새로고침으로 클라이언트 상태 완전 초기화
       window.location.href = "/";
     } catch (err) {
+      await clearSession();
       showToast(err instanceof Error ? err.message : "탈퇴 실패", "error");
+      window.location.href = "/";
     } finally {
       setIsWithdrawing(false);
       setShowWithdrawModal(false);

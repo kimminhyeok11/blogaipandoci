@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getServiceSupabase } from "@/lib/supabase";
+
+const makeAdmin = () =>
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
 
 // DELETE /api/users/me - 회원 탈퇴
 export async function DELETE(request: Request) {
@@ -20,18 +26,22 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "인증 실패" }, { status: 401 });
     }
 
-    const supabaseAdmin = getServiceSupabase();
+    const admin = makeAdmin();
 
-    // public.users 먼저 삭제 (FK cascade 없을 경우 대비)
-    await supabaseAdmin.from("users").delete().eq("id", user.id);
+    // public.users 삭제 (comments는 user_id ON DELETE SET NULL이면 유지)
+    const { error: dbErr } = await admin.from("users").delete().eq("id", user.id);
+    if (dbErr) console.warn("[탈퇴] public.users 삭제 경고:", dbErr.message);
 
-    // auth.users 삭제 (service_role 권한 필요)
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
-    if (deleteError) throw deleteError;
+    // auth.users 삭제 (이게 핵심 - 카카오 포함 모든 로그인 차단)
+    const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
+    if (deleteError) {
+      console.error("[탈퇴] auth.admin.deleteUser 실패:", deleteError);
+      return NextResponse.json({ error: "계정 삭제 실패: " + deleteError.message }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("회원 탈퇴 실패:", error);
-    return NextResponse.json({ error: "회원 탈퇴에 실패했습니다." }, { status: 500 });
+  } catch (err) {
+    console.error("[탈퇴] 예외:", err);
+    return NextResponse.json({ error: "회원 탈퇴에 실패했습니다.", detail: String(err) }, { status: 500 });
   }
 }
