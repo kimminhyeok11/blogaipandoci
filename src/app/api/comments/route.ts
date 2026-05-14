@@ -1,37 +1,34 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getServiceSupabase } from "@/lib/supabase";
 import { maskPII, calculateRiskScore } from "@/lib/pii-mask";
 
-// 토큰 검증 전용 anon 클라이언트 (service_role로 토큰 검증하면 보안 위험)
-function getAnonSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+function makeAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Supabase env missing: " + (!url ? "URL" : "SERVICE_ROLE_KEY"));
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+function makeAnonClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error("Supabase env missing: " + (!url ? "URL" : "ANON_KEY"));
+  return createClient(url, key);
 }
 
 // 요청자 세션에서 user_id와 role 추출
 async function getRequester(request: Request) {
   try {
-    const authHeader = request.headers.get("authorization") || "";
-    const token = authHeader.replace("Bearer ", "").trim();
+    const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
     if (!token) return { userId: null, role: null };
 
-    // anon 클라이언트로 토큰 검증 (service_role로 하면 보안 위험)
-    const anonClient = getAnonSupabase();
-    const { data: { user }, error } = await anonClient.auth.getUser(token);
+    const { data: { user }, error } = await makeAnonClient().auth.getUser(token);
     if (error || !user) return { userId: null, role: null };
 
-    // role은 service_role로 조회 (RLS 우회)
-    const supabaseAdmin = getServiceSupabase();
-    const { data: profile } = await supabaseAdmin
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const { data: profile } = await makeAdminClient()
+      .from("users").select("role").eq("id", user.id).single();
 
-    return { userId: user.id, role: profile?.role || "user" };
+    return { userId: user.id, role: profile?.role ?? "user" };
   } catch {
     return { userId: null, role: null };
   }
@@ -64,16 +61,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "post_id 필수" }, { status: 400 });
     }
 
-    const supabaseAdmin = getServiceSupabase();
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: "서버 오류" }, { status: 500 });
-    }
+    const admin = makeAdminClient();
 
     // 요청자 신원 확인
     const { userId: requesterId, role: requesterRole } = await getRequester(request);
 
-    // 댓글 목록 조회 (트리 구조)
-    const { data: comments, error } = await supabaseAdmin
+    // 댓글 목록 조회
+    const { data: comments, error } = await admin
       .from("comments")
       .select(`
         *,
@@ -87,39 +81,30 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    // 1-pass: 모든 댓글 마스킹 후 Map에 등록
-    const commentsMap = new Map();
-    (comments || []).forEach((comment: any) => {
-      const masked = maskComment(comment, requesterId, requesterRole);
-      commentsMap.set(comment.id, { ...masked, replies: [] });
+    // 1-pass: Map 등록 + 마스킹
+    const map = new Map<string, any>();
+    (comments ?? []).forEach((c: any) => {
+      map.set(c.id, { ...maskComment(c, requesterId, requesterRole), replies: [] });
     });
 
-    // 2-pass: 트리 구조 조립 (순서 무관하게 안전하게 처리)
-    const rootComments: any[] = [];
-    commentsMap.forEach((commentData: any) => {
-      if (commentData.parent_id) {
-        const parent = commentsMap.get(commentData.parent_id);
-        if (parent) {
-          parent.replies.push(commentData);
-        } else {
-          // 부모가 없는 고아 답글은 루트에 표시
-          rootComments.push(commentData);
-        }
+    // 2-pass: 트리 조립 (정렬 순서 무관)
+    const roots: any[] = [];
+    map.forEach((c) => {
+      if (c.parent_id && map.has(c.parent_id)) {
+        map.get(c.parent_id).replies.push(c);
       } else {
-        rootComments.push(commentData);
+        roots.push(c);
       }
     });
 
-    // 루트 댓글 최신순 정렬, 각 답글은 오래된순 정렬
-    rootComments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    rootComments.forEach((c: any) => {
-      c.replies.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    });
+    // 루트: 최신순 / 답글: 오래된순
+    roots.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+    roots.forEach((c) => c.replies.sort((a: any, b: any) => +new Date(a.created_at) - +new Date(b.created_at)));
 
-    return NextResponse.json({ comments: rootComments });
-  } catch (error) {
-    console.error("댓글 조회 실패:", error);
-    return NextResponse.json({ error: "댓글 조회 실패" }, { status: 500 });
+    return NextResponse.json({ comments: roots });
+  } catch (err) {
+    console.error("[GET /api/comments] 오류:", err);
+    return NextResponse.json({ error: "댓글 조회 실패", detail: String(err) }, { status: 500 });
   }
 }
 
@@ -143,19 +128,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "필수 필드 누락" }, { status: 400 });
     }
 
-    const supabaseAdmin = getServiceSupabase();
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: "서버 오류" }, { status: 500 });
-    }
+    const admin = makeAdminClient();
 
-    // 개인정보 마스킹
     const maskedContent = maskPII(content);
     const riskScore = calculateRiskScore(content);
-
-    // 위험도가 높으면 law_risk 상태로 설정
     const status = riskScore > 50 ? "law_risk" : "pending";
 
-    const { data: comment, error } = await supabaseAdmin
+    const { data: comment, error } = await admin
       .from("comments")
       .insert({
         post_id,
@@ -176,8 +155,8 @@ export async function POST(request: Request) {
     if (error) throw error;
 
     return NextResponse.json({ comment }, { status: 201 });
-  } catch (error) {
-    console.error("댓글 작성 실패:", error);
-    return NextResponse.json({ error: "댓글 작성 실패" }, { status: 500 });
+  } catch (err) {
+    console.error("[POST /api/comments] 오류:", err);
+    return NextResponse.json({ error: "댓글 작성 실패", detail: String(err) }, { status: 500 });
   }
 }

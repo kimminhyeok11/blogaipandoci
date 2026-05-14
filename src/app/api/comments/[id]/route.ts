@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getServiceSupabase } from "@/lib/supabase";
 import { maskPII } from "@/lib/pii-mask";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 async function verifyToken(request: Request): Promise<{ userId: string | null; role: string | null }> {
   try {
@@ -10,9 +15,8 @@ async function verifyToken(request: Request): Promise<{ userId: string | null; r
     const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
     const { data: { user }, error } = await anon.auth.getUser(token);
     if (error || !user) return { userId: null, role: null };
-    const admin = getServiceSupabase();
-    const { data: profile } = await admin.from("users").select("role").eq("id", user.id).single();
-    return { userId: user.id, role: profile?.role || "user" };
+    const { data: profile } = await makeAdmin().from("users").select("role").eq("id", user.id).single();
+    return { userId: user.id, role: profile?.role ?? "user" };
   } catch {
     return { userId: null, role: null };
   }
@@ -34,9 +38,8 @@ export async function PUT(
       return NextResponse.json({ error: "내용 필수" }, { status: 400 });
     }
 
-    const supabaseAdmin = getServiceSupabase();
+    const supabaseAdmin = makeAdmin();
 
-    // 기존 댓글 조회
     const { data: existingComment, error: fetchError } = await supabaseAdmin
       .from("comments")
       .select("content, user_id")
@@ -93,7 +96,7 @@ export async function DELETE(
     const { userId, role } = await verifyToken(request);
     if (!userId) return NextResponse.json({ error: "로그인 필요" }, { status: 401 });
 
-    const supabaseAdmin = getServiceSupabase();
+    const supabaseAdmin = makeAdmin();
 
     const { data: comment } = await supabaseAdmin
       .from("comments")
