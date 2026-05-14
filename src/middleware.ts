@@ -45,7 +45,5 @@ export const config = {
   matcher: [
     // .txt 파일 (IndexNow 키 파일) - robots.txt는 제외
     '/:key((?!robots$)[^/]+).txt',
-    // API routes 제외
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
 };

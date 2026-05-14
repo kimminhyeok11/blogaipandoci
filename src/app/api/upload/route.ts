@@ -19,6 +19,10 @@ export async function POST(request: Request) {
     const { data: { user }, error: authErr } = await anon.auth.getUser(token);
     if (authErr || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
 
+    const serviceSupabase = makeAdmin();
+    const { data: profile } = await serviceSupabase.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 업로드 가능" }, { status: 403 });
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
@@ -68,7 +72,6 @@ export async function POST(request: Request) {
     const filePath = `uploads/${fileName}`;
 
     // 서비스 역할로 Supabase Storage에 업로드 (RLS 우회)
-    const serviceSupabase = makeAdmin();
     const { error: uploadError } = await serviceSupabase.storage
       .from("images")
       .upload(filePath, processedBuffer, {

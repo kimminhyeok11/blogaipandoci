@@ -99,24 +99,6 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
     }
   }
 
-  // slug가 짧거나 무의미한 경우 (예: "-", "abc", "post123")
-  // 제목 키워드로 검색
-  if (slug.length < 5 || slug === '-' || /^[a-z0-9]{1,4}$/i.test(slug)) {
-    // 일반적인 키워드로 최신 글 검색
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*, user:users(nickname, avatar_url, email, role)')
-      .eq('published', true)
-      .not('published_at', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!error && data) {
-      return data as Post;
-    }
-  }
-
   return null;
 }
 

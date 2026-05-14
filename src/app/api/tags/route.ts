@@ -37,7 +37,21 @@ export async function POST(request: Request) {
       .eq("id", postId)
       .single();
     if (postErr || !post) return NextResponse.json({ error: "Post not found" }, { status: 404 });
-    if (post.user_id !== authUser.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const { data: callerProfile } = await serviceSupabase
+      .from("users").select("role").eq("id", authUser.id).single();
+    const isAdmin = callerProfile?.role === "admin";
+
+    if (post.user_id !== authUser.id && !isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // 태그명 검증 (길이, 형식)
+    for (const tagName of tags) {
+      if (typeof tagName !== "string" || tagName.trim().length === 0 || tagName.length > 50) {
+        return NextResponse.json({ error: "태그명은 1~50자여야 합니다" }, { status: 400 });
+      }
+    }
 
     // 기존 태그 연결 삭제
     await serviceSupabase

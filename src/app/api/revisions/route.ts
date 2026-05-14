@@ -38,7 +38,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    if (post.user_id !== userId) {
+    const { data: callerProfile } = await serviceSupabase
+      .from("users").select("role").eq("id", userId).single();
+    const isAdmin = callerProfile?.role === "admin";
+
+    if (post.user_id !== userId && !isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -63,7 +67,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { post_id, title, content, excerpt, revision_number } = body;
+    const { post_id, title, content, excerpt } = body;
 
     if (!post_id || !title || !content) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
