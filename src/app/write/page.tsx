@@ -447,7 +447,6 @@ function WritePageContent() {
             "Authorization": `Bearer ${session?.access_token}`,
           },
           body: JSON.stringify({
-            user_id: currentUser.id,
             title: title.trim(),
             slug,
             content: processedContent,
