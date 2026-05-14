@@ -12,9 +12,9 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/login", "/write", "/api/", "/admin/", "/profile/", "/search", "/categories", "/auth/"],
       },
       {
-        // 일반 봇 규칙
+        // 일반 봇 규칙 (네이버봇 포함)
         userAgent: "*",
-        allow: ["/", "/posts/", "/tags/"],
+        allow: ["/", "/posts/", "/tags/", "/about", "/author", "/contact", "/privacy", "/terms"],
         disallow: ["/login", "/write", "/api/", "/admin/", "/profile/", "/search", "/categories", "/auth/"],
       },
     ],
