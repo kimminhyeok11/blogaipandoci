@@ -27,7 +27,7 @@ export function maskPII(text: string): string {
   masked = masked.replace(/(\w)[\w.-]+@([\w.-]+)/g, '$1***@$2');
 
   // 실명 추정 패턴 (한글 2-3자 + 씨/님)
-  masked = masked.replace(/([가-힣]{2,3})(씨|님)/g, '$***$2');
+  masked = masked.replace(/([가-힣]{2,3})(씨|님)/g, '$1***$2');
 
   // 주소 패턴 (시/도 + 구/군 + 동/리)
   masked = masked.replace(/([가-힣]+시)\s*([가-힣]+구)\s*([가-힣]+동)/g, '$1시 $2구 ***동');

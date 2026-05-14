@@ -27,14 +27,17 @@ const EMPTY_PROCEDURE = {
 };
 
 // IndexNow 알림 헬퍼
-const notifyIndexNow = async (path: string) => {
+const notifyIndexNow = async (path: string, token?: string) => {
   try {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
     const url = `${siteUrl}${path}`;
 
     await fetch("/api/indexnow-notify/", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ urls: [url] }),
     });
   } catch (err) {
@@ -431,7 +434,7 @@ function WritePageContent() {
         
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
-          await notifyIndexNow(`/posts/${slug}`);
+          await notifyIndexNow(`/posts/${slug}`, session?.access_token);
         }
         
         router.push(`/posts/${slug}`);
@@ -480,7 +483,7 @@ function WritePageContent() {
         
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
-          await notifyIndexNow(`/posts/${slug}`);
+          await notifyIndexNow(`/posts/${slug}`, session?.access_token);
         }
         
         router.push(`/posts/${slug}`);

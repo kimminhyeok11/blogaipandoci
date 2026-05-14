@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { notifyIndexNow } from "@/lib/indexnow";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * IndexNow 알림 API
@@ -9,6 +10,22 @@ import { notifyIndexNow } from "@/lib/indexnow";
  */
 export async function POST(request: Request) {
   try {
+    // 관리자 인증 확인
+    const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
+    if (!token) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
+
+    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    const { data: { user }, error: authErr } = await anon.auth.getUser(token);
+    if (authErr || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
+
+    const admin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    const { data: profile } = await admin.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
+
     const { urls } = await request.json();
     
     if (!urls || !Array.isArray(urls) || urls.length === 0) {

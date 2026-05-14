@@ -16,18 +16,15 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { nickname } = body;
 
-    let userId: string | null = body.userId || null;
+    // 반드시 토큰으로만 userId를 결정 — body.userId 우회 차단
+    if (!token) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
-    if (token) {
-      const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-      const { data: { user }, error } = await anon.auth.getUser(token);
-      if (error || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
-      userId = user.id;
-    }
+    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    const { data: { user }, error: authError } = await anon.auth.getUser(token);
+    if (authError || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
 
+    const userId = user.id;
     const trimmed = nickname?.trim();
-
-    if (!userId) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
     if (!trimmed || trimmed.length < 2) return NextResponse.json({ error: "닉네임은 2자 이상이어야 합니다." }, { status: 400 });
     if (trimmed.length > 20) return NextResponse.json({ error: "닉네임은 20자 이하여야 합니다." }, { status: 400 });
     if (!/^[가-힣a-zA-Z0-9_]+$/.test(trimmed)) return NextResponse.json({ error: "닉네임은 한글, 영문, 숫자, 밑줄(_)만 사용 가능합니다." }, { status: 400 });
@@ -53,10 +50,10 @@ export async function PUT(request: Request) {
 
     // 2) auth.users metadata 동기화 (display_name, user_metadata.nickname)
     //    → CommentsSection 등에서 user.user_metadata.nickname을 참조하므로 반드시 동기화 필요
-    const { error: authError } = await admin.auth.admin.updateUserById(userId, {
+    const { error: metaError } = await admin.auth.admin.updateUserById(userId, {
       user_metadata: { nickname: trimmed },
     });
-    if (authError) console.error("[닉네임] auth metadata 동기화 실패 (비치명):", authError.message);
+    if (metaError) console.error("[닉네임] auth metadata 동기화 실패 (비치명):", metaError.message);
 
     return NextResponse.json({ success: true, nickname: trimmed });
   } catch (error) {
