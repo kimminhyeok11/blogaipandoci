@@ -28,8 +28,11 @@ export async function POST(
     const { id } = params;
     const { reason } = await request.json();
 
-    if (!reason) {
+    if (!reason || typeof reason !== "string") {
       return NextResponse.json({ error: "신고 사유 필수" }, { status: 400 });
+    }
+    if (reason.trim().length > 500) {
+      return NextResponse.json({ error: "신고 사유는 500자 이내로 입력해주세요" }, { status: 400 });
     }
 
     // 토큰으로만 reporter_id 결정 — body.reporter_id 우회 차단
