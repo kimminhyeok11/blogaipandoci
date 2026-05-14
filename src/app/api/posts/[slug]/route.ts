@@ -31,26 +31,6 @@ export async function GET(
     
     const serviceSupabase = makeAdmin();
 
-    // 조회수 증가 (서비스 역할로 RLS 우회) - 조회 모드일 때만
-    if (!isEditMode) {
-      try {
-        const { data: currentPost } = await serviceSupabase
-          .from('posts')
-          .select('view_count')
-          .eq('slug', decodedSlug)
-          .single();
-        
-        if (currentPost) {
-          await (serviceSupabase as any)
-            .from('posts')
-            .update({ view_count: ((currentPost as any).view_count || 0) + 1 })
-            .eq('slug', decodedSlug);
-        }
-      } catch {
-        console.warn('View count increment failed');
-      }
-    }
-
     let data, error;
 
     if (isEditMode) {
