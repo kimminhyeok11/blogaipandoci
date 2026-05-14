@@ -3,17 +3,28 @@ import { createClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import { maskPII, calculateRiskScore } from "@/lib/pii-mask";
 
+// 토큰 검증 전용 anon 클라이언트 (service_role로 토큰 검증하면 보안 위험)
+function getAnonSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
 // 요청자 세션에서 user_id와 role 추출
 async function getRequester(request: Request) {
   try {
     const authHeader = request.headers.get("authorization") || "";
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.replace("Bearer ", "").trim();
     if (!token) return { userId: null, role: null };
 
-    const supabaseAdmin = getServiceSupabase();
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-    if (!user) return { userId: null, role: null };
+    // anon 클라이언트로 토큰 검증 (service_role로 하면 보안 위험)
+    const anonClient = getAnonSupabase();
+    const { data: { user }, error } = await anonClient.auth.getUser(token);
+    if (error || !user) return { userId: null, role: null };
 
+    // role은 service_role로 조회 (RLS 우회)
+    const supabaseAdmin = getServiceSupabase();
     const { data: profile } = await supabaseAdmin
       .from("users")
       .select("role")
