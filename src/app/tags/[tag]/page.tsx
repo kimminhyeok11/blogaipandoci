@@ -111,16 +111,9 @@ export default async function TagPage({ params }: TagPageProps) {
 
         {posts.length === 0 ? (
           <div className="text-center py-16 border border-rule bg-cream rounded-sm">
-            <p className="font-sans text-sm text-muted mb-4">
+            <p className="font-sans text-sm text-muted">
               이 태그의 글이 없습니다.
             </p>
-            <Link
-              href="/write"
-              className="inline-block px-4 py-2 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors"
-              rel="nofollow"
-            >
-              첫 글 작성하기
-            </Link>
           </div>
         ) : (
           <div className="grid gap-6">

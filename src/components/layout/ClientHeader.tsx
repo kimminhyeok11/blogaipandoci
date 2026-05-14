@@ -49,16 +49,18 @@ export function ClientHeader() {
       {/* Utility Navigation - 아이콘만 최소화 */}
       <nav className="mt-2 pt-2 border-t border-rule">
         <ul className="flex items-center justify-center gap-6">
-          <li>
-            <Link 
-              href="/write" 
-              className="p-1 text-ink hover:text-rust transition-colors"
-              title="글쓰기"
-              rel="nofollow"
-            >
-              <PenSquare size={16} />
-            </Link>
-          </li>
+          {user?.role === "admin" && (
+            <li>
+              <Link 
+                href="/write" 
+                className="p-1 text-ink hover:text-rust transition-colors"
+                title="글쓰기"
+                rel="nofollow"
+              >
+                <PenSquare size={16} />
+              </Link>
+            </li>
+          )}
           <li>
             <Link 
               href="/posts" 

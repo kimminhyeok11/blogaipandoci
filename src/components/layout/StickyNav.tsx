@@ -112,14 +112,16 @@ export function StickyNav({ backHref = "/", backLabel = "홈으로", showFullNav
             >
               <Search size={18} />
             </Link>
-            <Link
-              href="/write"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors"
-              rel="nofollow"
-            >
-              <PenSquare size={14} />
-              <span className="hidden sm:inline">글쓰기</span>
-            </Link>
+            {user?.role === "admin" && (
+              <Link
+                href="/write"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors"
+                rel="nofollow"
+              >
+                <PenSquare size={14} />
+                <span className="hidden sm:inline">글쓰기</span>
+              </Link>
+            )}
             <Link
               href={user ? "/profile" : "/login"}
               className="p-2 text-muted hover:text-rust transition-colors"

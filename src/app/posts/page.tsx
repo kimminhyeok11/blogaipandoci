@@ -119,13 +119,6 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
             <p className="font-sans text-sm text-muted">
               아직 작성된 글이 없습니다.
             </p>
-            <Link
-              href="/write"
-              className="inline-block mt-4 px-4 py-2 bg-rust text-paper text-xs font-sans font-medium rounded-sm hover:bg-rust-light transition-colors"
-              rel="nofollow"
-            >
-              첫 글 작성하기
-            </Link>
           </div>
         ) : (
           <>
