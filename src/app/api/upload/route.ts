@@ -1,20 +1,23 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 // POST /api/upload - 이미지 업로드 (WebP 변환 + 최적화)
 export async function POST(request: Request) {
   try {
-    // 요청에서 사용자 ID 추출 (헤더)
-    const authHeader = request.headers.get('authorization');
-    const userId = authHeader?.replace('Bearer ', '');
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized: No user ID" },
-        { status: 401 }
-      );
-    }
+    // JWT 토큰 검증
+    const token = (request.headers.get('authorization') || '').replace('Bearer ', '').trim();
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    const { data: { user }, error: authErr } = await anon.auth.getUser(token);
+    if (authErr || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -65,7 +68,7 @@ export async function POST(request: Request) {
     const filePath = `uploads/${fileName}`;
 
     // 서비스 역할로 Supabase Storage에 업로드 (RLS 우회)
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
     const { error: uploadError } = await serviceSupabase.storage
       .from("images")
       .upload(filePath, processedBuffer, {
