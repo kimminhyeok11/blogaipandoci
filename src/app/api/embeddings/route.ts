@@ -83,7 +83,7 @@ export async function PUT(request: Request) {
     const admin = makeAdmin();
 
     const { data: comments, error } = await admin.rpc("match_similar_comments", {
-      query_embedding: JSON.stringify(embedding),
+      query_embedding: embedding,
       exclude_post_id: post_id,
       match_count: limit,
     });
