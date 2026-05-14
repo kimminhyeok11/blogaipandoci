@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ThumbsUp, MessageSquare, Eye, Clock, MoreHorizontal, Trash2 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
+import { supabase } from "@/lib/supabase";
 
 interface QuestionCardProps {
   id: string;
@@ -80,10 +81,13 @@ export function QuestionCard({
   const handleDelete = async () => {
     if (!confirm("질문을 삭제하시겠습니까?")) return;
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(`/api/comments/${id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user?.id }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
       });
       if (!response.ok) throw new Error("삭제 실패");
       showToast("질문이 삭제되었습니다", "success");

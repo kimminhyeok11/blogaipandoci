@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import { maskPII } from "@/lib/pii-mask";
+
+async function verifyToken(request: Request): Promise<{ userId: string | null; role: string | null }> {
+  try {
+    const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
+    if (!token) return { userId: null, role: null };
+    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    const { data: { user }, error } = await anon.auth.getUser(token);
+    if (error || !user) return { userId: null, role: null };
+    const admin = getServiceSupabase();
+    const { data: profile } = await admin.from("users").select("role").eq("id", user.id).single();
+    return { userId: user.id, role: profile?.role || "user" };
+  } catch {
+    return { userId: null, role: null };
+  }
+}
 
 // PUT /api/comments/[id] - 댓글 수정
 export async function PUT(
@@ -9,16 +25,16 @@ export async function PUT(
 ) {
   try {
     const { id } = params;
-    const { content, user_id } = await request.json();
+    const { userId, role } = await verifyToken(request);
+    if (!userId) return NextResponse.json({ error: "로그인 필요" }, { status: 401 });
+
+    const { content } = await request.json();
 
     if (!content) {
       return NextResponse.json({ error: "내용 필수" }, { status: 400 });
     }
 
     const supabaseAdmin = getServiceSupabase();
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: "서버 오류" }, { status: 500 });
-    }
 
     // 기존 댓글 조회
     const { data: existingComment, error: fetchError } = await supabaseAdmin
@@ -31,8 +47,8 @@ export async function PUT(
       return NextResponse.json({ error: "댓글을 찾을 수 없습니다" }, { status: 404 });
     }
 
-    // 본인 확인
-    if (existingComment.user_id && existingComment.user_id !== user_id) {
+    // 본인 또는 관리자만 수정 가능
+    if (existingComment.user_id !== userId && role !== "admin") {
       return NextResponse.json({ error: "권한 없음" }, { status: 403 });
     }
 
@@ -43,7 +59,7 @@ export async function PUT(
       comment_id: id,
       old_content: existingComment.content,
       new_content: maskedContent,
-      edited_by: user_id,
+      edited_by: userId,
     });
 
     // 댓글 수정
@@ -74,14 +90,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = params;
-    const { user_id } = await request.json();
+    const { userId, role } = await verifyToken(request);
+    if (!userId) return NextResponse.json({ error: "로그인 필요" }, { status: 401 });
 
     const supabaseAdmin = getServiceSupabase();
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: "서버 오류" }, { status: 500 });
-    }
 
-    // 본인 확인 또는 관리자 확인
     const { data: comment } = await supabaseAdmin
       .from("comments")
       .select("user_id")
@@ -92,15 +105,8 @@ export async function DELETE(
       return NextResponse.json({ error: "댓글을 찾을 수 없습니다" }, { status: 404 });
     }
 
-    // 관리자 확인
-    const { data: adminUser } = await supabaseAdmin
-      .from("users")
-      .select("role")
-      .eq("id", user_id)
-      .single();
-
-    const isAdmin = adminUser?.role === "admin";
-    const isOwner = comment.user_id === user_id;
+    const isAdmin = role === "admin";
+    const isOwner = comment.user_id === userId;
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json({ error: "권한 없음" }, { status: 403 });

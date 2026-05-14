@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 
-// PUT /api/users/nickname - 닉네임 변경 (userId를 body에서 받음)
+// PUT /api/users/nickname - 닉네임 변경
 export async function PUT(request: Request) {
   try {
-    const { userId, nickname } = await request.json();
+    // Authorization 헤더 토큰으로 신원 검증
+    const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
+    // 하위 호환: 토큰 없으면 body의 userId 사용 (auth/callback 에서 직접 호출)
+    const body = await request.json();
+    const { nickname } = body;
+
+    let userId: string | null = body.userId || null;
+
+    if (token) {
+      const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+      const { data: { user }, error } = await anon.auth.getUser(token);
+      if (error || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
+      userId = user.id;
+    }
     const trimmed = nickname?.trim();
 
     if (!userId) {

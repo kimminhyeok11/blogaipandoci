@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ThumbsUp, MessageSquare, MoreHorizontal, Edit2, Trash2, Flag } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
+import { supabase } from "@/lib/supabase";
 
 export interface CommentItemProps {
   id: string;
@@ -89,10 +90,13 @@ export function CommentItem({
     if (!confirm("댓글을 삭제하시겠습니까?")) return;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(`/api/comments/${id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user?.id }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
       });
 
       if (!response.ok) throw new Error("삭제 실패");
