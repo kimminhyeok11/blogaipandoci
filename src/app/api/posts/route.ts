@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { supabase, getServiceSupabase } from "@/lib/supabase";
+import { notifyIndexNow } from "@/lib/indexnow";
+
+function getIndexNowConfig() {
+  const key = process.env.INDEXNOW_KEY;
+  const host = (process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  return { key, host };
+}
 
 // 불용어 (매칭에서 제외할 짧거나 의미 없는 단어)
 const STOP_WORDS = new Set([
@@ -210,6 +217,13 @@ export async function POST(request: Request) {
       revalidatePath(`/posts/${slug}`);
       revalidatePath("/tags");
       revalidatePath("/categories");
+
+      // IndexNow 알림 (신규 발행)
+      const { key, host } = getIndexNowConfig();
+      if (key) {
+        const siteUrl = `https://${host}`;
+        notifyIndexNow([`${siteUrl}/posts/${encodeURIComponent(slug)}`, `${siteUrl}/posts`, siteUrl], key, host).catch(() => {});
+      }
     }
 
     return NextResponse.json({ data });
@@ -298,6 +312,15 @@ export async function PUT(request: Request) {
     revalidatePath(`/posts/${slug}`);
     revalidatePath("/tags");
     revalidatePath("/categories");
+
+    // IndexNow 알림 (수정)
+    if (published) {
+      const { key, host } = getIndexNowConfig();
+      if (key) {
+        const siteUrl = `https://${host}`;
+        notifyIndexNow([`${siteUrl}/posts/${encodeURIComponent(slug)}`, `${siteUrl}/posts`, siteUrl], key, host).catch(() => {});
+      }
+    }
 
     return NextResponse.json({ data });
   } catch (error) {

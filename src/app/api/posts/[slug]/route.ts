@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { supabase, getServiceSupabase } from "@/lib/supabase";
+import { notifyIndexNow } from "@/lib/indexnow";
+
+function getIndexNowConfig() {
+  const key = process.env.INDEXNOW_KEY;
+  const host = (process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  return { key, host };
+}
 
 // GET /api/posts/[slug] - 글 상세 조회
 export async function GET(
@@ -137,6 +144,13 @@ export async function DELETE(
     revalidatePath("/");
     revalidatePath("/posts");
     revalidatePath(`/posts/${decodedSlug}`);
+
+    // IndexNow 알림 (삭제) - 홈/목록 URL만 알림 (삭제된 글 URL은 전송 불필요)
+    const { key, host } = getIndexNowConfig();
+    if (key) {
+      const siteUrl = `https://${host}`;
+      notifyIndexNow([`${siteUrl}/posts`, siteUrl], key, host).catch(() => {});
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
