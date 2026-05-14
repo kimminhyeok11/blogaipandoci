@@ -84,6 +84,18 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
     setIsSubmittingReply(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+
+      // 닉네임은 public.users에서 조회 (user_metadata보다 최신값 보장)
+      let dbNickname = "익명";
+      if (user?.id) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("nickname")
+          .eq("id", user.id)
+          .single();
+        dbNickname = profile?.nickname || user.email?.split("@")[0] || "익명";
+      }
+
       const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -92,7 +104,7 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
           parent_id: replyingTo.id,
           content: replyContent.trim(),
           user_id: user?.id || null,
-          nickname: user ? (user.user_metadata?.nickname || user.email?.split("@")[0] || "익명") : "익명",
+          nickname: dbNickname,
           is_anonymous: !user,
         }),
       });

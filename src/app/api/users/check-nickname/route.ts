@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 // GET /api/users/check-nickname?nickname=xxx - 닉네임 중복 확인
 export async function GET(request: Request) {
@@ -16,12 +16,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ available: false, message: "닉네임은 한글, 영문, 숫자, 밑줄(_)만 사용 가능합니다." });
   }
 
-  const supabase = getServiceSupabase();
-  if (!supabase) {
-    return NextResponse.json({ error: "서버 오류" }, { status: 500 });
-  }
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("users")
     .select("id")
     .eq("nickname", nickname)
