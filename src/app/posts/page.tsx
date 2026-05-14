@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     url: "/posts",
     siteName: "法 BLOG",
-    images: [{ url: "/opengraph-image.jpg", width: 1200, height: 630, alt: "法 BLOG 전체 글 목록" }],
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "法 BLOG 전체 글 목록" }],
   },
   alternates: {
     canonical: "/posts",

@@ -17,7 +17,7 @@ export function OrganizationSchema() {
       width: 512,
       height: 512,
     },
-    image: `${SITE_URL}/opengraph-image.jpg`,
+    image: `${SITE_URL}/opengraph-image.png`,
     description: SITE_DESC,
     inLanguage: "ko-KR",
     knowsAbout: [

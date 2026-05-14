@@ -191,18 +191,24 @@ function WritePageContent() {
         }
 
         setPostId(post.id);
-                // 임시 저장된 데이터가 있는지 확인
-        const saved = autoSave.load();
         setTitle(post.title);
         setContent(post.content);
         setExcerpt(post.excerpt || "");
-        if (saved?.hasData) {
-          const postUpdatedAt = new Date(post.updated_at);
-          const savedTime = saved.rawTimestamp ? new Date(saved.rawTimestamp) : null;
-          if (savedTime && savedTime > postUpdatedAt) {
-            setDraftBanner({ timestamp: saved.timestamp || '이전', data: { title: saved.title, content: saved.content, excerpt: saved.excerpt, tags: saved.tags } });
-          } else {
-            autoSave.clear();
+
+        // 수정 모드 전용 임시저장 키가 실제로 존재하는지 확인 후 로드
+        // (새 글 임시저장 blog_draft_* 과 섞이는 것 방지)
+        const editAutoSaveKey = `blog_edit_${editSlug}_timestamp`;
+        const editSaveExists = typeof window !== "undefined" && !!localStorage.getItem(editAutoSaveKey);
+        if (editSaveExists) {
+          const saved = autoSave.load();
+          if (saved?.hasData) {
+            const postUpdatedAt = new Date(post.updated_at);
+            const savedTime = saved.rawTimestamp ? new Date(saved.rawTimestamp) : null;
+            if (savedTime && savedTime > postUpdatedAt) {
+              setDraftBanner({ timestamp: saved.timestamp || '이전', data: { title: saved.title, content: saved.content, excerpt: saved.excerpt, tags: saved.tags } });
+            } else {
+              autoSave.clear();
+            }
           }
         }
 
