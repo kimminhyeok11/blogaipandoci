@@ -1,41 +1,38 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
-// GET /api/auth - 현재 사용자 정보
-export async function GET() {
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
+// GET /api/auth - Authorization 헤더 토큰으로 현재 사용자 정보 조회
+export async function GET(request: Request) {
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
+    if (!token) return NextResponse.json({ user: null }, { status: 200 });
 
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 401 }
-      );
+    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    const { data: { user }, error } = await anon.auth.getUser(token);
+
+    if (error || !user) {
+      return NextResponse.json({ user: null }, { status: 200 });
     }
 
-    if (!user) {
-      return NextResponse.json(
-        { user: null },
-        { status: 200 }
-      );
-    }
-
-    // 추가 프로필 정보 가져오기 (RLS 적용된 일반 클라이언트 사용)
-    const { data: profile } = await supabase
+    const serviceSupabase = makeAdmin();
+    const { data: profile } = await serviceSupabase
       .from("users")
       .select("nickname, avatar_url")
       .eq("id", user.id)
       .single();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const profileData = profile as any;
-
     return NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
-        nickname: profileData?.nickname || null,
-        avatar_url: profileData?.avatar_url || null,
+        nickname: (profile as any)?.nickname || null,
+        avatar_url: (profile as any)?.avatar_url || null,
       },
     });
   } catch {
