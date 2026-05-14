@@ -2,6 +2,17 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { maskPII, calculateRiskScore } from "@/lib/pii-mask";
 
+async function sendTelegramAlert(message: string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text: message }),
+  }).catch(() => {});
+}
+
 function makeAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -67,8 +78,12 @@ export async function GET(request: Request) {
     // 요청자 신원 확인
     const { userId: requesterId, role: requesterRole } = await getRequester(request);
 
-    // 댓글 목록 조회
-    const { data: comments, error } = await admin
+    // 댓글 목록 조회 - 본인 + 관리자만 전체 조회, 그 외는 빈 배열
+    if (!requesterId) {
+      return NextResponse.json({ comments: [] });
+    }
+
+    let query = admin
       .from("comments")
       .select(`
         *,
@@ -79,6 +94,13 @@ export async function GET(request: Request) {
       .in("status", ["public", "pending"])
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
+
+    // 관리자가 아니면 본인 댓글만 조회
+    if (requesterRole !== "admin") {
+      query = query.eq("user_id", requesterId);
+    }
+
+    const { data: comments, error } = await query;
 
     if (error) throw error;
 
@@ -155,6 +177,16 @@ export async function POST(request: Request) {
       .single();
 
     if (error) throw error;
+
+    // 텔레그램 알림 (비동기, 실패해도 응답에 영향 없음)
+    sendTelegramAlert(
+`[LAWTIPHUB 새 질문]
+
+닉네임: ${nickname || "익명"}
+내용: ${maskedContent.slice(0, 200)}${maskedContent.length > 200 ? "..." : ""}
+유형: ${question_type || "-"}
+태그: ${(topic_tags || []).join(", ") || "-"}`
+    );
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (err) {
