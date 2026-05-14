@@ -52,6 +52,8 @@ export function CommentItem({
   const [showReplies, setShowReplies] = useState(false);
 
   const isOwnComment = user?.id === userId;
+  const isAdmin = user?.role === "admin";
+  const canModify = isOwnComment || isAdmin;
 
   const handleLike = async () => {
     if (!user) {
@@ -87,6 +89,8 @@ export function CommentItem({
     try {
       const response = await fetch(`/api/comments/${id}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user?.id }),
       });
 
       if (!response.ok) throw new Error("삭제 실패");
@@ -196,15 +200,17 @@ export function CommentItem({
 
               {showMenu && (
                 <div className="absolute right-0 top-6 bg-white border border-rust/20 rounded-sm shadow-sm py-1 min-w-[120px] z-10">
-                  {isOwnComment ? (
+                  {canModify ? (
                     <>
-                      <button
-                        onClick={handleEdit}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-rust/5 flex items-center gap-2"
-                      >
-                        <Edit2 size={14} />
-                        수정
-                      </button>
+                      {isOwnComment && (
+                        <button
+                          onClick={handleEdit}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-rust/5 flex items-center gap-2"
+                        >
+                          <Edit2 size={14} />
+                          수정
+                        </button>
+                      )}
                       <button
                         onClick={handleDelete}
                         className="w-full px-3 py-2 text-left text-sm hover:bg-rust/5 text-red-600 flex items-center gap-2"

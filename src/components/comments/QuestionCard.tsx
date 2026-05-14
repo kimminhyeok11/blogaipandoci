@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ThumbsUp, MessageSquare, Eye, Clock, MoreHorizontal } from "lucide-react";
+import { ThumbsUp, MessageSquare, Eye, Clock, MoreHorizontal, Trash2 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
 
@@ -18,9 +18,11 @@ interface QuestionCardProps {
   viewCount: number;
   createdAt: string;
   isAnonymous: boolean;
+  userId?: string;
   isLiked?: boolean;
   onLike?: () => void;
   onReply?: () => void;
+  onDelete?: (id: string) => void;
 }
 
 export function QuestionCard({
@@ -36,14 +38,21 @@ export function QuestionCard({
   viewCount,
   createdAt,
   isAnonymous,
+  userId,
   isLiked = false,
   onLike,
   onReply,
+  onDelete,
 }: QuestionCardProps) {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [liked, setLiked] = useState(isLiked);
   const [localLikeCount, setLocalLikeCount] = useState(likeCount);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const isOwnQuestion = user?.id === userId;
+  const isAdmin = user?.role === "admin";
+  const canDelete = isOwnQuestion || isAdmin;
 
   const handleLike = async () => {
     if (!user) {
@@ -63,6 +72,22 @@ export function QuestionCard({
       onLike?.();
     } catch (error) {
       showToast("좋아요 처리에 실패했습니다", "error");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("질문을 삭제하시겠습니까?")) return;
+    try {
+      const response = await fetch(`/api/comments/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user?.id }),
+      });
+      if (!response.ok) throw new Error("삭제 실패");
+      showToast("질문이 삭제되었습니다", "success");
+      onDelete?.(id);
+    } catch {
+      showToast("삭제에 실패했습니다", "error");
     }
   };
 
@@ -132,6 +157,27 @@ export function QuestionCard({
             <Eye size={16} />
             {viewCount}
           </span>
+          {canDelete && (
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="text-muted hover:text-rust transition-colors"
+              >
+                <MoreHorizontal size={16} />
+              </button>
+              {showMenu && (
+                <div className="absolute right-0 top-6 bg-white border border-rust/20 rounded-sm shadow-sm py-1 min-w-[100px] z-10">
+                  <button
+                    onClick={handleDelete}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-rust/5 text-red-600 flex items-center gap-2"
+                  >
+                    <Trash2 size={14} />
+                    삭제
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

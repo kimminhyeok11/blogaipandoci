@@ -21,6 +21,7 @@ interface Comment {
   parent_id?: string;
   question_type?: string;
   topic_tags?: string[];
+  context_answers?: Record<string, unknown>;
   post_title?: string;
   post_slug?: string;
   replies?: Comment[];
@@ -107,7 +108,9 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
                 viewCount={0}
                 createdAt={question.created_at}
                 isAnonymous={question.is_anonymous}
+                userId={question.user_id}
                 onReply={() => handleReply(question.id, question.nickname)}
+                onDelete={() => fetchComments()}
               />
             ))}
           </div>
