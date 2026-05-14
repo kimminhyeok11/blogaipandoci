@@ -12,7 +12,6 @@ export default function AuthCallbackPage() {
   const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [nicknameMessage, setNicknameMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -25,7 +24,6 @@ export default function AuthCallbackPage() {
       }
 
       const user = session.user;
-      setUserId(user.id);
 
       // DB에서 닉네임 확인
       const { data: profile } = await supabase
@@ -69,13 +67,17 @@ export default function AuthCallbackPage() {
   };
 
   const handleSaveNickname = async () => {
-    if (!userId || !nickname.trim() || nicknameStatus === "taken") return;
+    if (!nickname.trim() || nicknameStatus === "taken") return;
     setIsSaving(true);
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       const res = await fetch("/api/users/nickname", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, nickname: nickname.trim() }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(currentSession?.access_token ? { "Authorization": `Bearer ${currentSession.access_token}` } : {}),
+        },
+        body: JSON.stringify({ nickname: nickname.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
