@@ -372,11 +372,11 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
         </div>
 
-        {/* Related Posts - 이어서 읽기 */}
-        <RelatedPosts posts={relatedPosts} currentPostId={post.id} />
-
         {/* Comments Section - 질문/댓글 */}
         <CommentsSection postId={post.id} postSlug={post.slug} postTitle={post.title} />
+
+        {/* Related Posts - 이어서 읽기 */}
+        <RelatedPosts posts={relatedPosts} currentPostId={post.id} />
       </main>
     </div>
   );
