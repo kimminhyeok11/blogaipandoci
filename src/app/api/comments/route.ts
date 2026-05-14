@@ -193,6 +193,24 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
+    // embedding 생성 (비동기, 실패해도 응답에 영향 없음)
+    if (process.env.OPENAI_API_KEY && comment?.id) {
+      const embeddingText = [question_type, ...(topic_tags || []), maskedContent].filter(Boolean).join(" ");
+      fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
+      }).then(r => r.json()).then(embRes => {
+        const vec = embRes?.data?.[0]?.embedding;
+        if (vec) {
+          admin.from("comments").update({ embedding: JSON.stringify(vec) }).eq("id", comment.id).then(() => {});
+        }
+      }).catch(() => {});
+    }
+
     // 텔레그램 알림 (비동기, 실패해도 응답에 영향 없음)
     admin.from("posts").select("title, slug").eq("id", post_id).single().then(({ data: post }) => {
       const postTitle = post?.title || "-";

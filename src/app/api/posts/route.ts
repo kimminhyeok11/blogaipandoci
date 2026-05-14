@@ -226,6 +226,24 @@ export async function POST(request: Request) {
       );
     }
 
+    // embedding 생성 (비동기, 발행 시에만)
+    if (published && data?.id && process.env.OPENAI_API_KEY) {
+      const embeddingText = `${title} ${(excerpt || "")} ${finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 6000)}`;
+      fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
+      }).then(r => r.json()).then(embRes => {
+        const vec = embRes?.data?.[0]?.embedding;
+        if (vec) {
+          serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id).then(() => {});
+        }
+      }).catch(() => {});
+    }
+
     // 캐시 즉시 갱신
     if (published) {
       revalidatePath("/");
@@ -331,6 +349,24 @@ export async function PUT(request: Request) {
         { error: error.message },
         { status: 500 }
       );
+    }
+
+    // embedding 재생성 (비동기, 발행 상태일 때만)
+    if (published && data?.id && process.env.OPENAI_API_KEY) {
+      const embeddingText = `${title} ${(excerpt || "")} ${finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 6000)}`;
+      fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
+      }).then(r => r.json()).then(embRes => {
+        const vec = embRes?.data?.[0]?.embedding;
+        if (vec) {
+          serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id).then(() => {});
+        }
+      }).catch(() => {});
     }
 
     // 캐시 즉시 갱신

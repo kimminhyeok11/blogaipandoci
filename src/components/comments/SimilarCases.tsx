@@ -33,7 +33,21 @@ export function SimilarCases({ postId, questionType, topicTags }: SimilarCasesPr
 
   const fetchSimilarCases = async () => {
     try {
-      // 1차: semantic search (질문 유형 + 태그 텍스트 기반)
+      // 1차: 현재 글 embedding 기반 RPC 검색 (가장 정확)
+      const postEmbedRes = await fetch("/api/comments/similar-by-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: postId, limit: 5 }),
+      });
+      if (postEmbedRes.ok) {
+        const postEmbedData = await postEmbedRes.json();
+        if ((postEmbedData.comments || []).length > 0) {
+          setCases(postEmbedData.comments);
+          return;
+        }
+      }
+
+      // 2차: 질문 유형/태그 텍스트 기반 semantic search
       if (questionType || topicTags?.length) {
         const queryText = [questionType, ...(topicTags || [])].filter(Boolean).join(" ");
         const semRes = await fetch("/api/embeddings", {
@@ -50,7 +64,7 @@ export function SimilarCases({ postId, questionType, topicTags }: SimilarCasesPr
         }
       }
 
-      // 2차 fallback: 태그 기반 exact match
+      // 3차 fallback: 태그 기반 exact match
       const params = new URLSearchParams({ post_id: postId });
       if (questionType) params.append("question_type", questionType);
       if (topicTags?.length) params.append("topic_tags", topicTags.join(","));
