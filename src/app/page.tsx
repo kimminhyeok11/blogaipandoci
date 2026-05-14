@@ -69,7 +69,7 @@ export default async function HomePage() {
         <ItemListSchema
           name="法 BLOG 최신 분석 글"
           description="법률, 정책, 사회 이슈에 관한 최신 심층 분석 글 모음"
-          items={recentPosts.map((p) => ({
+          items={recentPosts.map((p: Post) => ({
             name: p.title,
             url: `${SITE_URL_HOME}/posts/${encodeURIComponent(p.slug)}`,
             description: p.excerpt || undefined,
