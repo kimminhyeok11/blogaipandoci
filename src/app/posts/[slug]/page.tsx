@@ -188,7 +188,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   const title = rawTitle.length > 55 ? `${rawTitle.slice(0, 52)}...` : rawTitle;
 
   // OG 이미지 우선순위: cover_image → 본문 첫 이미지 → 동적 OG
-  const contentFirstImage = post.content?.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/)?.[1] || null;
+  const contentFirstImage = post.content?.match(/!\[.*?\]\((https?:\/\/[^\s)"]+)/)?.[1] || null;
   const ogImage = post.cover_image || contentFirstImage
     ? {
         url: (post.cover_image || contentFirstImage) as string,
