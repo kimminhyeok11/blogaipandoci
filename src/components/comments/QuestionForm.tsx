@@ -24,7 +24,7 @@ interface FormData {
 }
 
 export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dbNickname, setDbNickname] = useState<string | null>(null);
@@ -72,12 +72,14 @@ export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
     try {
       const response = await fetch("/api/comments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           post_id: postId,
           content: formData.content,
           nickname: dbNickname || user?.email?.split("@")[0] || "익명",
-          user_id: user?.id || null,
           is_anonymous: false,
           question_type: formData.questionType || formData.whoProblem,
           topic_tags: [...formData.currentSituation, ...formData.procedure],

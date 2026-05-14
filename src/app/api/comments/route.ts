@@ -155,7 +155,6 @@ export async function POST(request: Request) {
       post_id,
       content,
       parent_id,
-      user_id,
       nickname,
       is_anonymous,
       question_type,
@@ -165,6 +164,19 @@ export async function POST(request: Request) {
 
     if (!post_id || !content) {
       return NextResponse.json({ error: "필수 필드 누락" }, { status: 400 });
+    }
+
+    // 토큰으로만 user_id 결정 — body.user_id 우회 차단
+    // 토큰 없으면 null(익명) 허용
+    let resolvedUserId: string | null = null;
+    const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
+    if (token) {
+      try {
+        const { data: { user }, error: authErr } = await makeAnonClient().auth.getUser(token);
+        if (!authErr && user) resolvedUserId = user.id;
+      } catch {
+        // 토큰 검증 실패 시 익명으로 처리
+      }
     }
 
     const admin = makeAdminClient();
@@ -179,7 +191,7 @@ export async function POST(request: Request) {
         post_id,
         content: maskedContent,
         parent_id: parent_id || null,
-        user_id: user_id || null,
+        user_id: resolvedUserId,
         nickname: nickname || "익명",
         is_anonymous: is_anonymous ?? true,
         status,

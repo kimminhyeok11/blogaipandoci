@@ -36,7 +36,7 @@ interface CommentsSectionProps {
 }
 
 export function CommentsSection({ postId, postSlug, postTitle }: CommentsSectionProps) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
@@ -93,8 +93,6 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
     setGlobalLoading(true);
     setGlobalLoadingMsg("답글을 등록하고 있습니다");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-
       // 닉네임은 public.users에서 조회 (user_metadata보다 최신값 보장)
       let dbNickname = "익명";
       if (user?.id) {
@@ -108,12 +106,14 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
 
       const res = await fetch("/api/comments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           post_id: postId,
           parent_id: replyingTo.id,
           content: replyContent.trim(),
-          user_id: user?.id || null,
           nickname: dbNickname,
           is_anonymous: !user,
         }),
