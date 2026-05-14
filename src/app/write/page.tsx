@@ -67,9 +67,10 @@ function WritePageContent() {
     autoSave.save({ title, content, excerpt, tags });
   }, [hasContent, title, content, excerpt, tags, autoSave]);
 
-  // 자동 저장 (30초마다 + 내용 변경 시)
+  // 자동 저장 (10초마다, 제출 중엔 차단)
   useEffect(() => {
     if (!title && !content) return;
+    if (isSubmitting) return;
     
     // 10초마다 자동 저장 (사용자 피드백 개선)
     const interval = setInterval(() => {
@@ -207,7 +208,8 @@ function WritePageContent() {
           if (saved?.hasData) {
             const postUpdatedAt = new Date(post.updated_at);
             const savedTime = saved.rawTimestamp ? new Date(saved.rawTimestamp) : null;
-            if (savedTime && savedTime > postUpdatedAt) {
+            // 서버/클라이언트 시계 오차 감안: 임시저장이 글 수정보다 60초 이상 최신일 때만 배너 표시
+            if (savedTime && savedTime.getTime() - postUpdatedAt.getTime() > 60 * 1000) {
               setDraftBanner({ timestamp: saved.timestamp || '이전', data: { title: saved.title, content: saved.content, excerpt: saved.excerpt, tags: saved.tags } });
             } else {
               autoSave.clear();
