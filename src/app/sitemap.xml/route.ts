@@ -59,20 +59,20 @@ export async function GET() {
 
   // 정적 페이지
   const staticPages = [
-    { url: `${baseUrl}`, changefreq: "daily", priority: "1.0" },
-    { url: `${baseUrl}/posts`, changefreq: "daily", priority: "0.9" },
-    { url: `${baseUrl}/about`, changefreq: "monthly", priority: "0.7" },
-    { url: `${baseUrl}/contact`, changefreq: "yearly", priority: "0.5" },
-    { url: `${baseUrl}/tags`, changefreq: "weekly", priority: "0.7" },
-    { url: `${baseUrl}/privacy`, changefreq: "yearly", priority: "0.3" },
-    { url: `${baseUrl}/terms`, changefreq: "yearly", priority: "0.3" },
+    { url: `${baseUrl}`, changefreq: "daily", priority: "1.0", lastmod: new Date().toISOString().split("T")[0] },
+    { url: `${baseUrl}/posts`, changefreq: "daily", priority: "0.9", lastmod: new Date().toISOString().split("T")[0] },
+    { url: `${baseUrl}/about`, changefreq: "monthly", priority: "0.7", lastmod: "2025-10-01" },
+    { url: `${baseUrl}/contact`, changefreq: "yearly", priority: "0.5", lastmod: "2025-10-01" },
+    { url: `${baseUrl}/tags`, changefreq: "weekly", priority: "0.7", lastmod: new Date().toISOString().split("T")[0] },
+    { url: `${baseUrl}/privacy`, changefreq: "yearly", priority: "0.3", lastmod: "2025-10-01" },
+    { url: `${baseUrl}/terms`, changefreq: "yearly", priority: "0.3", lastmod: "2025-10-01" },
   ];
 
   const staticXml = staticPages
     .map(
       (p) => `  <url>
     <loc>${escapeXml(p.url)}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
+    <lastmod>${p.lastmod}</lastmod>
     <changefreq>${p.changefreq}</changefreq>
     <priority>${p.priority}</priority>
   </url>`
