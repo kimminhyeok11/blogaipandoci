@@ -103,21 +103,28 @@ export function CommentItem({
   };
 
   const handleReport = async () => {
-    const reason = prompt("신고 사유를 입력해주세요 (개인정보/욕설/명예훼손/기타)");
+    if (!user) {
+      showToast("로그인 후 신고할 수 있습니다", "error");
+      return;
+    }
+    const reasons = ["개인정보 노출", "욕설/혜시", "명예훼손", "스팸/광고", "기타"];
+    const reason = window.prompt(
+      `신고 사유를 선택하세요:\n${reasons.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n\n번호를 입력하거나 스스로 사유를 입력하세요`
+    );
     if (!reason) return;
+    const selectedReason = reasons[parseInt(reason) - 1] || reason;
 
     try {
       const response = await fetch(`/api/comments/${id}/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason }),
+        body: JSON.stringify({ reporter_id: user.id, reason: selectedReason }),
       });
-
-      if (!response.ok) throw new Error("신고 실패");
-
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
       showToast("신고가 접수되었습니다", "success");
-    } catch (error) {
-      showToast("신고에 실패했습니다", "error");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "신고에 실패했습니다", "error");
     }
   };
 

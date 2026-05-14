@@ -241,13 +241,22 @@ export default function ProfilePage() {
 
           <div className="space-y-3">
             {authUser?.role === 'admin' && (
-              <Link
-                href="/admin/stats"
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-ink/80 transition-colors"
-              >
-                <Shield size={16} />
-                관리자 페이지
-              </Link>
+              <>
+                <Link
+                  href="/admin/stats"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-ink/80 transition-colors"
+                >
+                  <Shield size={16} />
+                  관리자 페이지
+                </Link>
+                <Link
+                  href="/admin/reports"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-600 text-paper font-sans text-sm font-medium rounded-sm hover:bg-red-700 transition-colors"
+                >
+                  <Shield size={16} />
+                  신고 관리
+                </Link>
+              </>
             )}
 
             <Link
