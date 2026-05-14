@@ -9,6 +9,7 @@ const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com
 
 const ClientHeader = dynamic(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
 const AdSense = dynamic(() => import("@/components/ads/AdSense").then(m => ({ default: m.AdSense })), { ssr: false });
+const SituationSearch = dynamic(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
 
 // ISR: 1시간마다 재생성
 export const revalidate = 3600;
@@ -132,6 +133,9 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        {/* 상황 탐색 */}
+        <SituationSearch />
 
         {/* Recent Posts */}
         <section className="max-w-content mx-auto px-4 sm:px-6 py-16">

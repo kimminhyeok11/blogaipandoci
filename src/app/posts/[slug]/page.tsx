@@ -10,6 +10,8 @@ import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { TrustBadge } from "@/components/posts/TrustBadge";
+import { ProcedureProgressBar } from "@/components/posts/ProcedureProgressBar";
+import { ProcedureMeta } from "@/components/posts/ProcedureMeta";
 
 const PostContent = dynamic(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })));
 const TocSidebar = dynamic(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
@@ -347,10 +349,16 @@ export default async function PostPage({ params }: PostPageProps) {
           <div className="flex flex-col xl:flex-row gap-8 justify-center">
             {/* 본문 영역 */}
             <article className="flex-1 min-w-0 xl:max-w-3xl">
+              {/* 절차 진행 단계 바 (절차 메타 있을 때만 표시) */}
+              <ProcedureProgressBar post={post} />
+
               {/* 본문 내용 - max-w-article로 중앙 정렬 */}
               <div className="article-body-content">
                 <PostContent contentMarkdown={post.content} />
               </div>
+
+              {/* 절차 실무 정보 (방문 기관, 자주 하는 실수) */}
+              <ProcedureMeta post={post} />
 
               <div className="ornament">— ✦ —</div>
 

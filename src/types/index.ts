@@ -31,6 +31,13 @@ export interface Post {
   reviewed_at: string | null;
   user?: User;
   tags?: Tag[];
+  case_type?: string | null;
+  current_stage?: string | null;
+  next_stage?: string | null;
+  estimated_duration?: string | null;
+  involved_agencies?: string[] | null;
+  common_mistakes?: string[] | null;
+  expert_level?: string | null;
 }
 
 // 태그 타입

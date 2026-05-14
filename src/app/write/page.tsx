@@ -12,6 +12,19 @@ import { RevisionHistory } from "@/components/editor/RevisionHistory";
 import { useWriteForm } from "./hooks/useWriteForm";
 import { useAutoSave } from "./hooks/useAutoSave";
 
+const CASE_TYPES = ["상속·유언", "채무·금전", "형사·고소", "전세·임대차", "이혼·가족", "계약·거래", "행정·기타"];
+const EXPERT_LEVELS = ["직접가능", "법무사권장", "변호사권장"];
+
+const EMPTY_PROCEDURE = {
+  case_type: "",
+  current_stage: "",
+  next_stage: "",
+  estimated_duration: "",
+  involved_agencies: "",
+  common_mistakes: "",
+  expert_level: "",
+};
+
 // IndexNow 알림 헬퍼
 const notifyIndexNow = async (path: string) => {
   try {
@@ -57,6 +70,8 @@ function WritePageContent() {
   const [draftBanner, setDraftBanner] = useState<{ timestamp: string; data: { title: string; content: string; excerpt: string; tags: string } } | null>(null);
   const [postId, setPostId] = useState<string | null>(null);
   const [preview, setPreview] = useState(false);
+  const [procedureMeta, setProcedureMeta] = useState({ ...EMPTY_PROCEDURE });
+  const [showProcedure, setShowProcedure] = useState(false);
 
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
@@ -198,6 +213,20 @@ function WritePageContent() {
         setTitle(post.title);
         setContent(post.content);
         setExcerpt(post.excerpt || "");
+
+        // 기존 절차 메타 불러오기
+        if (post.case_type || post.current_stage || post.next_stage) {
+          setProcedureMeta({
+            case_type: post.case_type || "",
+            current_stage: post.current_stage || "",
+            next_stage: post.next_stage || "",
+            estimated_duration: post.estimated_duration || "",
+            involved_agencies: (post.involved_agencies || []).join(", "),
+            common_mistakes: (post.common_mistakes || []).join(", "),
+            expert_level: post.expert_level || "",
+          });
+          setShowProcedure(true);
+        }
 
         // 수정 모드 전용 임시저장 키가 실제로 존재하는지 확인 후 로드
         // (새 글 임시저장 blog_draft_* 과 섞이는 것 방지)
@@ -348,6 +377,13 @@ function WritePageContent() {
             content: processedContent,
             excerpt: finalExcerpt,
             published,
+            case_type: procedureMeta.case_type || null,
+            current_stage: procedureMeta.current_stage || null,
+            next_stage: procedureMeta.next_stage || null,
+            estimated_duration: procedureMeta.estimated_duration || null,
+            involved_agencies: procedureMeta.involved_agencies ? procedureMeta.involved_agencies.split(",").map(s => s.trim()).filter(Boolean) : null,
+            common_mistakes: procedureMeta.common_mistakes ? procedureMeta.common_mistakes.split(",").map(s => s.trim()).filter(Boolean) : null,
+            expert_level: procedureMeta.expert_level || null,
           }),
         });
 
@@ -410,6 +446,13 @@ function WritePageContent() {
             content: processedContent,
             excerpt: finalExcerpt,
             published,
+            case_type: procedureMeta.case_type || null,
+            current_stage: procedureMeta.current_stage || null,
+            next_stage: procedureMeta.next_stage || null,
+            estimated_duration: procedureMeta.estimated_duration || null,
+            involved_agencies: procedureMeta.involved_agencies ? procedureMeta.involved_agencies.split(",").map(s => s.trim()).filter(Boolean) : null,
+            common_mistakes: procedureMeta.common_mistakes ? procedureMeta.common_mistakes.split(",").map(s => s.trim()).filter(Boolean) : null,
+            expert_level: procedureMeta.expert_level || null,
           }),
         });
 
@@ -623,6 +666,59 @@ function WritePageContent() {
                   className="flex-1 font-sans text-sm text-ink placeholder:text-muted/40 bg-transparent border-b-2 border-rule/20 focus:border-rust focus:outline-none py-1.5 transition-colors"
                 />
               </div>
+            </div>
+
+            {/* 절차 정보 (접기/펼치기) */}
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setShowProcedure(!showProcedure)}
+                className="flex items-center gap-1.5 text-xs font-sans font-medium text-muted hover:text-rust transition-colors"
+              >
+                {showProcedure ? <span>▲</span> : <span>▼</span>}
+                절차 정보
+                {Object.values(procedureMeta).some(v => v.trim() !== "") && <span className="text-rust ml-1">●</span>}
+                <span className="text-muted/50 ml-1">(법률 절차 글에만 입력)</span>
+              </button>
+
+              {showProcedure && (
+                <div className="mt-3 p-3 bg-cream/40 rounded-sm border border-rule/30 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-muted mb-1">사건 유형</label>
+                    <select value={procedureMeta.case_type} onChange={(e) => setProcedureMeta({ ...procedureMeta, case_type: e.target.value })} className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none">
+                      <option value="">선택 안 함</option>
+                      {CASE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted mb-1">전문가 필요도</label>
+                    <select value={procedureMeta.expert_level} onChange={(e) => setProcedureMeta({ ...procedureMeta, expert_level: e.target.value })} className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none">
+                      <option value="">선택 안 함</option>
+                      {EXPERT_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted mb-1">현재 단계</label>
+                    <input type="text" value={procedureMeta.current_stage} onChange={(e) => setProcedureMeta({ ...procedureMeta, current_stage: e.target.value })} placeholder="예: 한정승인 완료" className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none placeholder:text-muted/40" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted mb-1">다음 단계</label>
+                    <input type="text" value={procedureMeta.next_stage} onChange={(e) => setProcedureMeta({ ...procedureMeta, next_stage: e.target.value })} placeholder="예: 상속재산파산 신청" className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none placeholder:text-muted/40" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted mb-1">예상 소요 기간</label>
+                    <input type="text" value={procedureMeta.estimated_duration} onChange={(e) => setProcedureMeta({ ...procedureMeta, estimated_duration: e.target.value })} placeholder="예: 2~4주, 1년 이상" className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none placeholder:text-muted/40" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted mb-1">방문 기관</label>
+                    <input type="text" value={procedureMeta.involved_agencies} onChange={(e) => setProcedureMeta({ ...procedureMeta, involved_agencies: e.target.value })} placeholder="법원, 은행, 보험사 (쉼표로 구분)" className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none placeholder:text-muted/40" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs text-muted mb-1">자주 하는 실수</label>
+                    <input type="text" value={procedureMeta.common_mistakes} onChange={(e) => setProcedureMeta({ ...procedureMeta, common_mistakes: e.target.value })} placeholder="보험해지 시기 착각, 답변서 미제출 (쉼표로 구분)" className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none placeholder:text-muted/40" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

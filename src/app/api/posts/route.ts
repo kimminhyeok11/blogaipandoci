@@ -174,7 +174,9 @@ export async function POST(request: Request) {
 
     const token = authHeader.replace("Bearer ", "");
     const body = await request.json();
-    const { title, slug, content, excerpt, cover_image, cover_image_alt, published, user_id } = body;
+    const { title, slug, content, excerpt, cover_image, cover_image_alt, published, user_id,
+      case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level
+    } = body;
 
     const serviceSupabase = makeAdmin();
 
@@ -214,6 +216,13 @@ export async function POST(request: Request) {
         published,
         user_id: user_id,
         published_at: published ? new Date().toISOString() : null,
+        case_type: case_type || null,
+        current_stage: current_stage || null,
+        next_stage: next_stage || null,
+        estimated_duration: estimated_duration || null,
+        involved_agencies: involved_agencies || null,
+        common_mistakes: common_mistakes || null,
+        expert_level: expert_level || null,
       })
       .select()
       .single();
@@ -290,7 +299,9 @@ export async function PUT(request: Request) {
 
     const token = authHeader.replace("Bearer ", "");
     const body = await request.json();
-    const { id, title, slug, content, excerpt, cover_image, cover_image_alt, published } = body;
+    const { id, title, slug, content, excerpt, cover_image, cover_image_alt, published,
+      case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level
+    } = body;
 
     const serviceSupabase = makeAdmin();
 
@@ -345,6 +356,13 @@ export async function PUT(request: Request) {
         published,
         published_at: published ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
+        case_type: case_type !== undefined ? (case_type || null) : undefined,
+        current_stage: current_stage !== undefined ? (current_stage || null) : undefined,
+        next_stage: next_stage !== undefined ? (next_stage || null) : undefined,
+        estimated_duration: estimated_duration !== undefined ? (estimated_duration || null) : undefined,
+        involved_agencies: involved_agencies !== undefined ? (involved_agencies || null) : undefined,
+        common_mistakes: common_mistakes !== undefined ? (common_mistakes || null) : undefined,
+        expert_level: expert_level !== undefined ? (expert_level || null) : undefined,
       })
       .eq("id", id)
       .select()

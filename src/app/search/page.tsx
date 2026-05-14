@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Search, Loader2, FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
@@ -14,17 +15,26 @@ interface SearchResult {
   slug: string;
   published_at: string;
   view_count: number;
+  case_type?: string | null;
 }
 
 export default function SearchPage() {
-  const [query, setQuery] = useState("");
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get("q") || "";
+  const urlCaseType = searchParams.get("case_type") || "";
+
+  const [query, setQuery] = useState(urlQuery);
+  const [activeCaseType, setActiveCaseType] = useState(urlCaseType);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const { showToast } = useToast();
 
-  const performSearch = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
+  const performSearch = useCallback(async (searchQuery: string, caseType: string) => {
+    const hasQuery = searchQuery.trim();
+    const hasCaseType = caseType.trim();
+
+    if (!hasQuery && !hasCaseType) {
       setResults([]);
       setHasSearched(false);
       return;
@@ -34,14 +44,20 @@ export default function SearchPage() {
     setHasSearched(true);
 
     try {
-      const { data, error } = await supabase
+      let q = supabase
         .from("posts")
-        .select("id, title, excerpt, slug, published_at, view_count")
+        .select("id, title, excerpt, slug, published_at, view_count, case_type")
         .eq("published", true)
-        .not("published_at", "is", null)
-        .or(`title.ilike.%${searchQuery}%,excerpt.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`)
-        .order("published_at", { ascending: false })
-        .limit(20);
+        .not("published_at", "is", null);
+
+      if (hasCaseType) {
+        q = q.eq("case_type", caseType);
+      }
+      if (hasQuery) {
+        q = q.or(`title.ilike.%${searchQuery}%,excerpt.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error } = await q.order("published_at", { ascending: false }).limit(20);
 
       if (error) throw error;
       setResults(data || []);
@@ -54,11 +70,16 @@ export default function SearchPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      performSearch(query);
+      performSearch(query, activeCaseType);
     }, 300);
-
     return () => clearTimeout(timer);
-  }, [query, performSearch]);
+  }, [query, activeCaseType, performSearch]);
+
+  // URL 파라미터 변경 시 상태 동기화
+  useEffect(() => {
+    setQuery(urlQuery);
+    setActiveCaseType(urlCaseType);
+  }, [urlQuery, urlCaseType]);
 
   return (
     <div className="min-h-screen bg-paper">
@@ -76,9 +97,22 @@ export default function SearchPage() {
           <div className="flex items-center gap-3 mb-4">
             <Search className="text-rust" size={28} />
             <h1 className="text-2xl font-black text-ink">검색</h1>
+            {activeCaseType && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-rust text-paper text-xs font-medium rounded-sm">
+                {activeCaseType}
+                <button
+                  type="button"
+                  onClick={() => setActiveCaseType("")}
+                  className="ml-1 hover:opacity-70"
+                  aria-label="필터 제거"
+                >
+                  ×
+                </button>
+              </span>
+            )}
           </div>
           <p className="font-sans text-sm text-muted">
-            제목, 내용, 요약에서 검색합니다.
+            {activeCaseType ? `'${activeCaseType}' 관련 글을 표시합니다.` : "제목, 내용, 요약에서 검색합니다."}
           </p>
         </div>
         
