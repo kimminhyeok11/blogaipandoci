@@ -364,6 +364,18 @@ function WritePageContent() {
       if (isEditMode && postId) {
         // 수정 모드: API 호출
         console.log("[DEBUG] Updating post via API:", postId, "by user:", currentUser.id);
+
+        // 절차 섹션을 한 번이라도 열었을 때만 절차 필드를 전송 (미개봉 시 기존 DB 값 보존)
+        const procedureFields = showProcedure ? {
+          case_type: procedureMeta.case_type || null,
+          current_stage: procedureMeta.current_stage || null,
+          next_stage: procedureMeta.next_stage || null,
+          estimated_duration: procedureMeta.estimated_duration || null,
+          involved_agencies: procedureMeta.involved_agencies ? procedureMeta.involved_agencies.split(",").map(s => s.trim()).filter(Boolean) : null,
+          common_mistakes: procedureMeta.common_mistakes ? procedureMeta.common_mistakes.split(",").map(s => s.trim()).filter(Boolean) : null,
+          expert_level: procedureMeta.expert_level || null,
+        } : {};
+
         const response = await fetch("/api/posts", {
           method: "PUT",
           headers: {
@@ -377,13 +389,7 @@ function WritePageContent() {
             content: processedContent,
             excerpt: finalExcerpt,
             published,
-            case_type: procedureMeta.case_type || null,
-            current_stage: procedureMeta.current_stage || null,
-            next_stage: procedureMeta.next_stage || null,
-            estimated_duration: procedureMeta.estimated_duration || null,
-            involved_agencies: procedureMeta.involved_agencies ? procedureMeta.involved_agencies.split(",").map(s => s.trim()).filter(Boolean) : null,
-            common_mistakes: procedureMeta.common_mistakes ? procedureMeta.common_mistakes.split(",").map(s => s.trim()).filter(Boolean) : null,
-            expert_level: procedureMeta.expert_level || null,
+            ...procedureFields,
           }),
         });
 

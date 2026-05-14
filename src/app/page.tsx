@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
-import { PenSquare, User, Search } from "lucide-react";
 import { HomepageBreadcrumbSchema, ItemListSchema } from "@/components/seo/StructuredData";
 
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
