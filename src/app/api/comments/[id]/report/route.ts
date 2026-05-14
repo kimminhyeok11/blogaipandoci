@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -26,10 +32,7 @@ export async function POST(
       return NextResponse.json({ error: "신고 사유 필수" }, { status: 400 });
     }
 
-    const supabaseAdmin = getServiceSupabase();
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: "서버 오류" }, { status: 500 });
-    }
+    const supabaseAdmin = makeAdmin();
 
     // 중복 신고 확인
     if (reporter_id) {

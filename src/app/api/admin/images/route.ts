@@ -1,29 +1,29 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
+async function verifyAdminToken(request: Request) {
+  const token = (request.headers.get('authorization') || '').replace('Bearer ', '').trim();
+  if (!token) return null;
+  const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+  const { data: { user }, error } = await anon.auth.getUser(token);
+  if (error || !user) return null;
+  const admin = makeAdmin();
+  const { data: profile } = await admin.from('users').select('role').eq('id', user.id).single() as any;
+  return profile?.role === 'admin' ? admin : null;
+}
 
 // GET /api/admin/images - 고아 이미지 목록 조회
 export async function GET(request: Request) {
   try {
-    // 요청에서 사용자 ID 추출 (헤더)
-    const authHeader = request.headers.get('authorization');
-    const userId = authHeader?.replace('Bearer ', '');
-    
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
-    }
-
-    const serviceSupabase = getServiceSupabase();
-
-    // 관리자 권한 확인
-    const { data: userData, error: roleError } = await serviceSupabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single() as { data: { role: string } | null; error: Error | null };
-
-    if (roleError || userData?.role !== 'admin') {
-      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
-    }
+    const admin = await verifyAdminToken(request);
+    if (!admin) return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    const serviceSupabase = admin;
 
     // 모든 게시글의 content에서 이미지 URL 추출
     const { data: posts, error: postsError } = await serviceSupabase
@@ -84,26 +84,9 @@ export async function GET(request: Request) {
 // DELETE /api/admin/images - 고아 이미지 삭제
 export async function DELETE(request: Request) {
   try {
-    // 요청에서 사용자 ID 추출 (헤더)
-    const authHeader = request.headers.get('authorization');
-    const userId = authHeader?.replace('Bearer ', '');
-    
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized: No user ID" }, { status: 401 });
-    }
-
-    const serviceSupabase = getServiceSupabase();
-
-    // 관리자 권한 확인
-    const { data: userData, error: roleError } = await serviceSupabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single() as { data: { role: string } | null; error: Error | null };
-
-    if (roleError || userData?.role !== 'admin') {
-      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
-    }
+    const admin = await verifyAdminToken(request);
+    if (!admin) return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    const serviceSupabase = admin;
 
     // 삭제할 이미지 경로 목록
     const { paths } = await request.json();

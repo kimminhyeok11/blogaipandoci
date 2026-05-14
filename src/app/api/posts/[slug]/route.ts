@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { supabase, getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { notifyIndexNow } from "@/lib/indexnow";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 function getIndexNowConfig() {
   const key = process.env.INDEXNOW_KEY;
@@ -22,7 +29,7 @@ export async function GET(
     // URL 디코딩 (한글/특수문자 처리)
     const decodedSlug = decodeURIComponent(slug);
     
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
 
     // 조회수 증가 (서비스 역할로 RLS 우회) - 조회 모드일 때만
     if (!isEditMode) {
@@ -117,7 +124,7 @@ export async function DELETE(
     }
 
     const userId = authHeader.replace("Bearer ", "");
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
 
     // 글 조회하여 소유자 확인
     const { data: post, error: fetchError } = await (serviceSupabase.from("posts") as any)

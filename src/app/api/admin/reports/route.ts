@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 // GET /api/admin/reports - 신고 목록 조회
 export async function GET(request: Request) {
-  const supabaseAdmin = getServiceSupabase();
-  if (!supabaseAdmin) {
-    return NextResponse.json({ error: "서버 오류" }, { status: 500 });
-  }
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") || "pending";

@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { supabase, getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { notifyIndexNow } from "@/lib/indexnow";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 function getIndexNowConfig() {
   const key = process.env.INDEXNOW_KEY;
@@ -169,7 +176,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { title, slug, content, excerpt, cover_image, cover_image_alt, published, user_id } = body;
 
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
 
     // 토큰으로 실제 유저 확인
     const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
@@ -260,7 +267,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { id, title, slug, content, excerpt, cover_image, cover_image_alt, published } = body;
 
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
 
     // 토큰으로 실제 유저 확인 + 관리자 체크
     const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);

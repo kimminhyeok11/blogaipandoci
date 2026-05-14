@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 // 간단한 IP 해시 (프라이버시 보호)
 function hashIP(ip: string): string {
@@ -20,7 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "slug is required" }, { status: 400 });
     }
 
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
 
     // IP 해시 생성
     const forwarded = request.headers.get("x-forwarded-for");

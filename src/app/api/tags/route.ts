@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 // POST /api/tags - 태그 생성 및 게시글 연결
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const token = (request.headers.get("Authorization") || "").replace("Bearer ", "").trim();
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const userId = authHeader.replace("Bearer ", "");
     const body = await request.json();
     const { postId, tags } = body;
 
@@ -17,7 +20,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
 
     // 기존 태그 연결 삭제
     await serviceSupabase
@@ -74,7 +77,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Missing postId" }, { status: 400 });
     }
 
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
 
     const { data, error } = await serviceSupabase
       .from("post_tags")

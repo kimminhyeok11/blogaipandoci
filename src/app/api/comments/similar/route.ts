@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 // GET /api/comments/similar - 유사 사례 추천
 export async function GET(request: Request) {
@@ -13,10 +19,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "post_id 필수" }, { status: 400 });
     }
 
-    const supabaseAdmin = getServiceSupabase();
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: "서버 오류" }, { status: 500 });
-    }
+    const supabaseAdmin = makeAdmin();
 
     let query = supabaseAdmin
       .from("comments")

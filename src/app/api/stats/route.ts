@@ -1,25 +1,28 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
-// 관리자 권한 확인 헬퍼
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
+// 관리자 권한 확인 헬퍼 - 토큰 검증 방식
 async function verifyAdmin(request: Request) {
-  const serviceSupabase = getServiceSupabase();
-  const authHeader = request.headers.get('authorization');
-  const userId = authHeader?.replace('Bearer ', '');
-  
-  if (!userId) return { error: "Unauthorized", status: 401, serviceSupabase };
+  const token = (request.headers.get('authorization') || '').replace('Bearer ', '').trim();
+  if (!token) return { error: "Unauthorized", status: 401, admin: null };
 
-  const { data: userData, error: roleError } = await serviceSupabase
-    .from('users')
-    .select('role')
-    .eq('id', userId)
-    .single() as { data: { role: string } | null; error: Error | null };
+  const admin = makeAdmin();
+  const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+  const { data: { user }, error: authErr } = await anon.auth.getUser(token);
+  if (authErr || !user) return { error: "Unauthorized", status: 401, admin: null };
 
-  if (roleError || userData?.role !== 'admin') {
-    return { error: "Forbidden", status: 403, serviceSupabase };
-  }
+  const { data: userData } = await admin
+    .from('users').select('role').eq('id', user.id).single() as { data: { role: string } | null; error: Error | null };
 
-  return { error: null, status: 200, serviceSupabase };
+  if (userData?.role !== 'admin') return { error: "Forbidden", status: 403, admin: null };
+
+  return { error: null, status: 200, admin };
 }
 
 // GET /api/stats - 통계 데이터 조회 (대시보드)
@@ -29,7 +32,7 @@ export async function GET(request: Request) {
     if (auth.error) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-    const serviceSupabase = auth.serviceSupabase;
+    const serviceSupabase = auth.admin!;
 
     const now = new Date();
 

@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const makeAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 // GET /api/revisions?slug=xxx - 특정 글의 히스토리 조회
 export async function GET(request: Request) {
@@ -19,7 +25,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
     
     const { data: post, error: postError } = await serviceSupabase
       .from("posts")
@@ -69,7 +75,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const serviceSupabase = getServiceSupabase();
+    const serviceSupabase = makeAdmin();
     
     const { data: post, error: postError } = await serviceSupabase
       .from("posts")
