@@ -45,7 +45,7 @@ function ShareButtonsComponent({ title, description, imageUrl }: ShareButtonsPro
         content: {
           title,
           description: description || title,
-          imageUrl: imageUrl || 'https://lawtiphub.com/opengraph-image.png',
+          imageUrl: imageUrl || 'https://lawtiphub.com/opengraph-image.jpg',
           link: {
             mobileWebUrl: shareUrl,
             webUrl: shareUrl,
