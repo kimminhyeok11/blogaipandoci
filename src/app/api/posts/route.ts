@@ -131,6 +131,29 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
+    const all = searchParams.get("all") === "true";
+
+    // 관리자 전체 조회 (미발행 포함) — 토큰 검증 필요
+    if (all) {
+      const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
+      if (!token) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
+
+      const serviceSupabase = makeAdmin();
+      const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
+      if (!authUser) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
+
+      const { data: profile } = await serviceSupabase.from("users").select("role").eq("id", authUser.id).single();
+      if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
+
+      const { data, error, count } = await serviceSupabase
+        .from("posts")
+        .select("id, title, slug, published, published_at, created_at, view_count", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ posts: data, count });
+    }
 
     const { data, error, count } = await supabase
       .from("posts")
@@ -167,17 +190,18 @@ export async function POST(request: Request) {
 
     const token = authHeader.replace("Bearer ", "");
     const body = await request.json();
-    const { title, slug, content, excerpt, cover_image, cover_image_alt, published, user_id,
+    const { title, slug, content, excerpt, cover_image, cover_image_alt, published,
       case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level
     } = body;
 
     const serviceSupabase = makeAdmin();
 
-    // 토큰으로 실제 유저 확인
+    // 토큰으로 user_id 결정 — body.user_id 우회 차단
     const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
-    if (!authUser || authUser.id !== user_id) {
-      return NextResponse.json({ error: "Forbidden - User mismatch" }, { status: 403 });
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = authUser.id;
 
     // 관리자만 글 작성 가능
     const { data: profile } = await serviceSupabase
@@ -207,7 +231,7 @@ export async function POST(request: Request) {
         cover_image,
         cover_image_alt,
         published,
-        user_id: user_id,
+        user_id: userId,
         published_at: published ? new Date().toISOString() : null,
         case_type: case_type || null,
         current_stage: current_stage || null,

@@ -26,7 +26,6 @@ import {
   Send
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { supabase } from "@/lib/supabase";
 
 interface OrphanedImage {
   name: string;
@@ -170,22 +169,18 @@ export default function StatsPage() {
     }
   };
 
-  // 전체 글 목록 페이지네이션 조회
+  // 전체 글 목록 페이지네이션 조회 (관리자 API 사용 — 미발행 글 포함)
   const fetchAllPosts = async (page: number) => {
-    if (!user?.id) return;
+    if (!session?.access_token) return;
     setIsAllPostsLoading(true);
     try {
       const from = (page - 1) * POSTS_PER_PAGE;
-      const to = from + POSTS_PER_PAGE - 1;
-
-      const { data, error, count } = await supabase
-        .from('posts')
-        .select('id, title, slug, published, published_at, created_at, view_count', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (error) throw error;
-      setAllPosts(data || []);
+      const response = await fetch(`/api/posts?all=true&limit=${POSTS_PER_PAGE}&offset=${from}`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      if (!response.ok) throw new Error('글 목록 조회 실패');
+      const { posts, count } = await response.json();
+      setAllPosts(posts || []);
       setAllPostsTotal(count || 0);
       setAllPostsPage(page);
     } catch (err) {
