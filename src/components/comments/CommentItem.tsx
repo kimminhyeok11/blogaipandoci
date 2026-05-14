@@ -10,6 +10,7 @@ export interface CommentItemProps {
   content: string;
   nickname: string;
   isAnonymous: boolean;
+  isSecret?: boolean;
   createdAt: string;
   updatedAt?: string;
   isEdited?: boolean;
@@ -37,6 +38,7 @@ export function CommentItem({
   replyCount,
   isLiked = false,
   userId,
+  isSecret = false,
   parentId,
   replies = [],
   onReply,
@@ -165,7 +167,11 @@ export function CommentItem({
             )}
           </div>
 
-          <p className="text-ink text-sm leading-relaxed mb-3">{content}</p>
+          {isSecret ? (
+            <p className="text-muted text-sm italic mb-3">🔒 비밀 댓글입니다. 작성자와 관리자만 볼 수 있습니다.</p>
+          ) : (
+            <p className="text-ink text-sm leading-relaxed mb-3">{content}</p>
+          )}
 
           {/* 액션 버튼 */}
           <div className="flex items-center gap-4 text-sm">

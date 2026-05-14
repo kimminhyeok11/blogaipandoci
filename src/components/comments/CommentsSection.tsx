@@ -85,6 +85,7 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
       content: c.content,
       nickname: c.nickname,
       isAnonymous: c.is_anonymous,
+      isSecret: c.is_secret,
       createdAt: c.created_at,
       updatedAt: c.updated_at,
       isEdited: c.is_edited,
