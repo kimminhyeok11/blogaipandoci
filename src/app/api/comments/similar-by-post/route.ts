@@ -10,7 +10,9 @@ const makeAdmin = () => createClient(
 // POST /api/comments/similar-by-post - 글 embedding 기반 유사 질문 검색
 export async function POST(request: Request) {
   try {
-    const { post_id, limit = 5 } = await request.json();
+    const body = await request.json();
+    const { post_id } = body;
+    const limit = Math.min(Math.max(1, parseInt(body.limit) || 5), 20);
 
     if (!post_id) {
       return NextResponse.json({ error: "post_id 필수" }, { status: 400 });

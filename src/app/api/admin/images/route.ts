@@ -98,6 +98,12 @@ export async function DELETE(request: Request) {
       );
     }
 
+    // 경로 검증 — uploads/ 외부 파일 삭제 차단
+    const invalidPaths = paths.filter((p: any) => typeof p !== "string" || !p.startsWith("uploads/"));
+    if (invalidPaths.length > 0) {
+      return NextResponse.json({ error: "유효하지 않은 경로가 포함되어 있습니다" }, { status: 400 });
+    }
+
     // Storage에서 삭제
     const { data, error } = await serviceSupabase
       .storage
