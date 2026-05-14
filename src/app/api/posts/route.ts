@@ -237,11 +237,18 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
       }).then(r => r.json()).then(embRes => {
-        const vec = embRes?.data?.[0]?.embedding;
-        if (vec) {
-          serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id).then(() => {});
+        if (embRes?.error) {
+          console.error("[embedding/post] OpenAI 오류:", embRes.error.message);
+          return;
         }
-      }).catch(() => {});
+        const vec = embRes?.data?.[0]?.embedding;
+        if (!Array.isArray(vec) || vec.length !== 1536) {
+          console.error("[embedding/post] 잘못된 벡터 차원:", vec?.length);
+          return;
+        }
+        serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id)
+          .then(({ error: dbErr }) => { if (dbErr) console.error("[embedding/post] DB 저장 실패:", dbErr.message); });
+      }).catch((err) => { console.error("[embedding/post] 네트워크 오류:", err?.message); });
     }
 
     // 캐시 즉시 갱신
@@ -362,11 +369,18 @@ export async function PUT(request: Request) {
         },
         body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
       }).then(r => r.json()).then(embRes => {
-        const vec = embRes?.data?.[0]?.embedding;
-        if (vec) {
-          serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id).then(() => {});
+        if (embRes?.error) {
+          console.error("[embedding/post-update] OpenAI 오류:", embRes.error.message);
+          return;
         }
-      }).catch(() => {});
+        const vec = embRes?.data?.[0]?.embedding;
+        if (!Array.isArray(vec) || vec.length !== 1536) {
+          console.error("[embedding/post-update] 잘못된 벡터 차원:", vec?.length);
+          return;
+        }
+        serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id)
+          .then(({ error: dbErr }) => { if (dbErr) console.error("[embedding/post-update] DB 저장 실패:", dbErr.message); });
+      }).catch((err) => { console.error("[embedding/post-update] 네트워크 오류:", err?.message); });
     }
 
     // 캐시 즉시 갱신
