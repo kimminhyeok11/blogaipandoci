@@ -43,6 +43,8 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
   const [replyingTo, setReplyingTo] = useState<{ id: string; nickname: string } | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [globalLoading, setGlobalLoading] = useState(false);
+  const [globalLoadingMsg, setGlobalLoadingMsg] = useState("");
   const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -67,10 +69,16 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
     }
   };
 
-  const handleCommentSuccess = () => {
-    fetchComments();
-    setShowQuestionForm(false);
-    setReplyingTo(null);
+  const handleCommentSuccess = async () => {
+    setGlobalLoading(true);
+    setGlobalLoadingMsg("처리 중입니다");
+    try {
+      await fetchComments();
+    } finally {
+      setShowQuestionForm(false);
+      setReplyingTo(null);
+      setGlobalLoading(false);
+    }
   };
 
   const handleReply = (parentId: string, nickname: string) => {
@@ -82,6 +90,8 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
   const handleSubmitReply = async () => {
     if (!replyingTo || !replyContent.trim()) return;
     setIsSubmittingReply(true);
+    setGlobalLoading(true);
+    setGlobalLoadingMsg("답글을 등록하고 있습니다");
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -111,11 +121,12 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
       if (!res.ok) throw new Error("답글 등록 실패");
       setReplyContent("");
       setReplyingTo(null);
-      fetchComments();
+      await fetchComments();
     } catch {
       alert("답글 등록에 실패했습니다.");
     } finally {
       setIsSubmittingReply(false);
+      setGlobalLoading(false);
     }
   };
 
@@ -190,20 +201,35 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
   };
 
   if (loading) {
-    return <div className="text-center py-8 text-muted">로딩 중...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <div className="w-5 h-5 border-2 border-rust border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm text-muted">불러오는 중...</span>
+      </div>
+    );
   }
 
   return (
+    <>
+      {/* 전역 로딩 오버레이 */}
+      {globalLoading && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-paper/80 backdrop-blur-sm">
+          <div className="w-8 h-8 border-2 border-rust border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-sm font-sans text-muted">{globalLoadingMsg}</p>
+        </div>
+      )}
+
     <div className="max-w-content mx-auto px-4 sm:px-6 py-12">
       <h2 className="text-2xl font-bold text-ink mb-8">질문 및 댓글</h2>
 
       {/* CTA 문구 */}
-      <div className="bg-cream border border-rust/20 rounded-sm p-6 mb-8">
-        <h3 className="font-bold text-ink mb-2">혹시 본문과 상황이 조금 다르신가요?</h3>
+      <div className="mb-8 pb-8 border-b border-rule">
+        <h3 className="font-bold text-ink mb-1">혹시 본문과 상황이 조금 다르신가요?</h3>
         <p className="text-muted text-sm mb-4">
           실제 사건은 가족관계, 채무 시점, 소송 여부에 따라 결과가 달라질 수 있습니다.
-          아래 질문 카드로 상황을 남겨주시면 공개 판례·실무 사례 기준으로 참고 가능한 내용을 정리해드립니다.
+          질문을 남겨주시면 공개 판례·실무 사례 기준으로 참고 가능한 내용을 정리해드립니다.
         </p>
+        <p className="text-xs text-muted mb-4">🔒 질문은 작성자 본인과 관리자만 열람할 수 있습니다.</p>
         <button
           onClick={() => setShowQuestionForm(!showQuestionForm)}
           className="px-4 py-2 bg-rust text-paper text-sm font-medium rounded-sm hover:bg-rust-light transition-colors"
@@ -222,31 +248,29 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
 
       {/* 답글 폼 */}
       {replyingTo && (
-        <div className="mb-6 p-4 bg-cream border border-rust/20 rounded-sm">
-          <p className="text-sm text-muted mb-2">
-            <span className="font-medium text-ink">{replyingTo.nickname}</span>님에게 답글 작성
-          </p>
+        <div className="mb-6 border-t border-b border-rule py-4">
+          <p className="text-xs text-muted mb-3">↩ <span className="font-medium text-ink">{replyingTo.nickname}</span>님에게 답글 · 🔒 본인과 관리자만 열람</p>
           <textarea
             ref={replyInputRef}
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
             placeholder="답글을 입력하세요..."
             rows={3}
-            className="w-full px-3 py-2 border border-rule rounded-sm text-sm focus:outline-none focus:border-rust bg-white resize-none mb-2"
+            className="w-full px-3 py-2 border border-rule text-sm focus:outline-none focus:border-rust bg-white resize-none mb-3"
           />
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => setReplyingTo(null)}
-              className="px-4 py-1.5 text-sm border border-rule text-muted rounded-sm hover:border-rust hover:text-rust transition-colors"
+              className="px-4 py-1.5 text-sm border border-rule text-muted hover:border-rust hover:text-rust transition-colors"
             >
               취소
             </button>
             <button
               onClick={handleSubmitReply}
               disabled={isSubmittingReply || !replyContent.trim()}
-              className="px-4 py-1.5 text-sm bg-rust text-paper rounded-sm hover:bg-rust-light disabled:opacity-50 transition-colors"
+              className="px-4 py-1.5 text-sm bg-rust text-paper hover:bg-rust-light disabled:opacity-50 transition-colors"
             >
-              {isSubmittingReply ? "등록 중..." : "답글 등록"}
+              답글 등록
             </button>
           </div>
         </div>
@@ -254,12 +278,13 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
 
       {/* 댓글 목록 */}
       {comments.length === 0 ? (
-        <div className="text-center py-12 border border-rust/10 rounded-sm bg-cream">
-          <p className="text-muted">아직 질문이나 댓글이 없습니다. 첫 번째 질문을 등록해보세요!</p>
+        <div className="py-12 text-center border-t border-rule">
+          <p className="text-sm text-muted">아직 질문이 없습니다. 첫 번째 질문을 등록해보세요.</p>
         </div>
       ) : (
         renderComments()
       )}
     </div>
+    </>
   );
 }
