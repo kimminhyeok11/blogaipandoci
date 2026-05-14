@@ -8,6 +8,9 @@ import type { Metadata } from "next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
+// ISR: 1시간마다 재생성
+export const revalidate = 3600;
+
 const VALID_CASE_TYPES = [
   "상속·유언", "채무·금전", "형사·고소", "전세·임대차",
   "이혼·가족", "계약·거래", "행정·기타",

@@ -152,9 +152,9 @@ export async function DELETE(
       .from("users").select("role").eq("id", authUser.id).single();
     const isAdmin = profile?.role === "admin";
 
-    // 글 조회하여 소유자 확인
+    // 글 조회하여 소유자 확인 (case_type도 함께 조회 - 삭제 후 캐시 갱신용)
     const { data: post, error: fetchError } = await (serviceSupabase.from("posts") as any)
-      .select("user_id")
+      .select("user_id, case_type")
       .eq("slug", decodedSlug)
       .single();
 
@@ -177,6 +177,8 @@ export async function DELETE(
     revalidatePath("/");
     revalidatePath("/posts");
     revalidatePath(`/posts/${decodedSlug}`);
+    revalidatePath("/cases");
+    if (post.case_type) revalidatePath(`/cases/${encodeURIComponent(post.case_type)}`);
 
     // IndexNow 알림 (삭제) - 홈/목록 URL만 알림 (삭제된 글 URL은 전송 불필요)
     const { key, host } = getIndexNowConfig();

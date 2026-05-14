@@ -267,6 +267,8 @@ export async function POST(request: Request) {
       revalidatePath(`/posts/${slug}`);
       revalidatePath("/tags");
       revalidatePath("/categories");
+      revalidatePath("/cases");
+      if (case_type) revalidatePath(`/cases/${encodeURIComponent(case_type)}`);
 
       // IndexNow 알림 (신규 발행)
       const { key, host } = getIndexNowConfig();
@@ -407,6 +409,8 @@ export async function PUT(request: Request) {
     revalidatePath(`/posts/${slug}`);
     revalidatePath("/tags");
     revalidatePath("/categories");
+    revalidatePath("/cases");
+    if (case_type) revalidatePath(`/cases/${encodeURIComponent(case_type)}`);
 
     // IndexNow 알림 (수정)
     if (published) {
