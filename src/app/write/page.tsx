@@ -324,8 +324,6 @@ function WritePageContent() {
     try {
       // AuthProvider의 user 사용 (auth lock 경쟁 방지)
       const currentUser = user;
-      console.log("[DEBUG] Submit - currentUser:", currentUser?.id);
-      console.log("[DEBUG] Submit - isEditMode:", isEditMode, "postId:", postId);
       
       if (!currentUser) {
         showToast("로그인이 필요합니다.", "error");
@@ -368,7 +366,6 @@ function WritePageContent() {
 
       if (isEditMode && postId) {
         // 수정 모드: API 호출
-        console.log("[DEBUG] Updating post via API:", postId, "by user:", currentUser.id);
 
         // 절차 섹션을 한 번이라도 열었을 때만 절차 필드를 전송 (미개봉 시 기존 DB 값 보존)
         const procedureFields = showProcedure ? {
@@ -400,11 +397,8 @@ function WritePageContent() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("[DEBUG] Update API error:", errorData);
           throw new Error(errorData.error || "글 수정에 실패했습니다.");
         }
-
-        console.log("[DEBUG] Update successful via API");
 
         // 태그 저장 (API에서 기존 태그 삭제 후 새로 저장)
         await saveTags(postId, tagList);
@@ -443,7 +437,6 @@ function WritePageContent() {
         router.push(`/posts/${slug}`);
       } else {
         // 신규 작성: API 호출
-        console.log("[DEBUG] Creating new post via API");
         const response = await fetch("/api/posts", {
           method: "POST",
           headers: {
@@ -474,7 +467,6 @@ function WritePageContent() {
 
         const result = await response.json();
         const newPost = result.data;
-        console.log("[DEBUG] Post created:", newPost);
 
         // 태그 저장
         if (newPost?.id) {
@@ -503,8 +495,10 @@ function WritePageContent() {
   };
 
   // 태그 저장 헬퍼 함수 (API 호출)
+  // tagList가 빈 배열이어도 수정 모드에서는 호출해야 기존 태그가 삭제됨
   const saveTags = async (postId: string, tagList: string[]) => {
-    if (!tagList.length || !user?.id) return;
+    if (!user?.id) return;
+    if (!tagList.length && !isEditMode) return;
 
     const response = await fetch("/api/tags", {
       method: "POST",

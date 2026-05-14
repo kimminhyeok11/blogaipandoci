@@ -13,6 +13,14 @@ export async function POST(request: Request) {
     const token = (request.headers.get("Authorization") || "").replace("Bearer ", "").trim();
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // 실제 토큰 검증
+    const anonClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user: authUser }, error: authErr } = await anonClient.auth.getUser(token);
+    if (authErr || !authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const body = await request.json();
     const { postId, tags } = body;
 
@@ -21,6 +29,15 @@ export async function POST(request: Request) {
     }
 
     const serviceSupabase = makeAdmin();
+
+    // 글 소유자 확인
+    const { data: post, error: postErr } = await serviceSupabase
+      .from("posts")
+      .select("user_id")
+      .eq("id", postId)
+      .single();
+    if (postErr || !post) return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    if (post.user_id !== authUser.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     // 기존 태그 연결 삭제
     await serviceSupabase
