@@ -187,6 +187,22 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   const rawTitle = post.meta_title || post.title;
   const title = rawTitle.length > 55 ? `${rawTitle.slice(0, 52)}...` : rawTitle;
 
+  // OG 이미지 우선순위: cover_image → 본문 첫 이미지 → 동적 OG
+  const contentFirstImage = post.content?.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/)?.[1] || null;
+  const ogImage = post.cover_image || contentFirstImage
+    ? {
+        url: (post.cover_image || contentFirstImage) as string,
+        width: 1200,
+        height: 630,
+        alt: post.cover_image_alt || post.title,
+      }
+    : {
+        url: `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&subtitle=${encodeURIComponent(description)}`,
+        width: 1200,
+        height: 630,
+        alt: post.title,
+      };
+
   return {
     title,
     description,
@@ -202,31 +218,13 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       publishedTime: post.published_at || undefined,
       modifiedTime: post.updated_at || undefined,
       authors: post.user?.nickname ? [post.user.nickname] : undefined,
-      images: [
-        post.cover_image
-          ? {
-              url: post.cover_image,
-              width: 1200,
-              height: 630,
-              alt: post.cover_image_alt || post.title,
-            }
-          : {
-              url: `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&subtitle=${encodeURIComponent(description)}`,
-              width: 1200,
-              height: 630,
-              alt: post.title,
-            },
-      ],
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description,
-      images: [
-        post.cover_image
-          ? post.cover_image
-          : `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&subtitle=${encodeURIComponent(description)}`,
-      ],
+      images: [ogImage.url],
     },
     alternates: {
       canonical: postUrl,
