@@ -16,7 +16,7 @@ interface PostActionsProps {
 function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
   const router = useRouter();
   const { showToast } = useToast();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const currentUser = user?.id || null;
 
@@ -25,8 +25,8 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
       return;
     }
 
-    // 작성자 본인 확인 (API 호출 전 이중 검증)
-    if (!currentUser || currentUser !== authorId) {
+    // 작성자 본인 또는 관리자 확인 (API 호출 전 이중 검증)
+    if (!currentUser || (currentUser !== authorId && user?.role !== "admin")) {
       showToast("삭제 권한이 없습니다.", "error");
       return;
     }
@@ -37,7 +37,7 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
       const response = await fetch(`/api/posts/${slug}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${currentUser}`,
+          "Authorization": `Bearer ${session?.access_token}`,
         },
       });
 
@@ -58,7 +58,7 @@ function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
   };
 
   // 작성자 본인이 아니면 버튼 표시 안 함
-  if (currentUser !== authorId) {
+  if (!currentUser || (currentUser !== authorId && user?.role !== "admin")) {
     return null;
   }
 

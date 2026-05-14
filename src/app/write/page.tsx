@@ -226,19 +226,9 @@ function WritePageContent() {
 
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
     try {
-      // Compress and convert to WebP
-      const imageCompression = (await import("browser-image-compression")).default;
-      
-      const compressedFile = await imageCompression(file, {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-        fileType: "image/webp",
-      });
-
-      // Upload to API with Authorization header
+      // 서버(sharp)가 WebP 변환+압축을 처리하므로 원본 그대로 전송
       const formData = new FormData();
-      formData.append('file', compressedFile, `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`);
+      formData.append('file', file, file.name);
 
       const response = await fetch('/api/upload', {
         method: 'POST',
