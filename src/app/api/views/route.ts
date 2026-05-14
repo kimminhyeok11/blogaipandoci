@@ -22,8 +22,11 @@ function hashIP(ip: string): string {
 export async function POST(request: Request) {
   try {
     const { slug } = await request.json();
-    if (!slug) {
+    if (!slug || typeof slug !== "string") {
       return NextResponse.json({ error: "slug is required" }, { status: 400 });
+    }
+    if (slug.length > 200) {
+      return NextResponse.json({ error: "유효하지 않은 slug" }, { status: 400 });
     }
 
     const serviceSupabase = makeAdmin();

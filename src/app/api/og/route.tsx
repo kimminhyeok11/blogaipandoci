@@ -6,8 +6,8 @@ export const runtime = "edge";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const title = searchParams.get("title") || "法 BLOG";
-    const subtitle = searchParams.get("subtitle") || "법률, 기술, 비즈니스 깊이 있는 분석";
+    const title = (searchParams.get("title") || "法 BLOG").slice(0, 100);
+    const subtitle = (searchParams.get("subtitle") || "법률, 기술, 비즈니스 깊이 있는 분석").slice(0, 150);
 
     return new ImageResponse(
       (
