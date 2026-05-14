@@ -62,11 +62,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // view_count 증가
-    await serviceSupabase
-      .from("posts")
-      .update({ view_count: (data.view_count || 0) + 1 })
-      .eq("slug", slug);
+    // view_count atomic 증가 (DB 레벨에서 race condition 방지)
+    await serviceSupabase.rpc("increment_view_count", { post_slug: slug });
 
     // 조회 로그 기록 (post_views 테이블)
     await serviceSupabase

@@ -23,11 +23,12 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") || "pending";
 
-  const { data, error } = await supabaseAdmin
+  let reportsQuery = supabaseAdmin
     .from("comment_reports")
     .select(`
       id,
       reason,
+      status,
       created_at,
       reporter:users!reporter_id(nickname, email),
       comment:comments!comment_id(
@@ -40,6 +41,12 @@ export async function GET(request: Request) {
     `)
     .order("created_at", { ascending: false })
     .limit(100);
+
+  if (status && status !== "all") {
+    reportsQuery = reportsQuery.eq("status", status);
+  }
+
+  const { data, error } = await reportsQuery;
 
   if (error) {
     return NextResponse.json({ error: "조회 실패" }, { status: 500 });

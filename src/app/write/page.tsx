@@ -222,7 +222,7 @@ function WritePageContent() {
     };
 
     loadPost();
-  }, [editSlug, router, user, isAuthLoading]);
+  }, [editSlug, router, user, session, isAuthLoading]);
 
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
     try {
@@ -260,7 +260,7 @@ function WritePageContent() {
       showToast("이미지 업로드에 실패했습니다.", "error");
       throw new Error("Image upload failed");
     }
-  }, [showToast, user?.id]);
+  }, [showToast, session?.access_token]);
 
   const handleSubmit = async (published: boolean = false) => {
     // 유효성 검사
@@ -378,7 +378,7 @@ function WritePageContent() {
               body: JSON.stringify({
                 post_id: postId,
                 title: title.trim(),
-                content: content.trim(),
+                content: processedContent,
                 excerpt: finalExcerpt,
               }),
             });
