@@ -94,7 +94,7 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
         <Link href="/" className="masthead-title">
           法 BLOG
         </Link>
-        <div className="masthead-date">
+        <div className="masthead-date" suppressHydrationWarning>
           {new Date().toLocaleDateString("ko-KR", {
             year: "numeric",
             month: "long",
@@ -147,7 +147,7 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
                       )}
                     </span>
                     <span className="text-rule">·</span>
-                    <span className="font-sans text-2xs text-muted">
+                    <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
                       {new Date(post.published_at || post.created_at).toLocaleDateString("ko-KR")}
                     </span>
                     <span className="text-rule">·</span>

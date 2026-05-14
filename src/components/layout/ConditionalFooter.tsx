@@ -58,7 +58,7 @@ export function ConditionalFooter() {
         </div>
         {/* 저작권 */}
         <div className="border-t border-rule pt-4 text-center">
-          <p className="font-sans text-xs text-muted tracking-wider">
+          <p className="font-sans text-xs text-muted tracking-wider" suppressHydrationWarning>
             © {new Date().getFullYear()} 法 BLOG. All rights reserved.
           </p>
         </div>

@@ -116,7 +116,7 @@ export default function PrivacyPage() {
               </p>
             </section>
 
-            <p className="text-sm text-muted pt-8 border-t border-rule">
+            <p className="text-sm text-muted pt-8 border-t border-rule" suppressHydrationWarning>
               최종 수정일: {new Date().toLocaleDateString("ko-KR")}
             </p>
           </div>
