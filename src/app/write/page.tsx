@@ -380,7 +380,6 @@ function WritePageContent() {
                 title: title.trim(),
                 content: content.trim(),
                 excerpt: finalExcerpt,
-                revision_number: 1,
               }),
             });
           } catch (err) {

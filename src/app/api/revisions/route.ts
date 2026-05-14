@@ -93,6 +93,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // 현재 최대 revision_number 조회 → 자동 증가
+    const { data: latestRevision } = await serviceSupabase
+      .from("post_revisions")
+      .select("revision_number")
+      .eq("post_id", post_id)
+      .order("revision_number", { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextRevisionNumber = (latestRevision?.revision_number ?? 0) + 1;
+
     const { data: revision, error: insertError } = await serviceSupabase
       .from("post_revisions")
       .insert({
@@ -100,13 +111,29 @@ export async function POST(request: Request) {
         title,
         content,
         excerpt: excerpt || null,
-        revision_number: revision_number || 1,
+        revision_number: nextRevisionNumber,
       })
       .select()
       .single();
 
     if (insertError) {
       return NextResponse.json({ error: "Failed to save revision" }, { status: 500 });
+    }
+
+    // 최대 10개 유지 — 초과분(오래된 것) 자동 삭제
+    const MAX_REVISIONS = 10;
+    const { data: allRevisions } = await serviceSupabase
+      .from("post_revisions")
+      .select("id")
+      .eq("post_id", post_id)
+      .order("revision_number", { ascending: false });
+
+    if (allRevisions && allRevisions.length > MAX_REVISIONS) {
+      const toDelete = allRevisions.slice(MAX_REVISIONS).map((r: any) => r.id);
+      await serviceSupabase
+        .from("post_revisions")
+        .delete()
+        .in("id", toDelete);
     }
 
     return NextResponse.json({ success: true, revision });
