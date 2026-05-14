@@ -4,7 +4,6 @@ import { useState } from "react";
 import { ThumbsUp, MessageSquare, MoreHorizontal, Edit2, Trash2, Flag } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
-import { supabase } from "@/lib/supabase";
 
 export interface CommentItemProps {
   id: string;
@@ -47,7 +46,7 @@ export function CommentItem({
   onDelete,
   onReport,
 }: CommentItemProps) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { showToast } = useToast();
   const [liked, setLiked] = useState(isLiked);
   const [localLikeCount, setLocalLikeCount] = useState(likeCount);
@@ -59,7 +58,7 @@ export function CommentItem({
   const canModify = isOwnComment || isAdmin;
 
   const handleLike = async () => {
-    if (!user) {
+    if (!user || !session?.access_token) {
       showToast("로그인 후 좋아요를 눌러주세요", "error");
       return;
     }
@@ -67,12 +66,14 @@ export function CommentItem({
     try {
       const response = await fetch(`/api/comments/${id}/like`, {
         method: "POST",
+        headers: { "Authorization": `Bearer ${session.access_token}` },
       });
 
       if (!response.ok) throw new Error("좋아요 실패");
 
-      setLiked(!liked);
-      setLocalLikeCount(liked ? localLikeCount - 1 : localLikeCount + 1);
+      const data = await response.json();
+      setLiked(data.liked);
+      setLocalLikeCount(data.like_count ?? (liked ? localLikeCount - 1 : localLikeCount + 1));
     } catch (error) {
       showToast("좋아요 처리에 실패했습니다", "error");
     }
@@ -90,7 +91,6 @@ export function CommentItem({
     if (!confirm("댓글을 삭제하시겠습니까?")) return;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(`/api/comments/${id}`, {
         method: "DELETE",
         headers: {
@@ -123,8 +123,11 @@ export function CommentItem({
     try {
       const response = await fetch(`/api/comments/${id}/report`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reporter_id: user.id, reason: selectedReason }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ reason: selectedReason }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);

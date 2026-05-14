@@ -26,32 +26,39 @@ export async function POST(
 ) {
   try {
     const { id } = params;
-    const { reporter_id, reason } = await request.json();
+    const { reason } = await request.json();
 
     if (!reason) {
       return NextResponse.json({ error: "신고 사유 필수" }, { status: 400 });
     }
 
+    // 토큰으로만 reporter_id 결정 — body.reporter_id 우회 차단
+    const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
+    if (!token) return NextResponse.json({ error: "로그인 필요" }, { status: 401 });
+
+    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    const { data: { user }, error: authErr } = await anon.auth.getUser(token);
+    if (authErr || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
+
+    const reporterId = user.id;
     const supabaseAdmin = makeAdmin();
 
     // 중복 신고 확인
-    if (reporter_id) {
-      const { data: existingReport } = await supabaseAdmin
-        .from("comment_reports")
-        .select("id")
-        .eq("comment_id", id)
-        .eq("reporter_id", reporter_id)
-        .maybeSingle();
+    const { data: existingReport } = await supabaseAdmin
+      .from("comment_reports")
+      .select("id")
+      .eq("comment_id", id)
+      .eq("reporter_id", reporterId)
+      .maybeSingle();
 
-      if (existingReport) {
-        return NextResponse.json({ error: "이미 신고했습니다" }, { status: 400 });
-      }
+    if (existingReport) {
+      return NextResponse.json({ error: "이미 신고했습니다" }, { status: 400 });
     }
 
     // 신고 등록
     const { error: insertError } = await supabaseAdmin
       .from("comment_reports")
-      .insert({ comment_id: id, reporter_id: reporter_id || null, reason });
+      .insert({ comment_id: id, reporter_id: reporterId, reason });
 
     if (insertError) throw insertError;
 
