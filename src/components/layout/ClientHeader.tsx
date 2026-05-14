@@ -47,7 +47,7 @@ export function ClientHeader() {
       </div>
 
       {/* Utility Navigation - 아이콘만 최소화 */}
-      <nav className="mt-2 pt-2 border-t border-rule">
+      <nav className="mt-1 pt-1 border-t border-rule">
         <ul className="flex items-center justify-center gap-6">
           {user?.role === "admin" && (
             <li>
