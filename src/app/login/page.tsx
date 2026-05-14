@@ -292,26 +292,24 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* 카카오 로그인 */}
-          {mode === "login" && (
-            <div className="mt-4">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-rule"></div>
-                </div>
-                <div className="relative flex justify-center text-xs font-sans">
-                  <span className="px-2 bg-white text-muted">또는</span>
-                </div>
+          {/* 카카오 로그인/가입 */}
+          <div className="mt-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-rule"></div>
               </div>
-              <button
-                onClick={handleKakaoLogin}
-                className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 bg-[#FEE500] text-[#000000] font-sans text-sm font-medium rounded-sm hover:bg-[#F5DC00] transition-colors"
-              >
-                <MessageCircle size={18} />
-                카카오로 시작하기
-              </button>
+              <div className="relative flex justify-center text-xs font-sans">
+                <span className="px-2 bg-white text-muted">또는</span>
+              </div>
             </div>
-          )}
+            <button
+              onClick={handleKakaoLogin}
+              className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 bg-[#FEE500] text-[#000000] font-sans text-sm font-medium rounded-sm hover:bg-[#F5DC00] transition-colors"
+            >
+              <MessageCircle size={18} />
+              카카오로 {mode === "login" ? "로그인" : "가입"}하기
+            </button>
+          </div>
 
           {mode === "login" && (
             <div className="mt-4 text-center">
