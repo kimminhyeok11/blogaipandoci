@@ -20,8 +20,8 @@ const CommentsSection = dynamic(() => import("@/components/comments/CommentsSect
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
-// ISR: 1시간마다 재생성
-export const revalidate = 3600;
+// ISR: 1분마다 재생성 (OG 이미지 등 빠른 반영)
+export const revalidate = 60;
 
 // 서버용 Supabase 클라이언트 (service role - RLS 우회, users.nickname 조회 가능)
 function getServerSupabase() {
@@ -169,7 +169,7 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const post = await getPost(params.slug);
-  const postUrl = `${SITE_URL}/posts/${encodeURIComponent(params.slug)}`;
+  const postUrl = `${SITE_URL}/posts/${params.slug}`;
 
   if (!post) {
     return {
