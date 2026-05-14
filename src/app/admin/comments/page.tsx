@@ -40,13 +40,15 @@ export default function AdminCommentsPage() {
 
   useEffect(() => {
     if (user?.role !== "admin") return;
+    if (!session?.access_token) return;
     fetchComments();
-  }, [user, filter]);
+  }, [user, session, filter]);
 
   const fetchComments = async () => {
+    if (!session?.access_token) return;
     try {
       const response = await fetch(`/api/admin/comments?filter=${filter}`, {
-        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
       });
       if (!response.ok) throw new Error("댓글 로드 실패");
       const data = await response.json();
