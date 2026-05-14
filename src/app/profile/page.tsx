@@ -129,9 +129,18 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      await supabase.auth.signOut();
+
+      // 모든 기기 세션 강제 무효화 (global scope)
+      await supabase.auth.signOut({ scope: "global" });
+
+      // 브라우저에 남은 Supabase 세션 토큰 완전 삭제
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("sb-")) localStorage.removeItem(key);
+      });
+
       showToast("탈퇴가 완료되었습니다.", "success");
-      router.push("/");
+      // 페이지 강제 새로고침으로 클라이언트 상태 완전 초기화
+      window.location.href = "/";
     } catch (err) {
       showToast(err instanceof Error ? err.message : "탈퇴 실패", "error");
     } finally {
