@@ -124,6 +124,14 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${notoSerifKR.variable} ${notoSansKR.variable} ${dmMono.variable}`} suppressHydrationWarning>
       <head>
+        {/* Google Tag Manager */}
+        <Script id="gtm-head" strategy="beforeInteractive">
+          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','GTM-PXGCKLX4');`}
+        </Script>
         <meta name="google-adsense-account" content="ca-pub-5239497835591112" />
         {/* Note: Google Fonts CDN 미사용 - Next.js next/font로 최적화된 폰트 사용 */}
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
@@ -131,6 +139,10 @@ export default function RootLayout({
         <WebSiteSchema />
       </head>
       <body className="antialiased min-h-screen font-serif flex flex-col">
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PXGCKLX4" height="0" width="0" style={{display:'none',visibility:'hidden'}}></iframe>
+        </noscript>
         <AdSenseScript />
         <QueryProvider>
           <AuthProvider>
