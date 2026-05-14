@@ -194,14 +194,20 @@ export async function POST(request: Request) {
     if (error) throw error;
 
     // 텔레그램 알림 (비동기, 실패해도 응답에 영향 없음)
-    sendTelegramAlert(
+    admin.from("posts").select("title, slug").eq("id", post_id).single().then(({ data: post }) => {
+      const postTitle = post?.title || "-";
+      const postUrl = post?.slug ? `https://lawtiphub.com/posts/${post.slug}` : "-";
+      sendTelegramAlert(
 `[LAWTIPHUB 새 질문]
 
 닉네임: ${nickname || "익명"}
 내용: ${maskedContent.slice(0, 200)}${maskedContent.length > 200 ? "..." : ""}
 유형: ${question_type || "-"}
-태그: ${(topic_tags || []).join(", ") || "-"}`
-    );
+태그: ${(topic_tags || []).join(", ") || "-"}
+글: ${postTitle}
+링크: ${postUrl}`
+      );
+    });
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (err) {
