@@ -129,23 +129,16 @@ function appendRelatedLinks(content: string, relatedPosts: { title: string; slug
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get("category");
-    const tag = searchParams.get("tag");
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
 
-    let query = supabase
+    const { data, error, count } = await supabase
       .from("posts")
       .select("id, title, excerpt, slug, published_at, view_count, user_id")
       .eq("published", true)
       .not("published_at", "is", null)
       .order("published_at", { ascending: false })
       .range(offset, offset + limit - 1);
-
-    // TODO: 태그 필터링 구현 (post_tags 테이블 조인 필요)
-    // 현재 tag 파라미터는 무시됨
-
-    const { data, error, count } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -321,7 +314,7 @@ export async function PUT(request: Request) {
     // Check if user owns this post
     const { data: existingPost, error: fetchError } = await serviceSupabase
       .from("posts")
-      .select("user_id")
+      .select("user_id, published_at, published")
       .eq("id", id)
       .single();
 
@@ -356,7 +349,12 @@ export async function PUT(request: Request) {
         ...(cover_image !== undefined ? { cover_image } : {}),
         ...(cover_image_alt !== undefined ? { cover_image_alt } : {}),
         published,
-        published_at: published ? new Date().toISOString() : null,
+        // 이미 발행된 글이면 published_at 유지, 신규 발행 시에만 현재 시간 설정
+        published_at: published
+          ? (existingPost.published && existingPost.published_at
+              ? existingPost.published_at
+              : new Date().toISOString())
+          : null,
         updated_at: new Date().toISOString(),
         case_type: case_type !== undefined ? (case_type || null) : undefined,
         current_stage: current_stage !== undefined ? (current_stage || null) : undefined,

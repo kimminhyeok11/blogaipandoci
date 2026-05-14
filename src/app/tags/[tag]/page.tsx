@@ -7,13 +7,16 @@ import type { Metadata } from "next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
+// ISR: 1시간마다 재생성
+export const revalidate = 3600;
+
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
   const tag = decodeURIComponent(params.tag);
   return {
     title: `#${tag} 관련 글 | 法 BLOG`,
     description: `${tag} 주제의 법률·정책·사회 심층 분석 글 모음`,
     alternates: {
-      canonical: `/tags/${encodeURIComponent(tag)}`,
+      canonical: `${SITE_URL}/tags/${encodeURIComponent(tag)}`,
     },
   };
 }
