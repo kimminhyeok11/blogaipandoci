@@ -10,22 +10,29 @@ const PAGE_SIZE = 20;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
-export const metadata: Metadata = {
-  title: "전체 글 목록 | 법률·정책·사회 분석",
-  description: "법률, 기술, 비즈니스에 관한 法 BLOG의 모든 게시글을 확인하세요. 실제 판례와 사례를 기반으로 한 심층 분석 콘텐츠를 제공합니다.",
-  openGraph: {
-    title: "전체 글 목록 | 法 BLOG",
+export async function generateMetadata({ searchParams }: { searchParams: { page?: string } }): Promise<Metadata> {
+  const page = parseInt(searchParams.page || "1", 10);
+  const isFirstPage = page <= 1;
+  const titleSuffix = isFirstPage ? "" : ` — ${page}페이지`;
+  const canonicalUrl = isFirstPage ? "/posts" : `/posts?page=${page}`;
+
+  return {
+    title: `전체 글 목록${titleSuffix} | 법률·정책·사회 분석`,
     description: "법률, 기술, 비즈니스에 관한 法 BLOG의 모든 게시글을 확인하세요. 실제 판례와 사례를 기반으로 한 심층 분석 콘텐츠를 제공합니다.",
-    type: "website",
-    locale: "ko_KR",
-    url: "/posts",
-    siteName: "法 BLOG",
-    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "法 BLOG 전체 글 목록" }],
-  },
-  alternates: {
-    canonical: "/posts",
-  },
-};
+    openGraph: {
+      title: `전체 글 목록${titleSuffix} | 法 BLOG`,
+      description: "법률, 기술, 비즈니스에 관한 法 BLOG의 모든 게시글을 확인하세요. 실제 판례와 사례를 기반으로 한 심층 분석 콘텐츠를 제공합니다.",
+      type: "website",
+      locale: "ko_KR",
+      url: canonicalUrl,
+      siteName: "法 BLOG",
+      images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "法 BLOG 전체 글 목록" }],
+    },
+    alternates: {
+      canonical: canonicalUrl,
+    },
+  };
+}
 
 // searchParams 사용으로 동적 렌더링 (ISR 불가)
 export const dynamic = "force-dynamic";
