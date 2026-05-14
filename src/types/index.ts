@@ -27,6 +27,8 @@ export interface Post {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+  is_ai_assisted: boolean;
+  reviewed_at: string | null;
   user?: User;
   tags?: Tag[];
 }

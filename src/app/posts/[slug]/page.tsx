@@ -9,6 +9,7 @@ import type { Post } from "@/types";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
+import { TrustBadge } from "@/components/posts/TrustBadge";
 
 const PostContent = dynamic(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })));
 const TocSidebar = dynamic(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
@@ -354,6 +355,13 @@ export default async function PostPage({ params }: PostPageProps) {
               </div>
 
               <div className="ornament">— ✦ —</div>
+
+              {/* 신뢰 배지 */}
+              <TrustBadge
+                isAiAssisted={post.is_ai_assisted ?? false}
+                reviewedAt={post.reviewed_at ?? null}
+                updatedAt={post.updated_at}
+              />
 
               {/* Share */}
               <ShareButtons

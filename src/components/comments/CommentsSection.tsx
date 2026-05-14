@@ -225,11 +225,17 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
       {/* CTA 문구 */}
       <div className="mb-8 pb-8 border-b border-rule">
         <h3 className="font-bold text-ink mb-1">혹시 본문과 상황이 조금 다르신가요?</h3>
-        <p className="text-muted text-sm mb-4">
+        <p className="text-muted text-sm mb-3">
           실제 사건은 가족관계, 채무 시점, 소송 여부에 따라 결과가 달라질 수 있습니다.
-          질문을 남겨주시면 공개 판례·실무 사례 기준으로 참고 가능한 내용을 정리해드립니다.
+          질문을 남겨주시면 <strong className="text-ink">판례·실무 사례 기반 AI 참고 답변</strong>을 받을 수 있습니다.
         </p>
-        <p className="text-xs text-muted mb-4">🔒 질문은 작성자 본인과 관리자만 열람할 수 있습니다.</p>
+        <div className="flex flex-wrap items-center gap-3 mb-4 text-xs text-muted">
+          <span>🤖 판례 데이터 기반 AI 답변</span>
+          <span className="text-rule">|</span>
+          <span>⚖️ 법률 자문이 아닙니다</span>
+          <span className="text-rule">|</span>
+          <span>🔒 본인·관리자만 열람</span>
+        </div>
         <button
           onClick={() => setShowQuestionForm(!showQuestionForm)}
           className="px-4 py-2 bg-rust text-paper text-sm font-medium rounded-sm hover:bg-rust-light transition-colors"
@@ -238,12 +244,12 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
         </button>
       </div>
 
+      {/* 유사 사례 — 항상 표시 */}
+      <SimilarCases postId={postId} />
+
       {/* 질문 폼 */}
       {showQuestionForm && (
-        <>
-          <SimilarCases postId={postId} />
-          <QuestionForm postId={postId} onSuccess={handleCommentSuccess} />
-        </>
+        <QuestionForm postId={postId} onSuccess={handleCommentSuccess} />
       )}
 
       {/* 답글 폼 */}
