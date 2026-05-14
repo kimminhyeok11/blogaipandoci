@@ -283,6 +283,9 @@ export default async function PostPage({ params }: PostPageProps) {
         dateModified={post.updated_at || undefined}
         url={postUrl}
         image={firstImage}
+        tags={post.tags?.map((t) => t.name) || []}
+        wordCount={post.content ? post.content.replace(/\s+/g, ' ').trim().split(' ').length : undefined}
+        articleBody={post.content?.replace(/[#*`\[\]()]/g, '').replace(/!\[.*?\]\(.*?\)/g, '').slice(0, 500)}
       />
       <BreadcrumbSchema
         items={[

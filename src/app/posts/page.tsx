@@ -4,6 +4,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import type { Post } from "@/types";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ItemListSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 
 const PAGE_SIZE = 20;
 
@@ -69,6 +70,24 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
 
   return (
     <div className="min-h-screen bg-paper">
+      <BreadcrumbSchema
+        items={[
+          { name: "홈", url: SITE_URL },
+          { name: "전체 글", url: `${SITE_URL}/posts` },
+        ]}
+      />
+      {posts.length > 0 && (
+        <ItemListSchema
+          name="法 BLOG 전체 글 목록"
+          description="법률, 정책, 사회 이슈 심층 분석 글 전체 목록"
+          items={posts.map((p) => ({
+            name: p.title,
+            url: `${SITE_URL}/posts/${encodeURIComponent(p.slug)}`,
+            description: p.excerpt || undefined,
+            datePublished: p.published_at || undefined,
+          }))}
+        />
+      )}
       {/* Masthead Header */}
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>

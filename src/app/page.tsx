@@ -3,7 +3,9 @@ import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
 import { PenSquare, User, Search } from "lucide-react";
-import { HomepageBreadcrumbSchema } from "@/components/seo/StructuredData";
+import { HomepageBreadcrumbSchema, ItemListSchema } from "@/components/seo/StructuredData";
+
+const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 const ClientHeader = dynamic(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
 const AdSense = dynamic(() => import("@/components/ads/AdSense").then(m => ({ default: m.AdSense })), { ssr: false });
@@ -63,6 +65,18 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-paper">
       <HomepageBreadcrumbSchema />
+      {recentPosts.length > 0 && (
+        <ItemListSchema
+          name="法 BLOG 최신 분석 글"
+          description="법률, 정책, 사회 이슈에 관한 최신 심층 분석 글 모음"
+          items={recentPosts.map((p) => ({
+            name: p.title,
+            url: `${SITE_URL_HOME}/posts/${encodeURIComponent(p.slug)}`,
+            description: p.excerpt || undefined,
+            datePublished: p.published_at,
+          }))}
+        />
+      )}
       {/* Client Header with Auth and Scroll Effects */}
       <ClientHeader />
 

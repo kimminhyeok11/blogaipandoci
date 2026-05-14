@@ -2,15 +2,41 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 const SITE_NAME = "法 BLOG";
 const SITE_DESC = "법률, 기술, 비즈니스에 관한 깊이 있는 분석과 인사이트를 제공하는 블로그";
 
-// Organization: 사이트 정체성, 지식 패널 노출
+// Organization: 사이트 정체성, 지식 패널 노출 (GEO/AEO 강화)
 export function OrganizationSchema() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": `${SITE_URL}/#organization`,
     name: SITE_NAME,
+    alternateName: ["법 BLOG", "Lawtip Hub", "법블로그"],
     url: SITE_URL,
-    logo: `${SITE_URL}/icon.png`,
+    logo: {
+      "@type": "ImageObject",
+      url: `${SITE_URL}/icon.png`,
+      width: 512,
+      height: 512,
+    },
+    image: `${SITE_URL}/opengraph-image.jpg`,
     description: SITE_DESC,
+    inLanguage: "ko-KR",
+    knowsAbout: [
+      "법률",
+      "생활법률",
+      "판례 분석",
+      "정책",
+      "사회 이슈",
+      "논란 분석",
+      "한국 법률",
+      "소비자 권리",
+      "노동법",
+    ],
+    areaServed: {
+      "@type": "Country",
+      name: "대한민국",
+    },
+    publishingPrinciples: `${SITE_URL}/about`,
+    sameAs: [],
   };
   return (
     <script
@@ -52,6 +78,8 @@ interface ArticleSchemaProps {
   url: string;
   image?: string;
   tags?: string[];
+  wordCount?: number;
+  articleBody?: string;
 }
 
 export function ArticleSchema({
@@ -64,12 +92,16 @@ export function ArticleSchema({
   url,
   image,
   tags = [],
+  wordCount,
+  articleBody,
 }: ArticleSchemaProps) {
-  const schema = {
+  const schema: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: title.slice(0, 110),
     ...(description && { description }),
+    ...(wordCount && { wordCount }),
+    ...(articleBody && { articleBody: articleBody.slice(0, 500) }),
     author: {
       "@type": "Person",
       name: author || "익명",
@@ -90,6 +122,7 @@ export function ArticleSchema({
     }),
     publisher: {
       "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
       name: SITE_NAME,
       logo: {
         "@type": "ImageObject",
@@ -98,8 +131,18 @@ export function ArticleSchema({
         height: 512,
       },
     },
-    ...(tags.length > 0 && { keywords: tags.join(", ") }),
-    inLanguage: "ko",
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+    isAccessibleForFree: true,
+    isFamilyFriendly: true,
+    ...(tags.length > 0 && { keywords: tags.join(", "), articleSection: tags[0] }),
+    inLanguage: "ko-KR",
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["h1", ".subheadline", ".article-body-content p:first-of-type"],
+    },
   };
   return (
     <script
@@ -214,6 +257,35 @@ export function CollectionPageSchema({ name, description, url, items }: Collecti
       "@type": "BlogPosting",
       headline: item.name,
       url: item.url,
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// ItemList: 글 목록 페이지 AEO 최적화 (Google/Bing이 목록 인식)
+interface ItemListSchemaProps {
+  items: Array<{ name: string; url: string; description?: string; image?: string; datePublished?: string }>;
+  name?: string;
+  description?: string;
+}
+
+export function ItemListSchema({ items, name = "법률 분석 글 목록", description }: ItemListSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    ...(description && { description }),
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: item.url,
+      name: item.name,
     })),
   };
   return (
