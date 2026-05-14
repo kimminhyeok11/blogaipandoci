@@ -66,7 +66,7 @@ function SearchPageContent() {
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

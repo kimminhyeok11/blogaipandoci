@@ -124,38 +124,45 @@ export default async function CasesPage() {
             const meta = CASE_TYPE_META[case_type];
             const hasContent = count > 0;
 
-            return (
+            const cardContent = (
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl" aria-hidden="true">{meta?.emoji}</span>
+                  <div>
+                    <p className={`font-bold text-base transition-colors ${hasContent ? "text-ink group-hover:text-rust" : "text-muted"}`}>
+                      {case_type}
+                    </p>
+                    <p className="font-sans text-xs text-muted mt-0.5 leading-relaxed">
+                      {meta?.desc}
+                    </p>
+                  </div>
+                </div>
+                <span className={`shrink-0 font-sans text-xs font-medium px-2 py-1 rounded-sm border ${
+                  hasContent
+                    ? "text-rust border-rust/30 bg-rust/5"
+                    : "text-muted/50 border-rule/30 bg-cream/40"
+                }`}>
+                  {count}건
+                </span>
+              </div>
+            );
+
+            return hasContent ? (
               <Link
                 key={case_type}
-                href={hasContent ? `/cases/${encodeURIComponent(case_type)}` : "#"}
-                aria-disabled={!hasContent}
-                className={`group p-5 border rounded-sm transition-all ${
-                  hasContent
-                    ? "border-rule hover:border-rust hover:shadow-sm bg-paper cursor-pointer"
-                    : "border-rule/40 bg-cream/20 cursor-default opacity-60"
-                }`}
+                href={`/cases/${encodeURIComponent(case_type)}`}
+                className="group p-5 border border-rule rounded-sm transition-all hover:border-rust hover:shadow-sm bg-paper cursor-pointer"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl" aria-hidden="true">{meta?.emoji}</span>
-                    <div>
-                      <p className={`font-bold text-base transition-colors ${hasContent ? "text-ink group-hover:text-rust" : "text-muted"}`}>
-                        {case_type}
-                      </p>
-                      <p className="font-sans text-xs text-muted mt-0.5 leading-relaxed">
-                        {meta?.desc}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`shrink-0 font-sans text-xs font-medium px-2 py-1 rounded-sm border ${
-                    hasContent
-                      ? "text-rust border-rust/30 bg-rust/5"
-                      : "text-muted/50 border-rule/30 bg-cream/40"
-                  }`}>
-                    {count}건
-                  </span>
-                </div>
+                {cardContent}
               </Link>
+            ) : (
+              <div
+                key={case_type}
+                className="p-5 border border-rule/40 rounded-sm bg-cream/20 opacity-60 cursor-default"
+                aria-label={`${case_type} - 아직 글 없음`}
+              >
+                {cardContent}
+              </div>
             );
           })}
         </div>

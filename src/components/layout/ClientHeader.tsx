@@ -72,6 +72,15 @@ export function ClientHeader() {
           </li>
           <li>
             <Link 
+              href="/cases" 
+              className="p-1 text-ink hover:text-rust transition-colors"
+              title="사건 유형별 안내"
+            >
+              <span className="font-sans text-xs font-medium">사건유형</span>
+            </Link>
+          </li>
+          <li>
+            <Link 
               href="/search" 
               className="p-1 text-ink hover:text-rust transition-colors"
               title="검색"
