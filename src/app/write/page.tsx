@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, Suspense, lazy } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Heading, Image as ImageIcon, Link as LinkIcon, MoreHorizontal, Pencil, Eye, Save, Check, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Pencil, Eye, Save, Check, Send, Loader2 } from "lucide-react";
 import { generateSlug } from "@/utils/image";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -11,6 +11,7 @@ import { WriteEditor } from "./components/WriteEditor";
 import { RevisionHistory } from "@/components/editor/RevisionHistory";
 import { useWriteForm } from "./hooks/useWriteForm";
 import { useAutoSave } from "./hooks/useAutoSave";
+import type { MarkdownEditorRef } from "@/components/editor/MarkdownEditor";
 
 const CASE_TYPES = ["상속·유언", "채무·금전", "형사·고소", "전세·임대차", "이혼·가족", "계약·거래", "행정·기타"];
 const EXPERT_LEVELS = ["직접가능", "법무사권장", "변호사권장"];
@@ -41,8 +42,6 @@ const notifyIndexNow = async (path: string) => {
   }
 };
 
-// MarkdownEditor 동적 임포트
-import type { MarkdownEditorRef } from "@/components/editor/MarkdownEditor";
 const MarkdownEditor = lazy(() =>
   import("@/components/editor/MarkdownEditor").then((mod) => ({ default: mod.MarkdownEditor }))
 );

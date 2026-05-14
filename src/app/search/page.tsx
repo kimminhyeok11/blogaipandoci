@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Search, Loader2, FileText } from "lucide-react";
@@ -18,7 +18,7 @@ interface SearchResult {
   case_type?: string | null;
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") || "";
   const urlCaseType = searchParams.get("case_type") || "";
@@ -183,5 +183,17 @@ export default function SearchPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <Loader2 size={24} className="animate-spin text-muted" />
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   );
 }
