@@ -59,8 +59,21 @@ export async function GET(
       if (!authHeader?.startsWith("Bearer ")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
-      
-      const userId = authHeader.replace("Bearer ", "");
+
+      const token = authHeader.replace("Bearer ", "");
+      const anonClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { data: { user: authUser }, error: authErr } = await anonClient.auth.getUser(token);
+      if (authErr || !authUser) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      // 관리자 여부 확인
+      const { data: profile } = await serviceSupabase
+        .from("users").select("role").eq("id", authUser.id).single();
+      const isAdmin = profile?.role === "admin";
       
       // 서비스 역할로 모든 글 조회 (작성자 확인용)
       const result = await serviceSupabase
@@ -72,8 +85,8 @@ export async function GET(
       data = result.data as any;
       error = result.error;
       
-      // 작성자 본인만 접근 가능
-      if (data && data.user_id !== userId) {
+      // 본인 또는 관리자만 접근 가능
+      if (data && data.user_id !== authUser.id && !isAdmin) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     } else {
@@ -123,8 +136,21 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = authHeader.replace("Bearer ", "");
+    const token = authHeader.replace("Bearer ", "");
     const serviceSupabase = makeAdmin();
+    const anonClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user: authUser }, error: authErr } = await anonClient.auth.getUser(token);
+    if (authErr || !authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 관리자 여부 확인
+    const { data: profile } = await serviceSupabase
+      .from("users").select("role").eq("id", authUser.id).single();
+    const isAdmin = profile?.role === "admin";
 
     // 글 조회하여 소유자 확인
     const { data: post, error: fetchError } = await (serviceSupabase.from("posts") as any)
@@ -136,7 +162,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    if (post.user_id !== userId) {
+    if (post.user_id !== authUser.id && !isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
