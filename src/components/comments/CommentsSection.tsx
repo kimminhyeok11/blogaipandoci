@@ -6,12 +6,14 @@ import { QuestionCard } from "./QuestionCard";
 import { CommentItem, CommentItemProps } from "./CommentItem";
 import { SimilarCases } from "./SimilarCases";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { supabase } from "@/lib/supabase";
 
 interface Comment {
   id: string;
   content: string;
   nickname: string;
   is_anonymous: boolean;
+  is_secret?: boolean;
   created_at: string;
   updated_at?: string;
   is_edited?: boolean;
@@ -46,7 +48,12 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
 
   const fetchComments = async () => {
     try {
-      const response = await fetch(`/api/comments?post_id=${postId}`);
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      const response = await fetch(`/api/comments?post_id=${postId}`, { headers });
       if (!response.ok) throw new Error("댓글 로드 실패");
       const data = await response.json();
       setComments(data.comments || []);
@@ -108,6 +115,7 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
                 viewCount={0}
                 createdAt={question.created_at}
                 isAnonymous={question.is_anonymous}
+                isSecret={question.is_secret}
                 userId={question.user_id}
                 onReply={() => handleReply(question.id, question.nickname)}
                 onDelete={() => fetchComments()}

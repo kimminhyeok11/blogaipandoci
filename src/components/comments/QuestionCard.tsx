@@ -19,6 +19,7 @@ interface QuestionCardProps {
   createdAt: string;
   isAnonymous: boolean;
   userId?: string;
+  isSecret?: boolean;
   isLiked?: boolean;
   onLike?: () => void;
   onReply?: () => void;
@@ -39,6 +40,7 @@ export function QuestionCard({
   createdAt,
   isAnonymous,
   userId,
+  isSecret = false,
   isLiked = false,
   onLike,
   onReply,
@@ -110,19 +112,29 @@ export function QuestionCard({
     <div className="bg-white border border-rust/20 rounded-sm p-5 mb-4 hover:shadow-sm transition-shadow">
       {/* 헤더: 카테고리 + 상황 태그 */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className="px-2 py-1 bg-rust/10 text-rust text-xs font-medium rounded-sm">
-          {questionType}
-        </span>
-        {topicTags.slice(0, 3).map((tag) => (
-          <span key={tag} className="px-2 py-1 bg-cream text-muted text-xs rounded-sm">
-            {tag}
-          </span>
-        ))}
+        {isSecret ? (
+          <span className="px-2 py-1 bg-gray-100 text-muted text-xs font-medium rounded-sm">비밀 질문</span>
+        ) : (
+          <>
+            <span className="px-2 py-1 bg-rust/10 text-rust text-xs font-medium rounded-sm">
+              {questionType}
+            </span>
+            {topicTags.slice(0, 3).map((tag) => (
+              <span key={tag} className="px-2 py-1 bg-cream text-muted text-xs rounded-sm">
+                {tag}
+              </span>
+            ))}
+          </>
+        )}
       </div>
 
       {/* 질문 내용 */}
       <div className="mb-4">
-        <p className="text-ink font-medium leading-relaxed">{content}</p>
+        {isSecret ? (
+          <p className="text-muted text-sm italic">🔒 비밀 질문입니다. 작성자와 관리자만 볼 수 있습니다.</p>
+        ) : (
+          <p className="text-ink font-medium leading-relaxed">{content}</p>
+        )}
       </div>
 
       {/* 메타 정보 */}

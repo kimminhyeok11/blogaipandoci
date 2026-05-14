@@ -165,19 +165,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const userId = authHeader.replace("Bearer ", "");
+    const token = authHeader.replace("Bearer ", "");
     const body = await request.json();
     const { title, slug, content, excerpt, cover_image, cover_image_alt, published, user_id } = body;
 
-    // Verify user matches
-    if (userId !== user_id) {
-      return NextResponse.json(
-        { error: "Forbidden - User mismatch" },
-        { status: 403 }
-      );
+    const serviceSupabase = getServiceSupabase();
+
+    // 토큰으로 실제 유저 확인
+    const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
+    if (!authUser || authUser.id !== user_id) {
+      return NextResponse.json({ error: "Forbidden - User mismatch" }, { status: 403 });
     }
 
-    const serviceSupabase = getServiceSupabase();
+    // 관리자만 글 작성 가능
+    const { data: profile } = await serviceSupabase
+      .from("users")
+      .select("role")
+      .eq("id", authUser.id)
+      .single();
+
+    if (profile?.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden - 관리자만 글을 작성할 수 있습니다" }, { status: 403 });
+    }
 
     // 발행 시 관련 글 자동 삽입
     let finalContent = content;
@@ -196,7 +205,7 @@ export async function POST(request: Request) {
         cover_image,
         cover_image_alt,
         published,
-        user_id: userId,
+        user_id: user_id,
         published_at: published ? new Date().toISOString() : null,
       })
       .select()
@@ -247,11 +256,22 @@ export async function PUT(request: Request) {
       );
     }
 
-    const userId = authHeader.replace("Bearer ", "");
+    const token = authHeader.replace("Bearer ", "");
     const body = await request.json();
     const { id, title, slug, content, excerpt, cover_image, cover_image_alt, published } = body;
 
     const serviceSupabase = getServiceSupabase();
+
+    // 토큰으로 실제 유저 확인 + 관리자 체크
+    const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { data: profile } = await serviceSupabase
+      .from("users").select("role").eq("id", authUser.id).single();
+    if (profile?.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden - 관리자만 글을 수정할 수 있습니다" }, { status: 403 });
+    }
 
     // Check if user owns this post
     const { data: existingPost, error: fetchError } = await serviceSupabase
@@ -267,7 +287,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    if (existingPost.user_id !== userId) {
+    if (existingPost.user_id !== authUser.id) {
       return NextResponse.json(
         { error: "Forbidden - Not your post" },
         { status: 403 }
