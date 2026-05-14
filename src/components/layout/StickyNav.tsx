@@ -8,7 +8,6 @@ import { useAuth } from "@/components/auth/AuthProvider";
 interface StickyNavProps {
   backHref?: string;
   backLabel?: string;
-  showFullNav?: boolean;
   children?: React.ReactNode;
 }
 
@@ -24,7 +23,7 @@ function throttle<T extends (...args: any[]) => void>(func: T, limit: number): T
   }) as T;
 }
 
-export function StickyNav({ backHref = "/", backLabel = "홈으로", showFullNav = false, children }: StickyNavProps) {
+export function StickyNav({ backHref = "/", backLabel = "홈으로", children }: StickyNavProps) {
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
@@ -80,30 +79,13 @@ export function StickyNav({ backHref = "/", backLabel = "홈으로", showFullNav
       <div className="max-w-content mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-12">
           <div className="flex items-center gap-6">
-            {showFullNav ? (
-              <>
-                <Link href="/" className="font-sans text-xs font-medium text-ink hover:text-rust transition-colors">
-                  홈
-                </Link>
-                <Link href="/posts" className="font-sans text-xs font-medium text-muted hover:text-rust transition-colors">
-                  모든 글
-                </Link>
-                <Link href="/tags" className="font-sans text-xs font-medium text-muted hover:text-rust transition-colors">
-                  태그
-                </Link>
-                <Link href="/cases" className="font-sans text-xs font-medium text-muted hover:text-rust transition-colors">
-                  사건 유형
-                </Link>
-              </>
-            ) : (
-              <Link
-                href={backHref}
-                className="flex items-center gap-1 font-sans text-xs font-medium text-muted hover:text-rust transition-colors"
-              >
-                <ArrowLeft size={14} />
-                {backLabel}
-              </Link>
-            )}
+            <Link
+              href={backHref}
+              className="flex items-center gap-1 font-sans text-xs font-medium text-muted hover:text-rust transition-colors"
+            >
+              <ArrowLeft size={14} />
+              {backLabel}
+            </Link>
           </div>
           <div className="flex items-center gap-3">
             {children}
