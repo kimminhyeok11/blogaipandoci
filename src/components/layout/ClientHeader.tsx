@@ -1,32 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { PenSquare, User, Search } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export function ClientHeader() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollY = useRef(0);
   const { user } = useAuth();
+
+  const handleScroll = useCallback(() => {
+    const currentScrollY = window.scrollY;
+    if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+      setIsHeaderVisible(false);
+    } else {
+      setIsHeaderVisible(true);
+    }
+    lastScrollY.current = currentScrollY;
+  }, []);
 
   // 스마트 스티키 헤더 - 스크롤 감지
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsHeaderVisible(false);
-      } else {
-        setIsHeaderVisible(true);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
+    lastScrollY.current = window.scrollY;
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  }, [handleScroll]);
 
   return (
     <header 

@@ -201,7 +201,7 @@ function postprocessEmbeds(html: string): string {
     (match, url) => {
       const postId = extractInstagramId(url);
       if (postId) {
-        return `<div class="embed-container my-6"><iframe src="https://www.instagram.com/p/${postId}/embed" frameborder="0" scrolling="no" allowtransparency="true" class="w-full rounded shadow-sm" style="min-height:500px;"></iframe></div>`;
+        return `<div class="embed-container my-6"><iframe src="https://www.instagram.com/p/${postId}/embed" frameborder="0" scrolling="no" allowtransparency="true" class="w-full min-h-[500px] rounded shadow-sm"></iframe></div>`;
       }
       return match;
     }
@@ -213,7 +213,7 @@ function postprocessEmbeds(html: string): string {
     (match, url) => {
       const postId = extractInstagramId(url);
       if (postId) {
-        return `<div class="embed-container my-6"><iframe src="https://www.instagram.com/p/${postId}/embed" frameborder="0" scrolling="no" allowtransparency="true" class="w-full rounded shadow-sm" style="min-height:500px;"></iframe></div>`;
+        return `<div class="embed-container my-6"><iframe src="https://www.instagram.com/p/${postId}/embed" frameborder="0" scrolling="no" allowtransparency="true" class="w-full min-h-[500px] rounded shadow-sm"></iframe></div>`;
       }
       return match;
     }
@@ -246,7 +246,7 @@ export function processMarkdown(text: string): string {
       ],
       ALLOWED_ATTR: [
         'href', 'title', 'alt', 'src', 'class', 'loading', 'target', 'rel',
-        'frameborder', 'allow', 'allowfullscreen', 'scrolling', 'style',
+        'frameborder', 'allow', 'allowfullscreen', 'scrolling',
         'width', 'height', 'start'
       ],
     });
