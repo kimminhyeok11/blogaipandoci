@@ -175,7 +175,7 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
                 isSecret={question.is_secret}
                 userId={question.user_id}
                 onReply={() => handleReply(question.id, question.nickname)}
-                onDelete={() => fetchComments()}
+                onDelete={handleCommentSuccess}
               />
             ))}
           </div>

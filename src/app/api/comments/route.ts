@@ -95,9 +95,24 @@ export async function GET(request: Request) {
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
-    // 관리자가 아니면 본인 댓글만 조회
+    // 관리자가 아니면: 본인이 쓴 댓글 + 본인 댓글에 달린 답글 모두 조회
     if (requesterRole !== "admin") {
-      query = query.eq("user_id", requesterId);
+      // 본인 루트 댓글 ID 먼저 조회
+      const { data: myRoots } = await admin
+        .from("comments")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", requesterId)
+        .is("parent_id", null);
+
+      const myRootIds = (myRoots ?? []).map((r: any) => r.id);
+
+      // 본인이 쓴 댓글 OR 본인 루트댓글의 답글
+      if (myRootIds.length > 0) {
+        query = query.or(`user_id.eq.${requesterId},parent_id.in.(${myRootIds.join(",")})`);
+      } else {
+        query = query.eq("user_id", requesterId);
+      }
     }
 
     const { data: comments, error } = await query;
