@@ -213,8 +213,14 @@ function WritePageContent() {
         setContent(post.content);
         setExcerpt(post.excerpt || "");
 
-        // 기존 절차 메타 불러오기
-        if (post.case_type || post.current_stage || post.next_stage) {
+        // 기존 절차 메타 불러오기 (7개 필드 중 하나라도 값이 있으면 로드)
+        const hasProcedureMeta =
+          post.case_type || post.current_stage || post.next_stage ||
+          post.estimated_duration || post.expert_level ||
+          (post.involved_agencies && post.involved_agencies.length > 0) ||
+          (post.common_mistakes && post.common_mistakes.length > 0);
+
+        if (hasProcedureMeta) {
           setProcedureMeta({
             case_type: post.case_type || "",
             current_stage: post.current_stage || "",
