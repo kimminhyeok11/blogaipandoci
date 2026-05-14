@@ -42,6 +42,7 @@ function WritePageContent() {
   const { showToast } = useToast();
   const { user, session, isLoading: isAuthLoading } = useAuth();
   const editorRef = useRef<MarkdownEditorRef>(null);
+  const hasLoadedPost = useRef(false);
 
   // 폼 상태 관리
   const form = useWriteForm();
@@ -159,9 +160,11 @@ function WritePageContent() {
     return processedContent;
   }, [existingPosts]);
 
-  // 수정 모드일 때 글 로드
+  // 수정 모드일 때 글 로드 (최초 1회만)
   useEffect(() => {
     if (!editSlug || !user || isAuthLoading) return;
+    if (hasLoadedPost.current) return;
+    hasLoadedPost.current = true;
 
     const loadPost = async () => {
       try {
