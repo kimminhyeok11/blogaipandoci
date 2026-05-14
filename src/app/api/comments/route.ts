@@ -87,21 +87,33 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    // 트리 구조로 변환 + 비밀글 마스킹
+    // 1-pass: 모든 댓글 마스킹 후 Map에 등록
     const commentsMap = new Map();
-    const rootComments: any[] = [];
-
     (comments || []).forEach((comment: any) => {
       const masked = maskComment(comment, requesterId, requesterRole);
-      const commentData = { ...masked, replies: [] };
-      commentsMap.set(comment.id, commentData);
+      commentsMap.set(comment.id, { ...masked, replies: [] });
+    });
 
-      if (comment.parent_id) {
-        const parent = commentsMap.get(comment.parent_id);
-        if (parent) parent.replies.push(commentData);
+    // 2-pass: 트리 구조 조립 (순서 무관하게 안전하게 처리)
+    const rootComments: any[] = [];
+    commentsMap.forEach((commentData: any) => {
+      if (commentData.parent_id) {
+        const parent = commentsMap.get(commentData.parent_id);
+        if (parent) {
+          parent.replies.push(commentData);
+        } else {
+          // 부모가 없는 고아 답글은 루트에 표시
+          rootComments.push(commentData);
+        }
       } else {
         rootComments.push(commentData);
       }
+    });
+
+    // 루트 댓글 최신순 정렬, 각 답글은 오래된순 정렬
+    rootComments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    rootComments.forEach((c: any) => {
+      c.replies.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     });
 
     return NextResponse.json({ comments: rootComments });
