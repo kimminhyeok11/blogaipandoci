@@ -15,6 +15,7 @@ const TocSidebar = dynamic(() => import("@/components/posts/TocSidebar").then(m 
 const PostActions = dynamic(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
 const ShareButtons = dynamic(() => import("@/components/posts/ShareButtons").then(m => ({ default: m.ShareButtons })), { ssr: false });
 const RelatedPosts = dynamic(() => import("@/components/posts/RelatedPosts").then(m => ({ default: m.RelatedPosts })), { ssr: false });
+const CommentsSection = dynamic(() => import("@/components/comments/CommentsSection").then(m => ({ default: m.CommentsSection })), { ssr: false });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
@@ -373,6 +374,9 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Related Posts - 이어서 읽기 */}
         <RelatedPosts posts={relatedPosts} currentPostId={post.id} />
+
+        {/* Comments Section - 질문/댓글 */}
+        <CommentsSection postId={post.id} postSlug={post.slug} postTitle={post.title} />
       </main>
     </div>
   );

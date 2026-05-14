@@ -317,3 +317,38 @@ export function HomepageBreadcrumbSchema() {
     />
   );
 }
+
+// Question Schema: 질문 카드용 구조화된 데이터
+interface QuestionSchemaProps {
+  question: string;
+  answer: string;
+  author?: string;
+  upvoteCount?: number;
+}
+
+export function QuestionSchema({ question, answer, author, upvoteCount = 0 }: QuestionSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Question",
+    name: question,
+    text: question,
+    answerCount: 1,
+    upvoteCount,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: answer,
+      author: author ? {
+        "@type": "Person",
+        name: author,
+      } : undefined,
+      dateCreated: new Date().toISOString(),
+      upvoteCount,
+    },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}

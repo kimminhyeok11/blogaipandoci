@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff, MessageCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/utils/cn";
 import { useToast } from "@/components/ui/Toast";
@@ -85,6 +85,23 @@ export default function LoginPage() {
       showToast(msg, "error");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleKakaoLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "kakao",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "카카오 로그인 실패";
+      setError(msg);
+      showToast(msg, "error");
     }
   };
 
@@ -199,6 +216,27 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* 카카오 로그인 */}
+          {mode === "login" && (
+            <div className="mt-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-rule"></div>
+                </div>
+                <div className="relative flex justify-center text-xs font-sans">
+                  <span className="px-2 bg-white text-muted">또는</span>
+                </div>
+              </div>
+              <button
+                onClick={handleKakaoLogin}
+                className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 bg-[#FEE500] text-[#000000] font-sans text-sm font-medium rounded-sm hover:bg-[#F5DC00] transition-colors"
+              >
+                <MessageCircle size={18} />
+                카카오로 시작하기
+              </button>
+            </div>
+          )}
 
           {mode === "login" && (
             <div className="mt-4 text-center">
