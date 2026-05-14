@@ -105,7 +105,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ comments: roots });
   } catch (err) {
     console.error("[GET /api/comments] 오류:", err);
-    return NextResponse.json({ error: "댓글 조회 실패", detail: String(err) }, { status: 500 });
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    return NextResponse.json({ error: "댓글 조회 실패", detail: msg }, { status: 500 });
   }
 }
 
@@ -158,6 +159,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ comment }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/comments] 오류:", err);
-    return NextResponse.json({ error: "댓글 작성 실패", detail: String(err) }, { status: 500 });
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    return NextResponse.json({ error: "댓글 작성 실패", detail: msg }, { status: 500 });
   }
 }
