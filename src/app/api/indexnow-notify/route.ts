@@ -34,6 +34,12 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const siteBase = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+    const invalidUrls = urls.filter((u: any) => typeof u !== "string" || !u.startsWith(siteBase));
+    if (invalidUrls.length > 0) {
+      return NextResponse.json({ error: "허용되지 않은 URL이 포함되어 있습니다" }, { status: 400 });
+    }
     
     const key = process.env.INDEXNOW_KEY;
     const host = process.env.NEXT_PUBLIC_SITE_URL?.replace(/^https?:\/\//, "").replace(/\/.*$/, "");

@@ -69,7 +69,8 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { text, post_id, limit = 5 } = body;
+    const { text, post_id } = body;
+    const limit = Math.min(Math.max(1, parseInt(body.limit) || 5), 20);
 
     if (!text || !post_id) {
       return NextResponse.json({ error: "text와 post_id 필수" }, { status: 400 });
