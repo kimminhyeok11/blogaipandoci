@@ -40,7 +40,7 @@ function WritePageContent() {
   const editSlug = searchParams.get("edit");
   const isEditMode = !!editSlug;
   const { showToast } = useToast();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, session, isLoading: isAuthLoading } = useAuth();
   const editorRef = useRef<MarkdownEditorRef>(null);
 
   // 폼 상태 관리
@@ -168,7 +168,7 @@ function WritePageContent() {
         // API로 글 조회 (RLS 우회)
         const response = await fetch(`/api/posts/${editSlug}?edit=true`, {
           headers: {
-            "Authorization": `Bearer ${user.id}`,
+            "Authorization": `Bearer ${session?.access_token}`,
           },
         });
 
@@ -243,7 +243,7 @@ function WritePageContent() {
       const response = await fetch('/api/upload', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${user?.id}`
+          'Authorization': `Bearer ${session?.access_token}`
         },
         body: formData
       });
@@ -338,7 +338,7 @@ function WritePageContent() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentUser.id}`,
+            "Authorization": `Bearer ${session?.access_token}`,
           },
           body: JSON.stringify({
             id: postId,
@@ -373,7 +373,7 @@ function WritePageContent() {
               method: "POST",
               headers: { 
                 "Content-Type": "application/json",
-                'Authorization': `Bearer ${user.id}`
+                'Authorization': `Bearer ${session?.access_token}`
               },
               body: JSON.stringify({
                 post_id: postId,
@@ -401,7 +401,7 @@ function WritePageContent() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentUser.id}`,
+            "Authorization": `Bearer ${session?.access_token}`,
           },
           body: JSON.stringify({
             user_id: currentUser.id,
@@ -456,7 +456,7 @@ function WritePageContent() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${user.id}`,
+        "Authorization": `Bearer ${session?.access_token}`,
       },
       body: JSON.stringify({
         postId,

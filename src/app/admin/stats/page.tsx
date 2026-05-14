@@ -82,7 +82,7 @@ interface StatsData {
 }
 
 export default function StatsPage() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, session, isLoading: isAuthLoading } = useAuth();
   const { showToast } = useToast();
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -143,7 +143,7 @@ export default function StatsPage() {
       fetchAutoSaves();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, isAuthLoading]);
+  }, [user, session, isAuthLoading]);
 
   const fetchStats = async () => {
     try {
@@ -153,7 +153,7 @@ export default function StatsPage() {
       
       const response = await fetch("/api/stats", {
         headers: {
-          'Authorization': `Bearer ${user.id}`
+          'Authorization': `Bearer ${session?.access_token}`
         }
       });
       
@@ -330,7 +330,7 @@ export default function StatsPage() {
     try {
       const response = await fetch('/api/admin/images', {
         headers: {
-          'Authorization': `Bearer ${user.id}`
+          'Authorization': `Bearer ${session?.access_token}`
         }
       });
       
@@ -363,7 +363,7 @@ export default function StatsPage() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.id}`
+          'Authorization': `Bearer ${session?.access_token}`
         },
         body: JSON.stringify({ paths })
       });
@@ -848,7 +848,7 @@ export default function StatsPage() {
                 try {
                   const response = await fetch('/api/indexnow/batch', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${user?.id}` }
+                    headers: { 'Authorization': `Bearer ${session?.access_token}` }
                   });
                   
                   const result = await response.json();

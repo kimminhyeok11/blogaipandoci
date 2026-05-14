@@ -32,7 +32,7 @@ interface Comment {
 }
 
 export default function AdminCommentsPage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { showToast } = useToast();
   const [comments, setComments] = useState<Comment[]>([]);
   const [filter, setFilter] = useState<"all" | "pending" | "public" | "hidden" | "law_risk">("pending");
@@ -45,7 +45,9 @@ export default function AdminCommentsPage() {
 
   const fetchComments = async () => {
     try {
-      const response = await fetch(`/api/admin/comments?filter=${filter}`);
+      const response = await fetch(`/api/admin/comments?filter=${filter}`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+      });
       if (!response.ok) throw new Error("댓글 로드 실패");
       const data = await response.json();
       setComments(data.comments || []);
@@ -60,6 +62,7 @@ export default function AdminCommentsPage() {
     try {
       const response = await fetch(`/api/admin/comments/${commentId}/approve`, {
         method: "PUT",
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
       });
       if (!response.ok) throw new Error("승인 실패");
       showToast("댓글이 승인되었습니다", "success");
@@ -73,6 +76,7 @@ export default function AdminCommentsPage() {
     try {
       const response = await fetch(`/api/admin/comments/${commentId}/hide`, {
         method: "PUT",
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
       });
       if (!response.ok) throw new Error("숨김 실패");
       showToast("댓글이 숨겨졌습니다", "success");
@@ -88,7 +92,10 @@ export default function AdminCommentsPage() {
     try {
       const response = await fetch(`/api/comments/${commentId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({ user_id: user?.id }),
       });
       if (!response.ok) throw new Error("삭제 실패");
@@ -101,7 +108,9 @@ export default function AdminCommentsPage() {
 
   const handleExport = async (format: "csv" | "json") => {
     try {
-      const response = await fetch(`/api/admin/comments/export?format=${format}`);
+      const response = await fetch(`/api/admin/comments/export?format=${format}`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+      });
       if (!response.ok) throw new Error("내보내기 실패");
       const data = await response.json();
       

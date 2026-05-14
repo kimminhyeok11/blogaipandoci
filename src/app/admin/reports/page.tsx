@@ -24,7 +24,7 @@ interface ReportGroup {
 }
 
 export default function AdminReportsPage() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, session, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
   const [reportGroups, setReportGroups] = useState<ReportGroup[]>([]);
@@ -37,12 +37,14 @@ export default function AdminReportsPage() {
       return;
     }
     fetchReports();
-  }, [user, isAuthLoading]);
+  }, [user, session, isAuthLoading]);
 
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/reports");
+      const res = await fetch("/api/admin/reports", {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+      });
       const data = await res.json();
       setReportGroups(data.reports || []);
     } catch {
@@ -56,6 +58,7 @@ export default function AdminReportsPage() {
     try {
       const res = await fetch(`/api/admin/comments/${commentId}/hide`, {
         method: "PUT",
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
       });
       if (!res.ok) throw new Error("숨김 실패");
       showToast("숨김 처리되었습니다", "success");
@@ -70,7 +73,10 @@ export default function AdminReportsPage() {
     try {
       const res = await fetch(`/api/comments/${commentId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({ user_id: user?.id }),
       });
       if (!res.ok) throw new Error("삭제 실패");
