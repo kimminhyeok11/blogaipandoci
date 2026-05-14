@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { QuestionForm } from "./QuestionForm";
 import { QuestionCard } from "./QuestionCard";
 import { CommentItem, CommentItemProps } from "./CommentItem";
@@ -41,6 +41,9 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
   const [loading, setLoading] = useState(true);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{ id: string; nickname: string } | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     fetchComments();
@@ -72,6 +75,36 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
 
   const handleReply = (parentId: string, nickname: string) => {
     setReplyingTo({ id: parentId, nickname });
+    setReplyContent("");
+    setTimeout(() => replyInputRef.current?.focus(), 100);
+  };
+
+  const handleSubmitReply = async () => {
+    if (!replyingTo || !replyContent.trim()) return;
+    setIsSubmittingReply(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          post_id: postId,
+          parent_id: replyingTo.id,
+          content: replyContent.trim(),
+          user_id: user?.id || null,
+          nickname: user ? (user.user_metadata?.nickname || user.email?.split("@")[0] || "익명") : "익명",
+          is_anonymous: !user,
+        }),
+      });
+      if (!res.ok) throw new Error("답글 등록 실패");
+      setReplyContent("");
+      setReplyingTo(null);
+      fetchComments();
+    } catch {
+      alert("답글 등록에 실패했습니다.");
+    } finally {
+      setIsSubmittingReply(false);
+    }
   };
 
   const renderComments = () => {
@@ -173,6 +206,38 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
           <SimilarCases postId={postId} />
           <QuestionForm postId={postId} onSuccess={handleCommentSuccess} />
         </>
+      )}
+
+      {/* 답글 폼 */}
+      {replyingTo && (
+        <div className="mb-6 p-4 bg-cream border border-rust/20 rounded-sm">
+          <p className="text-sm text-muted mb-2">
+            <span className="font-medium text-ink">{replyingTo.nickname}</span>님에게 답글 작성
+          </p>
+          <textarea
+            ref={replyInputRef}
+            value={replyContent}
+            onChange={(e) => setReplyContent(e.target.value)}
+            placeholder="답글을 입력하세요..."
+            rows={3}
+            className="w-full px-3 py-2 border border-rule rounded-sm text-sm focus:outline-none focus:border-rust bg-white resize-none mb-2"
+          />
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setReplyingTo(null)}
+              className="px-4 py-1.5 text-sm border border-rule text-muted rounded-sm hover:border-rust hover:text-rust transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleSubmitReply}
+              disabled={isSubmittingReply || !replyContent.trim()}
+              className="px-4 py-1.5 text-sm bg-rust text-paper rounded-sm hover:bg-rust-light disabled:opacity-50 transition-colors"
+            >
+              {isSubmittingReply ? "등록 중..." : "답글 등록"}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* 댓글 목록 */}
