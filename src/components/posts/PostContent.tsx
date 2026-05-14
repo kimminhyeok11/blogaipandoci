@@ -81,28 +81,6 @@ export function PostContent({ contentMarkdown, onTocExtract }: PostContentProps)
     }
   }, [images]);
 
-  // 이미지 클릭 가능하도록 CSS 클래스 추가
-  useEffect(() => {
-    const style = document.createElement("style");
-    style.textContent = `
-      .prose-journal img:not(a img) {
-        cursor: zoom-in;
-        transition: opacity 0.2s;
-      }
-      .prose-journal img:not(a img):hover {
-        opacity: 0.9;
-      }
-      /* 링크 안 이미지는 기본 커서 */
-      .prose-journal a img {
-        cursor: pointer;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
-
   return (
     <>
       <div

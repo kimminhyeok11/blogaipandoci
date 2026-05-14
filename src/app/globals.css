@@ -420,6 +420,19 @@ body {
   border-radius: 2px;
 }
 
+.prose-journal img:not(a img) {
+  cursor: zoom-in;
+  transition: opacity 0.2s;
+}
+
+.prose-journal img:not(a img):hover {
+  opacity: 0.9;
+}
+
+.prose-journal a img {
+  cursor: pointer;
+}
+
 .prose-journal pre {
   background: var(--cream);
   padding: 1rem;
