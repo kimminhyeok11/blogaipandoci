@@ -6,7 +6,7 @@ import { QuestionCard } from "./QuestionCard";
 import { CommentItem, CommentItemProps } from "./CommentItem";
 import { SimilarCases } from "./SimilarCases";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase"; // 닉네임 조회용
 
 interface Comment {
   id: string;
@@ -53,7 +53,6 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
 
   const fetchComments = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const headers: Record<string, string> = {};
       if (session?.access_token) {
         headers["Authorization"] = `Bearer ${session.access_token}`;
