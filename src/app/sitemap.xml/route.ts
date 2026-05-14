@@ -64,6 +64,7 @@ export async function GET() {
     { url: `${baseUrl}/about`, changefreq: "monthly", priority: "0.7", lastmod: "2025-10-01" },
     { url: `${baseUrl}/contact`, changefreq: "yearly", priority: "0.5", lastmod: "2025-10-01" },
     { url: `${baseUrl}/tags`, changefreq: "weekly", priority: "0.7", lastmod: new Date().toISOString().split("T")[0] },
+    { url: `${baseUrl}/cases`, changefreq: "weekly", priority: "0.8", lastmod: new Date().toISOString().split("T")[0] },
     { url: `${baseUrl}/privacy`, changefreq: "yearly", priority: "0.3", lastmod: "2025-10-01" },
     { url: `${baseUrl}/terms`, changefreq: "yearly", priority: "0.3", lastmod: "2025-10-01" },
   ];
@@ -79,11 +80,28 @@ export async function GET() {
     )
     .join("\n");
 
-  // 동적 게시글
+  // 동적 게시글 + 사건 유형 페이지
   let postXml = "";
+  let caseTypeXml = "";
   const supabase = getServerSupabase();
 
   if (supabase) {
+    // 사건 유형별 페이지 (case_type 있는 것만)
+    const { data: caseData } = await supabase
+      .from("posts")
+      .select("case_type, updated_at")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .not("case_type", "is", null);
+
+    const caseTypes = Array.from(new Set((caseData || []).map((r: any) => r.case_type).filter(Boolean)));
+    caseTypeXml = caseTypes.map((ct: string) => `  <url>
+    <loc>${escapeXml(`${baseUrl}/cases/${encodeURIComponent(ct)}`)}</loc>
+    <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`).join("\n");
+
     const { data } = await supabase
       .from("posts")
       .select("slug, title, updated_at, published_at, content, cover_image, excerpt")
@@ -122,6 +140,7 @@ ${imageXml}
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${staticXml}
+${caseTypeXml}
 ${postXml}
 </urlset>`;
 

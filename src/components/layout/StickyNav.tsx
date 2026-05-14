@@ -91,6 +91,9 @@ export function StickyNav({ backHref = "/", backLabel = "홈으로", showFullNav
                 <Link href="/tags" className="font-sans text-xs font-medium text-muted hover:text-rust transition-colors">
                   태그
                 </Link>
+                <Link href="/cases" className="font-sans text-xs font-medium text-muted hover:text-rust transition-colors">
+                  사건 유형
+                </Link>
               </>
             ) : (
               <Link

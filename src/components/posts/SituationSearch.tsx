@@ -25,7 +25,7 @@ export function SituationSearch() {
   };
 
   const handleSituationClick = (case_type: string) => {
-    router.push(`/search?case_type=${encodeURIComponent(case_type)}`);
+    router.push(`/cases/${encodeURIComponent(case_type)}`);
   };
 
   return (
