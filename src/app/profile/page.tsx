@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Mail, LogOut, Loader2, Edit3, Shield } from "lucide-react";
+import { User, Mail, LogOut, Loader2, Edit3, Shield, CheckCircle, XCircle, Save, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { StickyNav } from "@/components/layout/StickyNav";
@@ -24,6 +24,11 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [newNickname, setNewNickname] = useState("");
+  const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [nicknameMessage, setNicknameMessage] = useState("");
+  const [isSavingNickname, setIsSavingNickname] = useState(false);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -58,6 +63,49 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [authUser, isAuthLoading, router]);
+
+  const checkNickname = async (value: string) => {
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setNicknameStatus("idle");
+      setNicknameMessage("");
+      return;
+    }
+    setNicknameStatus("checking");
+    try {
+      const res = await fetch(`/api/users/check-nickname?nickname=${encodeURIComponent(trimmed)}`);
+      const data = await res.json();
+      setNicknameStatus(data.available ? "available" : "taken");
+      setNicknameMessage(data.message);
+    } catch {
+      setNicknameStatus("idle");
+    }
+  };
+
+  const handleSaveNickname = async () => {
+    if (!user || !newNickname.trim()) return;
+    if (nicknameStatus === "taken") {
+      showToast("이미 사용 중인 닉네임입니다.", "warning");
+      return;
+    }
+    setIsSavingNickname(true);
+    try {
+      const res = await fetch("/api/users/nickname", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, nickname: newNickname.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setUser((prev) => prev ? { ...prev, nickname: data.nickname } : prev);
+      setIsEditingNickname(false);
+      showToast("닉네임이 변경되었습니다.", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "닉네임 변경 실패", "error");
+    } finally {
+      setIsSavingNickname(false);
+    }
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -119,14 +167,68 @@ export default function ProfilePage() {
                 </span>
                 <span className="font-sans text-sm text-ink">{user.email}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-rule/50">
-                <span className="font-sans text-sm text-muted flex items-center gap-2">
-                  <User size={14} />
-                  닉네임
-                </span>
-                <span className="font-sans text-sm text-ink">
-                  {user.nickname || "미설정"}
-                </span>
+              <div className="py-2 border-b border-rule/50">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-sans text-sm text-muted flex items-center gap-2">
+                    <User size={14} />
+                    닉네임
+                  </span>
+                  {!isEditingNickname && (
+                    <button
+                      onClick={() => {
+                        setIsEditingNickname(true);
+                        setNewNickname(user.nickname || "");
+                        setNicknameStatus("idle");
+                        setNicknameMessage("");
+                      }}
+                      className="text-xs text-rust hover:underline flex items-center gap-1"
+                    >
+                      <Edit3 size={12} />
+                      변경
+                    </button>
+                  )}
+                </div>
+                {isEditingNickname ? (
+                  <div className="mt-2 space-y-2">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={newNickname}
+                        onChange={(e) => {
+                          setNewNickname(e.target.value);
+                          checkNickname(e.target.value);
+                        }}
+                        placeholder="2~20자, 한글/영문/숫자/_"
+                        className="w-full pl-3 pr-8 py-2 border border-rule rounded-sm text-sm focus:outline-none focus:border-rust bg-white"
+                      />
+                      {nicknameStatus === "checking" && <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted" />}
+                      {nicknameStatus === "available" && <CheckCircle size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
+                      {nicknameStatus === "taken" && <XCircle size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />}
+                    </div>
+                    {nicknameMessage && (
+                      <p className={`text-xs ${nicknameStatus === "available" ? "text-green-600" : "text-red-500"}`}>{nicknameMessage}</p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSaveNickname}
+                        disabled={isSavingNickname || nicknameStatus === "taken" || !newNickname.trim()}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-rust text-paper text-xs rounded-sm hover:bg-rust-light disabled:opacity-50 transition-colors"
+                      >
+                        {isSavingNickname ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                        저장
+                      </button>
+                      <button
+                        onClick={() => setIsEditingNickname(false)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-rule text-muted text-xs rounded-sm hover:border-rust hover:text-rust transition-colors"
+                      >
+                        <X size={12} />
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="font-sans text-sm text-ink">{user.nickname || "미설정"}</span>
+                )}
               </div>
               <div className="flex items-center justify-between py-2">
                 <span className="font-sans text-sm text-muted">가입일</span>

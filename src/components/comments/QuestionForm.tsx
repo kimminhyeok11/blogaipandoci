@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
+import { supabase } from "@/lib/supabase";
 import { LogIn, Info } from "lucide-react";
 
 interface QuestionFormProps {
@@ -23,6 +24,7 @@ export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dbNickname, setDbNickname] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     whoProblem: "본인",
     currentSituation: [],
@@ -30,6 +32,19 @@ export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
     concern: "",
     content: "",
   });
+
+  // 로그인 시 DB에서 닉네임 조회
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("users")
+      .select("nickname")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }: { data: { nickname: string } | null }) => {
+        if (data?.nickname) setDbNickname(data.nickname);
+      });
+  }, [user]);
 
   const handleCheckboxChange = (field: "currentSituation" | "procedure", value: string) => {
     setFormData((prev) => ({
@@ -56,7 +71,7 @@ export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
         body: JSON.stringify({
           post_id: postId,
           content: formData.content,
-          nickname: user?.email?.split("@")[0] || "익명",
+          nickname: dbNickname || user?.email?.split("@")[0] || "익명",
           is_anonymous: false,
           question_type: formData.whoProblem,
           topic_tags: [...formData.currentSituation, ...formData.procedure],

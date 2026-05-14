@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Mail, Lock, Eye, EyeOff, MessageCircle } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff, MessageCircle, User, CheckCircle, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/utils/cn";
 import { useToast } from "@/components/ui/Toast";
@@ -13,6 +13,9 @@ export default function LoginPage() {
   const { showToast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [nicknameMessage, setNicknameMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +24,25 @@ export default function LoginPage() {
   // 이메일 형식 검증
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  // 닉네임 중복 확인
+  const checkNickname = async (value: string) => {
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setNicknameStatus("idle");
+      setNicknameMessage("");
+      return;
+    }
+    setNicknameStatus("checking");
+    try {
+      const res = await fetch(`/api/users/check-nickname?nickname=${encodeURIComponent(trimmed)}`);
+      const data = await res.json();
+      setNicknameStatus(data.available ? "available" : "taken");
+      setNicknameMessage(data.message);
+    } catch {
+      setNicknameStatus("idle");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,6 +74,18 @@ export default function LoginPage() {
       return;
     }
 
+    if (mode === "register" && !nickname.trim()) {
+      setError("닉네임을 입력해주세요.");
+      showToast("닉네임을 입력해주세요.", "warning");
+      return;
+    }
+
+    if (mode === "register" && nicknameStatus === "taken") {
+      setError("이미 사용 중인 닉네임입니다.");
+      showToast("다른 닉네임을 사용해주세요.", "warning");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -71,12 +105,15 @@ export default function LoginPage() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: { nickname: nickname.trim() },
           },
         });
 
         if (signUpError) throw signUpError;
 
         showToast("회원가입이 완료되었습니다. 이메일을 확인해주세요.", "success");
+        setNickname("");
+        setNicknameStatus("idle");
         setMode("login");
       }
     } catch (err) {
@@ -173,6 +210,44 @@ export default function LoginPage() {
                 />
               </div>
             </div>
+
+            {/* 닉네임 (회원가입 시만) */}
+            {mode === "register" && (
+              <div>
+                <label htmlFor="register-nickname" className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
+                  닉네임
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} />
+                  <input
+                    id="register-nickname"
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => {
+                      setNickname(e.target.value);
+                      checkNickname(e.target.value);
+                    }}
+                    placeholder="2~20자, 한글/영문/숫자/_"
+                    required
+                    className="w-full pl-10 pr-8 py-2.5 bg-cream border border-rule rounded-sm text-sm font-sans text-ink placeholder-muted focus:outline-none focus:border-rust transition-colors"
+                  />
+                  {nicknameStatus === "checking" && (
+                    <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted" />
+                  )}
+                  {nicknameStatus === "available" && (
+                    <CheckCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
+                  )}
+                  {nicknameStatus === "taken" && (
+                    <XCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />
+                  )}
+                </div>
+                {nicknameMessage && (
+                  <p className={`mt-1 text-xs font-sans ${nicknameStatus === "available" ? "text-green-600" : "text-red-500"}`}>
+                    {nicknameMessage}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div>
               <label htmlFor="login-password" className="block font-sans text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
