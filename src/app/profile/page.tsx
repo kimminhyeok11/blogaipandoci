@@ -29,6 +29,9 @@ export default function ProfilePage() {
   const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [nicknameMessage, setNicknameMessage] = useState("");
   const [isSavingNickname, setIsSavingNickname] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawConfirm, setWithdrawConfirm] = useState("");
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -90,10 +93,14 @@ export default function ProfilePage() {
     }
     setIsSavingNickname(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch("/api/users/nickname", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, nickname: newNickname.trim() }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ nickname: newNickname.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -104,6 +111,32 @@ export default function ProfilePage() {
       showToast(err instanceof Error ? err.message : "닉네임 변경 실패", "error");
     } finally {
       setIsSavingNickname(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (withdrawConfirm !== "탈퇴") {
+      showToast("\"탈퇴\"를 입력해주세요.", "warning");
+      return;
+    }
+    setIsWithdrawing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("세션 만료");
+      const res = await fetch("/api/users/me", {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      await supabase.auth.signOut();
+      showToast("탈퇴가 완료되었습니다.", "success");
+      router.push("/");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "탈퇴 실패", "error");
+    } finally {
+      setIsWithdrawing(false);
+      setShowWithdrawModal(false);
     }
   };
 
@@ -259,29 +292,70 @@ export default function ProfilePage() {
               </>
             )}
 
-            <Link
-              href="/write"
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-rust text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust-light transition-colors"
-            >
-              <Edit3 size={16} />
-              새 글 작성
-            </Link>
+            {authUser?.role === 'admin' && (
+              <Link
+                href="/write"
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-rust text-paper font-sans text-sm font-medium rounded-sm hover:bg-rust-light transition-colors"
+              >
+                <Edit3 size={16} />
+                새 글 작성
+              </Link>
+            )}
 
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
               className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-rule text-muted font-sans text-sm font-medium rounded-sm hover:border-rust hover:text-rust transition-colors disabled:opacity-50"
             >
-              {isLoggingOut ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <LogOut size={16} />
-              )}
+              {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
               로그아웃
+            </button>
+
+            <button
+              onClick={() => { setShowWithdrawModal(true); setWithdrawConfirm(""); }}
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-red-200 text-red-400 font-sans text-sm font-medium rounded-sm hover:border-red-400 hover:text-red-600 transition-colors"
+            >
+              회원 탈퇴
             </button>
           </div>
         </div>
       </main>
+
+      {/* 탈퇴 확인 모달 */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-sm border border-rule p-6 max-w-sm w-full">
+            <h2 className="text-lg font-bold text-ink mb-2">정말 탈퇴하시겠습니까?</h2>
+            <p className="text-sm text-muted mb-4">
+              탈퇴 시 계정 및 모든 개인정보가 즉시 삭제됩니다.<br />
+              작성하신 질문은 익명으로 유지됩니다.
+            </p>
+            <p className="text-sm text-ink mb-2">확인을 위해 아래에 <strong>탈퇴</strong>를 입력하세요.</p>
+            <input
+              type="text"
+              value={withdrawConfirm}
+              onChange={(e) => setWithdrawConfirm(e.target.value)}
+              placeholder="탈퇴"
+              className="w-full px-3 py-2 border border-rule rounded-sm text-sm focus:outline-none focus:border-red-400 mb-4"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleWithdraw}
+                disabled={isWithdrawing || withdrawConfirm !== "탈퇴"}
+                className="flex-1 py-2.5 bg-red-600 text-white text-sm font-medium rounded-sm hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-1"
+              >
+                {isWithdrawing ? <Loader2 size={14} className="animate-spin" /> : "탈퇴 확인"}
+              </button>
+              <button
+                onClick={() => setShowWithdrawModal(false)}
+                className="flex-1 py-2.5 border border-rule text-muted text-sm rounded-sm hover:border-rust hover:text-rust transition-colors"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
