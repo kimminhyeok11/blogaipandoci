@@ -35,19 +35,20 @@ async function getRequester(request: Request) {
 }
 
 function maskComment(comment: any, requesterId: string | null, requesterRole: string | null) {
+  // 비밀 질문이 아니면 그대로 반환
+  if (!comment.is_secret) return comment;
+
   const isOwner = requesterId && comment.user_id === requesterId;
   const isAdmin = requesterRole === "admin";
 
-  if (isOwner || isAdmin) {
-    return { ...comment, is_secret: false };
-  }
+  // 작성자 본인 또는 관리자면 원본 반환
+  if (isOwner || isAdmin) return comment;
 
-  // 타인에게는 내용 숨김
+  // 그 외에는 내용 마스킹
   return {
     ...comment,
     content: "🔒 비밀 질문입니다.",
     context_answers: null,
-    is_secret: true,
   };
 }
 
@@ -142,7 +143,7 @@ export async function POST(request: Request) {
         parent_id: parent_id || null,
         user_id: user_id || null,
         nickname: nickname || "익명",
-        is_anonymous: is_anonymous || true,
+        is_anonymous: is_anonymous ?? true,
         status,
         risk_score: riskScore,
         question_type: question_type || null,
