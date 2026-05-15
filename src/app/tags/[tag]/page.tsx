@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Tag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { StickyNav } from "@/components/layout/StickyNav";
-import { CollectionPageSchema } from "@/components/seo/StructuredData";
 import type { Metadata } from "next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
@@ -80,16 +79,70 @@ export default async function TagPage({ params }: TagPageProps) {
   const tag = decodeURIComponent(params.tag);
   const posts = await getPostsByTag(tag);
 
+  // BreadcrumbSchema 데이터
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "태그",
+        item: `${SITE_URL}/tags`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: `#${tag}`,
+        item: `${SITE_URL}/tags/${encodeURIComponent(tag)}`,
+      },
+    ],
+  };
+
+  // CollectionPageSchema 데이터
+  const collectionData = posts.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `#${tag} 관련 글 모음`,
+    description: `${tag} 주제의 법률·정책·사회 분석 글 ${posts.length}개`,
+    url: `${SITE_URL}/tags/${encodeURIComponent(tag)}`,
+    isPartOf: {
+      "@type": "WebSite",
+      name: "法 BLOG",
+      url: SITE_URL,
+    },
+    itemListElement: posts.map((p, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: p.title,
+      url: `${SITE_URL}/posts/${encodeURIComponent(p.slug)}`,
+      description: p.excerpt || undefined,
+      datePublished: p.published_at || undefined,
+    })),
+  } : null;
+
   return (
     <div className="min-h-screen bg-paper">
-      {posts.length > 0 && (
-        <CollectionPageSchema
-          name={`#${tag} 관련 글 모음`}
-          description={`${tag} 주제의 법률·정책·사회 분석 글 ${posts.length}개`}
-          url={`${SITE_URL}/tags/${encodeURIComponent(tag)}`}
-          items={posts.map((p) => ({ name: p.title, url: `${SITE_URL}/posts/${p.slug}` }))}
+      {/* JSON-LD 스크립트 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        suppressHydrationWarning
+      />
+      {collectionData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionData) }}
+          suppressHydrationWarning
         />
       )}
+
       {/* Header */}
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>
