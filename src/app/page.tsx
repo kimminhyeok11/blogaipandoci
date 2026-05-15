@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
-import { HomepageBreadcrumbSchema, ItemListSchema } from "@/components/seo/StructuredData";
 
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
@@ -62,21 +61,75 @@ async function getPosts() {
 export default async function HomePage() {
   const { featuredPost, recentPosts } = await getPosts();
 
+  // BreadcrumbSchema 데이터
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL_HOME,
+      },
+    ],
+  };
+
+  // WebSiteSchema 데이터
+  const websiteData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "法 BLOG",
+    url: SITE_URL_HOME,
+    description: "법률, 정책, 사회 이슈에 관한 심층 분석 콘텐츠",
+    image: `${SITE_URL_HOME}/opengraph-image.png`,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL_HOME}/posts?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  // ItemListSchema 데이터
+  const itemListData = recentPosts.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "法 BLOG 최신 분석 글",
+    description: "법률, 정책, 사회 이슈에 관한 최신 심층 분석 글 모음",
+    itemListElement: recentPosts.map((p: Post, index: number) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: p.title,
+      url: `${SITE_URL_HOME}/posts/${encodeURIComponent(p.slug)}`,
+      description: p.excerpt || undefined,
+      datePublished: p.published_at,
+    })),
+  } : null;
+
   return (
     <div className="min-h-screen bg-paper">
-      <HomepageBreadcrumbSchema />
-      {recentPosts.length > 0 && (
-        <ItemListSchema
-          name="法 BLOG 최신 분석 글"
-          description="법률, 정책, 사회 이슈에 관한 최신 심층 분석 글 모음"
-          items={recentPosts.map((p: Post) => ({
-            name: p.title,
-            url: `${SITE_URL_HOME}/posts/${encodeURIComponent(p.slug)}`,
-            description: p.excerpt || undefined,
-            datePublished: p.published_at,
-          }))}
+      {/* JSON-LD 스크립트 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        suppressHydrationWarning
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteData) }}
+        suppressHydrationWarning
+      />
+      {itemListData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListData) }}
+          suppressHydrationWarning
         />
       )}
+
       {/* Client Header with Auth and Scroll Effects */}
       <ClientHeader />
 
