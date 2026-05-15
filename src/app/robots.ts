@@ -8,14 +8,14 @@ export default function robots(): MetadataRoute.Robots {
       {
         // Googlebot 전용 규칙 - 콘텐츠 페이지 명시적 허용
         userAgent: "Googlebot",
-        allow: ["/", "/posts/", "/tags/", "/about", "/author", "/contact", "/privacy", "/terms"],
-        disallow: ["/login", "/write", "/api/", "/admin/", "/profile/", "/search", "/categories", "/auth/"],
+        allow: ["/", "/posts/", "/tags/", "/categories/", "/cases/", "/about", "/author", "/contact", "/privacy", "/terms"],
+        disallow: ["/login", "/write", "/api/", "/admin/", "/profile/", "/search", "/auth/"],
       },
       {
         // 일반 봇 규칙 (네이버봇 포함)
         userAgent: "*",
-        allow: ["/", "/posts/", "/tags/", "/about", "/author", "/contact", "/privacy", "/terms"],
-        disallow: ["/login", "/write", "/api/", "/admin/", "/profile/", "/search", "/categories", "/auth/"],
+        allow: ["/", "/posts/", "/tags/", "/categories/", "/cases/", "/about", "/author", "/contact", "/privacy", "/terms"],
+        disallow: ["/login", "/write", "/api/", "/admin/", "/profile/", "/search", "/auth/"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
