@@ -52,9 +52,6 @@ async function getPost(slug: string): Promise<Post | null> {
   const supabase = getServerSupabase();
   if (!supabase) return null;
 
-  // URL 디코딩 (한글/특수문자 처리)
-  const decodedSlug = decodeURIComponent(slug);
-
   const { data, error } = await supabase
     .from("posts")
     .select(`
@@ -83,7 +80,7 @@ async function getPost(slug: string): Promise<Post | null> {
       user_id,
       user:users(nickname, avatar_url, email, role)
     `)
-    .eq("slug", decodedSlug)
+    .eq("slug", slug)
     .eq("published", true)
     .not("published_at", "is", null)
     .single();
@@ -312,7 +309,7 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  const post = await getPost(params.slug);
+  const post = await getPost(decodedSlug);
 
   if (!post) {
     notFound();
