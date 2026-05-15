@@ -50,7 +50,12 @@ function isInvalidSlugPattern(slug: string): boolean {
 
 async function getPost(slug: string): Promise<Post | null> {
   const supabase = getServerSupabase();
-  if (!supabase) return null;
+  if (!supabase) {
+    console.error('[getPost] Supabase client not available');
+    return null;
+  }
+
+  console.log('[getPost] Fetching post with slug:', slug);
 
   const { data, error } = await supabase
     .from("posts")
@@ -86,9 +91,11 @@ async function getPost(slug: string): Promise<Post | null> {
     .single();
 
   if (error) {
+    console.error('[getPost] Error fetching post:', error);
     return null;
   }
 
+  console.log('[getPost] Post found:', data ? 'yes' : 'no');
   return data as Post;
 }
 
