@@ -307,7 +307,8 @@ export function extractTocFromHtml(html: string): TocItem[] {
   
   while ((match = headingRegex.exec(html)) !== null) {
     const tag = match[1];
-    const text = match[2]?.replace(/<[^>]*>/g, '').trim() || ''; // HTML 태그 제거
+    const innerHtml = match[2] || '';
+    const text = innerHtml.replace(/<[^>]*>/g, '').trim(); // HTML 태그 제거
     const level = tag === 'h2' ? 2 : 3;
     const id = `toc-heading-${counter++}`;
     
