@@ -29,50 +29,60 @@ export function ProcedureProgressBar({ post }: Props) {
   const expertBadge = expert_level ? EXPERT_BADGE[expert_level] : null;
 
   return (
-    <div className="mb-8 p-4 border border-rule rounded-sm bg-cream/30 not-prose">
+    <div className="mb-8 p-6 border border-rule rounded-lg bg-cream/40 not-prose shadow-sm">
       {/* 상단: 사건 유형 + 전문가 배지 */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
+      <div className="flex flex-wrap items-center gap-3 mb-5">
         {case_type && (
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium text-white ${accentColor}`}>
+          <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-semibold text-white ${accentColor} shadow-sm`}>
             {case_type}
           </span>
         )}
         {expertBadge && (
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium ${expertBadge.cls}`}>
+          <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium ${expertBadge.cls}`}>
             {expertBadge.label}
           </span>
         )}
         {estimated_duration && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-rule/20 text-muted border border-rule/30">
+          <span className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-rule/20 text-muted border border-rule/30">
             약 {estimated_duration} 소요
           </span>
         )}
       </div>
 
-      {/* 진행 단계 바 */}
+      {/* 진행 단계 바 - 타임라인 스타일 */}
       {(current_stage || next_stage) && (
-        <div className="flex items-center gap-0 text-sm">
-          {current_stage && (
-            <div className="flex items-center gap-2">
-              <div className={`w-2.5 h-2.5 rounded-full ${accentColor} shrink-0`} />
-              <span className="font-medium text-ink">{current_stage}</span>
-              <span className="text-xs text-muted ml-1 bg-rule/10 px-1.5 py-0.5 rounded-sm">현재 단계</span>
-            </div>
-          )}
-          {current_stage && next_stage && (
-            <div className="flex items-center gap-0 mx-3 text-muted">
-              <div className="w-6 h-px bg-rule" />
-              <span className="text-base">→</span>
-              <div className="w-2 h-px bg-rule" />
-            </div>
-          )}
-          {next_stage && (
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full border-2 border-muted/40 bg-cream shrink-0" />
-              <span className="text-muted">{next_stage}</span>
-              <span className="text-xs text-muted ml-1 bg-rule/10 px-1.5 py-0.5 rounded-sm">다음 단계</span>
-            </div>
-          )}
+        <div className="relative">
+          {/* 배경 라인 */}
+          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-rule/30 -translate-y-1/2 rounded-full" />
+          
+          {/* 진행 단계들 */}
+          <div className="relative flex items-center gap-0 text-sm">
+            {current_stage && (
+              <div className="flex items-center gap-3 relative z-10">
+                <div className={`w-4 h-4 rounded-full ${accentColor} shadow-md ring-4 ring-cream/40`} />
+                <div className="flex flex-col">
+                  <span className="font-semibold text-ink text-base">{current_stage}</span>
+                  <span className="text-xs text-muted font-medium bg-white px-2 py-0.5 rounded-sm border border-rule/20 shadow-sm">현재 단계</span>
+                </div>
+              </div>
+            )}
+            {current_stage && next_stage && (
+              <div className="flex items-center gap-1 mx-4 text-muted relative z-10">
+                <div className="w-8 h-px bg-rule/50" />
+                <div className="w-2 h-2 rounded-full bg-rule/50" />
+                <div className="w-8 h-px bg-rule/50" />
+              </div>
+            )}
+            {next_stage && (
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="w-4 h-4 rounded-full border-3 border-muted/30 bg-white shadow-sm ring-4 ring-cream/40" />
+                <div className="flex flex-col">
+                  <span className="text-muted text-base">{next_stage}</span>
+                  <span className="text-xs text-muted font-medium bg-white px-2 py-0.5 rounded-sm border border-rule/20 shadow-sm">다음 단계</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

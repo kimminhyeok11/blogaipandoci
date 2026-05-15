@@ -144,25 +144,37 @@ body {
 
 /* 마크다운 콘텐츠 스타일 — @layer 밖에서 정의하여 Preflight/글로벌 리셋보다 높은 우선순위 보장 */
 .prose-journal h1 {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
+  font-size: 2.75rem;
+  line-height: 1.2;
   font-weight: 900;
-  margin-top: 2.5rem;
-  margin-bottom: 1.25rem;
-  letter-spacing: -0.025em;
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.03em;
   color: var(--ink);
 }
 
+@media (min-width: 768px) {
+  .prose-journal h1 {
+    font-size: 3rem;
+  }
+}
+
 .prose-journal h2 {
-  font-size: 1.5rem;
-  line-height: 2rem;
+  font-size: 1.875rem;
+  line-height: 1.3;
   font-weight: 900;
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
   padding-top: 2rem;
   border-top: 2px solid var(--ink);
   letter-spacing: -0.025em;
   color: var(--ink);
+}
+
+@media (min-width: 768px) {
+  .prose-journal h2 {
+    font-size: 2rem;
+  }
 }
 
 .prose-journal h2 .num {
@@ -175,29 +187,35 @@ body {
 }
 
 .prose-journal h3 {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--ink);
+}
+
+@media (min-width: 768px) {
+  .prose-journal h3 {
+    font-size: 1.625rem;
+  }
+}
+
+.prose-journal h4 {
   font-size: 1.25rem;
-  line-height: 1.75rem;
+  line-height: 1.5;
   font-weight: 700;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
   color: var(--ink);
 }
 
-.prose-journal h4 {
+.prose-journal h5 {
   font-size: 1.125rem;
-  line-height: 1.75rem;
+  line-height: 1.5;
   font-weight: 700;
   margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: var(--ink);
-}
-
-.prose-journal h5 {
-  font-size: 1rem;
-  line-height: 1.5rem;
-  font-weight: 700;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
   color: var(--ink);
 }
 
@@ -205,20 +223,28 @@ body {
   font-size: 0.875rem;
   line-height: 1.25rem;
   font-weight: 700;
-  margin-top: 1rem;
-  margin-bottom: 0.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
 .prose-journal p {
-  font-size: 1rem;
-  line-height: 1.9;
-  margin-bottom: 1.25rem;
+  font-size: 1.125rem;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
   color: #2a2420;
   word-break: break-word;
   overflow-wrap: break-word;
+}
+
+@media (min-width: 768px) {
+  .prose-journal p {
+    font-size: 1.125rem;
+    line-height: 1.9;
+    margin-bottom: 1.75rem;
+  }
 }
 
 .prose-journal strong {
@@ -232,59 +258,62 @@ body {
 .prose-journal blockquote {
   border-left: 4px solid var(--rust);
   padding-left: 1.5rem;
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  margin-top: 2.25rem;
-  margin-bottom: 2.25rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+  background: var(--cream);
+  border-radius: 0 4px 4px 0;
 }
 
 .prose-journal blockquote p {
   font-size: 1.25rem;
   font-weight: 700;
-  line-height: 1.375;
+  line-height: 1.5;
   color: var(--rust);
   font-style: italic;
   margin: 0;
 }
 
 .prose-journal ul {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding-left: 1.75rem;
   list-style-type: disc;
 }
 
 .prose-journal ol {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding-left: 1.75rem;
   list-style-type: decimal;
 }
 
 .prose-journal ul ul {
   list-style-type: circle;
-  margin-top: 0.25rem;
-  margin-bottom: 0;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .prose-journal ol ol {
   list-style-type: lower-alpha;
-  margin-top: 0.25rem;
-  margin-bottom: 0;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .prose-journal li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
   line-height: 1.8;
   display: list-item;
   word-break: break-word;
   overflow-wrap: break-word;
+  font-size: 1.125rem;
 }
 
 .prose-journal li > ul,
 .prose-journal li > ol {
-  margin-top: 0.25rem;
-  margin-bottom: 0;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .prose-journal ul.checklist {
@@ -332,21 +361,27 @@ body {
 }
 
 .prose-journal figure {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .prose-journal figure img {
   margin-top: 0;
   margin-bottom: 0;
+  border-radius: 4px;
 }
 
 .prose-journal figcaption {
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--muted);
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0;
   font-family: var(--font-sans), sans-serif;
+  line-height: 1.5;
+  padding: 0 1rem;
 }
 
 .prose-journal del {
@@ -358,20 +393,25 @@ body {
 .prose-journal .table-container {
   overflow-x: auto;
   max-width: 100%;
-  margin-top: 1.5rem;
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .prose-journal .table-wrapper {
   width: 100%;
   overflow-x: auto;
-  margin: 1.5rem 0;
+  margin: 2.5rem 0;
 }
 
 .prose-journal table {
   width: 100%;
   min-width: min(500px, 100vw - 2rem);
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
 }
 
 /* 표가 큰 경우 전체 콘텐츠를 확장하여 일관된 너비 유지 */
@@ -381,52 +421,78 @@ body {
 
 .prose-journal th {
   border: 1px solid var(--rule);
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 1rem;
   background: var(--cream);
   font-weight: 700;
   text-align: left;
+  color: var(--ink);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.prose-journal th:first-child {
+  border-top-left-radius: 3px;
+}
+
+.prose-journal th:last-child {
+  border-top-right-radius: 3px;
 }
 
 .prose-journal td {
   border: 1px solid var(--rule);
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--ink);
+}
+
+.prose-journal tr:nth-child(even) {
+  background: rgba(237, 231, 215, 0.15);
+}
+
+.prose-journal tr:hover {
+  background: rgba(237, 231, 215, 0.25);
 }
 
 .prose-journal hr {
   border: none;
-  border-top: 1px solid var(--rule);
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+  border-top: 2px solid var(--rule);
+  margin-top: 3rem;
+  margin-bottom: 3rem;
 }
 
 .prose-journal a {
   color: var(--rust);
   text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color 0.15s;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+  transition: color 0.15s, text-decoration-color 0.15s;
   word-break: break-all;
   overflow-wrap: break-word;
+  font-weight: 500;
 }
 
 .prose-journal a:hover {
   color: var(--rust-light);
+  text-decoration-color: var(--rust-light);
 }
 
 .prose-journal img {
   width: 100%;
   height: auto;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  border-radius: 2px;
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .prose-journal img:not(a img) {
   cursor: zoom-in;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
 }
 
 .prose-journal img:not(a img):hover {
   opacity: 0.9;
+  transform: scale(1.01);
 }
 
 .prose-journal a img {
@@ -435,31 +501,69 @@ body {
 
 .prose-journal pre {
   background: var(--cream);
-  padding: 1rem;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
   overflow-x: auto;
   font-family: var(--font-mono), monospace;
   font-size: 0.875rem;
-  line-height: 1.6;
-  border-radius: 2px;
+  line-height: 1.7;
+  border-radius: 4px;
   word-break: break-all;
   white-space: pre-wrap;
+  border: 1px solid var(--rule);
 }
 
 .prose-journal code {
   background: var(--cream);
-  padding: 0.125rem 0.375rem;
+  padding: 0.1875rem 0.5rem;
   font-size: 0.875rem;
   font-family: var(--font-mono), monospace;
-  border-radius: 2px;
+  border-radius: 3px;
   word-break: break-all;
   overflow-wrap: break-word;
+  border: 1px solid var(--rule);
+  color: var(--ink);
 }
 
 .prose-journal pre code {
   background: transparent;
   padding: 0;
+  border: none;
+}
+
+/* TL;DR 박스 스타일 */
+.prose-journal .tldr-box {
+  background: var(--cream);
+  border-left: 4px solid var(--rust);
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin: 2.5rem 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.prose-journal .tldr-label {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--rust);
+  margin-bottom: 0.75rem;
+}
+
+.prose-journal .tldr-content {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.prose-journal .tldr-content p {
+  margin-bottom: 0.75rem;
+}
+
+.prose-journal .tldr-content p:last-child {
+  margin-bottom: 0;
 }
 
 /* 모바일 최적화 */

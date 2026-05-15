@@ -222,6 +222,14 @@ function postprocessEmbeds(html: string): string {
   return html;
 }
 
+// TL;DR 블록 처리 전처리
+function preprocessTldrBlocks(text: string): string {
+  // :::tldr ... ::: 패턴을 HTML로 변환
+  return text.replace(/:::tldr\n([\s\S]*?)\n:::/g, (match, content) => {
+    return `<div class="tldr-box"><div class="tldr-label">핵심 요약</div><div class="tldr-content">${content}</div></div>`;
+  });
+}
+
 // 마크다운 → HTML 변환 (에디터 & 상세페이지 공용)
 export function processMarkdown(text: string): string {
   if (!text) return "";
@@ -232,6 +240,8 @@ export function processMarkdown(text: string): string {
     preprocessed = preprocessBullets(preprocessed);
     // 전처리: 리스트 항목 사이 빈 줄 정리 (연속 리스트 인식)
     preprocessed = preprocessListGaps(preprocessed);
+    // 전처리: TL;DR 블록 처리
+    preprocessed = preprocessTldrBlocks(preprocessed);
     // marked v18 - 동기 파싱
     let html = marked.parse(preprocessed, { async: false }) as string;
     // 후처리: URL → 임베드 변환
