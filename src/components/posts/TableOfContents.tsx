@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { List } from "lucide-react";
+import { List, ChevronDown, ChevronRight } from "lucide-react";
 import type { TocItem } from "./PostContent";
 
 interface TableOfContentsProps {
@@ -59,31 +59,37 @@ export function TableOfContents({ items }: TableOfContentsProps) {
 
   return (
     <aside className="w-full">
-      <div className="bg-paper border border-rule rounded-sm p-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+      <div className="bg-paper border border-rule rounded-lg shadow-sm overflow-hidden">
+        {/* 헤더 */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 w-full text-left mb-2"
+          className="flex items-center justify-between w-full px-4 py-3 bg-cream/50 hover:bg-cream transition-colors border-b border-rule"
         >
-          <List size={16} className="text-muted" />
-          <span className="font-sans text-sm font-medium text-ink">목차</span>
-          <span className="ml-auto font-sans text-xs text-muted">
-            {isOpen ? "−" : "+"}
-          </span>
+          <div className="flex items-center gap-2">
+            <List size={18} className="text-rust" />
+            <span className="font-sans text-sm font-semibold text-ink">목차</span>
+          </div>
+          {isOpen ? (
+            <ChevronDown size={16} className="text-muted" />
+          ) : (
+            <ChevronRight size={16} className="text-muted" />
+          )}
         </button>
 
+        {/* 목차 내용 */}
         {isOpen && (
-          <nav className="space-y-1">
+          <nav className="p-4 space-y-1 max-h-[calc(100vh-12rem)] overflow-y-auto">
             {items.map((item) => (
               <a
                 key={item.id}
                 href={`#${item.id}`}
                 onClick={(e) => handleClick(e, item.id)}
-                className={`block font-sans text-sm leading-relaxed transition-colors hover:text-rust ${
-                  item.level === 3 ? "pl-3" : ""
+                className={`block font-sans text-sm leading-relaxed transition-all duration-200 rounded-md px-3 py-2 ${
+                  item.level === 3 ? "ml-4" : ""
                 } ${
                   activeId === item.id
-                    ? "text-rust font-medium"
-                    : "text-muted"
+                    ? "bg-rust/10 text-rust font-medium border-l-2 border-rust"
+                    : "text-muted hover:text-ink hover:bg-cream/30"
                 }`}
               >
                 {item.text}

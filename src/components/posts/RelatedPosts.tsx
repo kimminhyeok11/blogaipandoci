@@ -16,63 +16,64 @@ export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
   if (relatedPosts.length === 0) return null;
 
   return (
-    <section className="max-w-content mx-auto px-4 sm:px-6 mt-12 pt-8 border-t-2 border-double border-ink/20">
-      <h2 className="text-xl font-serif font-bold text-ink mb-6 text-center">
-        <span className="inline-block border-b-2 border-rust pb-1">
+    <section className="max-w-content mx-auto px-4 sm:px-6 mt-16 pt-12 border-t-2 border-double border-ink/20">
+      <h2 className="text-2xl font-serif font-bold text-ink mb-8 text-center">
+        <span className="inline-block border-b-2 border-rust pb-2">
           이어서 읽기
         </span>
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {relatedPosts.map((post) => (
           <Link
             key={post.id}
             href={`/posts/${encodeURIComponent(post.slug)}`}
-            className="group block bg-paper border border-ink/10 rounded-sm overflow-hidden hover:border-rust/30 transition-colors"
+            className="group block bg-paper border border-ink/10 rounded-lg overflow-hidden hover:border-rust/50 hover:shadow-lg transition-all duration-300"
           >
-            <div className="flex gap-3 p-3">
-              {/* 썸네일 */}
-              <div className="relative w-20 h-20 flex-shrink-0 rounded-sm overflow-hidden bg-cream">
-                {post.cover_image ? (
-                  <Image
-                    src={post.cover_image}
-                    alt={post.cover_image_alt || post.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    sizes="80px"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted">
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
-
-              {/* 텍스트 정보 */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-serif font-bold text-ink text-sm leading-snug line-clamp-2 group-hover:text-rust transition-colors">
-                  {post.title}
-                </h3>
-                {post.excerpt && (
-                  <p className="text-xs text-muted mt-1 line-clamp-2 font-sans">
-                    {post.excerpt}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 mt-2 text-xs text-muted/80 font-sans">
-                  <span>{post.view_count.toLocaleString()}회 읽음</span>
+            {/* 썸네일 */}
+            <div className="relative w-full h-48 flex-shrink-0 overflow-hidden bg-cream">
+              {post.cover_image ? (
+                <Image
+                  src={post.cover_image}
+                  alt={post.cover_image_alt || post.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted">
+                  <svg
+                    className="w-12 h-12"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
                 </div>
+              )}
+            </div>
+
+            {/* 텍스트 정보 */}
+            <div className="p-5">
+              <h3 className="font-serif font-bold text-ink text-base leading-snug line-clamp-2 group-hover:text-rust transition-colors mb-2">
+                {post.title}
+              </h3>
+              {post.excerpt && (
+                <p className="text-sm text-muted line-clamp-3 font-sans leading-relaxed mb-3">
+                  {post.excerpt}
+                </p>
+              )}
+              <div className="flex items-center justify-between mt-3 text-xs text-muted/80 font-sans border-t border-rule/30 pt-3">
+                <span>{post.view_count.toLocaleString()}회 읽음</span>
+                <span className="text-rust/70 group-hover:text-rust transition-colors">
+                  자세히 보기 →
+                </span>
               </div>
             </div>
           </Link>
@@ -80,7 +81,7 @@ export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
       </div>
 
       {/* 더보기 버튼 */}
-      <div className="text-center mt-6 mb-8">
+      <div className="text-center mt-10 mb-8">
         <Link
           href="/posts"
           className="btn-outline"
