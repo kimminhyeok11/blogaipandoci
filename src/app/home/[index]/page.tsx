@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import dynamicImport from "next/dynamic";
 import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
+import fs from 'fs';
+import path from 'path';
 
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
@@ -9,8 +11,8 @@ const ClientHeader = dynamicImport(() => import("@/components/layout/ClientHeade
 const AdSense = dynamicImport(() => import("@/components/ads/AdSense").then(m => ({ default: m.AdSense })), { ssr: false });
 const SituationSearch = dynamicImport(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
 
-// SSR: 서버 사이드 렌더링 사용 (검색엔진 인덱싱을 위해)
-export const dynamic = 'force-dynamic';
+// ISR: 1시간마다 재생성 (빌드 시점에 정적 생성 + 주기적 재생성)
+export const revalidate = 3600;
 
 interface Post {
   id: string;
@@ -24,6 +26,7 @@ interface Post {
 }
 
 function getSupabase() {
+  // 빌드 시점에도 데이터를 가져올 수 있도록 직접 클라이언트 생성
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -37,40 +40,117 @@ function getSupabase() {
 }
 
 async function getPosts() {
-  const supabase = getSupabase();
-  if (!supabase) {
-    return { featuredPost: null, recentPosts: [] };
-  }
+  console.log("[BUILD DEBUG] getPosts called");
 
+  // 빌드 시점에 생성된 JSON 파일에서 데이터 읽기
   try {
-    const { data: popularPosts } = await supabase
-      .from("posts")
-      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email, role)")
-      .eq("published", true)
-      .not("published_at", "is", null)
-      .order("view_count", { ascending: false })
-      .limit(1);
+    const dataFilePath = path.join(process.cwd(), 'public', 'build-data.json');
+    const fileContent = fs.readFileSync(dataFilePath, 'utf-8');
+    const buildData = JSON.parse(fileContent);
 
-    const { data: latestPosts } = await supabase
-      .from("posts")
-      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email, role)")
-      .eq("published", true)
-      .not("published_at", "is", null)
-      .order("published_at", { ascending: false })
-      .limit(10);
+    console.log("[BUILD DEBUG] Data loaded from build-data.json");
+    console.log("[BUILD DEBUG] Featured post:", buildData.featuredPost?.title || 'None');
+    console.log("[BUILD DEBUG] Recent posts count:", buildData.recentPosts.length);
 
     return {
-      featuredPost: popularPosts?.[0] || null,
-      recentPosts: latestPosts || []
+      featuredPost: buildData.featuredPost,
+      recentPosts: buildData.recentPosts
     };
   } catch (err) {
-    console.error("Failed to fetch posts:", err);
-    return { featuredPost: null, recentPosts: [] };
+    console.error("[BUILD DEBUG] Failed to load build-data.json:", err);
+
+    // JSON 파일이 없으면 Supabase에서 직접 가져오기 (런타임 fallback)
+    const supabase = getSupabase();
+    if (!supabase) {
+      console.error("[BUILD DEBUG] Supabase client not available");
+      return { featuredPost: null, recentPosts: [] };
+    }
+
+    try {
+      const { data: popularPosts } = await supabase
+        .from("posts")
+        .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email, role)")
+        .eq("published", true)
+        .not("published_at", "is", null)
+        .order("view_count", { ascending: false })
+        .limit(1);
+
+      const { data: latestPosts } = await supabase
+        .from("posts")
+        .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email, role)")
+        .eq("published", true)
+        .not("published_at", "is", null)
+        .order("published_at", { ascending: false })
+        .limit(10);
+
+      return {
+        featuredPost: popularPosts?.[0] || null,
+        recentPosts: latestPosts || []
+      };
+    } catch (supabaseErr) {
+      console.error("[BUILD DEBUG] Failed to fetch from Supabase:", supabaseErr);
+      return { featuredPost: null, recentPosts: [] };
+    }
   }
 }
 
-export default async function HomePage() {
-  const { featuredPost, recentPosts } = await getPosts();
+export async function generateStaticParams() {
+  console.log("[BUILD DEBUG] generateStaticParams called");
+  console.log("[BUILD DEBUG] Environment check:", {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? "SET" : "NOT SET",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "SET" : "NOT SET",
+  });
+
+  // 빌드 시점에 데이터를 가져오기 위해 실제 쿼리 수행
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("[BUILD DEBUG] Supabase env not set in generateStaticParams");
+    return [{ index: 'index' }];
+  }
+
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const { data: posts } = await supabase
+      .from("posts")
+      .select("slug")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .limit(1);
+
+    console.log("[BUILD DEBUG] Posts fetched in generateStaticParams:", posts?.length);
+
+    // 실제 동적 파라미터 반환 (첫 번째 게시글의 slug 사용)
+    if (posts && posts.length > 0) {
+      return [{ index: posts[0].slug }];
+    }
+
+    // 게시글이 없으면 기본값 반환
+    return [{ index: 'index' }];
+  } catch (err) {
+    console.error("[BUILD DEBUG] Error in generateStaticParams:", err);
+    return [{ index: 'index' }];
+  }
+}
+
+// 페이지 컴포넌트를 동기 함수로 변경하여 빌드 시점에 호출되도록 함
+export default function HomePage({ params }: { params: { index: string } }) {
+  // 빌드 시점에 생성된 JSON 파일에서 데이터 읽기 (동기)
+  let buildData;
+  try {
+    const dataFilePath = path.join(process.cwd(), 'public', 'build-data.json');
+    const fileContent = fs.readFileSync(dataFilePath, 'utf-8');
+    buildData = JSON.parse(fileContent);
+    console.log("[BUILD DEBUG] Data loaded from build-data.json in sync function");
+  } catch (err) {
+    console.error("[BUILD DEBUG] Failed to load build-data.json:", err);
+    buildData = { featuredPost: null, recentPosts: [] };
+  }
+
+  const { featuredPost, recentPosts } = buildData;
 
   // BreadcrumbSchema 데이터
   const breadcrumbData = {

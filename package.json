@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "dotenv -e .env.local -- node scripts/build-data.js && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -29,6 +29,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
