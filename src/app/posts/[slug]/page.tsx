@@ -34,6 +34,30 @@ function getServerSupabase() {
   }
 }
 
+// 검색봇 크롤링 최적화: 발행된 게시글 목록을 정적으로 생성
+export async function generateStaticParams() {
+  const supabase = getServerSupabase();
+  if (!supabase) return [];
+
+  try {
+    const { data: posts, error } = await supabase
+      .from("posts")
+      .select("slug")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false })
+      .limit(200); // 최대 200개의 최신 게시글
+
+    if (error || !posts) return [];
+
+    return posts.map((post: { slug: string }) => ({
+      slug: post.slug,
+    }));
+  } catch (err) {
+    console.error("generateStaticParams error:", err);
+    return [];
+  }
+}
 
 interface PostPageProps {
   params: { slug: string };
