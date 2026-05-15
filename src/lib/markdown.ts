@@ -288,3 +288,58 @@ export function processMarkdown(text: string): string {
     return text;
   }
 }
+
+// TOC 아이템 인터페이스
+export interface TocItem {
+  id: string;
+  text: string;
+  level: number;
+}
+
+// 서버에서 HTML에서 TOC 추출 (정규식 사용)
+export function extractTocFromHtml(html: string): TocItem[] {
+  const toc: TocItem[] = [];
+  let counter = 0;
+  
+  // 정규식으로 h2, h3 태그 추출
+  const headingRegex = /<(h[23])[^>]*>([\s\S]*?)<\/\1>/g;
+  let match;
+  
+  while ((match = headingRegex.exec(html)) !== null) {
+    const tag = match[1];
+    const text = match[2].replace(/<[^>]*>/g, '').trim(); // HTML 태그 제거
+    const level = tag === 'h2' ? 2 : 3;
+    const id = `toc-heading-${counter++}`;
+    
+    if (text.length > 0) {
+      toc.push({ id, text, level });
+    }
+  }
+  
+  return toc;
+}
+
+// 서버에서 HTML에 heading ID 추가
+export function addHeadingIds(html: string): string {
+  let counter = 0;
+  return html.replace(/<(h[23])>/g, (match, tag) => {
+    return `<${tag} id="toc-heading-${counter++}">`;
+  });
+}
+
+// 서버에서 HTML에서 이미지 추출 (정규식 사용)
+export function extractImagesFromHtml(html: string): Array<{ src: string; alt?: string }> {
+  const images: Array<{ src: string; alt?: string }> = [];
+  const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*>/g;
+  let match;
+  
+  while ((match = imgRegex.exec(html)) !== null) {
+    const src = match[1];
+    const alt = match[2] || '';
+    if (src) {
+      images.push({ src, alt: alt || undefined });
+    }
+  }
+  
+  return images;
+}

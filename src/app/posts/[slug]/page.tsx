@@ -13,8 +13,8 @@ import { ProcedureProgressBar } from "@/components/posts/ProcedureProgressBar";
 import { ProcedureMeta } from "@/components/posts/ProcedureMeta";
 import { RelatedPosts } from "@/components/posts/RelatedPosts";
 import { getThumbnailUrl } from "@/utils/image";
+import { PostContent } from "@/components/posts/PostContent";
 
-const PostContent = dynamicImport(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })));
 const TocSidebar = dynamicImport(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
 const PostActions = dynamicImport(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
 const ShareButtons = dynamicImport(() => import("@/components/posts/ShareButtons").then(m => ({ default: m.ShareButtons })), { ssr: false });
