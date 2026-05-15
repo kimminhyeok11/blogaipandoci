@@ -4,6 +4,8 @@ import { StickyNav } from "@/components/layout/StickyNav";
 import { supabase } from "@/lib/supabase";
 import type { Metadata } from "next";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+
 // ISR: 1시간마다 재생성
 export const revalidate = 3600;
 
@@ -54,8 +56,63 @@ async function getTags(): Promise<TagData[]> {
 export default async function TagsPage() {
   const tags = await getTags();
 
+  // BreadcrumbSchema 데이터
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "태그",
+        item: `${SITE_URL}/tags`,
+      },
+    ],
+  };
+
+  // CollectionPageSchema 데이터
+  const collectionData = tags.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "모든 태그",
+    description: "法 BLOG의 모든 태그 목록",
+    url: `${SITE_URL}/tags`,
+    isPartOf: {
+      "@type": "WebSite",
+      name: "法 BLOG",
+      url: SITE_URL,
+    },
+    itemListElement: tags.map((tag, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: `#${tag.name}`,
+      url: `${SITE_URL}/tags/${encodeURIComponent(tag.name)}`,
+      description: `${tag.count}개의 글`,
+    })),
+  } : null;
+
   return (
     <div className="min-h-screen bg-paper">
+      {/* JSON-LD 스크립트 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        suppressHydrationWarning
+      />
+      {collectionData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionData) }}
+          suppressHydrationWarning
+        />
+      )}
+
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>
         <Link href="/" className="masthead-title">

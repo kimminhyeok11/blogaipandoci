@@ -3,7 +3,6 @@ import { Layers } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getServiceSupabase } from "@/lib/supabase";
 import { StickyNav } from "@/components/layout/StickyNav";
-import { CollectionPageSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import type { Metadata } from "next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
@@ -100,24 +99,67 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
   const posts = await getPostsByCaseType(caseType);
   const style = STAGE_LABELS[caseType] || { color: "text-ink", bg: "bg-cream" };
 
+  // BreadcrumbSchema 데이터
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "사건 유형별 안내",
+        item: `${SITE_URL}/cases`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: `${caseType} 절차`,
+        item: `${SITE_URL}/cases/${encodeURIComponent(caseType)}`,
+      },
+    ],
+  };
+
+  // CollectionPageSchema 데이터
+  const collectionData = posts.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `${caseType} 절차 안내`,
+    description: `${caseType} 관련 실제 절차 경험 글 ${posts.length}개`,
+    url: `${SITE_URL}/cases/${encodeURIComponent(caseType)}`,
+    isPartOf: {
+      "@type": "WebSite",
+      name: "法 BLOG",
+      url: SITE_URL,
+    },
+    itemListElement: posts.map((p, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: p.title,
+      url: `${SITE_URL}/posts/${encodeURIComponent(p.slug)}`,
+      description: p.excerpt || undefined,
+      datePublished: p.published_at || undefined,
+    })),
+  } : null;
+
   return (
     <div className="min-h-screen bg-paper">
-      <BreadcrumbSchema
-        items={[
-          { name: "홈", url: SITE_URL },
-          { name: "사건 유형별 안내", url: `${SITE_URL}/cases` },
-          { name: `${caseType} 절차`, url: `${SITE_URL}/cases/${encodeURIComponent(caseType)}` },
-        ]}
+      {/* JSON-LD 스크립트 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        suppressHydrationWarning
       />
-      {posts.length > 0 && (
-        <CollectionPageSchema
-          name={`${caseType} 절차 안내`}
-          description={`${caseType} 관련 실제 절차 경험 글 ${posts.length}개`}
-          url={`${SITE_URL}/cases/${encodeURIComponent(caseType)}`}
-          items={posts.map((p) => ({
-            name: p.title,
-            url: `${SITE_URL}/posts/${encodeURIComponent(p.slug)}`,
-          }))}
+      {collectionData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionData) }}
+          suppressHydrationWarning
         />
       )}
 
