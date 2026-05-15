@@ -21,38 +21,9 @@ const CommentsSection = dynamicImport(() => import("@/components/comments/Commen
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
-// SSG + ISR (빌드 시점에 정적 생성, 1시간마다 재검증)
+// 런타임 SSR + 캐싱 최적화
+export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
-
-// 빌드 시점에 모든 게시글 slug를 가져와서 정적 페이지 생성
-export async function generateStaticParams() {
-  // 빌드 시점에는 anonSupabase 직접 사용
-  if (!anonSupabase) {
-    console.error("[generateStaticParams] anonSupabase not available");
-    return [];
-  }
-
-  try {
-    const { data: posts } = await anonSupabase
-      .from("posts")
-      .select("slug")
-      .eq("published", true)
-      .not("published_at", "is", null);
-
-    if (!posts || posts.length === 0) {
-      console.log("[generateStaticParams] No published posts found");
-      return [];
-    }
-
-    console.log(`[generateStaticParams] Found ${posts.length} published posts`);
-    return posts.map((post: { slug: string }) => ({
-      slug: post.slug,
-    }));
-  } catch (error) {
-    console.error("[generateStaticParams] Error fetching posts:", error);
-    return [];
-  }
-}
 
 // 서버용 Supabase 클라이언트 (빌드 시점에도 데이터 가져오기 위해 anonSupabase 사용)
 function getServerSupabase() {
