@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       .eq("post_id", post_id)
       .order("revision_number", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     const nextRevisionNumber = (latestRevision?.revision_number ?? 0) + 1;
 
