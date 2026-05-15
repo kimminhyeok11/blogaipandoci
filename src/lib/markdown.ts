@@ -17,7 +17,7 @@ const renderer = {
   // token.text = alt text (접근성용, 화면에 표시 안됨)
   // token.title = 캡션/설명 (화면에 figcaption으로 표시)
   image(token: { href: string; title?: string | null; text: string }) {
-    return `<figure class="my-6 max-w-2xl mx-auto"><img src="${token.href}" alt="${token.text}" class="w-full h-auto rounded shadow-sm" loading="lazy"${token.title ? ` title="${token.title}"` : ''} />${token.title ? `<figcaption class="text-center text-xs text-muted mt-2 font-sans">${token.title}</figcaption>` : ''}</figure>`;
+    return `<figure class="my-6 max-w-2xl mx-auto"><img src="${token.href}" alt="${token.text}" class="w-full h-auto rounded shadow-sm" loading="lazy" decoding="async"${token.title ? ` title="${token.title}"` : ''} />${token.title ? `<figcaption class="text-center text-xs text-muted mt-2 font-sans">${token.title}</figcaption>` : ''}</figure>`;
   },
 
   // 코드 블록 스타일링
