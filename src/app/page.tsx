@@ -9,8 +9,9 @@ const ClientHeader = dynamicImport(() => import("@/components/layout/ClientHeade
 const AdSense = dynamicImport(() => import("@/components/ads/AdSense").then(m => ({ default: m.AdSense })), { ssr: false });
 const SituationSearch = dynamicImport(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
 
-// 런타임에 데이터 가져오기 (SSR)
+// 런타임 SSR + 캐싱 최적화 (빌드 시점 환경변수 제약으로 ISR 불가)
 export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 interface Post {
   id: string;
@@ -24,7 +25,17 @@ interface Post {
 }
 
 function getSupabase() {
-  try { return getServiceSupabase(); } catch { return anonSupabase; }
+  // 빌드 시점에도 데이터를 가져올 수 있도록 직접 클라이언트 생성
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("Supabase environment variables not set");
+    return null;
+  }
+
+  const { createClient } = require('@supabase/supabase-js');
+  return createClient(supabaseUrl, supabaseAnonKey);
 }
 
 async function getPosts() {

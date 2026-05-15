@@ -1,10 +1,10 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
-import { getServiceSupabase } from "@/lib/supabase";
+import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
 import type { Post } from "@/types";
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
@@ -12,25 +12,23 @@ import { TrustBadge } from "@/components/posts/TrustBadge";
 import { ProcedureProgressBar } from "@/components/posts/ProcedureProgressBar";
 import { ProcedureMeta } from "@/components/posts/ProcedureMeta";
 
-const PostContent = dynamic(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })));
-const TocSidebar = dynamic(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
-const PostActions = dynamic(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
-const ShareButtons = dynamic(() => import("@/components/posts/ShareButtons").then(m => ({ default: m.ShareButtons })), { ssr: false });
-const RelatedPosts = dynamic(() => import("@/components/posts/RelatedPosts").then(m => ({ default: m.RelatedPosts })), { ssr: false });
-const CommentsSection = dynamic(() => import("@/components/comments/CommentsSection").then(m => ({ default: m.CommentsSection })), { ssr: false });
+const PostContent = dynamicImport(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })));
+const TocSidebar = dynamicImport(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
+const PostActions = dynamicImport(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
+const ShareButtons = dynamicImport(() => import("@/components/posts/ShareButtons").then(m => ({ default: m.ShareButtons })), { ssr: false });
+const RelatedPosts = dynamicImport(() => import("@/components/posts/RelatedPosts").then(m => ({ default: m.RelatedPosts })), { ssr: false });
+const CommentsSection = dynamicImport(() => import("@/components/comments/CommentsSection").then(m => ({ default: m.CommentsSection })), { ssr: false });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
-// ISR: 1분마다 재생성 (OG 이미지 등 빠른 반영)
-export const revalidate = 60;
+// 런타임 SSR + 캐싱 최적화 (빌드 시점 환경변수 제약으로 ISR 불가)
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
-// 서버용 Supabase 클라이언트 (service role - RLS 우회, users.nickname 조회 가능)
+// 서버용 Supabase 클라이언트 (빌드 시점에도 데이터 가져오기 위해 anonSupabase 사용)
 function getServerSupabase() {
-  try {
-    return getServiceSupabase();
-  } catch {
-    return null;
-  }
+  // 빌드 시점에도 데이터를 가져올 수 있도록 anonSupabase 우선 사용
+  return anonSupabase;
 }
 
 // 검색봇 크롤링 최적화: 발행된 게시글 목록을 정적으로 생성
