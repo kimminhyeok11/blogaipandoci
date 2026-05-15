@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
 
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
-const ClientHeader = dynamic(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
-const AdSense = dynamic(() => import("@/components/ads/AdSense").then(m => ({ default: m.AdSense })), { ssr: false });
-const SituationSearch = dynamic(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
+const ClientHeader = dynamicImport(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
+const AdSense = dynamicImport(() => import("@/components/ads/AdSense").then(m => ({ default: m.AdSense })), { ssr: false });
+const SituationSearch = dynamicImport(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
 
-// ISR: 1시간마다 재생성
-export const revalidate = 3600;
+// 런타임에 데이터 가져오기 (SSR)
+export const dynamic = 'force-dynamic';
 
 interface Post {
   id: string;
@@ -29,6 +29,11 @@ function getSupabase() {
 
 async function getPosts() {
   const supabase = getSupabase();
+  if (!supabase) {
+    console.error("Supabase client not available");
+    return { featuredPost: null, recentPosts: [] };
+  }
+
   try {
     // Popular posts (by view count)
     const { data: popularPosts } = await supabase
