@@ -147,7 +147,7 @@ ${postXml}
   return new Response(sitemap, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=60, s-maxage=60", // 도메인 전환 기간 동안 짧게 캐시
+      "Cache-Control": "public, max-age=3600, s-maxage=3600", // 1시간 캐시 (검색봇 효율성)
     },
   });
 }
