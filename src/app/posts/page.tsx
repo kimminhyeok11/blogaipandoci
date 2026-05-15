@@ -34,8 +34,9 @@ export async function generateMetadata({ searchParams }: { searchParams: { page?
   };
 }
 
-// searchParams 사용으로 동적 렌더링 (ISR 불가)
-export const dynamic = "force-dynamic";
+// 페이지네이션이 있어서 searchParams 기반 동적 렌더링
+// 하지만 초기 로드는 캐시되고, 다른 페이지 요청 시만 재생성
+export const revalidate = 3600; // 1시간 캐시 (색인 최적화)
 
 // 서버용 Supabase 클라이언트 (service role - RLS 우회, users.nickname 조회 가능)
 function getServerSupabase() {
