@@ -36,17 +36,40 @@ export async function generateStaticParams() {
     }
     const { createClient } = require('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    // 빌드 시점에 전체 게시글 데이터 가져오기 (content 포함)
     const { data: posts } = await supabase
       .from("posts")
-      .select("slug")
+      .select("id, user_id, title, slug, content, excerpt, cover_image, cover_image_alt, published, featured, view_count, meta_title, meta_description, created_at, updated_at, published_at, user:users(nickname, email, role)")
       .eq("published", true)
       .not("published_at", "is", null)
       .limit(500);
+      
     if (!posts || posts.length === 0) {
       console.log("[generateStaticParams] No published posts found");
       return [];
     }
-    console.log(`[generateStaticParams] Found ${posts.length} posts for static generation`);
+    
+    console.log(`[generateStaticParams] Found ${posts.length} posts for static generation with full content`);
+    
+    // 빌드 시점에 전체 데이터를 캐시에 저장
+    const buildData = {
+      posts: posts,
+      generatedAt: new Date().toISOString()
+    };
+    
+    const fs = require('fs');
+    const path = require('path');
+    const publicDir = path.join(process.cwd(), 'public');
+    const dataFile = path.join(publicDir, 'posts-build-data.json');
+    
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+    
+    fs.writeFileSync(dataFile, JSON.stringify(buildData, null, 2));
+    console.log(`[generateStaticParams] Posts data saved to ${dataFile}`);
+    
     return posts.map((post: { slug: string }) => ({
       slug: post.slug,
     }));
@@ -80,41 +103,57 @@ function isInvalidSlugPattern(slug: string): boolean {
 }
 
 async function getPost(slug: string): Promise<Post | null> {
+  console.log('[getPost] Fetching post with slug:', slug);
+  
+  // 빌드 시점에 저장된 데이터 먼저 확인
+  const fs = require('fs');
+  const path = require('path');
+  const dataFile = path.join(process.cwd(), 'public', 'posts-build-data.json');
+  
+  try {
+    if (fs.existsSync(dataFile)) {
+      const fileContent = fs.readFileSync(dataFile, 'utf-8');
+      const buildData = JSON.parse(fileContent);
+      const post = buildData.posts?.find((p: Post) => p.slug === slug);
+      
+      if (post) {
+        console.log('[getPost] Post found in build data');
+        return post;
+      }
+    }
+  } catch (err) {
+    console.error('[getPost] Error reading build data:', err);
+  }
+  
+  // 빌드 데이터에 없으면 Supabase에서 가져오기
   const supabase = getServerSupabase();
   if (!supabase) {
     console.error('[getPost] Supabase client not available');
     return null;
   }
 
-  console.log('[getPost] Fetching post with slug:', slug);
+  console.log('[getPost] Fetching from Supabase');
 
   const { data, error } = await supabase
     .from("posts")
     .select(`
       id,
+      user_id,
       title,
       slug,
-      excerpt,
       content,
-      meta_title,
-      meta_description,
+      excerpt,
       cover_image,
       cover_image_alt,
       published,
-      published_at,
+      featured,
+      view_count,
+      meta_title,
+      meta_description,
       created_at,
       updated_at,
-      view_count,
-      case_type,
-      current_stage,
-      next_stage,
-      estimated_duration,
-      expert_level,
-      involved_agencies,
-      common_mistakes,
-      tags,
-      user_id,
-      user:users(nickname, avatar_url, email, role)
+      published_at,
+      user:users(nickname, email, role)
     `)
     .eq("slug", slug)
     .eq("published", true)
