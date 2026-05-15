@@ -2,6 +2,11 @@ const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
 
+// 환경변수가 없을 때만 .env.local 로드 (로컬 개발용)
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  require('dotenv').config({ path: '.env.local' });
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
