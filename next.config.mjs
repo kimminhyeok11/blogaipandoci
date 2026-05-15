@@ -65,11 +65,11 @@ const nextConfig = {
           { key: 'Cache-Control', value: 'public, max-age=86400' }, // OG 이미지는 1일
         ],
       },
-      // HTML 페이지 - 즉시 재검증 (콘텐츠 freshness)
+      // HTML 페이지 - ISR 캐싱 유지 (60초 후 재검증)
       {
         source: '/:path*',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+          { key: 'Cache-Control', value: 'public, max-age=60, s-maxage=60, stale-while-revalidate=3600' },
         ],
       },
     ];
