@@ -222,6 +222,27 @@ function postprocessEmbeds(html: string): string {
   return html;
 }
 
+// FAQ 블록 처리 전처리
+function preprocessFAQBlocks(text: string): string {
+  // :::faq ... ::: 패턴을 HTML로 변환
+  return text.replace(/:::faq\n([\s\S]*?)\n:::/g, (match, content) => {
+    // Q: ... A: ... 형식을 파싱
+    const faqItems = content.split(/\n(?=Q:)/).map((item: string) => {
+      const questionMatch = item.match(/^Q:\s*(.*)/);
+      const answerMatch = item.match(/A:\s*(.*)/);
+      if (questionMatch && answerMatch) {
+        return `<div class="faq-item">
+          <div class="faq-question">${questionMatch[1]}</div>
+          <div class="faq-answer">${answerMatch[1]}</div>
+        </div>`;
+      }
+      return '';
+    }).filter(Boolean).join('');
+    
+    return `<div class="faq-accordion">${faqItems}</div>`;
+  });
+}
+
 // TL;DR 블록 처리 전처리
 function preprocessTldrBlocks(text: string): string {
   // :::tldr ... ::: 패턴을 HTML로 변환
@@ -240,6 +261,8 @@ export function processMarkdown(text: string): string {
     preprocessed = preprocessBullets(preprocessed);
     // 전처리: 리스트 항목 사이 빈 줄 정리 (연속 리스트 인식)
     preprocessed = preprocessListGaps(preprocessed);
+    // 전처리: FAQ 블록 처리
+    preprocessed = preprocessFAQBlocks(preprocessed);
     // 전처리: TL;DR 블록 처리
     preprocessed = preprocessTldrBlocks(preprocessed);
     // marked v18 - 동기 파싱

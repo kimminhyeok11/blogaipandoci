@@ -566,6 +566,46 @@ body {
   margin-bottom: 0;
 }
 
+/* FAQ Accordion 스타일 */
+.prose-journal .faq-accordion {
+  margin: 2.5rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--cream);
+}
+
+.prose-journal .faq-item {
+  border-bottom: 1px solid var(--rule);
+}
+
+.prose-journal .faq-item:last-child {
+  border-bottom: none;
+}
+
+.prose-journal .faq-question {
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  background: var(--cream);
+  transition: background 0.2s;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.prose-journal .faq-question:hover {
+  background: rgba(237, 231, 215, 0.5);
+}
+
+.prose-journal .faq-answer {
+  padding: 1rem 1.5rem;
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.7;
+  font-size: 0.9375rem;
+}
+
 /* 모바일 최적화 */
 @layer utilities {
   .touch-manipulation {
