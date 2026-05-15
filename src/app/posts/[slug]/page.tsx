@@ -11,12 +11,12 @@ import { StickyNav } from "@/components/layout/StickyNav";
 import { TrustBadge } from "@/components/posts/TrustBadge";
 import { ProcedureProgressBar } from "@/components/posts/ProcedureProgressBar";
 import { ProcedureMeta } from "@/components/posts/ProcedureMeta";
+import { RelatedPosts } from "@/components/posts/RelatedPosts";
 
 const PostContent = dynamicImport(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })));
 const TocSidebar = dynamicImport(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
 const PostActions = dynamicImport(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
 const ShareButtons = dynamicImport(() => import("@/components/posts/ShareButtons").then(m => ({ default: m.ShareButtons })), { ssr: false });
-const RelatedPosts = dynamicImport(() => import("@/components/posts/RelatedPosts").then(m => ({ default: m.RelatedPosts })));
 const CommentsSection = dynamicImport(() => import("@/components/comments/CommentsSection").then(m => ({ default: m.CommentsSection })), { ssr: false });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
@@ -82,7 +82,32 @@ async function getPost(slug: string): Promise<Post | null> {
 
   const { data, error } = await supabase
     .from("posts")
-    .select("*, user:users(nickname, avatar_url, email, role)")
+    .select(`
+      id,
+      title,
+      slug,
+      excerpt,
+      content,
+      meta_title,
+      meta_description,
+      cover_image,
+      cover_image_alt,
+      published,
+      published_at,
+      created_at,
+      updated_at,
+      view_count,
+      case_type,
+      current_stage,
+      next_stage,
+      estimated_duration,
+      expert_level,
+      involved_agencies,
+      common_mistakes,
+      tags,
+      user_id,
+      user:users(nickname, avatar_url, email, role)
+    `)
     .eq("slug", decodedSlug)
     .eq("published", true)
     .not("published_at", "is", null)
@@ -107,7 +132,32 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
     // 유사한 slug 패턴을 가진 최근 게시글 검색
     const { data, error } = await supabase
       .from('posts')
-      .select('*, user:users(nickname, avatar_url, email, role)')
+      .select(`
+        id,
+        title,
+        slug,
+        excerpt,
+        content,
+        meta_title,
+        meta_description,
+        cover_image,
+        cover_image_alt,
+        published,
+        published_at,
+        created_at,
+        updated_at,
+        view_count,
+        case_type,
+        current_stage,
+        next_stage,
+        estimated_duration,
+        expert_level,
+        involved_agencies,
+        common_mistakes,
+        tags,
+        user_id,
+        user:users(nickname, avatar_url, email, role)
+      `)
       .eq('published', true)
       .not('published_at', 'is', null)
       .ilike('slug', `%${timestampMatch[1]}`)
@@ -137,7 +187,18 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
   if (tagIds.length > 0) {
     const { data: taggedPosts } = await supabase
       .from("posts")
-      .select("*, user:users(nickname), tags!inner(*)")
+      .select(`
+        id,
+        title,
+        slug,
+        excerpt,
+        cover_image,
+        cover_image_alt,
+        published_at,
+        view_count,
+        user:users(nickname),
+        tags!inner(id, name, slug)
+      `)
       .eq("published", true)
       .not("published_at", "is", null)
       .in("tags.id", tagIds)
@@ -157,7 +218,18 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
 
     const { data: recentPosts } = await supabase
       .from("posts")
-      .select("*, user:users(nickname), tags(*)")
+      .select(`
+        id,
+        title,
+        slug,
+        excerpt,
+        cover_image,
+        cover_image_alt,
+        published_at,
+        view_count,
+        user:users(nickname),
+        tags(id, name, slug)
+      `)
       .eq("published", true)
       .not("published_at", "is", null)
       .not("id", "in", `(${excludeIds.join(",")})`)

@@ -49,7 +49,7 @@ export const generateSlug = (text: string): string => {
     .replace(/-+/g, '-')
     // 앞뒤 하이픈 제거
     .replace(/^-+|-+$/g, '')
-    .substring(0, 20);
+    .substring(0, 60);
   
   // slug가 비어있거나 너무 짧은 경우 (한글만 있거나 특수문자만 제거된 경우)
   if (slug.length < 2) {
@@ -59,7 +59,7 @@ export const generateSlug = (text: string): string => {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-+|-+$/g, '')
-      .substring(0, 20);
+      .substring(0, 60);
     
     if (fallback.length >= 2) {
       return fallback;
