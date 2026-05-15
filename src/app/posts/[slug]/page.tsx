@@ -294,7 +294,8 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
 }
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
-  const post = await getPost(params.slug);
+  const decodedSlug = decodeURIComponent(params.slug);
+  const post = await getPost(decodedSlug);
   const postUrl = `${SITE_URL}/posts/${params.slug}`;
 
   if (!post) {
