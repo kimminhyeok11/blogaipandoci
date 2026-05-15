@@ -4,7 +4,6 @@ import { getServiceSupabase } from "@/lib/supabase";
 import type { Post } from "@/types";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ItemListSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 
 const PAGE_SIZE = 20;
 
@@ -76,24 +75,55 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
   const { posts, total } = await getPosts(page);
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
+  // BreadcrumbSchema 데이터
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "전체 글",
+        item: `${SITE_URL}/posts`,
+      },
+    ],
+  };
+
+  // ItemListSchema 데이터
+  const itemListData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "法 BLOG 전체 글 목록",
+    description: "법률, 정책, 사회 이슈 심층 분석 글 전체 목록",
+    itemListElement: posts.map((p, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: p.title,
+      url: `${SITE_URL}/posts/${encodeURIComponent(p.slug)}`,
+      description: p.excerpt || undefined,
+      datePublished: p.published_at || undefined,
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-paper">
-      <BreadcrumbSchema
-        items={[
-          { name: "홈", url: SITE_URL },
-          { name: "전체 글", url: `${SITE_URL}/posts` },
-        ]}
+      {/* JSON-LD 스크립트 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        suppressHydrationWarning
       />
       {posts.length > 0 && (
-        <ItemListSchema
-          name="法 BLOG 전체 글 목록"
-          description="법률, 정책, 사회 이슈 심층 분석 글 전체 목록"
-          items={posts.map((p) => ({
-            name: p.title,
-            url: `${SITE_URL}/posts/${encodeURIComponent(p.slug)}`,
-            description: p.excerpt || undefined,
-            datePublished: p.published_at || undefined,
-          }))}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListData) }}
+          suppressHydrationWarning
         />
       )}
       {/* Masthead Header */}
