@@ -23,7 +23,6 @@ const CommentsSection = dynamicImport(() => import("@/components/comments/Commen
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 // ISR: 1시간마다 재생성 (빌드 시점에 정적 생성 + 주기적 재생성)
-export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
 // 빌드 시점에 정적 생성할 페이지 목록 생성
