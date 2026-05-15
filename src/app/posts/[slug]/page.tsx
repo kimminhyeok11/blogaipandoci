@@ -12,6 +12,7 @@ import { TrustBadge } from "@/components/posts/TrustBadge";
 import { ProcedureProgressBar } from "@/components/posts/ProcedureProgressBar";
 import { ProcedureMeta } from "@/components/posts/ProcedureMeta";
 import { RelatedPosts } from "@/components/posts/RelatedPosts";
+import { getThumbnailUrl } from "@/utils/image";
 
 const PostContent = dynamicImport(() => import("@/components/posts/PostContent").then(m => ({ default: m.PostContent })));
 const TocSidebar = dynamicImport(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
@@ -315,9 +316,10 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
   // OG 이미지 우선순위: cover_image → 본문 첫 이미지 → 동적 OG
   const contentFirstImage = post.content?.match(/!\[.*?\]\((https?:\/\/[^\s)"]+)/)?.[1] || null;
+  const coverThumbnail = getThumbnailUrl(post.cover_image, { width: 1200, height: 630, quality: 85 });
   const ogImage = post.cover_image || contentFirstImage
     ? {
-        url: (post.cover_image || contentFirstImage) as string,
+        url: (coverThumbnail || post.cover_image || contentFirstImage) as string,
         width: 1200,
         height: 630,
         alt: post.cover_image_alt || post.title,

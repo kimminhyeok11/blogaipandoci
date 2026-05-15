@@ -74,6 +74,8 @@ function WritePageContent() {
   const [preview, setPreview] = useState(false);
   const [procedureMeta, setProcedureMeta] = useState({ ...EMPTY_PROCEDURE });
   const [showProcedure, setShowProcedure] = useState(false);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [coverImageAlt, setCoverImageAlt] = useState<string | null>(null);
 
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
@@ -215,6 +217,8 @@ function WritePageContent() {
         setTitle(post.title);
         setContent(post.content);
         setExcerpt(post.excerpt || "");
+        setCoverImage(post.cover_image || null);
+        setCoverImageAlt(post.cover_image_alt || null);
 
         // 기존 절차 메타 불러오기 (7개 필드 중 하나라도 값이 있으면 로드)
         const hasProcedureMeta =
@@ -299,6 +303,15 @@ function WritePageContent() {
       throw new Error("Image upload failed");
     }
   }, [showToast, session?.access_token]);
+
+  // 이미지 삽입 시 cover_image, cover_image_alt 업데이트
+  const handleImageInsert = useCallback((url: string, alt: string) => {
+    // 첫번째 이미지만 cover_image로 저장
+    if (!coverImage) {
+      setCoverImage(url);
+      setCoverImageAlt(alt);
+    }
+  }, [coverImage]);
 
   const handleSubmit = async (published: boolean = false) => {
     // 유효성 검사
@@ -394,6 +407,8 @@ function WritePageContent() {
             content: processedContent,
             excerpt: finalExcerpt,
             published,
+            cover_image: coverImage || undefined,
+            cover_image_alt: coverImageAlt || undefined,
             ...procedureFields,
           }),
         });
@@ -452,6 +467,8 @@ function WritePageContent() {
             content: processedContent,
             excerpt: finalExcerpt,
             published,
+            cover_image: coverImage || null,
+            cover_image_alt: coverImageAlt || null,
             case_type: procedureMeta.case_type || null,
             current_stage: procedureMeta.current_stage || null,
             next_stage: procedureMeta.next_stage || null,
@@ -736,6 +753,7 @@ function WritePageContent() {
             setContent={setContent}
             preview={preview}
             onImageUpload={handleImageUpload}
+            onImageInsert={handleImageInsert}
           />
 
           {/* 하단 고정 글자수 바 */}

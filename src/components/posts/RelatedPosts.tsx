@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Post } from "@/types";
+import { getThumbnailUrl } from "@/utils/image";
 
 interface RelatedPostsProps {
   posts: Post[];
@@ -34,7 +35,7 @@ export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
             <div className="relative w-full h-48 flex-shrink-0 overflow-hidden bg-cream">
               {post.cover_image ? (
                 <Image
-                  src={post.cover_image}
+                  src={getThumbnailUrl(post.cover_image, { width: 400, height: 300 }) || post.cover_image}
                   alt={post.cover_image_alt || post.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"

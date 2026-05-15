@@ -23,6 +23,7 @@ interface MarkdownEditorProps {
   placeholder?: string;
   minHeight?: string;
   onImageUpload?: (file: File) => Promise<string>;
+  onImageInsert?: (url: string, alt: string) => void;
   preview?: boolean;
   className?: string;
 }
@@ -33,6 +34,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   placeholder = "마크다운으로 글을 작성하세요...",
   minHeight = "400px",
   onImageUpload,
+  onImageInsert,
   preview = false,
   className = "",
 }: MarkdownEditorProps, ref) {
@@ -403,23 +405,28 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     const link = imageLink.trim();
 
     // 캡션을 title 속성으로 포함
-    let markdown = caption 
-      ? `![${alt}](${imageUrl} "${caption}")` 
+    let markdown = caption
+      ? `![${alt}](${imageUrl} "${caption}")`
       : `![${alt}](${imageUrl})`;
-    
+
     if (link) {
       markdown = `[${markdown}](${link})`;
     }
 
     insertText(markdown, '\n\n');
-    
+
+    // 부모 컴포넌트에 cover_image, cover_image_alt 업데이트 알림
+    if (onImageInsert) {
+      onImageInsert(imageUrl, alt);
+    }
+
     setShowImageModal(false);
     setPendingImageFile(null);
     setImageUrl("");
     setImageAlt("");
     setImageCaption("");
     setImageLink("");
-  }, [imageUrl, imageAlt, imageCaption, imageLink, insertText]);
+  }, [imageUrl, imageAlt, imageCaption, imageLink, insertText, onImageInsert]);
 
   // 툴바용 메서드 노출
   useImperativeHandle(ref, () => ({

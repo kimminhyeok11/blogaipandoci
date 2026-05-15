@@ -13,10 +13,11 @@ interface WriteEditorProps {
   setContent: (value: string) => void;
   preview: boolean;
   onImageUpload: (file: File) => Promise<string>;
+  onImageInsert?: (url: string, alt: string) => void;
 }
 
 export const WriteEditor = forwardRef<MarkdownEditorRef, WriteEditorProps>(
-  function WriteEditor({ content, setContent, preview, onImageUpload }, ref) {
+  function WriteEditor({ content, setContent, preview, onImageUpload, onImageInsert }, ref) {
     const [showShortcuts, setShowShortcuts] = useState(false);
     const [showMoreTools, setShowMoreTools] = useState(false);
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -74,6 +75,7 @@ export const WriteEditor = forwardRef<MarkdownEditorRef, WriteEditorProps>(
             preview={preview}
             placeholder="마크다운으로 글을 작성하세요..."
             onImageUpload={onImageUpload}
+            onImageInsert={onImageInsert}
             className="min-h-[calc(100vh-280px)] sm:min-h-[calc(100vh-240px)]"
           />
         </div>

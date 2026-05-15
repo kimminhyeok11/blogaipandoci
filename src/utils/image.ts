@@ -80,3 +80,30 @@ export const truncateText = (text: string, maxLength: number): string => {
 export const stripHtml = (html: string): string => {
   return html.replace(/<[^>]*>/g, '');
 };
+
+// 썸네일 URL 생성 (Supabase Storage 이미지 변환)
+export const getThumbnailUrl = (
+  imageUrl: string | null | undefined,
+  options: { width?: number; height?: number; quality?: number } = {}
+): string | null => {
+  if (!imageUrl) return null;
+
+  const { width = 400, height = 300, quality = 80 } = options;
+
+  try {
+    const url = new URL(imageUrl);
+
+    // Supabase Storage URL인 경우 썸네일 파라미터 추가
+    if (url.hostname.includes('supabase.co') && url.pathname.includes('/storage/v1/object/public/')) {
+      url.searchParams.set('width', width.toString());
+      url.searchParams.set('height', height.toString());
+      url.searchParams.set('quality', quality.toString());
+      url.searchParams.set('resize', 'cover');
+    }
+
+    return url.toString();
+  } catch {
+    // URL 파싱 실패 시 원본 반환
+    return imageUrl;
+  }
+};
