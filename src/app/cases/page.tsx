@@ -3,7 +3,6 @@ import { Layers } from "lucide-react";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { getServiceSupabase } from "@/lib/supabase";
 import type { Metadata } from "next";
-import { BreadcrumbSchema, CollectionPageSchema } from "@/components/seo/StructuredData";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
@@ -79,23 +78,59 @@ export default async function CasesPage() {
     count: caseCounts.find((c) => c.case_type === key)?.count || 0,
   }));
 
+  // BreadcrumbSchema 데이터
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "사건 유형별 안내",
+        item: `${SITE_URL}/cases`,
+      },
+    ],
+  };
+
+  // CollectionPageSchema 데이터
+  const collectionData = caseCounts.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "사건 유형별 절차 안내",
+    description: "사건 유형별로 정리된 법률 절차 경험 글 모음",
+    url: `${SITE_URL}/cases`,
+    isPartOf: {
+      "@type": "WebSite",
+      name: "法 BLOG",
+      url: SITE_URL,
+    },
+    itemListElement: caseCounts.map((c, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: `${c.case_type} 절차 안내`,
+      url: `${SITE_URL}/cases/${encodeURIComponent(c.case_type)}`,
+    })),
+  } : null;
+
   return (
     <div className="min-h-screen bg-paper">
-      <BreadcrumbSchema
-        items={[
-          { name: "홈", url: SITE_URL },
-          { name: "사건 유형별 안내", url: `${SITE_URL}/cases` },
-        ]}
+      {/* JSON-LD 스크립트 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        suppressHydrationWarning
       />
-      {caseCounts.length > 0 && (
-        <CollectionPageSchema
-          name="사건 유형별 절차 안내"
-          description="사건 유형별로 정리된 법률 절차 경험 글 모음"
-          url={`${SITE_URL}/cases`}
-          items={caseCounts.map((c) => ({
-            name: `${c.case_type} 절차 안내`,
-            url: `${SITE_URL}/cases/${encodeURIComponent(c.case_type)}`,
-          }))}
+      {collectionData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionData) }}
+          suppressHydrationWarning
         />
       )}
 
