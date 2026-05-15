@@ -224,6 +224,12 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       modifiedTime: post.updated_at || undefined,
       authors: post.user?.nickname ? [post.user.nickname] : undefined,
       images: [ogImage],
+      ...(post.tags && post.tags.length > 0 && {
+        article: {
+          section: post.tags[0]?.name,
+          tag: post.tags.map((t) => t.name),
+        },
+      }),
     },
     twitter: {
       card: "summary_large_image",
@@ -273,6 +279,8 @@ export default async function PostPage({ params }: PostPageProps) {
   const firstImage = post.cover_image || imgMatch?.[1] || undefined;
   const postUrl = `${SITE_URL}/posts/${post.slug}`;
   const authorName = post.user?.nickname || post.user?.email?.split('@')[0] || "익명";
+  const authorEmail = post.user?.email || undefined;
+  const authorAvatar = post.user?.avatar_url || `${SITE_URL}/icon.png`;
 
   // ArticleSchema 데이터
   const articleSchemaData = {
@@ -285,7 +293,14 @@ export default async function PostPage({ params }: PostPageProps) {
     author: {
       "@type": "Person",
       name: authorName,
+      ...(authorEmail && { email: authorEmail }),
       url: `${SITE_URL}/author`,
+      image: {
+        "@type": "ImageObject",
+        url: authorAvatar,
+        width: 512,
+        height: 512,
+      },
     },
     datePublished: post.published_at || post.created_at,
     dateModified: post.updated_at || post.published_at || post.created_at,
@@ -297,6 +312,7 @@ export default async function PostPage({ params }: PostPageProps) {
           url: firstImage,
           width: 1200,
           height: 630,
+          caption: post.cover_image_alt || post.title,
         },
       ],
     }),
@@ -304,12 +320,14 @@ export default async function PostPage({ params }: PostPageProps) {
       "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,
       name: "法 BLOG",
+      url: SITE_URL,
       logo: {
         "@type": "ImageObject",
         url: `${SITE_URL}/icon.png`,
         width: 512,
         height: 512,
       },
+      description: "법률, 기술, 비즈니스에 관한 깊이 있는 분석과 인사이트를 제공하는 블로그",
     },
     mainEntityOfPage: {
       "@type": "WebPage",
@@ -320,6 +338,10 @@ export default async function PostPage({ params }: PostPageProps) {
     ...(post.tags && post.tags.length > 0 && { 
       keywords: post.tags.map((t) => t.name).join(", "),
       articleSection: post.tags[0]?.name,
+      about: post.tags.map((tag) => ({
+        "@type": "Thing",
+        name: tag.name,
+      })),
     }),
     inLanguage: "ko-KR",
     speakable: {
@@ -362,12 +384,10 @@ export default async function PostPage({ params }: PostPageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchemaData) }}
-        suppressHydrationWarning
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchemaData) }}
-        suppressHydrationWarning
       />
       {/* Navigation - 스마트 스티키 헤더 */}
       <StickyNav backHref="/" backLabel="홈으로" />
