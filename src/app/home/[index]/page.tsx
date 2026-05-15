@@ -93,48 +93,6 @@ async function getPosts() {
   }
 }
 
-export async function generateStaticParams() {
-  console.log("[BUILD DEBUG] generateStaticParams called");
-  console.log("[BUILD DEBUG] Environment check:", {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? "SET" : "NOT SET",
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "SET" : "NOT SET",
-  });
-
-  // 빌드 시점에 데이터를 가져오기 위해 실제 쿼리 수행
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("[BUILD DEBUG] Supabase env not set in generateStaticParams");
-    return [{ index: 'index' }];
-  }
-
-  try {
-    const { createClient } = require('@supabase/supabase-js');
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    const { data: posts } = await supabase
-      .from("posts")
-      .select("slug")
-      .eq("published", true)
-      .not("published_at", "is", null)
-      .limit(1);
-
-    console.log("[BUILD DEBUG] Posts fetched in generateStaticParams:", posts?.length);
-
-    // 실제 동적 파라미터 반환 (첫 번째 게시글의 slug 사용)
-    if (posts && posts.length > 0) {
-      return [{ index: posts[0].slug }];
-    }
-
-    // 게시글이 없으면 기본값 반환
-    return [{ index: 'index' }];
-  } catch (err) {
-    console.error("[BUILD DEBUG] Error in generateStaticParams:", err);
-    return [{ index: 'index' }];
-  }
-}
-
 // 페이지 컴포넌트를 동기 함수로 변경하여 빌드 시점에 호출되도록 함
 export default function HomePage({ params }: { params: { index: string } }) {
   // 빌드 시점에 생성된 JSON 파일에서 데이터 읽기 (동기)

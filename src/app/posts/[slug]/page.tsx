@@ -21,9 +21,40 @@ const CommentsSection = dynamicImport(() => import("@/components/comments/Commen
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
-// 런타임 SSR + 캐싱 최적화
+// ISR: 1시간마다 재생성 (빌드 시점에 정적 생성 + 주기적 재생성)
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
+
+// 빌드 시점에 정적 생성할 페이지 목록 생성
+export async function generateStaticParams() {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("[generateStaticParams] Environment variables not set");
+      return [];
+    }
+    const { createClient } = require('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: posts } = await supabase
+      .from("posts")
+      .select("slug")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .limit(500);
+    if (!posts || posts.length === 0) {
+      console.log("[generateStaticParams] No published posts found");
+      return [];
+    }
+    console.log(`[generateStaticParams] Found ${posts.length} posts for static generation`);
+    return posts.map((post: { slug: string }) => ({
+      slug: post.slug,
+    }));
+  } catch (error) {
+    console.error("[generateStaticParams] Error:", error);
+    return [];
+  }
+}
 
 // 서버용 Supabase 클라이언트 (빌드 시점에도 데이터 가져오기 위해 anonSupabase 사용)
 function getServerSupabase() {
@@ -295,7 +326,9 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 }
 
 export default async function PostPage({ params }: PostPageProps) {
+  console.log('[PostPage] params.slug:', params.slug);
   const decodedSlug = decodeURIComponent(params.slug);
+  console.log('[PostPage] decodedSlug:', decodedSlug);
 
   // 1. 정확한 매핑 테이블 확인 (가장 우선)
   const mappedSlug = getMappedSlug(decodedSlug);
