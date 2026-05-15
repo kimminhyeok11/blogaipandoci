@@ -221,8 +221,8 @@ function WritePageContent() {
         setExcerpt(post.excerpt || "");
         setCoverImage(post.cover_image || null);
         setCoverImageAlt(post.cover_image_alt || null);
-        setMetaTitle(post.meta_title || "");
-        setMetaDescription(post.meta_description || "");
+        setMetaTitle(post.meta_title || post.title || "");
+        setMetaDescription(post.meta_description || post.excerpt || "");
 
         // 기존 절차 메타 불러오기 (7개 필드 중 하나라도 값이 있으면 로드)
         const hasProcedureMeta =
@@ -413,8 +413,8 @@ function WritePageContent() {
             published,
             cover_image: coverImage || undefined,
             cover_image_alt: coverImageAlt || undefined,
-            meta_title: metaTitle || null,
-            meta_description: metaDescription || null,
+            meta_title: metaTitle || title.trim() || null,
+            meta_description: metaDescription || finalExcerpt || null,
             ...procedureFields,
           }),
         });
@@ -475,8 +475,8 @@ function WritePageContent() {
             published,
             cover_image: coverImage || null,
             cover_image_alt: coverImageAlt || null,
-            meta_title: metaTitle || null,
-            meta_description: metaDescription || null,
+            meta_title: metaTitle || title.trim() || null,
+            meta_description: metaDescription || finalExcerpt || null,
             case_type: procedureMeta.case_type || null,
             current_stage: procedureMeta.current_stage || null,
             next_stage: procedureMeta.next_stage || null,
