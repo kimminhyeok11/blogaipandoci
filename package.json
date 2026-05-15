@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "dotenv -e .env.local -- node scripts/build-data.js && next build",
+    "build": "node scripts/build-data.js && next build",
     "start": "next start",
     "lint": "next lint"
   },
