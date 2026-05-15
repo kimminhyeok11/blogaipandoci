@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { TableOfContents } from "./TableOfContents";
-import type { TocItem } from "./PostContent";
+import type { TocItem } from "@/lib/markdown";
 
 interface TocSidebarProps {
   contentMarkdown: string;

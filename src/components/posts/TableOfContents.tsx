@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { List, ChevronDown, ChevronRight } from "lucide-react";
-import type { TocItem } from "./PostContent";
+import type { TocItem } from "@/lib/markdown";
 
 interface TableOfContentsProps {
   items: TocItem[];
