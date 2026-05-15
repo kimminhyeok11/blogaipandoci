@@ -6,7 +6,6 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
 import { getServiceSupabase } from "@/lib/supabase";
 import type { Post } from "@/types";
-import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/StructuredData";
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { TrustBadge } from "@/components/posts/TrustBadge";
@@ -277,30 +276,100 @@ export default async function PostPage({ params }: PostPageProps) {
   const postUrl = `${SITE_URL}/posts/${post.slug}`;
   const authorName = post.user?.nickname || post.user?.email?.split('@')[0] || "익명";
 
+  // ArticleSchema 데이터
+  const articleSchemaData = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title.slice(0, 110),
+    description: post.excerpt || undefined,
+    wordCount: post.content ? post.content.replace(/\s+/g, ' ').trim().split(' ').length : undefined,
+    articleBody: post.content?.replace(/[#*`\[\]()]/g, '').replace(/!\[.*?\]\(.*?\)/g, '').slice(0, 500),
+    author: {
+      "@type": "Person",
+      name: authorName,
+      url: `${SITE_URL}/author`,
+    },
+    datePublished: post.published_at || post.created_at,
+    dateModified: post.updated_at || post.published_at || post.created_at,
+    url: postUrl,
+    ...(firstImage && {
+      image: [
+        {
+          "@type": "ImageObject",
+          url: firstImage,
+          width: 1200,
+          height: 630,
+        },
+      ],
+    }),
+    publisher: {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "法 BLOG",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/icon.png`,
+        width: 512,
+        height: 512,
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": postUrl,
+    },
+    isAccessibleForFree: true,
+    isFamilyFriendly: true,
+    ...(post.tags && post.tags.length > 0 && { 
+      keywords: post.tags.map((t) => t.name).join(", "),
+      articleSection: post.tags[0]?.name,
+    }),
+    inLanguage: "ko-KR",
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["h1", ".subheadline", ".article-body-content p:first-of-type"],
+    },
+  };
+
+  // BreadcrumbSchema 데이터
+  const breadcrumbSchemaData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "글 목록",
+        item: `${SITE_URL}/posts`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: post.title,
+        item: postUrl,
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-paper">
       {/* 조회수 증가 (클라이언트, 24시간 쿠키 중복 방지) */}
       <ViewCounter slug={post.slug} />
-      {/* 구조화 데이터 (JSON-LD) */}
-      <ArticleSchema
-        title={post.title}
-        description={post.excerpt || undefined}
-        author={authorName}
-        authorId={post.user_id}
-        datePublished={post.published_at || post.created_at}
-        dateModified={post.updated_at || undefined}
-        url={postUrl}
-        image={firstImage}
-        tags={post.tags?.map((t) => t.name) || []}
-        wordCount={post.content ? post.content.replace(/\s+/g, ' ').trim().split(' ').length : undefined}
-        articleBody={post.content?.replace(/[#*`\[\]()]/g, '').replace(/!\[.*?\]\(.*?\)/g, '').slice(0, 500)}
+      {/* JSON-LD 스크립트 태그 (검색 엔진 마크업 인식용) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchemaData) }}
+        suppressHydrationWarning
       />
-      <BreadcrumbSchema
-        items={[
-          { name: "홈", url: SITE_URL },
-          { name: "글 목록", url: `${SITE_URL}/posts` },
-          { name: post.title, url: postUrl },
-        ]}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchemaData) }}
+        suppressHydrationWarning
       />
       {/* Navigation - 스마트 스티키 헤더 */}
       <StickyNav backHref="/" backLabel="홈으로" />
