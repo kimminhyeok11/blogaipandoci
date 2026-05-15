@@ -172,7 +172,7 @@ export const WriteEditor = forwardRef<MarkdownEditorRef, WriteEditorProps>(
                     <div className="border-t border-rule my-1" />
                     <button
                       onClick={() => toolbarActions("image")}
-                      className="w-full px-3 py-2 text-left text-sm text-ink hover:bg-cream flex items-center gap-2 sm:hidden"
+                      className="w-full px-3 py-2 text-left text-sm text-ink hover:bg-cream flex items-center gap-2"
                     >
                       <Image size={16} /> 이미지
                     </button>
