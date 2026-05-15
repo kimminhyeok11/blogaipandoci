@@ -6,8 +6,6 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
-import { Analytics } from "@vercel/analytics/next";
-import { AdSenseScript } from "@/components/ads/AdSenseScript";
 import { ScrollRestoration } from "@/components/utils/ScrollRestoration";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
 import Link from "next/link";
@@ -124,26 +122,10 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${notoSerifKR.variable} ${notoSansKR.variable} ${dmMono.variable}`}>
       <head>
-        {/* Google Tag Manager */}
-        <Script id="gtm-head" strategy="beforeInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-PXGCKLX4');`}
-        </Script>
-        <meta name="google-adsense-account" content="ca-pub-5239497835591112" />
-        {/* Note: Google Fonts CDN 미사용 - Next.js next/font로 최적화된 폰트 사용 */}
-        <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
         <OrganizationSchema />
         <WebSiteSchema />
       </head>
       <body className="antialiased min-h-screen font-serif flex flex-col">
-        {/* Google Tag Manager (noscript) */}
-        <noscript>
-          <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PXGCKLX4" height="0" width="0" style={{display:'none',visibility:'hidden'}}></iframe>
-        </noscript>
-        <AdSenseScript />
         <QueryProvider>
           <AuthProvider>
             <ToastProvider>
@@ -156,7 +138,6 @@ export default function RootLayout({
             </ToastProvider>
           </AuthProvider>
         </QueryProvider>
-        <Analytics />
         {/* Kakao JS SDK - 카카오 공유 OG 미리보기용 */}
         {process.env.NEXT_PUBLIC_KAKAO_JS_KEY && (
           <Script id="kakao-sdk-init" strategy="afterInteractive">
@@ -175,28 +156,6 @@ export default function RootLayout({
             `}
           </Script>
         )}
-        {/* Microsoft Clarity - 사용자 행동 분석 */}
-        <Script id="microsoft-clarity" strategy="afterInteractive">
-          {`
-            (function(c,l,a,r,i,t,y){
-              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
-              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "wqr2qg2916");
-          `}
-        </Script>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-DKZVK5XQ5J"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-DKZVK5XQ5J');
-          `}
-        </Script>
       </body>
     </html>
   );

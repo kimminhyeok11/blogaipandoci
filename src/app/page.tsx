@@ -6,7 +6,6 @@ import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 const ClientHeader = dynamicImport(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
-const AdSense = dynamicImport(() => import("@/components/ads/AdSense").then(m => ({ default: m.AdSense })), { ssr: false });
 const SituationSearch = dynamicImport(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
 
 // SSR: 서버 사이드 렌더링 사용 (검색엔진 인덱싱을 위해)
@@ -246,16 +245,6 @@ export default async function HomePage() {
             ))}
           </div>
 
-          {/* 광고 - 지연 로딩 */}
-          <div className="my-12" style={{ minHeight: "250px" }}>
-            <Suspense fallback={<div className="w-full h-[250px] bg-cream rounded animate-pulse" />}>
-              <AdSense
-                slot="7498833217"
-                format="auto"
-                minHeight={250}
-              />
-            </Suspense>
-          </div>
 
           <div className="mt-12 text-center">
             <Link
