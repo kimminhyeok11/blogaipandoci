@@ -76,6 +76,8 @@ function WritePageContent() {
   const [showProcedure, setShowProcedure] = useState(false);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [coverImageAlt, setCoverImageAlt] = useState<string | null>(null);
+  const [metaTitle, setMetaTitle] = useState<string>("");
+  const [metaDescription, setMetaDescription] = useState<string>("");
 
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
@@ -219,6 +221,8 @@ function WritePageContent() {
         setExcerpt(post.excerpt || "");
         setCoverImage(post.cover_image || null);
         setCoverImageAlt(post.cover_image_alt || null);
+        setMetaTitle(post.meta_title || "");
+        setMetaDescription(post.meta_description || "");
 
         // 기존 절차 메타 불러오기 (7개 필드 중 하나라도 값이 있으면 로드)
         const hasProcedureMeta =
@@ -409,6 +413,8 @@ function WritePageContent() {
             published,
             cover_image: coverImage || undefined,
             cover_image_alt: coverImageAlt || undefined,
+            meta_title: metaTitle || null,
+            meta_description: metaDescription || null,
             ...procedureFields,
           }),
         });
@@ -469,6 +475,8 @@ function WritePageContent() {
             published,
             cover_image: coverImage || null,
             cover_image_alt: coverImageAlt || null,
+            meta_title: metaTitle || null,
+            meta_description: metaDescription || null,
             case_type: procedureMeta.case_type || null,
             current_stage: procedureMeta.current_stage || null,
             next_stage: procedureMeta.next_stage || null,
@@ -661,6 +669,32 @@ function WritePageContent() {
               placeholder="제목을 입력하세요"
               className="w-full text-2xl sm:text-3xl font-black text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0 mb-3"
             />
+
+            {/* 메타 타이틀/디스크립션 */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-3">
+              <div className="flex-1">
+                <input
+                  id="meta-title"
+                  name="meta-title"
+                  type="text"
+                  value={metaTitle}
+                  onChange={(e) => setMetaTitle(e.target.value)}
+                  placeholder="메타 타이틀 (선택사항)"
+                  className="w-full px-3 py-2 text-sm text-ink placeholder-muted/50 bg-cream border border-rule rounded-sm focus:outline-none focus:ring-2 focus:ring-rust/20"
+                />
+              </div>
+              <div className="flex-1">
+                <input
+                  id="meta-description"
+                  name="meta-description"
+                  type="text"
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  placeholder="메타 디스크립션 (선택사항)"
+                  className="w-full px-3 py-2 text-sm text-ink placeholder-muted/50 bg-cream border border-rule rounded-sm focus:outline-none focus:ring-2 focus:ring-rust/20"
+                />
+              </div>
+            </div>
 
             {/* 태그/요약 - 가로 레이아웃 */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
