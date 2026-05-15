@@ -16,7 +16,7 @@ const PostContent = dynamicImport(() => import("@/components/posts/PostContent")
 const TocSidebar = dynamicImport(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
 const PostActions = dynamicImport(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
 const ShareButtons = dynamicImport(() => import("@/components/posts/ShareButtons").then(m => ({ default: m.ShareButtons })), { ssr: false });
-const RelatedPosts = dynamicImport(() => import("@/components/posts/RelatedPosts").then(m => ({ default: m.RelatedPosts })), { ssr: false });
+const RelatedPosts = dynamicImport(() => import("@/components/posts/RelatedPosts").then(m => ({ default: m.RelatedPosts })));
 const CommentsSection = dynamicImport(() => import("@/components/comments/CommentsSection").then(m => ({ default: m.CommentsSection })), { ssr: false });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
