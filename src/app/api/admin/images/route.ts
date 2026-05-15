@@ -40,7 +40,9 @@ export async function GET(request: Request) {
       if (post.content) {
         const matches = post.content.matchAll(urlPattern);
         Array.from(matches).forEach(match => {
-          usedPaths.add(match[1]); // e.g., "uploads/123456.webp"
+          if (match[1]) {
+            usedPaths.add(match[1]); // e.g., "uploads/123456.webp"
+          }
         });
       }
     });

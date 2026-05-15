@@ -357,6 +357,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     // 이미지 파일 확인
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
+      if (!item) continue;
       if (item.type.startsWith('image/')) {
         e.preventDefault();
         const file = item.getAsFile();
@@ -393,6 +394,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     }
 
     const file = imageFiles[0];
+    if (!file) return;
     await openImageModal(file);
   }, [openImageModal, showToast]);
 

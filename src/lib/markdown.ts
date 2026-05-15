@@ -157,7 +157,7 @@ function extractYoutubeId(url: string): string | null {
   ];
   for (const pattern of patterns) {
     const match = url.match(pattern);
-    if (match) return match[1];
+    if (match && match[1]) return match[1];
   }
   return null;
 }
@@ -165,7 +165,7 @@ function extractYoutubeId(url: string): string | null {
 // Instagram URL에서 포스트 ID 추출
 function extractInstagramId(url: string): string | null {
   const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([a-zA-Z0-9_-]+)/);
-  return match ? match[1] : null;
+  return match && match[1] ? match[1] : null;
 }
 
 // URL을 임베드로 변환하는 후처리
@@ -307,7 +307,7 @@ export function extractTocFromHtml(html: string): TocItem[] {
   
   while ((match = headingRegex.exec(html)) !== null) {
     const tag = match[1];
-    const text = match[2].replace(/<[^>]*>/g, '').trim(); // HTML 태그 제거
+    const text = match[2]?.replace(/<[^>]*>/g, '').trim() || ''; // HTML 태그 제거
     const level = tag === 'h2' ? 2 : 3;
     const id = `toc-heading-${counter++}`;
     

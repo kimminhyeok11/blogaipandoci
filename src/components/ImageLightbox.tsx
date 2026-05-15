@@ -229,26 +229,30 @@ export function ImageLightbox({ images, initialIndex, isOpen, onClose }: ImageLi
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        <img
-          src={currentImage.src}
-          alt={currentImage.alt || ""}
-          className="max-w-full max-h-[70vh] object-contain transition-transform duration-200"
-          style={{ 
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-            transformOrigin: 'center center'
-          }}
-          draggable={false}
-        />
-        
-        {/* 이미지 정보 - 이미지 밖으로 이동 */}
-        <div className="mt-4 px-4 py-2 text-center max-w-[90vw]">
-          <p className="text-white/80 text-sm font-sans leading-relaxed">
-            {currentImage.alt || ""}
-          </p>
-          <p className="text-white/60 text-xs font-sans mt-2">
-            {currentIndex + 1} / {images.length}
-          </p>
-        </div>
+        {currentImage && (
+          <>
+            <img
+              src={currentImage.src}
+              alt={currentImage.alt || ""}
+              className="max-w-full max-h-[70vh] object-contain transition-transform duration-200"
+              style={{ 
+                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                transformOrigin: 'center center'
+              }}
+              draggable={false}
+            />
+            
+            {/* 이미지 정보 - 이미지 밖으로 이동 */}
+            <div className="mt-4 px-4 py-2 text-center max-w-[90vw]">
+              <p className="text-white/80 text-sm font-sans leading-relaxed">
+                {currentImage.alt || ""}
+              </p>
+              <p className="text-white/60 text-xs font-sans mt-2">
+                {currentIndex + 1} / {images.length}
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* 안내 메시지 - 컨트롤 숨김 시 표시 */}
