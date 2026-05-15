@@ -21,39 +21,43 @@ const CommentsSection = dynamicImport(() => import("@/components/comments/Commen
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
-// 런타임 SSR + 캐싱 최적화 (빌드 시점 환경변수 제약으로 ISR 불가)
-export const dynamic = 'force-dynamic';
+// SSG + ISR (빌드 시점에 정적 생성, 1시간마다 재검증)
 export const revalidate = 3600;
+
+// 빌드 시점에 모든 게시글 slug를 가져와서 정적 페이지 생성
+export async function generateStaticParams() {
+  // 빌드 시점에는 anonSupabase 직접 사용
+  if (!anonSupabase) {
+    console.error("[generateStaticParams] anonSupabase not available");
+    return [];
+  }
+
+  try {
+    const { data: posts } = await anonSupabase
+      .from("posts")
+      .select("slug")
+      .eq("published", true)
+      .not("published_at", "is", null);
+
+    if (!posts || posts.length === 0) {
+      console.log("[generateStaticParams] No published posts found");
+      return [];
+    }
+
+    console.log(`[generateStaticParams] Found ${posts.length} published posts`);
+    return posts.map((post: { slug: string }) => ({
+      slug: post.slug,
+    }));
+  } catch (error) {
+    console.error("[generateStaticParams] Error fetching posts:", error);
+    return [];
+  }
+}
 
 // 서버용 Supabase 클라이언트 (빌드 시점에도 데이터 가져오기 위해 anonSupabase 사용)
 function getServerSupabase() {
   // 빌드 시점에도 데이터를 가져올 수 있도록 anonSupabase 우선 사용
   return anonSupabase;
-}
-
-// 검색봇 크롤링 최적화: 발행된 게시글 목록을 정적으로 생성
-export async function generateStaticParams() {
-  const supabase = getServerSupabase();
-  if (!supabase) return [];
-
-  try {
-    const { data: posts, error } = await supabase
-      .from("posts")
-      .select("slug")
-      .eq("published", true)
-      .not("published_at", "is", null)
-      .order("published_at", { ascending: false })
-      .limit(200); // 최대 200개의 최신 게시글
-
-    if (error || !posts) return [];
-
-    return posts.map((post: { slug: string }) => ({
-      slug: post.slug,
-    }));
-  } catch (err) {
-    console.error("generateStaticParams error:", err);
-    return [];
-  }
 }
 
 interface PostPageProps {
