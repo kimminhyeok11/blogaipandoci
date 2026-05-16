@@ -1,5 +1,4 @@
 import { processMarkdown, addHeadingIds, extractTocFromHtml, extractImagesFromHtml, TocItem } from "@/lib/markdown";
-import { PostContentClient } from "./PostContentClient";
 
 interface PostContentProps {
   contentMarkdown: string;
@@ -31,10 +30,11 @@ export function PostContent({ contentMarkdown, onTocExtract, removeFirstImage = 
     onTocExtract(toc);
   }
   
+  // 서버 컴포넌트로 직접 HTML 렌더링 (SSR 강화)
   return (
-    <PostContentClient
-      processedHtml={finalHtml}
-      images={images}
+    <div
+      className="prose-journal font-serif text-base leading-loose text-[#2a2420]"
+      dangerouslySetInnerHTML={{ __html: finalHtml }}
     />
   );
 }

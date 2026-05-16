@@ -80,12 +80,28 @@ export async function GET() {
     )
     .join("\n");
 
-  // 동적 게시글 + 사건 유형 페이지
+  // 동적 게시글 + 사건 유형 페이지 + 태그 페이지
   let postXml = "";
   let caseTypeXml = "";
+  let tagXml = "";
   const supabase = getServerSupabase();
 
   if (supabase) {
+    // 태그 페이지 추가 (글 2개 이상인 태그만 포함, thin content 방지)
+    const { data: tagData } = await supabase
+      .from("tags")
+      .select("slug, updated_at, post_tags(count)")
+      .order("name", { ascending: true });
+
+    tagXml = (tagData || [])
+      .filter((tag: any) => (tag.post_tags?.[0]?.count ?? 0) >= 2)
+      .map((tag: any) => `  <url>
+    <loc>${escapeXml(`${baseUrl}/tags/${encodeURIComponent(tag.slug)}`)}</loc>
+    <lastmod>${new Date(tag.updated_at).toISOString().split("T")[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>`).join("\n");
+
     // 사건 유형별 페이지 (case_type 있는 것만)
     const { data: caseData } = await supabase
       .from("posts")
@@ -114,7 +130,7 @@ export async function GET() {
     postXml = posts
       .map((post) => {
         const images = extractImages(post.content, post.cover_image);
-        const lastmod = new Date(post.updated_at || post.published_at || new Date()).toISOString();
+        const lastmod = new Date(post.updated_at || post.published_at || new Date()).toISOString().split("T")[0];
         const imageXml = images
           .map(
             (img) => `    <image:image>
@@ -141,6 +157,7 @@ ${imageXml}
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${staticXml}
 ${caseTypeXml}
+${tagXml}
 ${postXml}
 </urlset>`;
 

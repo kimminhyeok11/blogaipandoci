@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { slugMapping } from "@/lib/slug-mapping";
 
 /**
  * IndexNow 키 파일 미들웨어
@@ -9,6 +10,18 @@ import type { NextRequest } from "next/server";
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // /posts/[slug] 구 slug → 새 slug 301 리다이렉트 (dynamicParams=false보다 먼저 실행)
+  if (pathname.startsWith('/posts/')) {
+    const rawSlug = pathname.slice('/posts/'.length);
+    const decodedSlug = decodeURIComponent(rawSlug);
+    const newSlug = slugMapping[decodedSlug];
+    if (newSlug) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/posts/${newSlug}`;
+      return NextResponse.redirect(url, { status: 308 });
+    }
+  }
   
   // .txt로 끝나는 경로 처리 (IndexNow 키 파일) - robots.txt는 제외
   if (pathname.endsWith('.txt') && pathname !== '/robots.txt') {
@@ -45,5 +58,7 @@ export const config = {
   matcher: [
     // .txt 파일 (IndexNow 키 파일) - robots.txt는 제외
     '/:key((?!robots$)[^/]+).txt',
+    // 게시글 slug 리다이렉트
+    '/posts/:slug*',
   ],
 };

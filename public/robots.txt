@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://lawtiphub.com/sitemap.xml
+
+# Next.js 정적 리소스 허용 (Googlebot 렌더링에 필요)
+Allow: /_next/static/
+Allow: /_next/image/
+
+# 불필요한 API 엔드포인트 차단
+Disallow: /api/
+Disallow: /admin/
+Disallow: /write/
+Disallow: /auth/
+
+# 검색 및 필터링 페이지 (중복 콘텐츠)
+Disallow: /search?q=*
+Disallow: /posts?page=*
+Disallow: /tags?tag=*
+
+# 임시 파일 및 빌드 데이터
+Disallow: /build-data.json
+Disallow: /posts-build-data.json
+
+# 크롤 지연 (서버 부하 방지)
+Crawl-delay: 1

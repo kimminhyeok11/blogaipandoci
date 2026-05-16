@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Tag } from "lucide-react";
+import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { StickyNav } from "@/components/layout/StickyNav";
 import type { Metadata } from "next";
@@ -78,6 +79,11 @@ async function getPostsByTag(tagSlug: string): Promise<Post[]> {
 export default async function TagPage({ params }: TagPageProps) {
   const tag = decodeURIComponent(params.tag);
   const posts = await getPostsByTag(tag);
+
+  // 글이 없는 태그 페이지 → 404 (soft 404 방지)
+  if (posts.length === 0) {
+    notFound();
+  }
 
   // BreadcrumbSchema 데이터
   const breadcrumbData = {
@@ -160,19 +166,16 @@ export default async function TagPage({ params }: TagPageProps) {
             <Tag className="text-rust" size={28} />
             <h1 className="text-2xl font-black text-ink">#{tag}</h1>
           </div>
-          <p className="font-sans text-sm text-muted">
+          <p className="font-sans text-sm text-muted mb-4">
             {`총 ${posts.length}개의 글`}
+          </p>
+          <p className="font-sans text-sm text-ink leading-relaxed">
+            <strong>#{tag}</strong> 주제의 법률·정책·사회 이슈를 심층 분석한 글 모음입니다.
+            판례, 실무 절차, 법적 권리 등 실생활에 필요한 정보를 다룹니다.
           </p>
         </div>
 
-        {posts.length === 0 ? (
-          <div className="text-center py-16 border border-rule bg-cream rounded-sm">
-            <p className="font-sans text-sm text-muted">
-              이 태그의 글이 없습니다.
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-6">
+        <div className="grid gap-6">
             {posts.map((post) => (
               <article
                 key={post.id}
@@ -202,7 +205,6 @@ export default async function TagPage({ params }: TagPageProps) {
               </article>
             ))}
           </div>
-        )}
       </main>
     </div>
   );

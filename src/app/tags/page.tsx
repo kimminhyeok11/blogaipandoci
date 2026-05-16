@@ -123,14 +123,41 @@ export default async function TagsPage() {
       <StickyNav backHref="/" backLabel="홈으로" />
 
       <main className="max-w-content mx-auto px-4 sm:px-6 py-16">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="mb-12">
+          <div className="flex items-center gap-3 mb-6">
             <Tag className="text-rust" size={28} />
             <h1 className="text-2xl font-black text-ink">태그</h1>
           </div>
-          <p className="font-sans text-sm text-muted">
-            모든 태그 목록입니다.
-          </p>
+          <div className="prose prose-sm max-w-none">
+            <p className="font-sans text-sm text-muted leading-relaxed mb-4">
+              법률, 정책, 사회 이슈에 관한 심층 분석 콘텐츠를 주제별로 쉽게 찾아보세요. 
+              각 태그는 해당 분야의 핵심 주제를 다루는 글들을 모아두어 관련 정보를 체계적으로 탐색할 수 있습니다.
+            </p>
+            <div className="bg-cream/40 border border-rule rounded-lg p-6 mb-6">
+              <h2 className="font-sans text-base font-semibold text-ink mb-3">주요 태그 분야</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <h3 className="font-medium text-ink mb-2">💰 금융·채무</h3>
+                  <p className="text-muted">대출 연체, 개인회생, 파산, 채권추심 등 금융 관련 법률 문제</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-ink mb-2">🏠 부동산·임대차</h3>
+                  <p className="text-muted">전세보증금, 임대차 계약, 경매, 주택 관련 분쟁 해결</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-ink mb-2">⚖️ 형사·고소</h3>
+                  <p className="text-muted">명예훼손, 고소고발, 처벌법, 범죄 피해 구제 절차</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-ink mb-2">👥 가족·상속</h3>
+                  <p className="text-muted">이혼, 상속, 친생자관계, 가족법 관련 법률 문제 해결</p>
+                </div>
+              </div>
+            </div>
+            <p className="font-sans text-xs text-muted">
+              총 {tags.length}개의 태그가 있으며, 관심 있는 주제를 클릭하여 해당 분야의 전문적인 분석 글들을 읽어보세요.
+            </p>
+          </div>
         </div>
 
         {tags.length === 0 ? (
