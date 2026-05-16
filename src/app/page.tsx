@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import dynamicImport from "next/dynamic";
-import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
+import { getServiceSupabase } from "@/lib/supabase";
+import { getTrendingSituations, getStuckStages } from "@/lib/situations";
 
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
@@ -70,6 +70,10 @@ async function getPosts() {
 
 export default async function HomePage() {
   const { featuredPost, recentPosts } = await getPosts();
+  const [situations, stuckStages] = await Promise.all([
+    getTrendingSituations(8),
+    getStuckStages(6),
+  ]);
 
   // BreadcrumbSchema 데이터
   const breadcrumbData = {
@@ -196,8 +200,33 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* 상황 탐색 */}
-        <SituationSearch />
+        {/* 1층: 지금 많이 찾는 상황 (DB 기반 동적 버튼) */}
+        <SituationSearch situations={situations} />
+
+        {/* 2층: 지금 많이 막히는 절차 */}
+        {stuckStages.length > 0 && (
+          <section className="border-b border-rule py-10 px-4 sm:px-6">
+            <div className="max-w-content mx-auto">
+              <p className="font-sans text-xs font-medium tracking-widest uppercase text-muted mb-4 text-center">
+                지금 많이 막히는 절차
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {stuckStages.map((s) => (
+                  <Link
+                    key={s.current_stage}
+                    href={s.case_type ? `/cases/${encodeURIComponent(s.case_type)}` : `/search?q=${encodeURIComponent(s.current_stage)}`}
+                    className="font-sans text-xs text-muted border border-rule/40 rounded-sm px-3 py-1.5 hover:border-rust hover:text-rust transition-colors"
+                  >
+                    {s.current_stage}
+                    {s.post_count > 1 && (
+                      <span className="ml-1 text-rust/60">{s.post_count}건</span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Recent Posts */}
         <section className="max-w-content mx-auto px-4 sm:px-6 py-16">

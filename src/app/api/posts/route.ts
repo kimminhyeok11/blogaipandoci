@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { notifyIndexNow } from "@/lib/indexnow";
+import { refreshSituationsCache } from "@/lib/situations";
 
 const makeAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -379,6 +380,9 @@ export async function POST(request: Request) {
         const siteUrl = `https://${host}`;
         notifyIndexNow([`${siteUrl}/posts/${encodeURIComponent(finalSlug)}`, `${siteUrl}/posts`, siteUrl], key, host).catch(() => {});
       }
+
+      // situations_cache 갱신 (비동기, 실패해도 발행에 영향 없음)
+      refreshSituationsCache().catch(() => {});
     }
 
     return NextResponse.json({ data });
@@ -520,13 +524,14 @@ export async function PUT(request: Request) {
     revalidatePath("/cases");
     if (case_type) revalidatePath(`/cases/${encodeURIComponent(case_type)}`);
 
-    // IndexNow 알림 (수정)
+    // IndexNow 알림 + situations_cache 갱신 (수정)
     if (published) {
       const { key, host } = getIndexNowConfig();
       if (key) {
         const siteUrl = `https://${host}`;
         notifyIndexNow([`${siteUrl}/posts/${encodeURIComponent(slug)}`, `${siteUrl}/posts`, siteUrl], key, host).catch(() => {});
       }
+      refreshSituationsCache().catch(() => {});
     }
 
     return NextResponse.json({ data });

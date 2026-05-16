@@ -3,18 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import type { SituationItem } from "@/lib/situations";
 
-const SITUATIONS = [
-  { label: "가족이 빚을 남기고 사망", case_type: "상속·유언" },
-  { label: "지급명령 서류를 받음", case_type: "채무·금전" },
-  { label: "통장압류 문자 받음", case_type: "채무·금전" },
-  { label: "전세금 못 받고 있음", case_type: "전세·임대차" },
-  { label: "경찰서 출석요구 받음", case_type: "형사·고소" },
-  { label: "이혼 또는 양육권 문제", case_type: "이혼·가족" },
-  { label: "계약 분쟁 발생", case_type: "계약·거래" },
-];
+interface SituationSearchProps {
+  situations: SituationItem[];
+}
 
-export function SituationSearch() {
+export function SituationSearch({ situations }: SituationSearchProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
 
@@ -24,8 +19,12 @@ export function SituationSearch() {
     router.push(`/search?q=${encodeURIComponent(query.trim())}`);
   };
 
-  const handleSituationClick = (case_type: string) => {
-    router.push(`/cases/${encodeURIComponent(case_type)}`);
+  const handleSituationClick = (item: SituationItem) => {
+    if (item.case_type) {
+      router.push(`/cases/${encodeURIComponent(item.case_type)}`);
+    } else {
+      router.push(`/search?q=${encodeURIComponent(item.phrase)}`);
+    }
   };
 
   return (
@@ -53,16 +52,16 @@ export function SituationSearch() {
           </button>
         </form>
 
-        {/* 빠른 상황 선택 버튼 */}
+        {/* 지금 많이 찾는 상황 버튼 (DB 기반) */}
         <div className="flex flex-wrap justify-center gap-2">
-          {SITUATIONS.map((s) => (
+          {situations.map((s) => (
             <button
-              key={s.label}
+              key={s.phrase}
               type="button"
-              onClick={() => handleSituationClick(s.case_type)}
+              onClick={() => handleSituationClick(s)}
               className="font-sans text-xs text-muted border border-rule/40 rounded-sm px-3 py-1.5 hover:border-rust hover:text-rust transition-colors"
             >
-              {s.label}
+              {s.phrase}
             </button>
           ))}
         </div>

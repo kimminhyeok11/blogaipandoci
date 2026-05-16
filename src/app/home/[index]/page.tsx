@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import dynamicImport from "next/dynamic";
-import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
+import { getServiceSupabase } from "@/lib/supabase";
+import { getTrendingSituations, getStuckStages } from "@/lib/situations";
 import fs from 'fs';
 import path from 'path';
 
@@ -94,7 +94,11 @@ async function getPosts() {
 }
 
 // 페이지 컴포넌트를 동기 함수로 변경하여 빌드 시점에 호출되도록 함
-export default function HomePage({ params }: { params: { index: string } }) {
+export default async function HomePage({ params }: { params: { index: string } }) {
+  const [situations, stuckStages] = await Promise.all([
+    getTrendingSituations(8),
+    getStuckStages(6),
+  ]);
   // 빌드 시점에 생성된 JSON 파일에서 데이터 읽기 (동기)
   let buildData;
   try {
@@ -234,8 +238,8 @@ export default function HomePage({ params }: { params: { index: string } }) {
           </section>
         )}
 
-        {/* 상황 탐색 */}
-        <SituationSearch />
+        {/* 1층: 지금 많이 찾는 상황 */}
+        <SituationSearch situations={situations} />
 
         {/* Recent Posts */}
         <section className="max-w-content mx-auto px-4 sm:px-6 py-16">
