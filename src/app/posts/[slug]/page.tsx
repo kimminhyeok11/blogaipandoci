@@ -121,7 +121,8 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
       timeline_steps,
       is_ai_assisted,
       reviewed_at,
-      user:users(nickname, email, role)
+      user:users(nickname, email, role),
+      tags(id, name, slug)
     `)
     .eq("slug", slug)
     .eq("published", true)
