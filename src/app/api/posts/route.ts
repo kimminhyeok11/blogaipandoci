@@ -372,6 +372,29 @@ export async function POST(request: Request) {
       }).catch((err) => { console.error("[embedding/post] 네트워크 오류:", err?.message); });
     }
 
+    // process_embedding 생성 (절차 데이터가 있을 때만)
+    if (published && data?.id && process.env.OPENAI_API_KEY && (current_stage || next_stage || (timeline_steps && timeline_steps.length > 0))) {
+      const processText = [
+        current_stage,
+        next_stage,
+        ...(timeline_steps || []),
+      ].filter(Boolean).join(" → ");
+      fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model: "text-embedding-3-small", input: processText.slice(0, 2000) }),
+      }).then(r => r.json()).then(pEmbRes => {
+        if (pEmbRes?.error) return;
+        const pvec = pEmbRes?.data?.[0]?.embedding;
+        if (!Array.isArray(pvec) || pvec.length !== 1536) return;
+        serviceSupabase.from("posts").update({ process_embedding: JSON.stringify(pvec) }).eq("id", data.id)
+          .then(({ error: dbErr }) => { if (dbErr) console.error("[process-embedding/post] DB 저장 실패:", dbErr.message); });
+      }).catch(() => {});
+    }
+
     // 캐시 즉시 갱신
     if (published) {
       revalidatePath("/");
@@ -529,6 +552,29 @@ export async function PUT(request: Request) {
         serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id)
           .then(({ error: dbErr }) => { if (dbErr) console.error("[embedding/post-update] DB 저장 실패:", dbErr.message); });
       }).catch((err) => { console.error("[embedding/post-update] 네트워크 오류:", err?.message); });
+    }
+
+    // process_embedding 재생성
+    if (published && data?.id && process.env.OPENAI_API_KEY && (current_stage || next_stage || (timeline_steps && timeline_steps.length > 0))) {
+      const processText = [
+        current_stage,
+        next_stage,
+        ...(timeline_steps || []),
+      ].filter(Boolean).join(" → ");
+      fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model: "text-embedding-3-small", input: processText.slice(0, 2000) }),
+      }).then(r => r.json()).then(pEmbRes => {
+        if (pEmbRes?.error) return;
+        const pvec = pEmbRes?.data?.[0]?.embedding;
+        if (!Array.isArray(pvec) || pvec.length !== 1536) return;
+        serviceSupabase.from("posts").update({ process_embedding: JSON.stringify(pvec) }).eq("id", data.id)
+          .then(({ error: dbErr }) => { if (dbErr) console.error("[process-embedding/post-update] DB 저장 실패:", dbErr.message); });
+      }).catch(() => {});
     }
 
     // 캐시 즉시 갱신

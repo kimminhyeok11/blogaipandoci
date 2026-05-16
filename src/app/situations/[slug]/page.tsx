@@ -23,6 +23,13 @@ interface HubPost {
   published_at: string;
 }
 
+// thin 판단 기준: 글 3개 미만 OR (timeline 2개 미만 AND nextStage 2개 미만)
+function isThinHub(postCount: number, timelineLen: number, nextStageLen: number): boolean {
+  if (postCount < 3) return true;
+  if (timelineLen < 2 && nextStageLen < 2) return true;
+  return false;
+}
+
 async function getSituationData(situationSlug: string): Promise<{
   phrase: string;
   case_type: string | null;
@@ -30,6 +37,7 @@ async function getSituationData(situationSlug: string): Promise<{
   stuckStages: { stage: string; count: number }[];
   mergedTimeline: string[];
   nextStages: { stage: string; count: number }[];
+  isThin: boolean;
 } | null> {
   const supabase = getServiceSupabase();
 
@@ -94,7 +102,9 @@ async function getSituationData(situationSlug: string): Promise<{
     .slice(0, 7)
     .map(([step]) => step);
 
-  return { phrase, case_type, posts: posts || [], stuckStages, mergedTimeline, nextStages };
+  const thin = isThinHub((posts || []).length, mergedTimeline.length, nextStages.length);
+
+  return { phrase, case_type, posts: posts || [], stuckStages, mergedTimeline, nextStages, isThin: thin };
 }
 
 export async function generateMetadata({
@@ -107,6 +117,15 @@ export async function generateMetadata({
 
   const title = `${data.phrase} | 실제 절차 경험 모음`;
   const description = `${data.phrase} 상황에서 실제로 어떻게 진행되는지, 막히는 절차와 관련 사례를 모아봤습니다.`;
+
+  // thin 허브는 noindex
+  if (data.isThin) {
+    return {
+      title,
+      description,
+      robots: { index: false, follow: true },
+    };
+  }
 
   return {
     title,
@@ -138,7 +157,35 @@ export default async function SituationHubPage({
   const data = await getSituationData(params.slug);
   if (!data) notFound();
 
-  const { phrase, case_type, posts, stuckStages, mergedTimeline, nextStages } = data;
+  const { phrase, case_type, posts, stuckStages, mergedTimeline, nextStages, isThin } = data;
+
+  // HowTo schema (timeline_steps 2개 이상일 때만)
+  const howToSchema = mergedTimeline.length >= 2 ? {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: `${phrase} 진행 순서`,
+    description: `${phrase} 상황에서 보통 이런 순서로 진행됩니다.`,
+    step: mergedTimeline.map((step, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: step,
+      text: step,
+    })),
+  } : null;
+
+  // FAQPage schema (막히는 절차 → FAQ 항목)
+  const faqSchema = stuckStages.length >= 2 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: stuckStages.slice(0, 4).map(({ stage }) => ({
+      "@type": "Question",
+      name: `${phrase} 중 ${stage} 단계에서 막히면 어떻게 하나요?`,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: `${phrase} 상황에서 ${stage} 단계는 많은 분들이 어려움을 겪는 구간입니다. 관련 글을 참고해 다음 절차를 확인하세요.`,
+      },
+    })),
+  } : null;
 
   const breadcrumbData = {
     "@context": "https://schema.org",
@@ -157,6 +204,23 @@ export default async function SituationHubPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
         suppressHydrationWarning
       />
+      {howToSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+          suppressHydrationWarning
+        />
+      )}
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+          suppressHydrationWarning
+        />
+      )}
+      {isThin && (
+        <meta name="robots" content="noindex, follow" />
+      )}
 
       <header className="masthead">
         <div className="masthead-pub">상황별 절차 안내</div>
