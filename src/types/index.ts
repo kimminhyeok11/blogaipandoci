@@ -38,6 +38,7 @@ export interface Post {
   involved_agencies?: string[] | null;
   common_mistakes?: string[] | null;
   expert_level?: string | null;
+  timeline_steps?: string[] | null;
 }
 
 // 태그 타입
