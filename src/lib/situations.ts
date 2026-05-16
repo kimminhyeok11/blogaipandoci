@@ -12,7 +12,39 @@ export interface SituationItem {
   phrase: string;
   case_type: string | null;
   source_post_id: string | null;
+  target_url: string | null;
   score: number;
+}
+
+// 블로그형 수식어 제거 + 18~24자 제한으로 행동형 phrase 정제
+const STRIP_PATTERNS = [
+  /\d{4}년/g,
+  /\d+선/g,
+  /핵심\s*분석/g,
+  /완벽\s*정리/g,
+  /총\s*정리/g,
+  /한눈에/g,
+  /쉽게\s*설명/g,
+  /최신\s*판례/g,
+  /판례\s*분석/g,
+  /[\[\]()（）【】]/g,
+  /[?？!！]/g,
+];
+
+export function sanitizeSituationPhrase(text: string): string {
+  let result = text;
+  for (const pattern of STRIP_PATTERNS) {
+    result = result.replace(pattern, "");
+  }
+  // 연속 공백 정리
+  result = result.replace(/\s+/g, " ").trim();
+  // 24자 초과 시 자연스러운 단어 경계에서 자름
+  if (result.length > 24) {
+    const truncated = result.slice(0, 24);
+    const lastSpace = truncated.lastIndexOf(" ");
+    result = lastSpace > 10 ? truncated.slice(0, lastSpace) : truncated;
+  }
+  return result;
 }
 
 export interface StuckStageItem {
@@ -28,7 +60,7 @@ export async function getTrendingSituations(limit = 8): Promise<SituationItem[]>
     const admin = makeAdmin();
     const { data, error } = await admin
       .from("situations_cache")
-      .select("phrase, case_type, source_post_id, score")
+      .select("phrase, case_type, source_post_id, target_url, score")
       .order("score", { ascending: false })
       .limit(limit);
 
@@ -86,7 +118,7 @@ export async function refreshSituationsCache(): Promise<void> {
 
     const { data: posts, error } = await admin
       .from("posts")
-      .select("id, title, current_stage, case_type, view_count, published_at")
+      .select("id, title, slug, current_stage, case_type, view_count, published_at")
       .eq("published", true)
       .not("published_at", "is", null)
       .order("view_count", { ascending: false })
@@ -106,15 +138,18 @@ export async function refreshSituationsCache(): Promise<void> {
         const freshScore = Math.max(0, 1 - daysSince / DECAY_DAYS) * 0.3;
         const score = viewScore + freshScore;
 
-        // 상황 문장: current_stage 우선, 없으면 title 앞 15자
-        const phrase = p.current_stage
-          ? p.current_stage
-          : p.title.slice(0, 30).replace(/[?？]/g, "").trim();
+        // 상황 문장: current_stage 우선, 없으면 title 정제
+        const rawPhrase = p.current_stage || p.title;
+        const phrase = sanitizeSituationPhrase(rawPhrase);
+
+        // target_url: 항상 해당 글로 직접 이동
+        const target_url = `/posts/${p.slug}`;
 
         return {
           phrase,
           case_type: p.case_type || null,
           source_post_id: p.id,
+          target_url,
           score,
           generated_at: new Date().toISOString(),
         };
@@ -142,11 +177,11 @@ export async function refreshSituationsCache(): Promise<void> {
 // situations_cache가 비어있을 때 fallback
 function getDefaultSituations(): SituationItem[] {
   return [
-    { phrase: "경찰 출석요구 받음", case_type: "형사·고소", source_post_id: null, score: 0 },
-    { phrase: "통장압류 문자 받음", case_type: "채무·금전", source_post_id: null, score: 0 },
-    { phrase: "전세금 반환 계속 미뤄짐", case_type: "전세·임대차", source_post_id: null, score: 0 },
-    { phrase: "가족이 빚을 남기고 사망", case_type: "상속·유언", source_post_id: null, score: 0 },
-    { phrase: "지급명령 서류 받음", case_type: "채무·금전", source_post_id: null, score: 0 },
-    { phrase: "이혼 또는 양육권 문제", case_type: "이혼·가족", source_post_id: null, score: 0 },
+    { phrase: "경찰 출석요구 받음", case_type: "형사·고소", source_post_id: null, target_url: null, score: 0 },
+    { phrase: "통장압류 문자 받음", case_type: "채무·금전", source_post_id: null, target_url: null, score: 0 },
+    { phrase: "전세금 반환 계속 미뤄짐", case_type: "전세·임대차", source_post_id: null, target_url: null, score: 0 },
+    { phrase: "가족이 빚을 남기고 사망", case_type: "상속·유언", source_post_id: null, target_url: null, score: 0 },
+    { phrase: "지급명령 서류 받음", case_type: "채무·금전", source_post_id: null, target_url: null, score: 0 },
+    { phrase: "이혼 또는 양육권 문제", case_type: "이혼·가족", source_post_id: null, target_url: null, score: 0 },
   ];
 }

@@ -20,7 +20,9 @@ export function SituationSearch({ situations }: SituationSearchProps) {
   };
 
   const handleSituationClick = (item: SituationItem) => {
-    if (item.case_type) {
+    if (item.target_url) {
+      router.push(item.target_url);
+    } else if (item.case_type) {
       router.push(`/cases/${encodeURIComponent(item.case_type)}`);
     } else {
       router.push(`/search?q=${encodeURIComponent(item.phrase)}`);
