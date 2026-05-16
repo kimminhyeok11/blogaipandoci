@@ -96,7 +96,7 @@ export default async function CategoriesPage() {
       "@type": "ListItem",
       position: index + 1,
       name: `#${tag.name}`,
-      url: `${SITE_URL}/tags/${encodeURIComponent(tag.name)}`,
+      url: `${SITE_URL}/tags/${tag.slug}`,
       description: `${tag.count}개의 전문 분석 글`,
     })),
   } : null;
@@ -183,7 +183,7 @@ export default async function CategoriesPage() {
                 {tags.slice(0, 10).map((tag) => (
                   <Link
                     key={tag.name}
-                    href={`/tags/${encodeURIComponent(tag.name)}`}
+                    href={`/tags/${tag.slug}`}
                     className="group flex items-center gap-2 px-3 py-2 bg-rust/5 border border-rust/20 rounded-lg hover:border-rust hover:bg-rust/10 transition-all"
                   >
                     <span className="text-rust text-sm">#</span>
@@ -205,7 +205,7 @@ export default async function CategoriesPage() {
                 {tags.map((tag) => (
                   <Link
                     key={tag.name}
-                    href={`/tags/${encodeURIComponent(tag.name)}`}
+                    href={`/tags/${tag.slug}`}
                     className="group flex items-center gap-2 px-3 py-1.5 bg-cream/30 border border-rule rounded-full hover:border-rust hover:bg-rust/5 transition-all"
                   >
                     <span className="text-rust text-xs">#</span>

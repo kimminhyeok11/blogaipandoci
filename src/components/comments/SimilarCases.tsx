@@ -98,7 +98,7 @@ export function SimilarCases({ postId, questionType, topicTags }: SimilarCasesPr
         {cases.map((caseItem, i) => (
           <Link
             key={caseItem.id}
-            href={`/posts/${encodeURIComponent(caseItem.post.slug)}#comments`}
+            href={`/posts/${caseItem.post.slug}#comments`}
             className={`block py-4 hover:bg-cream/50 transition-colors ${i < cases.length - 1 ? "border-b border-rule" : ""}`}
           >
             <div className="flex items-start justify-between gap-4">

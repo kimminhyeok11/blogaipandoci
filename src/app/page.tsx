@@ -118,7 +118,7 @@ export default async function HomePage() {
       "@type": "ListItem",
       position: index + 1,
       name: p.title,
-      url: `${SITE_URL_HOME}/posts/${encodeURIComponent(p.slug)}`,
+      url: `${SITE_URL_HOME}/posts/${p.slug}`,
       description: p.excerpt || undefined,
       datePublished: p.published_at,
     })),
@@ -215,7 +215,7 @@ export default async function HomePage() {
                 {stuckStages.map((s) => (
                   <Link
                     key={s.current_stage}
-                    href={s.case_type ? `/cases/${encodeURIComponent(s.case_type)}` : `/search?q=${encodeURIComponent(s.current_stage)}`}
+                    href={s.case_type ? `/cases/${s.case_type}` : `/search?q=${encodeURIComponent(s.current_stage)}`}
                     className="font-sans text-xs text-muted border border-rule/40 rounded-sm px-3 py-1.5 hover:border-rust hover:text-rust transition-colors"
                   >
                     {s.current_stage}

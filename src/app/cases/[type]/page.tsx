@@ -60,12 +60,12 @@ export async function generateMetadata({ params }: CaseTypePageProps): Promise<M
       description: `${caseType} 관련 실제 절차 경험을 담은 글 모음입니다.`,
       type: "website",
       locale: "ko_KR",
-      url: `${SITE_URL}/cases/${encodeURIComponent(caseType)}`,
+      url: `${SITE_URL}/cases/${caseType}`,
       siteName: "法 BLOG",
       images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: `${caseType} 절차 안내` }],
     },
     alternates: {
-      canonical: `${SITE_URL}/cases/${encodeURIComponent(caseType)}`,
+      canonical: `${SITE_URL}/cases/${caseType}`,
     },
   };
 }
@@ -120,7 +120,7 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
         "@type": "ListItem",
         position: 3,
         name: `${caseType} 절차`,
-        item: `${SITE_URL}/cases/${encodeURIComponent(caseType)}`,
+        item: `${SITE_URL}/cases/${caseType}`,
       },
     ],
   };
@@ -141,7 +141,7 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
       "@type": "ListItem",
       position: index + 1,
       name: p.title,
-      url: `${SITE_URL}/posts/${encodeURIComponent(p.slug)}`,
+      url: `${SITE_URL}/posts/${p.slug}`,
       description: p.excerpt || undefined,
       datePublished: p.published_at || undefined,
     })),
@@ -202,7 +202,7 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
                 key={post.id}
                 className="group border-b border-rule pb-6 last:border-0"
               >
-                <Link href={`/posts/${encodeURIComponent(post.slug)}`} className="block">
+                <Link href={`/posts/${post.slug}`} className="block">
                   {/* 절차 단계 진행 표시 */}
                   {(post.current_stage || post.next_stage) && (
                     <div className="flex items-center gap-2 mb-2 flex-wrap">

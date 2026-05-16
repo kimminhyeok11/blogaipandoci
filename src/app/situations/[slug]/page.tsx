@@ -227,7 +227,7 @@ export default async function SituationHubPage({
         <Link href="/" className="masthead-title">法 BLOG</Link>
       </header>
 
-      <StickyNav backHref={case_type ? `/cases/${encodeURIComponent(case_type)}` : "/"} backLabel={case_type || "홈으로"} />
+      <StickyNav backHref={case_type ? `/cases/${case_type}` : "/"} backLabel={case_type || "홈으로"} />
 
       <main className="max-w-content mx-auto px-4 sm:px-6 py-12">
         {/* 허브 헤더 */}
@@ -235,7 +235,7 @@ export default async function SituationHubPage({
           <div className="flex items-center gap-2 mb-2">
             {case_type && (
               <Link
-                href={`/cases/${encodeURIComponent(case_type)}`}
+                href={`/cases/${case_type}`}
                 className="font-sans text-xs text-rust hover:underline"
               >
                 {case_type}
@@ -369,7 +369,7 @@ export default async function SituationHubPage({
         {case_type && (
           <div className="mt-10 text-center">
             <Link
-              href={`/cases/${encodeURIComponent(case_type)}`}
+              href={`/cases/${case_type}`}
               className="font-sans text-sm text-rust hover:underline"
             >
               {case_type} 관련 글 전체 보기 →

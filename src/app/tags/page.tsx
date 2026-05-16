@@ -92,7 +92,7 @@ export default async function TagsPage() {
       "@type": "ListItem",
       position: index + 1,
       name: `#${tag.name}`,
-      url: `${SITE_URL}/tags/${encodeURIComponent(tag.name)}`,
+      url: `${SITE_URL}/tags/${tag.slug}`,
       description: `${tag.count}개의 글`,
     })),
   } : null;
@@ -171,7 +171,7 @@ export default async function TagsPage() {
             {tags.map((tag) => (
               <Link
                 key={tag.name}
-                href={`/tags/${encodeURIComponent(tag.name)}`}
+                href={`/tags/${tag.slug}`}
                 className="group flex items-center gap-2 px-4 py-2 bg-cream/30 border border-rule rounded-full hover:border-rust hover:bg-rust/5 transition-all"
               >
                 <span className="text-rust">#</span>

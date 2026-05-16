@@ -28,7 +28,7 @@ export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
         {relatedPosts.map((post) => (
           <Link
             key={post.id}
-            href={`/posts/${encodeURIComponent(post.slug)}`}
+            href={`/posts/${post.slug}`}
             className="group block bg-paper border border-ink/10 rounded-lg overflow-hidden hover:border-rust/50 hover:shadow-lg transition-all duration-300"
           >
             {/* 썸네일 */}

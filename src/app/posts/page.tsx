@@ -105,7 +105,7 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
       "@type": "ListItem",
       position: index + 1,
       name: p.title,
-      url: `${SITE_URL}/posts/${encodeURIComponent(p.slug)}`,
+      url: `${SITE_URL}/posts/${p.slug}`,
       description: p.excerpt || undefined,
       datePublished: p.published_at || undefined,
     })),

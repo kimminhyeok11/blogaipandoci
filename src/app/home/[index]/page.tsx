@@ -154,7 +154,7 @@ export default async function HomePage({ params }: { params: { index: string } }
       "@type": "ListItem",
       position: index + 1,
       name: p.title,
-      url: `${SITE_URL_HOME}/posts/${encodeURIComponent(p.slug)}`,
+      url: `${SITE_URL_HOME}/posts/${p.slug}`,
       description: p.excerpt || undefined,
       datePublished: p.published_at,
     })),

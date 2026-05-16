@@ -14,10 +14,7 @@ function ShareButtonsComponent({ title, description, imageUrl }: ShareButtonsPro
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // 한글 slug가 디코딩된 상태면 인코딩된 canonical URL로 통일
-    const { origin, pathname, search, hash } = window.location;
-    const encodedPath = pathname.split('/').map(seg => encodeURIComponent(decodeURIComponent(seg))).join('/');
-    setShareUrl(`${origin}${encodedPath}${search}${hash}`);
+    setShareUrl(window.location.href);
   }, []);
 
   const openShareWindow = (url: string) => {

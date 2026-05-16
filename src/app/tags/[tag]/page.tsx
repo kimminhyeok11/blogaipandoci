@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
     title: `#${tag} 관련 글 | 法 BLOG`,
     description: `${tag} 주제의 법률·정책·사회 심층 분석 글 모음`,
     alternates: {
-      canonical: `${SITE_URL}/tags/${encodeURIComponent(tag)}`,
+      canonical: `${SITE_URL}/tags/${tag}`,
     },
   };
 }
@@ -106,7 +106,7 @@ export default async function TagPage({ params }: TagPageProps) {
         "@type": "ListItem",
         position: 3,
         name: `#${tag}`,
-        item: `${SITE_URL}/tags/${encodeURIComponent(tag)}`,
+        item: `${SITE_URL}/tags/${tag}`,
       },
     ],
   };
@@ -117,7 +117,7 @@ export default async function TagPage({ params }: TagPageProps) {
     "@type": "CollectionPage",
     name: `#${tag} 관련 글 모음`,
     description: `${tag} 주제의 법률·정책·사회 분석 글 ${posts.length}개`,
-    url: `${SITE_URL}/tags/${encodeURIComponent(tag)}`,
+    url: `${SITE_URL}/tags/${tag}`,
     isPartOf: {
       "@type": "WebSite",
       name: "法 BLOG",
@@ -127,7 +127,7 @@ export default async function TagPage({ params }: TagPageProps) {
       "@type": "ListItem",
       position: index + 1,
       name: p.title,
-      url: `${SITE_URL}/posts/${encodeURIComponent(p.slug)}`,
+      url: `${SITE_URL}/posts/${p.slug}`,
       description: p.excerpt || undefined,
       datePublished: p.published_at || undefined,
     })),

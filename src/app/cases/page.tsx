@@ -114,7 +114,7 @@ export default async function CasesPage() {
       "@type": "ListItem",
       position: index + 1,
       name: `${c.case_type} 절차 안내`,
-      url: `${SITE_URL}/cases/${encodeURIComponent(c.case_type)}`,
+      url: `${SITE_URL}/cases/${c.case_type}`,
     })),
   } : null;
 
@@ -185,7 +185,7 @@ export default async function CasesPage() {
             return hasContent ? (
               <Link
                 key={case_type}
-                href={`/cases/${encodeURIComponent(case_type)}`}
+                href={`/cases/${case_type}`}
                 className="group p-5 border border-rule rounded-sm transition-all hover:border-rust hover:shadow-sm bg-paper cursor-pointer"
               >
                 {cardContent}
