@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 
-interface SimilarPost {
+export interface SimilarPost {
   id: string;
   title: string;
   slug: string;
@@ -14,10 +14,10 @@ interface SimilarPost {
 }
 
 interface SimilarPostsProps {
-  postId: string;
+  posts: SimilarPost[];
 }
 
-async function fetchSimilarPosts(postId: string): Promise<SimilarPost[]> {
+export async function fetchSimilarPosts(postId: string): Promise<SimilarPost[]> {
   try {
     const admin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,8 +45,7 @@ async function fetchSimilarPosts(postId: string): Promise<SimilarPost[]> {
   }
 }
 
-export async function SimilarPosts({ postId }: SimilarPostsProps) {
-  const posts = await fetchSimilarPosts(postId);
+export function SimilarPosts({ posts }: SimilarPostsProps) {
 
   if (posts.length === 0) return null;
 

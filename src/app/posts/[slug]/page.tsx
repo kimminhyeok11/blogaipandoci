@@ -13,7 +13,7 @@ import { TrustBadge } from "@/components/posts/TrustBadge";
 import { ProcedureProgressBar } from "@/components/posts/ProcedureProgressBar";
 import { ProcedureMeta } from "@/components/posts/ProcedureMeta";
 import { RelatedPosts } from "@/components/posts/RelatedPosts";
-import { SimilarPosts } from "@/components/posts/SimilarPosts";
+import { SimilarPosts, fetchSimilarPosts } from "@/components/posts/SimilarPosts";
 import { getThumbnailUrl } from "@/utils/image";
 import { PostContent } from "@/components/posts/PostContent";
 
@@ -383,9 +383,10 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   // 관련 글 + 초기 댓글 병렬 fetch
-  const [relatedPosts, initialComments] = await Promise.all([
+  const [relatedPosts, initialComments, similarPosts] = await Promise.all([
     getRelatedPosts(post),
     getInitialComments(post.id),
+    fetchSimilarPosts(post.id),
   ]);
 
   // 본문에서 첫 이미지 추출 (Article Schema용)
@@ -594,7 +595,7 @@ export default async function PostPage({ params }: PostPageProps) {
         </div>
 
         {/* 비슷한 상황의 실제 사례 (pgvector 기반) */}
-        <SimilarPosts postId={post.id} />
+        <SimilarPosts posts={similarPosts} />
 
         {/* Comments Section - 질문/댓글 */}
         <CommentsSection postId={post.id} postSlug={post.slug} postTitle={post.title} initialComments={initialComments} />
