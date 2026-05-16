@@ -13,7 +13,19 @@ export interface SituationItem {
   case_type: string | null;
   source_post_id: string | null;
   target_url: string | null;
+  situation_slug: string | null;
   score: number;
+}
+
+// phrase를 URL slug로 변환
+export function phraseToSlug(phrase: string): string {
+  return phrase
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318Fa-z0-9-]/gi, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
 }
 
 // 블로그형 수식어 제거 + 18~24자 제한으로 행동형 phrase 정제
@@ -60,7 +72,7 @@ export async function getTrendingSituations(limit = 8): Promise<SituationItem[]>
     const admin = makeAdmin();
     const { data, error } = await admin
       .from("situations_cache")
-      .select("phrase, case_type, source_post_id, target_url, score")
+      .select("phrase, case_type, source_post_id, target_url, situation_slug, score")
       .order("score", { ascending: false })
       .limit(limit);
 
@@ -142,14 +154,20 @@ export async function refreshSituationsCache(): Promise<void> {
         const rawPhrase = p.current_stage || p.title;
         const phrase = sanitizeSituationPhrase(rawPhrase);
 
-        // target_url: 항상 해당 글로 직접 이동
-        const target_url = `/posts/${p.slug}`;
+        // situation_slug: 허브 페이지 URL용
+        const situation_slug = phraseToSlug(phrase);
+
+        // target_url: 허브 페이지 우선, 없으면 직접 글
+        const target_url = situation_slug
+          ? `/situations/${situation_slug}`
+          : `/posts/${p.slug}`;
 
         return {
           phrase,
           case_type: p.case_type || null,
           source_post_id: p.id,
           target_url,
+          situation_slug,
           score,
           generated_at: new Date().toISOString(),
         };
@@ -177,11 +195,11 @@ export async function refreshSituationsCache(): Promise<void> {
 // situations_cache가 비어있을 때 fallback
 function getDefaultSituations(): SituationItem[] {
   return [
-    { phrase: "경찰 출석요구 받음", case_type: "형사·고소", source_post_id: null, target_url: null, score: 0 },
-    { phrase: "통장압류 문자 받음", case_type: "채무·금전", source_post_id: null, target_url: null, score: 0 },
-    { phrase: "전세금 반환 계속 미뤄짐", case_type: "전세·임대차", source_post_id: null, target_url: null, score: 0 },
-    { phrase: "가족이 빚을 남기고 사망", case_type: "상속·유언", source_post_id: null, target_url: null, score: 0 },
-    { phrase: "지급명령 서류 받음", case_type: "채무·금전", source_post_id: null, target_url: null, score: 0 },
-    { phrase: "이혼 또는 양육권 문제", case_type: "이혼·가족", source_post_id: null, target_url: null, score: 0 },
+    { phrase: "경찰 출석요구 받음", case_type: "형사·고소", source_post_id: null, target_url: "/cases/형사·고소", situation_slug: null, score: 0 },
+    { phrase: "통장압류 문자 받음", case_type: "채무·금전", source_post_id: null, target_url: "/cases/채무·금전", situation_slug: null, score: 0 },
+    { phrase: "전세금 반환 계속 미뤄짐", case_type: "전세·임대차", source_post_id: null, target_url: "/cases/전세·임대차", situation_slug: null, score: 0 },
+    { phrase: "가족이 빚을 남기고 사망", case_type: "상속·유언", source_post_id: null, target_url: "/cases/상속·유언", situation_slug: null, score: 0 },
+    { phrase: "지급명령 서류 받음", case_type: "채무·금전", source_post_id: null, target_url: "/cases/채무·금전", situation_slug: null, score: 0 },
+    { phrase: "이혼 또는 양육권 문제", case_type: "이혼·가족", source_post_id: null, target_url: "/cases/이혼·가족", situation_slug: null, score: 0 },
   ];
 }

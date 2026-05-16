@@ -12,6 +12,7 @@ import { TrustBadge } from "@/components/posts/TrustBadge";
 import { ProcedureProgressBar } from "@/components/posts/ProcedureProgressBar";
 import { ProcedureMeta } from "@/components/posts/ProcedureMeta";
 import { RelatedPosts } from "@/components/posts/RelatedPosts";
+import { SimilarPosts } from "@/components/posts/SimilarPosts";
 import { getThumbnailUrl } from "@/utils/image";
 import { PostContent } from "@/components/posts/PostContent";
 
@@ -619,6 +620,9 @@ export default async function PostPage({ params }: PostPageProps) {
             </aside>
           </div>
         </div>
+
+        {/* 비슷한 상황의 실제 사례 (pgvector 기반) */}
+        <SimilarPosts postId={post.id} />
 
         {/* Comments Section - 질문/댓글 */}
         <CommentsSection postId={post.id} postSlug={post.slug} postTitle={post.title} />
