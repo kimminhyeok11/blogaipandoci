@@ -24,6 +24,7 @@ const EMPTY_PROCEDURE = {
   involved_agencies: "",
   common_mistakes: "",
   expert_level: "",
+  timeline_steps: "",
 };
 
 // IndexNow 알림 헬퍼
@@ -231,7 +232,8 @@ function WritePageContent() {
           (post.involved_agencies && post.involved_agencies.length > 0) ||
           (post.common_mistakes && post.common_mistakes.length > 0);
 
-        if (hasProcedureMeta) {
+        const hasTimeline = post.timeline_steps && post.timeline_steps.length > 0;
+        if (hasProcedureMeta || hasTimeline) {
           setProcedureMeta({
             case_type: post.case_type || "",
             current_stage: post.current_stage || "",
@@ -240,6 +242,7 @@ function WritePageContent() {
             involved_agencies: (post.involved_agencies || []).join(", "),
             common_mistakes: (post.common_mistakes || []).join(", "),
             expert_level: post.expert_level || "",
+            timeline_steps: (post.timeline_steps || []).join(" → "),
           });
           setShowProcedure(true);
         }
@@ -396,6 +399,9 @@ function WritePageContent() {
           involved_agencies: procedureMeta.involved_agencies ? procedureMeta.involved_agencies.split(",").map(s => s.trim()).filter(Boolean) : null,
           common_mistakes: procedureMeta.common_mistakes ? procedureMeta.common_mistakes.split(",").map(s => s.trim()).filter(Boolean) : null,
           expert_level: procedureMeta.expert_level || null,
+          timeline_steps: procedureMeta.timeline_steps
+            ? procedureMeta.timeline_steps.split("→").map(s => s.trim()).filter(Boolean)
+            : null,
         } : {};
 
         const response = await fetch("/api/posts", {
@@ -484,6 +490,9 @@ function WritePageContent() {
             involved_agencies: procedureMeta.involved_agencies ? procedureMeta.involved_agencies.split(",").map(s => s.trim()).filter(Boolean) : null,
             common_mistakes: procedureMeta.common_mistakes ? procedureMeta.common_mistakes.split(",").map(s => s.trim()).filter(Boolean) : null,
             expert_level: procedureMeta.expert_level || null,
+            timeline_steps: procedureMeta.timeline_steps
+              ? procedureMeta.timeline_steps.split("→").map(s => s.trim()).filter(Boolean)
+              : null,
           }),
         });
 
@@ -774,6 +783,19 @@ function WritePageContent() {
                   <div className="sm:col-span-2">
                     <label className="block text-xs text-muted mb-1">자주 하는 실수</label>
                     <input type="text" value={procedureMeta.common_mistakes} onChange={(e) => setProcedureMeta({ ...procedureMeta, common_mistakes: e.target.value })} placeholder="보험해지 시기 착각, 답변서 미제출 (쉼표로 구분)" className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none placeholder:text-muted/40" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs text-muted mb-1">
+                      사건 진행 타임라인
+                      <span className="text-muted/50 ml-1 font-normal">(→ 로 구분)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={procedureMeta.timeline_steps}
+                      onChange={(e) => setProcedureMeta({ ...procedureMeta, timeline_steps: e.target.value })}
+                      placeholder="통장압류 문자 수신 → 채권자 확인 → 압류 범위 확인 → 이의신청 검토"
+                      className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none placeholder:text-muted/40"
+                    />
                   </div>
                 </div>
               )}

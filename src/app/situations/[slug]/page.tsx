@@ -18,6 +18,7 @@ interface HubPost {
   current_stage: string | null;
   next_stage: string | null;
   expert_level: string | null;
+  timeline_steps: string[] | null;
   view_count: number;
   published_at: string;
 }
@@ -27,6 +28,8 @@ async function getSituationData(situationSlug: string): Promise<{
   case_type: string | null;
   posts: HubPost[];
   stuckStages: { stage: string; count: number }[];
+  mergedTimeline: string[];
+  nextStages: { stage: string; count: number }[];
 } | null> {
   const supabase = getServiceSupabase();
 
@@ -44,7 +47,7 @@ async function getSituationData(situationSlug: string): Promise<{
   // case_type 기반 관련 글 조회
   let query = supabase
     .from("posts")
-    .select("id, title, slug, excerpt, case_type, current_stage, next_stage, expert_level, view_count, published_at")
+    .select("id, title, slug, excerpt, case_type, current_stage, next_stage, expert_level, timeline_steps, view_count, published_at")
     .eq("published", true)
     .not("published_at", "is", null)
     .order("view_count", { ascending: false })
@@ -58,17 +61,40 @@ async function getSituationData(situationSlug: string): Promise<{
 
   // current_stage 집계 (막히는 절차)
   const stageCounts: Record<string, number> = {};
+  // next_stage 집계 (다음 단계 추천)
+  const nextStageCounts: Record<string, number> = {};
+  // timeline_steps 빈도 집계 → 대표 타임라인 생성
+  const stepFreq: Record<string, number> = {};
+
   for (const p of posts || []) {
     if (p.current_stage) {
       stageCounts[p.current_stage] = (stageCounts[p.current_stage] || 0) + 1;
     }
+    if (p.next_stage) {
+      nextStageCounts[p.next_stage] = (nextStageCounts[p.next_stage] || 0) + 1;
+    }
+    for (const step of p.timeline_steps || []) {
+      if (step.trim()) stepFreq[step.trim()] = (stepFreq[step.trim()] || 0) + 1;
+    }
   }
+
   const stuckStages = Object.entries(stageCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6)
     .map(([stage, count]) => ({ stage, count }));
 
-  return { phrase, case_type, posts: posts || [], stuckStages };
+  const nextStages = Object.entries(nextStageCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([stage, count]) => ({ stage, count }));
+
+  // 빈도 높은 타임라인 단계를 순서대로 정렬 (상위 7개)
+  const mergedTimeline = Object.entries(stepFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 7)
+    .map(([step]) => step);
+
+  return { phrase, case_type, posts: posts || [], stuckStages, mergedTimeline, nextStages };
 }
 
 export async function generateMetadata({
@@ -112,7 +138,7 @@ export default async function SituationHubPage({
   const data = await getSituationData(params.slug);
   if (!data) notFound();
 
-  const { phrase, case_type, posts, stuckStages } = data;
+  const { phrase, case_type, posts, stuckStages, mergedTimeline, nextStages } = data;
 
   const breadcrumbData = {
     "@context": "https://schema.org",
@@ -158,9 +184,31 @@ export default async function SituationHubPage({
           </p>
         </div>
 
+        {/* 사건 진행 타임라인 */}
+        {mergedTimeline.length > 0 && (
+          <div className="mb-8 p-5 border border-rule rounded-sm bg-paper">
+            <p className="font-sans text-xs font-medium tracking-widest uppercase text-muted mb-4">
+              보통 이런 순서로 진행됩니다
+            </p>
+            <ol className="flex flex-wrap items-center gap-2">
+              {mergedTimeline.map((step, i) => (
+                <li key={step} className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-rust/10 text-rust text-2xs font-bold flex-shrink-0">
+                    {i + 1}
+                  </span>
+                  <span className="font-sans text-xs text-ink">{step}</span>
+                  {i < mergedTimeline.length - 1 && (
+                    <span className="text-muted/40 text-xs">→</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
         {/* 막히는 절차 */}
         {stuckStages.length > 0 && (
-          <div className="mb-10 p-5 border border-rule rounded-sm bg-cream/30">
+          <div className="mb-8 p-5 border border-rule rounded-sm bg-cream/30">
             <p className="font-sans text-xs font-medium tracking-widest uppercase text-muted mb-3">
               이 상황에서 많이 막히는 절차
             </p>
@@ -173,6 +221,26 @@ export default async function SituationHubPage({
                   {stage}
                   {count > 1 && <span className="ml-1 text-rust/70">{count}건</span>}
                 </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 다음 단계 추천 (S2) */}
+        {nextStages.length > 0 && (
+          <div className="mb-10 p-5 border-l-2 border-rust bg-rust/5 rounded-sm">
+            <p className="font-sans text-xs font-medium text-rust mb-3">
+              이 상황 다음에 이어지는 문제
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {nextStages.map(({ stage }) => (
+                <Link
+                  key={stage}
+                  href={`/search?q=${encodeURIComponent(stage)}`}
+                  className="font-sans text-xs text-ink border border-rule/60 rounded-sm px-3 py-1.5 bg-paper hover:border-rust hover:text-rust transition-colors"
+                >
+                  {stage} →
+                </Link>
               ))}
             </div>
           </div>

@@ -19,6 +19,8 @@ interface Post {
   published_at: string;
   view_count: number;
   user_id: string;
+  current_stage: string | null;
+  case_type: string | null;
   user?: { nickname: string | null; email: string | null; role?: string | null };
 }
 
@@ -44,7 +46,7 @@ async function getPosts() {
   try {
     const { data: popularPosts } = await supabase
       .from("posts")
-      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email, role)")
+      .select("id, title, excerpt, slug, published_at, view_count, user_id, current_stage, case_type, user:users(nickname, email, role)")
       .eq("published", true)
       .not("published_at", "is", null)
       .order("view_count", { ascending: false })
@@ -52,7 +54,7 @@ async function getPosts() {
 
     const { data: latestPosts } = await supabase
       .from("posts")
-      .select("id, title, excerpt, slug, published_at, view_count, user_id, user:users(nickname, email, role)")
+      .select("id, title, excerpt, slug, published_at, view_count, user_id, current_stage, case_type, user:users(nickname, email, role)")
       .eq("published", true)
       .not("published_at", "is", null)
       .order("published_at", { ascending: false })
@@ -245,9 +247,15 @@ export default async function HomePage() {
               >
                 <Link href={`/posts/${post.slug}`} className="block">
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="font-mono text-2xs tracking-wider uppercase text-rust">
-                      심층 분석
-                    </span>
+                    {post.current_stage ? (
+                      <span className="font-sans text-2xs font-medium text-rust border border-rust/30 rounded-sm px-2 py-0.5 bg-rust/5">
+                        {post.current_stage}
+                      </span>
+                    ) : (
+                      <span className="font-mono text-2xs tracking-wider uppercase text-rust">
+                        {post.case_type || "심층 분석"}
+                      </span>
+                    )}
                     <span className="text-rule">·</span>
                     <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
                       {new Date(post.published_at).toLocaleDateString("ko-KR")}

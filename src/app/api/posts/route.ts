@@ -267,7 +267,8 @@ export async function POST(request: Request) {
     const token = authHeader.replace("Bearer ", "");
     const body = await request.json();
     const { title, slug, content, excerpt, cover_image, cover_image_alt, published,
-      case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level
+      case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level,
+      timeline_steps
     } = body;
 
     const serviceSupabase = makeAdmin();
@@ -327,6 +328,7 @@ export async function POST(request: Request) {
         involved_agencies: involved_agencies || null,
         common_mistakes: common_mistakes || null,
         expert_level: expert_level || null,
+        timeline_steps: timeline_steps || null,
       })
       .select()
       .single();
@@ -341,7 +343,13 @@ export async function POST(request: Request) {
 
     // embedding 생성 (비동기, 발행 시에만)
     if (published && data?.id && process.env.OPENAI_API_KEY) {
-      const embeddingText = `${title} ${(excerpt || "")} ${finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 6000)}`;
+      const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
+      const embeddingText = [
+        title,
+        stagePart,
+        excerpt || "",
+        finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 5500),
+      ].filter(Boolean).join(" ");
       fetch("https://api.openai.com/v1/embeddings", {
         method: "POST",
         headers: {
@@ -409,7 +417,8 @@ export async function PUT(request: Request) {
     const token = authHeader.replace("Bearer ", "");
     const body = await request.json();
     const { id, title, slug, content, excerpt, cover_image, cover_image_alt, published,
-      case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level
+      case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level,
+      timeline_steps
     } = body;
 
     const serviceSupabase = makeAdmin();
@@ -477,6 +486,7 @@ export async function PUT(request: Request) {
         involved_agencies: involved_agencies !== undefined ? (involved_agencies || null) : undefined,
         common_mistakes: common_mistakes !== undefined ? (common_mistakes || null) : undefined,
         expert_level: expert_level !== undefined ? (expert_level || null) : undefined,
+        timeline_steps: timeline_steps !== undefined ? (timeline_steps || null) : undefined,
       })
       .eq("id", id)
       .select()
@@ -492,7 +502,13 @@ export async function PUT(request: Request) {
 
     // embedding 재생성 (비동기, 발행 상태일 때만)
     if (published && data?.id && process.env.OPENAI_API_KEY) {
-      const embeddingText = `${title} ${(excerpt || "")} ${finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 6000)}`;
+      const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
+      const embeddingText = [
+        title,
+        stagePart,
+        excerpt || "",
+        finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 5500),
+      ].filter(Boolean).join(" ");
       fetch("https://api.openai.com/v1/embeddings", {
         method: "POST",
         headers: {

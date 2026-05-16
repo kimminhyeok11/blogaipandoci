@@ -179,7 +179,17 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        {post.current_stage ? (
+                          <span className="font-sans text-2xs font-medium text-rust border border-rust/30 rounded-sm px-2 py-0.5 bg-rust/5 flex-shrink-0">
+                            {post.current_stage}
+                          </span>
+                        ) : post.case_type ? (
+                          <span className="font-sans text-2xs font-medium text-rust flex-shrink-0">
+                            {post.case_type}
+                          </span>
+                        ) : null}
+                        {(post.current_stage || post.case_type) && <span className="text-rule">·</span>}
                         <span className="font-sans text-2xs text-muted">
                           {post.user?.role === "admin" ? (
                             <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
