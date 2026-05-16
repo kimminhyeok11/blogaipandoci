@@ -111,18 +111,93 @@ async function findRelatedPosts(
   }
 }
 
-// 본문 하단에 관련 글 링크 마크다운 삽입
+// 본문에 관련 글 키워드 인라인 링크 자동 삽입
+// - 글 제목에서 핵심 키워드(3자 이상) 추출
+// - 본문에서 첫 번째 등장 위치에만 링크 삽입 (과도한 링크 방지)
+// - 코드블록·헤딩·이미 링크된 구간 제외
+function injectInlineLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
+  if (relatedPosts.length === 0) return content;
+
+  // 코드블록 위치 수집 (링크 삽입 제외 구간)
+  const codeBlockRanges: [number, number][] = [];
+  const codeBlockRegex = /```[\s\S]*?```/g;
+  let m: RegExpExecArray | null;
+  while ((m = codeBlockRegex.exec(content)) !== null) {
+    codeBlockRanges.push([m.index, m.index + m[0].length]);
+  }
+  const isInCodeBlock = (idx: number) => codeBlockRanges.some(([s, e]) => idx >= s && idx < e);
+
+  // 이미 링크된 구간 수집 ([text](url) 형태)
+  const linkedRanges: [number, number][] = [];
+  const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
+  while ((m = linkRegex.exec(content)) !== null) {
+    linkedRanges.push([m.index, m.index + m[0].length]);
+  }
+  const isAlreadyLinked = (idx: number) => linkedRanges.some(([s, e]) => idx >= s && idx < e);
+
+  // 헤딩 라인 위치 수집
+  const headingRanges: [number, number][] = [];
+  const headingRegex = /^#{1,6} .+$/gm;
+  while ((m = headingRegex.exec(content)) !== null) {
+    headingRanges.push([m.index, m.index + m[0].length]);
+  }
+  const isInHeading = (idx: number) => headingRanges.some(([s, e]) => idx >= s && idx < e);
+
+  const isExcluded = (idx: number) => isInCodeBlock(idx) || isAlreadyLinked(idx) || isInHeading(idx);
+
+  let result = content;
+  const usedKeywords = new Set<string>();
+
+  // 관련 글마다 핵심 키워드 추출 후 본문 치환 (글당 최대 1개 키워드만)
+  for (const post of relatedPosts) {
+    // 제목에서 불용어 제외 3자 이상 키워드 추출, 긴 것 우선
+    const keywords = post.title
+      .split(/[\s\-·,()]+/)
+      .map(w => w.trim())
+      .filter(w => w.length >= 3 && !STOP_WORDS.has(w))
+      .sort((a, b) => b.length - a.length);
+
+    let injected = false;
+    for (const keyword of keywords) {
+      if (usedKeywords.has(keyword)) continue;
+
+      const keywordIdx = result.indexOf(keyword);
+      if (keywordIdx === -1) continue;
+      if (isExcluded(keywordIdx)) continue;
+
+      // 첫 번째 등장 위치에만 링크 삽입
+      result =
+        result.slice(0, keywordIdx) +
+        `[${keyword}](/posts/${post.slug})` +
+        result.slice(keywordIdx + keyword.length);
+
+      usedKeywords.add(keyword);
+      injected = true;
+      break; // 글당 1개 키워드만
+    }
+    // 최대 3개 글만 인라인 링크 삽입 (과도한 링크 방지)
+    if (usedKeywords.size >= 3) break;
+    void injected;
+  }
+
+  return result;
+}
+
+// 본문 하단에 관련 글 링크 마크다운 삽입 + 본문 인라인 링크 삽입
 function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
   if (relatedPosts.length === 0) return content;
 
   // 기존에 관련 글 섹션이 있으면 제거 (재발행 시 중복 방지)
   const cleaned = content.replace(/\n---\n\n### 📌 관련 글\n[\s\S]*$/, '');
 
+  // 본문 인라인 링크 삽입
+  const withInline = injectInlineLinks(cleaned, relatedPosts);
+
   const links = relatedPosts
     .map(p => `- [${p.title}](/posts/${p.slug})`)
     .join('\n');
 
-  return `${cleaned.trimEnd()}\n\n---\n\n### 📌 관련 글\n${links}\n`;
+  return `${withInline.trimEnd()}\n\n---\n\n### 📌 관련 글\n${links}\n`;
 }
 
 // GET /api/posts - 글 목록 조회
