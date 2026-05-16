@@ -289,10 +289,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Forbidden - 관리자만 글을 작성할 수 있습니다" }, { status: 403 });
     }
 
+    // slug 중복 확인 후 자동 suffix 추가
+    let finalSlug = slug;
+    const { data: existing } = await serviceSupabase
+      .from("posts")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (existing) {
+      finalSlug = `${slug.slice(0, 20)}-${Date.now().toString(36).slice(-4)}`;
+    }
+
     // 발행 시 관련 글 자동 삽입
     let finalContent = content;
     if (published) {
-      const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
+      const relatedPosts = await findRelatedPosts(serviceSupabase, title, finalSlug);
       finalContent = appendRelatedLinks(content, relatedPosts);
     }
 
@@ -300,7 +311,7 @@ export async function POST(request: Request) {
       .from("posts")
       .insert({
         title,
-        slug,
+        slug: finalSlug,
         content: finalContent,
         excerpt,
         cover_image,
@@ -356,7 +367,7 @@ export async function POST(request: Request) {
     if (published) {
       revalidatePath("/");
       revalidatePath("/posts");
-      revalidatePath(`/posts/${slug}`);
+      revalidatePath(`/posts/${finalSlug}`);
       revalidatePath("/tags");
       revalidatePath("/categories");
       revalidatePath("/cases");
@@ -366,7 +377,7 @@ export async function POST(request: Request) {
       const { key, host } = getIndexNowConfig();
       if (key) {
         const siteUrl = `https://${host}`;
-        notifyIndexNow([`${siteUrl}/posts/${encodeURIComponent(slug)}`, `${siteUrl}/posts`, siteUrl], key, host).catch(() => {});
+        notifyIndexNow([`${siteUrl}/posts/${encodeURIComponent(finalSlug)}`, `${siteUrl}/posts`, siteUrl], key, host).catch(() => {});
       }
     }
 
