@@ -575,7 +575,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
               {/* 본문 내용 - max-w-article로 중앙 정렬 */}
               <div className="article-body-content">
-                <PostContent contentMarkdown={post.content} />
+                <PostContent contentMarkdown={post.content} removeFirstImage={!!post.cover_image} />
               </div>
 
               {/* 절차 실무 정보 (방문 기관, 자주 하는 실수) */}
