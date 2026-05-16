@@ -315,13 +315,12 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   console.log('[generateMetadata] decodedSlug:', decodedSlug);
   const post = await getPost(decodedSlug);
   console.log('[generateMetadata] post found:', post ? 'yes' : 'no');
-  const postUrl = `${SITE_URL}/posts/${post?.slug ?? params.slug}`;
 
   if (!post) {
-    return {
-      title: "글을 찾을 수 없습니다",
-    };
+    notFound();
   }
+
+  const postUrl = `${SITE_URL}/posts/${post.slug}`;
 
   const rawDesc = post.meta_description || post.excerpt || "";
   const description = rawDesc.length >= 120

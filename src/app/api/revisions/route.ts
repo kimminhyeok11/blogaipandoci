@@ -121,7 +121,8 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError) {
-      return NextResponse.json({ error: "Failed to save revision" }, { status: 500 });
+      console.error("[revisions] insert 실패:", JSON.stringify(insertError), "payload:", { post_id, title: title?.slice(0, 30), excerpt: excerpt?.slice(0, 30) });
+      return NextResponse.json({ error: "Failed to save revision", detail: insertError.message }, { status: 500 });
     }
 
     // 최대 10개 유지 — 초과분(오래된 것) 자동 삭제

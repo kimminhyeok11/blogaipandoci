@@ -113,7 +113,7 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const data = await getSituationData(params.slug);
-  if (!data) return { title: "상황 허브" };
+  if (!data) notFound();
 
   const title = `${data.phrase} | 실제 절차 경험 모음`;
   const description = `${data.phrase} 상황에서 실제로 어떻게 진행되는지, 막히는 절차와 관련 사례를 모아봤습니다.`;
