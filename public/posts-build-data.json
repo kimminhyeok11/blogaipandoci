@@ -24,6 +24,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -52,6 +53,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -80,6 +82,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -108,6 +111,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -136,6 +140,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -164,6 +169,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -201,6 +207,7 @@
         "경영책임자 책임 회피 시도"
       ],
       "expert_level": "변호사권장",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -237,6 +244,7 @@
         "면책 후 금융거래 과도한 기대"
       ],
       "expert_level": "변호사권장",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -265,6 +273,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -293,6 +302,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -321,6 +331,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -349,6 +360,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -377,6 +389,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -405,6 +418,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -433,6 +447,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -461,6 +476,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -489,6 +505,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -517,6 +534,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -545,6 +563,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -573,6 +592,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -601,6 +621,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -629,6 +650,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -657,6 +679,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -685,6 +708,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -713,6 +737,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -741,6 +766,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -769,6 +795,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -797,6 +824,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -825,6 +853,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -853,6 +882,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -881,6 +911,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -909,6 +940,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -937,6 +969,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -965,6 +998,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -993,6 +1027,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1030,6 +1065,7 @@
         "면책 불허 사유 방치"
       ],
       "expert_level": "변호사권장",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1058,6 +1094,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1086,6 +1123,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1114,6 +1152,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1142,6 +1181,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1170,6 +1210,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1198,6 +1239,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1226,6 +1268,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1254,6 +1297,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1291,6 +1335,7 @@
         "취하 서류 지연"
       ],
       "expert_level": "법무사권장",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1319,6 +1364,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1347,6 +1393,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1375,6 +1422,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1403,6 +1451,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1431,6 +1480,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1459,6 +1509,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1487,6 +1538,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1523,6 +1575,7 @@
         "퇴직연금 별도 확인 안 함"
       ],
       "expert_level": "법무사권장",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1551,6 +1604,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1579,6 +1633,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1607,6 +1662,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1635,6 +1691,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1663,6 +1720,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1691,6 +1749,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1719,6 +1778,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1747,6 +1807,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1775,6 +1836,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": "직접가능",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1803,6 +1865,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1831,6 +1894,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1859,6 +1923,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1896,6 +1961,7 @@
         "채권자 미협의"
       ],
       "expert_level": "변호사권장",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1924,6 +1990,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1961,6 +2028,7 @@
         "수취인 연락처/재산 미확인"
       ],
       "expert_level": "법무사권장",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -1989,6 +2057,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2017,6 +2086,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2045,6 +2115,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2073,6 +2144,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2101,6 +2173,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2129,6 +2202,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2157,6 +2231,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2185,6 +2260,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2213,6 +2289,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2241,6 +2318,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2269,6 +2347,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2297,6 +2376,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2325,6 +2405,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2353,6 +2434,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2381,6 +2463,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2409,6 +2492,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2437,6 +2521,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2465,6 +2550,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2493,6 +2579,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2521,6 +2608,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2549,6 +2637,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2577,6 +2666,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2605,6 +2695,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2633,6 +2724,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2661,6 +2753,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2689,6 +2782,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2717,6 +2811,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2745,6 +2840,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2773,6 +2869,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2801,6 +2898,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2829,6 +2927,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2857,6 +2956,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2885,6 +2985,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2913,6 +3014,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2941,6 +3043,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2969,6 +3072,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -2997,6 +3101,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3025,6 +3130,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3053,6 +3159,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3081,6 +3188,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3109,6 +3217,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3137,6 +3246,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3165,6 +3275,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3193,6 +3304,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3221,6 +3333,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3249,6 +3362,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3277,6 +3391,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3305,6 +3420,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3333,6 +3449,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3361,6 +3478,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3389,6 +3507,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3417,6 +3536,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3445,6 +3565,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3473,6 +3594,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3501,6 +3623,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3529,6 +3652,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3557,6 +3681,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3585,6 +3710,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3613,6 +3739,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3641,6 +3768,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3669,6 +3797,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3697,6 +3826,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3725,6 +3855,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": "변호사권장",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3753,6 +3884,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3781,6 +3913,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3809,6 +3942,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3837,6 +3971,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3865,6 +4000,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3893,6 +4029,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3921,6 +4058,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3949,6 +4087,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -3977,6 +4116,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4005,6 +4145,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4033,6 +4174,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4061,6 +4203,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4089,6 +4232,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4117,6 +4261,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4145,6 +4290,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4173,6 +4319,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4201,6 +4348,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4229,6 +4377,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4257,6 +4406,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4285,6 +4435,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4313,6 +4464,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4341,6 +4493,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4369,6 +4522,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4397,6 +4551,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4425,6 +4580,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4453,6 +4609,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4481,6 +4638,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4509,6 +4667,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4537,6 +4696,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4565,6 +4725,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4593,6 +4754,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4621,6 +4783,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4649,6 +4812,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4677,6 +4841,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4705,6 +4870,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4733,6 +4899,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4761,6 +4928,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4789,6 +4957,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4817,6 +4986,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4845,6 +5015,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4873,6 +5044,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4901,6 +5073,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4929,6 +5102,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4957,6 +5131,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -4985,6 +5160,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5013,6 +5189,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5041,6 +5218,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5069,6 +5247,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5097,6 +5276,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5125,6 +5305,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5153,6 +5334,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5181,6 +5363,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5209,6 +5392,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5237,6 +5421,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5265,6 +5450,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5293,6 +5479,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5321,6 +5508,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5349,6 +5537,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5377,6 +5566,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5405,6 +5595,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5433,6 +5624,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5461,6 +5653,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5496,6 +5689,7 @@
         "낙찰 후 대응 시도"
       ],
       "expert_level": "변호사권장",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5524,6 +5718,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5552,6 +5747,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5580,6 +5776,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5608,6 +5805,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5636,6 +5834,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5664,6 +5863,7 @@
       "involved_agencies": null,
       "common_mistakes": null,
       "expert_level": null,
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5673,7 +5873,7 @@
       "user_id": "05999c0c-5e8f-45ef-b1c2-e7505676226b",
       "title": "학교폭력 사이버 신고, 실제로 온라인으로 신고하면 어떻게 진행되는가",
       "slug": "학교폭력-사이버-신고-실제로-온라인으로-신고하면-어떻게-진행되는가",
-      "content": "학교에서 시작된 따돌림이 카톡 단체방, 인스타 DM, 디스코드 등으로 번지면서 욕설, 조롱, 사진 합성, 유포가 이어지는 상황이 발생했다. 처음에는 “그냥 참으면 끝나겠지” 하며 넘기기 쉽지만, 온라인으로 퍼지면 삭제되기도 전에 주변에 퍼지고 피해가 커진다. 많은 보호자들이 “온라인 신고는 어떻게 하나”, “증거를 어떻게 제출해야 조사에 도움이 되나”부터 막막해한다.\n\n실제 사이버 학교폭력 신고는 117 안전Dream 시스템을 통해 24시간 진행된다. 먼저 화면 캡처, 대화 전체 저장, URL, 게시 시간 등을 최대한 보존해야 한다. 증거가 사라지면 나중에 조사에서 피해 입증이 어려워진다.\n\n**신고 단계**  \n안전Dream 홈페이지([www.safe182.go.kr](https://www.safe182.go.kr))나 117Chat 앱에 접속해 피해 내용을 작성하고 파일을 첨부한다. 전화 117이나 문자 #0117도 가능하지만, 사이버폭력은 파일 첨부가 가능한 온라인 신고가 가장 효과적이다. 신고자 정보는 보호되며 익명도 선택할 수 있다.\n\n신고가 접수되면 117센터가 학교와 교육지원청에 즉시 통보한다. 학교는 신고 사실을 피해학생·보호자에게 알리고 사안조사를 시작한다. 긴급한 경우 학교전담경찰관(SPO)이 투입되거나 경찰 수사가 병행된다.\n\n**조사 및 후속 진행**  \n일반 학교폭력 사안과 동일하게 피해·가해·목격자 조사가 진행된다. 사이버 증거는 학교나 교육청 조사관에게 별도 제출하거나 117을 통해 추가로 보낸다. 조사 과정에서 플랫폼(카카오, 인스타 등)에 삭제 요청도 지원받을 수 있다. 이후 피해 정도에 따라 학교장 자체해결 또는 학폭위로 넘어간다.\n\n많은 사람들이 증거를 대충 캡처했다가 조사 때 “원본 확인이 안 된다”며 다시 요청받거나, 신고 후 학교 담임에게 따로 연락하지 않아 처리 속도가 느려지는 실수를 한다. 신고 후 117센터 상담사에게 진행 상황을 주기적으로 확인하는 것이 실제 체감 시간을 줄이는 방법이다.\n\n**절차 흐름 정리**\n\n| 단계 | 주요 내용 | 소요 기간 |\n|------|----------|----------|\n| 증거수집 | 캡처·저장·파일준비 | 즉시 |\n| 온라인신고 | 117 홈페이지·앱 | 24시간 접수 |\n| 학교연계 | 통보 및 조사 착수 | 1~3일 |\n| 사안조사 | 당사자 확인 | 2~3주 |\n| 학폭위 | 필요 시 심의 | 4~8주 |\n\n### FAQ\n\n**Q. 익명으로 신고해도 되나요?**  \n가능하지만 조사에서 사실 확인이 어려워 처리 속도가 느려지거나 효과가 약해지는 경우가 많습니다.\n\n**Q. 증거는 어떤 식으로 제출하나요?**  \n신고 화면에서 파일 직접 첨부하거나, 신고 번호 받은 후 117 상담사에게 추가 전송하면 됩니다.\n\n**Q. 신고 후 바로 삭제 요청이 되나요?**  \n117이 플랫폼사에 연계해 삭제를 요청하지만, 해외 플랫폼은 시간이 더 걸리는 경우가 흔합니다.\n\n**Q. 신고 후 학교에서 연락이 안 오면 어떻게 하나요?**  \n117센터에 진행 상황을 문의하거나 교육지원청에 직접 연락하세요. 공문이 내려가 처리 압박이 생깁니다.\n\n**Q. 비용이 드나요?**  \n신고·조사 과정 자체는 무료입니다. 다만 전문가(변호사) 상담이 필요하면 별도 비용이 발생합니다.\n\n**Q. 신고 후 보복이 더 심해지면요?**  \n추가 피해를 즉시 117이나 학교에 신고하면 보복 가중 조치가 적용됩니다.\n\n사이버폭력은 증거가 생명이다. 빠르게 기록하고 117 온라인 시스템부터 시작하면 실제 진행이 원활해진다.\n\n---\n\n### 📌 관련 글\n- [상속포기 했는데 대부업체 민사소송 종이 받았습니다. 실제로 어떻게 진행되나요?](/posts/상속포기-했는데-대부업체-민사소송-종)\n- [친구가 내 이름·관계 딴 닉네임으로 명예훼손성 발언을 했다? 고소 가능한지, 실제로 어떻게 진행되는지 현실 가이드](/posts/친구가-내-이름관계-딴-닉네임으로-명예훼손성-발언을-했다-고소-가능한지-실제로-어떻게-진행되는지-현실-가이드-yhn9ht)\n",
+      "content": "학교에서 시작된 따돌림이 카톡 단체방, 인스타 DM, 디스코드 등으로 번지면서 욕설, 조롱, 사진 합성, 유포가 이어지는 상황이 발생했다. 처음에는 “그냥 참으면 끝나겠지” 하며 넘기기 쉽지만, 온라인으로 퍼지면 삭제되기도 전에 주변에 퍼지고 피해가 커진다. 많은 보호자들이 “온라인 신고는 [어떻게](/posts/상속포기-했는데-대부업체-민사소송-종) 하나”, “증거를 어떻게 제출해야 조사에 도움이 되나”부터 막막해한다.\n\n실제 사이버 학교폭력 신고는 117 안전Dream 시스템을 통해 24시간 진행된다. 먼저 화면 캡처, 대화 전체 저장, URL, 게시 시간 등을 최대한 보존해야 한다. 증거가 사라지면 나중에 조사에서 피해 입증이 어려워진다.\n\n**신고 단계**  \n안전Dream 홈페이지([www.safe182.go.kr](https://www.safe182.go.kr))나 117Chat 앱에 접속해 피해 내용을 작성하고 파일을 첨부한다. 전화 117이나 문자 #0117도 가능하지만, 사이버폭력은 파일 첨부가 가능한 온라인 신고가 가장 효과적이다. 신고자 정보는 보호되며 익명도 선택할 수 있다.\n\n신고가 접수되면 117센터가 학교와 교육지원청에 즉시 통보한다. 학교는 신고 사실을 피해학생·보호자에게 알리고 사안조사를 시작한다. 긴급한 경우 학교전담경찰관(SPO)이 투입되거나 경찰 수사가 병행된다.\n\n**조사 및 후속 진행**  \n일반 학교폭력 사안과 동일하게 피해·가해·목격자 조사가 진행된다. 사이버 증거는 학교나 교육청 조사관에게 별도 제출하거나 117을 통해 추가로 보낸다. 조사 과정에서 플랫폼(카카오, 인스타 등)에 삭제 요청도 지원받을 수 있다. 이후 피해 정도에 따라 학교장 자체해결 또는 학폭위로 넘어간다.\n\n많은 사람들이 증거를 대충 캡처했다가 조사 때 “원본 확인이 안 된다”며 다시 요청받거나, 신고 후 학교 담임에게 따로 연락하지 않아 처리 속도가 느려지는 실수를 한다. 신고 후 117센터 상담사에게 진행 상황을 주기적으로 확인하는 것이 실제 체감 시간을 줄이는 방법이다.\n\n**절차 흐름 정리**\n\n| 단계 | 주요 내용 | 소요 기간 |\n|------|----------|----------|\n| 증거수집 | 캡처·저장·파일준비 | 즉시 |\n| 온라인신고 | 117 홈페이지·앱 | 24시간 접수 |\n| 학교연계 | 통보 및 조사 착수 | 1~3일 |\n| 사안조사 | 당사자 확인 | 2~3주 |\n| 학폭위 | 필요 시 심의 | 4~8주 |\n\n### FAQ\n\n**Q. 익명으로 신고해도 되나요?**  \n가능하지만 조사에서 사실 확인이 어려워 처리 속도가 느려지거나 효과가 약해지는 경우가 많습니다.\n\n**Q. 증거는 어떤 식으로 제출하나요?**  \n신고 화면에서 파일 직접 첨부하거나, 신고 번호 받은 후 117 상담사에게 추가 전송하면 됩니다.\n\n**Q. 신고 후 바로 삭제 요청이 되나요?**  \n117이 플랫폼사에 연계해 삭제를 요청하지만, 해외 플랫폼은 시간이 더 걸리는 경우가 흔합니다.\n\n**Q. 신고 후 학교에서 연락이 안 오면 어떻게 하나요?**  \n117센터에 진행 상황을 문의하거나 교육지원청에 직접 연락하세요. 공문이 내려가 처리 압박이 생깁니다.\n\n**Q. 비용이 드나요?**  \n신고·조사 과정 자체는 무료입니다. 다만 전문가(변호사) 상담이 필요하면 별도 비용이 발생합니다.\n\n**Q. 신고 후 보복이 더 심해지면요?**  \n추가 피해를 즉시 117이나 학교에 [신고하면](/posts/편의점-햄버거-포장지-과대광고-실제-신고하면-어떻게-진행될까) 보복 가중 조치가 적용됩니다.\n\n사이버폭력은 증거가 생명이다. 빠르게 기록하고 117 온라인 시스템부터 시작하면 실제 진행이 원활해진다.\n\n---\n\n### 📌 관련 글\n- [편의점 햄버거 포장지 과대광고, 실제 신고하면 어떻게 진행될까?](/posts/편의점-햄버거-포장지-과대광고-실제-신고하면-어떻게-진행될까)\n- [상속포기 했는데 대부업체 민사소송 종이 받았습니다. 실제로 어떻게 진행되나요?](/posts/상속포기-했는데-대부업체-민사소송-종)\n- [친구가 내 이름·관계 딴 닉네임으로 명예훼손성 발언을 했다? 고소 가능한지, 실제로 어떻게 진행되는지 현실 가이드](/posts/친구가-내-이름관계-딴-닉네임으로-명예훼손성-발언을-했다-고소-가능한지-실제로-어떻게-진행되는지-현실-가이드-yhn9ht)\n",
       "excerpt": "학교에서 시작된 따돌림이 카톡 단체방, 인스타 DM, 디스코드 등으로 번지면서 욕설, 조롱, 사진 합성, 유포가 이어지는 상황이 발생했다. 처음에는 “그냥 참으면 끝나겠지” 하며 넘기기 쉽지만, 온라인으로 퍼지면 삭제되기도 전에 주변에 퍼지고 피해가 커진다. 많은 보호...",
       "cover_image": "https://mcgrkxsgifcvfubsnzur.supabase.co/storage/v1/object/public/images/uploads/1778913458484-1rw450.webp",
       "cover_image_alt": "학교폭력 신고 방법",
@@ -5683,7 +5883,7 @@
       "meta_title": null,
       "meta_description": null,
       "created_at": "2026-05-16T02:25:59.666455+00:00",
-      "updated_at": "2026-05-16T06:59:12.114378+00:00",
+      "updated_at": "2026-05-16T16:04:10.047822+00:00",
       "published_at": "2026-05-16T06:37:58.981+00:00",
       "case_type": "형사·고소",
       "current_stage": "증거 수집 및 신고 준비",
@@ -5701,6 +5901,7 @@
         "파일 첨부 누락"
       ],
       "expert_level": "직접가능",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5737,39 +5938,7 @@
         "과도한 기대"
       ],
       "expert_level": "변호사권장",
-      "is_ai_assisted": false,
-      "reviewed_at": null,
-      "user": null
-    },
-    {
-      "id": "0ddbfc92-28d0-44d3-ad4c-8102cb97301a",
-      "user_id": "05999c0c-5e8f-45ef-b1c2-e7505676226b",
-      "title": "빌라 층간소음 공고문 누가 떼어갔다… 재물손괴죄 성립될까?",
-      "slug": "빌라-층간소음-공고문-누가-떼어갔다",
-      "content": "빌라처럼 입주민이 적고 관리인이 없는 곳에서 층간소음 문제를 알리는 공고문을 붙였는데, 누군가 임의로 떼어간 상황이 생겼습니다. 처음에는 “그냥 종이 한 장인데 뭐”라고 생각하기 쉽지만, 실제로는 공고문을 붙인 사람 입장에서 답답하고, 떼어간 사람 입장에서는 나중에 경찰 조사를 받을 수도 있는 일입니다.\n\n특히 관리인이 없으면 공용 게시 공간이라도 공고문을 붙인 사람(또는 입주민 대표)의 의사에 반해 제거한 행위로 볼 여지가 있어 재물손괴죄(형법 제366조) 적용 가능성이 나옵니다. 실제 아파트·빌라 게시판 공고문 제거 사례에서 벌금형(30만~50만 원 정도)이 나온 적이 여러 번 있습니다. 다만 공고문 자체가 단순 A4 용지라면 피해액이 미미해 경미 사건으로 끝나는 경우가 많습니다.\n![층간소음공고문떼기](https://mcgrkxsgifcvfubsnzur.supabase.co/storage/v1/object/public/images/uploads/1778862010450-pjq32a.webp \"층간소음공고문떼기\")\n\n\n### 실제 사건 진행 흐름\n1. **공고문 떼어간 사실 확인**  \n   공고문을 붙인 사람이 다시 가보니 없어졌거나, CCTV·목격자 증언이 있으면 바로 사진·영상으로 기록합니다. 빌라는 CCTV가 거의 없거나 제한적이라, 주변 이웃에게 “누가 떼어간 거 봤어요?” 물어보는 경우가 많습니다. 이 단계에서 이미 감정적으로 대면하면 분쟁이 커집니다.\n\n2. **경찰 신고 고려**  \n   피해를 입은 쪽(공고문 붙인 사람)이 가까운 경찰서나 지구대를 찾아 고소장을 제출합니다. “재물손괴”로 신고하면 경찰이 사실관계 조사를 시작합니다. 떼어간 사람에게 연락해 진술을 듣고, 의도·피해 정도를 확인합니다. 빌라라 관리인이 없어 경찰이 직접 현장 확인이나 입주민 조사에 나서는 경우가 일반적입니다.\n\n3. **조사 및 합의 과정**  \n   경찰 조사에서 “층간소음 때문에 짜증 나서 떼었다”는 취지로 진술하면, 고의성은 인정되지만 피해 규모가 작아 불송치(검찰에 안 넘김)나 약식기소(벌금)로 마무리될 가능성이 큽니다. 피해자와 합의하면 사건이 더 빨리 끝납니다. 합의금은 보통 10~30만 원 선에서 이뤄지지만, 공고문 재부착과 사과로 끝나는 경우도 있습니다.\n\n4. **추가 분쟁 발생 시**  \n   공고문을 다시 붙였는데 또 떼면 반복 행위로 판단돼 처벌 수위가 올라갈 수 있습니다. 반대로 공고문을 붙인 쪽이 과도하게 대응하면 업무방해나 다른 민원으로 역고소당할 위험도 있습니다.\n\n**절차 흐름 표**\n\n| 단계 | 주요 행동 | 예상 기간 | 방문 장소 |\n|------|-----------|-----------|-----------|\n| 증거 수집 | 사진 촬영, 목격자 확인 | 즉시~수일 | 현장 |\n| 신고 | 고소장 제출 | 1회 방문 | 경찰서·지구대 |\n| 조사 | 경찰 출석·진술 | 신고 후 1~3주 | 경찰서 |\n| 마무리 | 합의 또는 처분 | 전체 1~3개월 | - |\n\n### 전문가 활용 시 차이\n- **법무사**: 서류 작성·고소장 도움. 비용 20~50만 원 정도. 단순 사건에 적합.\n- **변호사**: 조사 동행, 합의 협상, 법원 대응까지. 비용 100만 원 이상. 분쟁이 커지거나 반복될 때 유리.\n직접 하는 게 비용은 적지만, 경찰 조사에서 불리한 진술을 할 위험이 있습니다. 많은 사람들이 “그냥 간단한 일”이라 생각하고 혼자 갔다가 진술 실수로 불리해집니다.\n\n### FAQ\n\n**Q. 재물손괴죄가 실제로 성립하나요?**  \n공고문을 타인(또는 입주민 공동)의 의사에 반해 제거해 그 효용을 해쳤다면 성립할 수 있습니다. 다만 종이 한 장이라 피해가 경미하면 벌금형이나 불송치로 끝나는 경우가 대부분입니다.\n\n**Q. 경찰서에 꼭 가야 하나요?**  \n온라인 신고(민원24 등)도 가능하지만, 증거 자료를 들고 직접 방문하는 게 조사 진행이 빠릅니다. 빌라는 관리인이 없어 현장 조사가 필요합니다.\n\n**Q. 합의 안 하면 어떻게 되나요?**  \n검찰 송치 후 약식기소(벌금) 또는 정식 재판으로 갈 수 있습니다. 초범·경미 사건이라면 벌금 30~50만 원 정도 예상되지만, 재판까지 가면 시간(수개월)이 더 걸립니다.\n\n**Q. 공고문을 다시 붙여도 되나요?**  \n붙일 수는 있지만 또 떼이면 반복으로 불리합니다. 입주민 단톡방이나 다른 방법으로 소음 문제를 공유하는 게 안전합니다.\n\n**Q. 비용은 얼마나 들까요?**  \n경찰 조사·합의 단계까지는 거의 들지 않습니다. 변호사 선임 시 100만 원 이상, 벌금 나오면 그만큼 추가 부담입니다.\n\n**Q. 관리인이 없는 빌라라서 더 어렵나요?**  \n네. 공동으로 관리할 사람이 없어 입주민끼리 직접 증거를 모아야 하고, 경찰이 중재하기도 애매합니다. 입주민 대표를 정해 공고를 붙이는 식으로 미리 방지하는 경우가 늘고 있습니다.",
-      "excerpt": "빌라처럼 입주민이 적고 관리인이 없는 곳에서 층간소음 문제를 알리는 공고문을 붙였는데, 누군가 임의로 떼어간 상황이 생겼습니다. 처음에는 “그냥 종이 한 장인데 뭐”라고 생각하기 쉽지만, 실제로는 공고문을 붙인 사람 입장에서 답답하고, 떼어간 사람 입장에서는 나중에 경...",
-      "cover_image": null,
-      "cover_image_alt": null,
-      "published": true,
-      "featured": false,
-      "view_count": 4,
-      "meta_title": null,
-      "meta_description": null,
-      "created_at": "2026-05-15T16:21:59.938483+00:00",
-      "updated_at": "2026-05-16T09:46:08.007415+00:00",
-      "published_at": "2026-05-15T16:21:59.288+00:00",
-      "case_type": "형사·고소",
-      "current_stage": "피해 확인 및 증거 수집",
-      "next_stage": "경찰 신고 또는 합의 시도",
-      "estimated_duration": "신고 후 1~4주 내 조사, 합의 시 빠름 / 정식 사건화 시 2~6개월",
-      "involved_agencies": [
-        "가까운 경찰서 민원실 또는 지구대"
-      ],
-      "common_mistakes": [
-        "증거 없이 바로 대면 항의",
-        "공고문 재부착 시 또 떼일 위험 무시"
-      ],
-      "expert_level": "직접가능",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5808,6 +5977,41 @@
         "압류 대응 미비"
       ],
       "expert_level": "변호사권장",
+      "timeline_steps": null,
+      "is_ai_assisted": false,
+      "reviewed_at": null,
+      "user": null
+    },
+    {
+      "id": "0ddbfc92-28d0-44d3-ad4c-8102cb97301a",
+      "user_id": "05999c0c-5e8f-45ef-b1c2-e7505676226b",
+      "title": "빌라 층간소음 공고문 누가 떼어갔다… 재물손괴죄 성립될까?",
+      "slug": "빌라-층간소음-공고문-누가-떼어갔다",
+      "content": "빌라처럼 입주민이 적고 관리인이 없는 곳에서 층간소음 문제를 알리는 공고문을 붙였는데, 누군가 임의로 떼어간 상황이 생겼습니다. 처음에는 “그냥 종이 한 장인데 뭐”라고 생각하기 쉽지만, 실제로는 공고문을 붙인 사람 입장에서 답답하고, 떼어간 사람 입장에서는 나중에 경찰 조사를 받을 수도 있는 일입니다.\n\n특히 관리인이 없으면 공용 게시 공간이라도 공고문을 붙인 사람(또는 입주민 대표)의 의사에 반해 제거한 행위로 볼 여지가 있어 재물손괴죄(형법 제366조) 적용 가능성이 나옵니다. 실제 아파트·빌라 게시판 공고문 제거 사례에서 벌금형(30만~50만 원 정도)이 나온 적이 여러 번 있습니다. 다만 공고문 자체가 단순 A4 용지라면 피해액이 미미해 경미 사건으로 끝나는 경우가 많습니다.\n![층간소음공고문떼기](https://mcgrkxsgifcvfubsnzur.supabase.co/storage/v1/object/public/images/uploads/1778862010450-pjq32a.webp \"층간소음공고문떼기\")\n\n\n### 실제 사건 진행 흐름\n1. **공고문 떼어간 사실 확인**  \n   공고문을 붙인 사람이 다시 가보니 없어졌거나, CCTV·목격자 증언이 있으면 바로 사진·영상으로 기록합니다. 빌라는 CCTV가 거의 없거나 제한적이라, 주변 이웃에게 “누가 떼어간 거 봤어요?” 물어보는 경우가 많습니다. 이 단계에서 이미 감정적으로 대면하면 분쟁이 커집니다.\n\n2. **경찰 신고 고려**  \n   피해를 입은 쪽(공고문 붙인 사람)이 가까운 경찰서나 지구대를 찾아 고소장을 제출합니다. “재물손괴”로 신고하면 경찰이 사실관계 조사를 시작합니다. 떼어간 사람에게 연락해 진술을 듣고, 의도·피해 정도를 확인합니다. 빌라라 관리인이 없어 경찰이 직접 현장 확인이나 입주민 조사에 나서는 경우가 일반적입니다.\n\n3. **조사 및 합의 과정**  \n   경찰 조사에서 “층간소음 때문에 짜증 나서 떼었다”는 취지로 진술하면, 고의성은 인정되지만 피해 규모가 작아 불송치(검찰에 안 넘김)나 약식기소(벌금)로 마무리될 가능성이 큽니다. 피해자와 합의하면 사건이 더 빨리 끝납니다. 합의금은 보통 10~30만 원 선에서 이뤄지지만, 공고문 재부착과 사과로 끝나는 경우도 있습니다.\n\n4. **추가 분쟁 발생 시**  \n   공고문을 다시 붙였는데 또 떼면 반복 행위로 판단돼 처벌 수위가 올라갈 수 있습니다. 반대로 공고문을 붙인 쪽이 과도하게 대응하면 업무방해나 다른 민원으로 역고소당할 위험도 있습니다.\n\n**절차 흐름 표**\n\n| 단계 | 주요 행동 | 예상 기간 | 방문 장소 |\n|------|-----------|-----------|-----------|\n| 증거 수집 | 사진 촬영, 목격자 확인 | 즉시~수일 | 현장 |\n| 신고 | 고소장 제출 | 1회 방문 | 경찰서·지구대 |\n| 조사 | 경찰 출석·진술 | 신고 후 1~3주 | 경찰서 |\n| 마무리 | 합의 또는 처분 | 전체 1~3개월 | - |\n\n### 전문가 활용 시 차이\n- **법무사**: 서류 작성·고소장 도움. 비용 20~50만 원 정도. 단순 사건에 적합.\n- **변호사**: 조사 동행, 합의 협상, 법원 대응까지. 비용 100만 원 이상. 분쟁이 커지거나 반복될 때 유리.\n직접 하는 게 비용은 적지만, 경찰 조사에서 불리한 진술을 할 위험이 있습니다. 많은 사람들이 “그냥 간단한 일”이라 생각하고 혼자 갔다가 진술 실수로 불리해집니다.\n\n### FAQ\n\n**Q. 재물손괴죄가 실제로 성립하나요?**  \n공고문을 타인(또는 입주민 공동)의 의사에 반해 제거해 그 효용을 해쳤다면 성립할 수 있습니다. 다만 종이 한 장이라 피해가 경미하면 벌금형이나 불송치로 끝나는 경우가 대부분입니다.\n\n**Q. 경찰서에 꼭 가야 하나요?**  \n온라인 신고(민원24 등)도 가능하지만, 증거 자료를 들고 직접 방문하는 게 조사 진행이 빠릅니다. 빌라는 관리인이 없어 현장 조사가 필요합니다.\n\n**Q. 합의 안 하면 어떻게 되나요?**  \n검찰 송치 후 약식기소(벌금) 또는 정식 재판으로 갈 수 있습니다. 초범·경미 사건이라면 벌금 30~50만 원 정도 예상되지만, 재판까지 가면 시간(수개월)이 더 걸립니다.\n\n**Q. 공고문을 다시 붙여도 되나요?**  \n붙일 수는 있지만 또 떼이면 반복으로 불리합니다. 입주민 단톡방이나 다른 방법으로 소음 문제를 공유하는 게 안전합니다.\n\n**Q. 비용은 얼마나 들까요?**  \n경찰 조사·합의 단계까지는 거의 들지 않습니다. 변호사 선임 시 100만 원 이상, 벌금 나오면 그만큼 추가 부담입니다.\n\n**Q. 관리인이 없는 빌라라서 더 어렵나요?**  \n네. 공동으로 관리할 사람이 없어 입주민끼리 직접 증거를 모아야 하고, 경찰이 중재하기도 애매합니다. 입주민 대표를 정해 공고를 붙이는 식으로 미리 방지하는 경우가 늘고 있습니다.",
+      "excerpt": "빌라처럼 입주민이 적고 관리인이 없는 곳에서 층간소음 문제를 알리는 공고문을 붙였는데, 누군가 임의로 떼어간 상황이 생겼습니다. 처음에는 “그냥 종이 한 장인데 뭐”라고 생각하기 쉽지만, 실제로는 공고문을 붙인 사람 입장에서 답답하고, 떼어간 사람 입장에서는 나중에 경...",
+      "cover_image": null,
+      "cover_image_alt": null,
+      "published": true,
+      "featured": false,
+      "view_count": 4,
+      "meta_title": null,
+      "meta_description": null,
+      "created_at": "2026-05-15T16:21:59.938483+00:00",
+      "updated_at": "2026-05-16T15:51:51.05459+00:00",
+      "published_at": "2026-05-15T16:21:59.288+00:00",
+      "case_type": "형사·고소",
+      "current_stage": "피해 확인 및 증거 수집",
+      "next_stage": "경찰 신고 또는 합의 시도",
+      "estimated_duration": "신고 후 1~4주 내 조사, 합의 시 빠름 / 정식 사건화 시 2~6개월",
+      "involved_agencies": [
+        "가까운 경찰서 민원실 또는 지구대"
+      ],
+      "common_mistakes": [
+        "증거 없이 바로 대면 항의",
+        "공고문 재부착 시 또 떼일 위험 무시"
+      ],
+      "expert_level": "직접가능",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5844,6 +6048,7 @@
         "업체 직접 항의만 함"
       ],
       "expert_level": "직접가능",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
@@ -5879,10 +6084,11 @@
         "정본과 등본 혼동"
       ],
       "expert_level": "직접가능",
+      "timeline_steps": null,
       "is_ai_assisted": false,
       "reviewed_at": null,
       "user": null
     }
   ],
-  "generatedAt": "2026-05-16T15:44:37.999Z"
+  "generatedAt": "2026-05-16T22:10:34.311Z"
 }
