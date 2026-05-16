@@ -96,7 +96,7 @@ export async function GET() {
     tagXml = (tagData || [])
       .filter((tag: any) => (tag.post_tags?.[0]?.count ?? 0) >= 2)
       .map((tag: any) => `  <url>
-    <loc>${escapeXml(`${baseUrl}/tags/${encodeURIComponent(tag.slug)}`)}</loc>
+    <loc>${escapeXml(`${baseUrl}/tags/${tag.slug}`)}</loc>
     <lastmod>${new Date(tag.updated_at).toISOString().split("T")[0]}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -112,7 +112,7 @@ export async function GET() {
 
     const caseTypes = Array.from(new Set((caseData || []).map((r: any) => r.case_type).filter(Boolean)));
     caseTypeXml = caseTypes.map((ct: string) => `  <url>
-    <loc>${escapeXml(`${baseUrl}/cases/${encodeURIComponent(ct)}`)}</loc>
+    <loc>${escapeXml(`${baseUrl}/cases/${ct}`)}</loc>
     <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -142,7 +142,7 @@ export async function GET() {
           .join("\n");
 
         return `  <url>
-    <loc>${escapeXml(`${baseUrl}/posts/${encodeURIComponent(post.slug)}`)}</loc>
+    <loc>${escapeXml(`${baseUrl}/posts/${post.slug}`)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
