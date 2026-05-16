@@ -288,7 +288,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     notFound();
   }
 
-  const postUrl = `${SITE_URL}/posts/${post.slug}`;
+  const postUrl = `${SITE_URL}/posts/${encodeURIComponent(post.slug)}`;
 
   const rawDesc = post.meta_description || post.excerpt || "";
   const description = rawDesc.length >= 120
@@ -391,7 +391,7 @@ export default async function PostPage({ params }: PostPageProps) {
   // 본문에서 첫 이미지 추출 (Article Schema용)
   const imgMatch = post.content?.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
   const firstImage = post.cover_image || imgMatch?.[1] || undefined;
-  const postUrl = `${SITE_URL}/posts/${post.slug}`;
+  const postUrl = `${SITE_URL}/posts/${encodeURIComponent(post.slug)}`;
   const authorName = post.user?.nickname || post.user?.email?.split('@')[0] || "익명";
   const authorEmail = post.user?.email || undefined;
   const authorAvatar = post.user?.avatar_url || `${SITE_URL}/icon.png`;
