@@ -42,7 +42,7 @@ const nextConfig = {
   generateBuildId: async () => {
     return Date.now().toString();
   },
-  // 캐시 설정 분리: 정적 파일 vs HTML
+  // 캐시 설정: 정적 파일만 명시 (HTML 페이지는 Next.js ISR revalidate 자동 처리)
   async headers() {
     return [
       // 정적 파일 (CSS, JS, 폰트, 이미지) - 1년 캐싱
@@ -68,13 +68,6 @@ const nextConfig = {
         source: '/og/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=86400' }, // OG 이미지는 1일
-        ],
-      },
-      // HTML 페이지 - ISR 캐싱 유지 (60초 후 재검증)
-      {
-        source: '/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=60, s-maxage=60, stale-while-revalidate=3600' },
         ],
       },
     ];
