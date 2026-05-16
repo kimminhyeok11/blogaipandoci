@@ -8,8 +8,7 @@ const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com
 const ClientHeader = dynamicImport(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
 const SituationSearch = dynamicImport(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
 
-// SSR: 서버 사이드 렌더링 사용 (검색엔진 인덱싱을 위해)
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 interface Post {
   id: string;

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,7 +17,7 @@ import { SimilarPosts } from "@/components/posts/SimilarPosts";
 import { getThumbnailUrl } from "@/utils/image";
 import { PostContent } from "@/components/posts/PostContent";
 
-const TocSidebar = dynamicImport(() => import("@/components/posts/TocSidebar").then(m => ({ default: m.TocSidebar })));
+import { TocSidebar } from "@/components/posts/TocSidebar";
 const PostActions = dynamicImport(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
 const ShareButtons = dynamicImport(() => import("@/components/posts/ShareButtons").then(m => ({ default: m.ShareButtons })));
 const CommentsSection = dynamicImport(() => import("@/components/comments/CommentsSection").then(m => ({ default: m.CommentsSection })));
@@ -107,7 +108,7 @@ function isInvalidSlugPattern(slug: string): boolean {
   return false;
 }
 
-async function getPost(slug: string): Promise<Post | null> {
+const getPost = cache(async function getPost(slug: string): Promise<Post | null> {
   console.log('[getPost] Fetching post with slug:', slug);
   
   // 빌드 시점에 저장된 데이터 먼저 확인
@@ -182,7 +183,7 @@ async function getPost(slug: string): Promise<Post | null> {
 
   console.log('[getPost] Post found:', data ? 'yes' : 'no');
   return data as Post;
-}
+});
 
 // 제목으로 게시글 찾기 (slug 변경 후 301 리다이렉트용)
 async function findPostByTitleGuess(slug: string): Promise<Post | null> {
@@ -238,6 +239,21 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
   return null;
 }
 
+
+// 초기 댓글 목록 서버 fetch (비로그인 기준 — 비공개 댓글 제외)
+async function getInitialComments(postId: string) {
+  const supabase = getServerSupabase();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("comments")
+    .select("id, content, nickname, is_anonymous, is_secret, created_at, updated_at, is_edited, like_count, reply_count, user_id, parent_id, question_type, topic_tags, context_answers")
+    .eq("post_id", postId)
+    .eq("is_secret", false)
+    .is("parent_id", null)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  return data || [];
+}
 
 // 관련 글 가져오기 (태그 기반 또는 최신글)
 async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
@@ -414,8 +430,11 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  // 관련 글 가져오기
-  const relatedPosts = await getRelatedPosts(post);
+  // 관련 글 + 초기 댓글 병렬 fetch
+  const [relatedPosts, initialComments] = await Promise.all([
+    getRelatedPosts(post),
+    getInitialComments(post.id),
+  ]);
 
   // 본문에서 첫 이미지 추출 (Article Schema용)
   const imgMatch = post.content?.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
@@ -626,7 +645,7 @@ export default async function PostPage({ params }: PostPageProps) {
         <SimilarPosts postId={post.id} />
 
         {/* Comments Section - 질문/댓글 */}
-        <CommentsSection postId={post.id} postSlug={post.slug} postTitle={post.title} />
+        <CommentsSection postId={post.id} postSlug={post.slug} postTitle={post.title} initialComments={initialComments} />
 
         {/* Related Posts - 이어서 읽기 */}
         <RelatedPosts posts={relatedPosts} currentPostId={post.id} />

@@ -33,12 +33,13 @@ interface CommentsSectionProps {
   postId: string;
   postSlug: string;
   postTitle: string;
+  initialComments?: Comment[];
 }
 
-export function CommentsSection({ postId, postSlug, postTitle }: CommentsSectionProps) {
+export function CommentsSection({ postId, postSlug, postTitle, initialComments = [] }: CommentsSectionProps) {
   const { user, session } = useAuth();
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [loading, setLoading] = useState(false);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{ id: string; nickname: string } | null>(null);
   const [replyContent, setReplyContent] = useState("");
@@ -48,8 +49,11 @@ export function CommentsSection({ postId, postSlug, postTitle }: CommentsSection
   const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    fetchComments();
-  }, [postId, user?.id]);
+    // 로그인 상태 변경 시에만 재fetch (secret 댓글 표시 갱신)
+    if (user?.id) {
+      fetchComments();
+    }
+  }, [user?.id]);
 
   const fetchComments = async () => {
     try {
