@@ -44,7 +44,7 @@ export async function generateStaticParams() {
     // 빌드 시점에 전체 게시글 데이터 가져오기 (content 포함)
     const { data: posts } = await supabase
       .from("posts")
-      .select("id, user_id, title, slug, content, excerpt, cover_image, cover_image_alt, published, featured, view_count, meta_title, meta_description, created_at, updated_at, published_at, user:users(nickname, email, role)")
+      .select("id, user_id, title, slug, content, excerpt, cover_image, cover_image_alt, published, featured, view_count, meta_title, meta_description, created_at, updated_at, published_at, case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level, is_ai_assisted, reviewed_at, user:users(nickname, email, role)")
       .eq("published", true)
       .not("published_at", "is", null)
       .limit(500);
@@ -157,6 +157,15 @@ async function getPost(slug: string): Promise<Post | null> {
       created_at,
       updated_at,
       published_at,
+      case_type,
+      current_stage,
+      next_stage,
+      estimated_duration,
+      involved_agencies,
+      common_mistakes,
+      expert_level,
+      is_ai_assisted,
+      reviewed_at,
       user:users(nickname, email, role)
     `)
     .eq("slug", slug)
