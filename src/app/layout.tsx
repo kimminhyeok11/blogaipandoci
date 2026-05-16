@@ -4,7 +4,6 @@ import { Noto_Serif_KR, Noto_Sans_KR, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { QueryProvider } from "@/components/providers/QueryProvider";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import { ScrollRestoration } from "@/components/utils/ScrollRestoration";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
@@ -126,18 +125,16 @@ export default function RootLayout({
         <WebSiteSchema />
       </head>
       <body className="antialiased min-h-screen font-serif flex flex-col">
-        <QueryProvider>
-          <AuthProvider>
-            <ToastProvider>
-              <ScrollRestoration />
-              <div className="flex-grow">
-                {children}
-              </div>
-              {/* 공통 Footer */}
-              <ConditionalFooter />
-            </ToastProvider>
-          </AuthProvider>
-        </QueryProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <ScrollRestoration />
+            <div className="flex-grow">
+              {children}
+            </div>
+            {/* 공통 Footer */}
+            <ConditionalFooter />
+          </ToastProvider>
+        </AuthProvider>
         {/* Kakao JS SDK - 카카오 공유 OG 미리보기용 */}
         {process.env.NEXT_PUBLIC_KAKAO_JS_KEY && (
           <Script id="kakao-sdk-init" strategy="afterInteractive">

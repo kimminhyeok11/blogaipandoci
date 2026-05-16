@@ -1,7 +1,5 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@supabase/supabase-js";
 
 interface SimilarPost {
   id: string;
@@ -19,23 +17,38 @@ interface SimilarPostsProps {
   postId: string;
 }
 
-export function SimilarPosts({ postId }: SimilarPostsProps) {
-  const [posts, setPosts] = useState<SimilarPost[]>([]);
-  const [loading, setLoading] = useState(true);
+async function fetchSimilarPosts(postId: string): Promise<SimilarPost[]> {
+  try {
+    const admin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
 
-  useEffect(() => {
-    fetch("/api/posts/similar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ post_id: postId, limit: 4 }),
-    })
-      .then((r) => r.json())
-      .then((data) => setPosts(data.posts || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [postId]);
+    const { data: post } = await admin
+      .from("posts")
+      .select("embedding")
+      .eq("id", postId)
+      .single();
 
-  if (loading || posts.length === 0) return null;
+    if (!post?.embedding) return [];
+
+    const { data: similar } = await admin.rpc("match_similar_posts", {
+      query_embedding: post.embedding,
+      exclude_post_id: postId,
+      match_count: 4,
+    });
+
+    return similar || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function SimilarPosts({ postId }: SimilarPostsProps) {
+  const posts = await fetchSimilarPosts(postId);
+
+  if (posts.length === 0) return null;
 
   return (
     <section className="max-w-content mx-auto px-4 sm:px-6 py-10 border-t border-rule">
