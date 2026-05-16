@@ -25,9 +25,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 // ISR: 1시간마다 재생성 (빌드 시점에 정적 생성 + 주기적 재생성)
 export const revalidate = 3600;
 
-// generateStaticParams에 없는 slug는 즉시 404 반환 (soft 404 방지)
-// 새 글 발행 시 revalidatePath("/posts/[slug]")로 즉시 갱신됨
-export const dynamicParams = false;
+// generateStaticParams에 없는 slug도 서버에서 동적 렌더링 허용
+// 새 글 발행 시 즉시 접근 가능, 없는 slug는 getPost → null → notFound()로 404 처리
+export const dynamicParams = true;
 
 // 빌드 시점에 정적 생성할 페이지 목록 생성
 export async function generateStaticParams() {
