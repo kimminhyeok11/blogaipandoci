@@ -8,7 +8,8 @@ const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com
 const ClientHeader = dynamicImport(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
 const SituationSearch = dynamicImport(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface Post {
   id: string;
@@ -43,6 +44,7 @@ async function getPosts() {
   }
 
   try {
+    console.log("[DEBUG] getPosts started");
     // posts 조회 (users는 별도로 가져와서 매핑)
     const { data: popularPosts, error: popError } = await supabase
       .from("posts")
@@ -60,16 +62,20 @@ async function getPosts() {
       .order("published_at", { ascending: false })
       .limit(10);
 
+    console.log("[DEBUG] popularPosts count:", popularPosts?.length || 0);
+    console.log("[DEBUG] latestPosts count:", latestPosts?.length || 0);
     if (popError) console.error("Popular posts error:", popError);
     if (lateError) console.error("Latest posts error:", lateError);
 
     // user_id 목록 수집
     const allPosts = [...(popularPosts || []), ...(latestPosts || [])];
+    console.log("[DEBUG] allPosts sample:", allPosts[0]);
     const uniqueUserIds = new Set<string>();
     allPosts.forEach((post: { user_id?: string }) => {
       if (post.user_id) uniqueUserIds.add(post.user_id);
     });
     const userIds = Array.from(uniqueUserIds);
+    console.log("[DEBUG] userIds:", userIds);
 
     // users 별도 조회
     type UserInfo = { nickname: string | null; email: string | null; role: string | null };
@@ -80,11 +86,13 @@ async function getPosts() {
         .select("id, nickname, email, role")
         .in("id", userIds);
 
+      console.log("[DEBUG] users fetched:", users?.length || 0);
       if (users) {
         (users as { id: string; nickname: string | null; email: string | null; role: string | null }[]).forEach((user) => {
           usersMap[user.id] = { nickname: user.nickname, email: user.email, role: user.role };
         });
       }
+      console.log("[DEBUG] usersMap:", Object.keys(usersMap));
     }
 
     // posts에 user 매핑
