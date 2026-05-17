@@ -19,14 +19,18 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
   if (posts.length < 3) {
     return {
       title: `#${tag} 관련 글 | 法 BLOG`,
-      description: `${tag} 주제의 법률·정책·사회 심층 분석 글 모음`,
+      description: `${tag} 관련 글 ${posts.length}개 모음`,
       robots: { index: false, follow: true },
     };
   }
 
+  // 조회수 최다 글 제목을 description에 포함 → 태그마다 고유 description
+  const topPost = [...posts].sort((a, b) => b.view_count - a.view_count)[0];
+  const description = `${tag} 관련 실제 절차·판례·법률 정보 ${posts.length}건. 「${topPost?.title.slice(0, 30) ?? tag}」 등 실무 경험 글 모음.`;
+
   return {
     title: `#${tag} 관련 글 | 法 BLOG`,
-    description: `${tag} 주제의 법률·정책·사회 심층 분석 글 모음`,
+    description,
     alternates: {
       canonical: `${SITE_URL}/tags/${tag}`,
     },
@@ -182,8 +186,8 @@ export default async function TagPage({ params }: TagPageProps) {
             {`총 ${posts.length}개의 글`}
           </p>
           <p className="font-sans text-sm text-ink leading-relaxed">
-            <strong>#{tag}</strong> 주제의 법률·정책·사회 이슈를 심층 분석한 글 모음입니다.
-            판례, 실무 절차, 법적 권리 등 실생활에 필요한 정보를 다룹니다.
+            <strong>#{tag}</strong> 관련 실제 절차 경험과 판례를 담은 글 {posts.length}건입니다.
+            가장 많이 읽힌 글은 「{posts.sort((a, b) => b.view_count - a.view_count)[0]?.title.slice(0, 30)}」입니다.
           </p>
         </div>
 
