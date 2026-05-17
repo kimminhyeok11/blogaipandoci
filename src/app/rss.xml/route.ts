@@ -29,8 +29,8 @@ export async function GET() {
       (post) => `
     <item>
       <title>${escapeXml(post.title)}</title>
-      <link>${baseUrl}/posts/${encodeURIComponent(post.slug)}</link>
-      <guid>${baseUrl}/posts/${encodeURIComponent(post.slug)}</guid>
+      <link>${baseUrl}/posts/${post.slug}</link>
+      <guid>${baseUrl}/posts/${post.slug}</guid>
       <pubDate>${new Date(post.published_at).toUTCString()}</pubDate>
       <description>${escapeXml(post.excerpt || post.content.slice(0, 150))}</description>
       <author>${escapeXml(post.user?.nickname || "익명")}</author>
