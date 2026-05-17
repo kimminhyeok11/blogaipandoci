@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { Layers } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -48,29 +49,7 @@ interface CaseTypePageProps {
   params: { type: string };
 }
 
-export async function generateMetadata({ params }: CaseTypePageProps): Promise<Metadata> {
-  const caseType = decodeURIComponent(params.type);
-  if (!VALID_CASE_TYPES.includes(caseType)) return {};
-
-  return {
-    title: `${caseType} 절차 안내 | 法 BLOG`,
-    description: `${caseType} 관련 실제 절차 경험을 담은 글 모음입니다. 현재 단계에서 다음 단계까지 실무 정보를 확인하세요.`,
-    openGraph: {
-      title: `${caseType} 절차 안내 | 法 BLOG`,
-      description: `${caseType} 관련 실제 절차 경험을 담은 글 모음입니다.`,
-      type: "website",
-      locale: "ko_KR",
-      url: `${SITE_URL}/cases/${caseType}`,
-      siteName: "法 BLOG",
-      images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: `${caseType} 절차 안내` }],
-    },
-    alternates: {
-      canonical: `${SITE_URL}/cases/${caseType}`,
-    },
-  };
-}
-
-async function getPostsByCaseType(caseType: string): Promise<CasePost[]> {
+const getPostsByCaseType = cache(async function getPostsByCaseType(caseType: string): Promise<CasePost[]> {
   try {
     const supabase = getServiceSupabase();
     const { data, error } = await supabase
@@ -87,6 +66,34 @@ async function getPostsByCaseType(caseType: string): Promise<CasePost[]> {
     console.error("사건 유형별 글 조회 오류:", err);
     return [];
   }
+});
+
+export async function generateMetadata({ params }: CaseTypePageProps): Promise<Metadata> {
+  const caseType = decodeURIComponent(params.type);
+  if (!VALID_CASE_TYPES.includes(caseType)) return {};
+
+  const posts = await getPostsByCaseType(caseType);
+  const topPost = [...posts].sort((a, b) => b.view_count - a.view_count)[0];
+  const description = posts.length > 0
+    ? `${caseType} 실제 절차 경험 ${posts.length}건. 「${topPost?.title.slice(0, 30) ?? caseType}」 등 단계별 실무 정보.`
+    : `${caseType} 관련 실제 절차 경험을 담은 글 모음입니다.`;
+
+  return {
+    title: `${caseType} 절차 안내 | 法 BLOG`,
+    description,
+    openGraph: {
+      title: `${caseType} 절차 안내 | 法 BLOG`,
+      description,
+      type: "website",
+      locale: "ko_KR",
+      url: `${SITE_URL}/cases/${caseType}`,
+      siteName: "法 BLOG",
+      images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: `${caseType} 절차 안내` }],
+    },
+    alternates: {
+      canonical: `${SITE_URL}/cases/${caseType}`,
+    },
+  };
 }
 
 export default async function CaseTypePage({ params }: CaseTypePageProps) {

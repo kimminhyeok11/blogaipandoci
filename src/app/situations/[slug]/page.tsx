@@ -116,7 +116,8 @@ export async function generateMetadata({
   if (!data) notFound();
 
   const title = `${data.phrase} | 실제 절차 경험 모음`;
-  const description = `${data.phrase} 상황에서 실제로 어떻게 진행되는지, 막히는 절차와 관련 사례를 모아봤습니다.`;
+  const stageHint = data.stuckStages[0] ? ` ${data.stuckStages[0].stage} 단계 등` : "";
+  const description = `${data.phrase} 실제 경험 ${data.posts.length}건.${stageHint} 막히는 절차와 다음 단계 정보를 모았습니다.`;
 
   // thin 허브는 noindex
   if (data.isThin) {
