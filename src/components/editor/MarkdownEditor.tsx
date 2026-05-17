@@ -347,27 +347,65 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     }
   }, [openImageModal]);
 
-  // 클립보드 붙여넣기 (이미지 지원)
+  // 클립보드 붙여넣기 (이미지 지원 + HTML 변환)
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
-    if (!onImageUpload) return;
-    
+    // 1. 이미지 파일(스크린샷) 처리 - 기존 로직 유지
     const items = e.clipboardData?.items;
-    if (!items) return;
-
-    // 이미지 파일 확인
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (!item) continue;
-      if (item.type.startsWith('image/')) {
-        e.preventDefault();
-        const file = item.getAsFile();
-        if (file) {
-          await openImageModal(file);
+    if (items) {
+      const itemArray = Array.from(items);
+      for (const item of itemArray) {
+        if (item?.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file && onImageUpload) {
+            await openImageModal(file);
+          }
+          return;
         }
-        return;
       }
     }
-  }, [onImageUpload, openImageModal]);
+
+    // 2. HTML 붙여넣기 처리 (추가)
+    const html = e.clipboardData?.getData('text/html');
+    if (!html) return;
+
+    // 보안: script 태그 체크
+    if (html.includes('<script')) return;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const img = doc.querySelector('img');
+
+    if (!img) return; // 이미지 없으면 기본 붙여넣기 동작
+
+    e.preventDefault();
+    const src = img.getAttribute('src') || '';
+    const alt = img.getAttribute('alt') || '';
+
+    if (!src) return;
+
+    // data: URL(base64) → File 변환 → 업로드 모달
+    if (src.startsWith('data:')) {
+      if (!onImageUpload) return;
+      try {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        const file = new File([blob], 'pasted-image.png', { type: blob.type });
+        await openImageModal(file);
+      } catch {
+        showToast('이미지 처리 실패', 'error');
+      }
+      return;
+    }
+
+    // 외부 URL → 모달 열기 (업로드 없이 바로 URL 사용)
+    setImageUrl(src);
+    setImageAlt(alt);
+    setImageCaption('');
+    setImageLink('');
+    setPendingImageFile(null); // 파일 없음 표시 (외부 URL)
+    setShowImageModal(true);
+  }, [onImageUpload, openImageModal, showToast]);
 
   // 드래그
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -417,8 +455,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 
     insertText(markdown, '\n\n');
 
-    // 부모 컴포넌트에 cover_image, cover_image_alt 업데이트 알림
-    if (onImageInsert) {
+    // 부모 컴포넌트에 cover_image, cover_image_alt 업데이트 알림 (파일 업로드된 경우만)
+    if (onImageInsert && pendingImageFile) {
       onImageInsert(imageUrl, alt);
     }
 
@@ -428,7 +466,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     setImageAlt("");
     setImageCaption("");
     setImageLink("");
-  }, [imageUrl, imageAlt, imageCaption, imageLink, insertText, onImageInsert]);
+  }, [imageUrl, imageAlt, imageCaption, imageLink, insertText, onImageInsert, pendingImageFile]);
 
   // 툴바용 메서드 노출
   useImperativeHandle(ref, () => ({
@@ -531,7 +569,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
             </div>
             
             <div className="p-4 space-y-4">
-              {pendingImageFile && (
+              {pendingImageFile ? (
+                // 파일 업로드된 이미지
                 <div className="flex items-center gap-3 p-3 bg-cream rounded-sm">
                   <div className="w-16 h-16 bg-rule/20 rounded-sm flex items-center justify-center">
                     <span className="text-xs text-muted">{pendingImageFile.name.slice(-3)}</span>
@@ -543,7 +582,13 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
                     </p>
                   </div>
                 </div>
-              )}
+              ) : imageUrl ? (
+                // 외부 URL 이미지 (웹에서 복사)
+                <div className="p-3 bg-cream rounded-sm">
+                  <p className="font-sans text-xs text-rust mb-1">외부 이미지 URL</p>
+                  <p className="font-sans text-sm text-ink break-all line-clamp-2">{imageUrl}</p>
+                </div>
+              ) : null}
               
               <div>
                 <label htmlFor="image-alt" className="block font-sans text-sm font-medium text-ink mb-1">
