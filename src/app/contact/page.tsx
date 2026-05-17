@@ -21,8 +21,74 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+
+  // FAQPage Schema
+  const faqData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "法 BLOG에 어떤 문의를 할 수 있나요?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "기사 제보, 사실 오류 정정, 제휴 및 협업 제안, 그리고 기타 피드백을 받고 있습니다. salad20c@gmail.com으로 문의주세요.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "답변은 얼마나 빨리 받을 수 있나요?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "일반 문의는 24시간 내, 제보/팁은 48시간 내 검토 후 답변드립니다. 제휴/광고 문의는 3영업일 내 답변드립니다.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "법률 자문도 해주시나요?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "아니요, 法 BLOG는 일반 정보 제공 목적의 미디어입니다. 구체적인 법률 문제는 반드시 해당 분야 전문 변호사와 상담하시기 바랍니다.",
+        },
+      },
+    ],
+  };
+
+  // Breadcrumb Schema
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "문의하기",
+        item: `${SITE_URL}/contact`,
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-paper">
+      {/* JSON-LD 스크립트 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }}
+        suppressHydrationWarning
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        suppressHydrationWarning
+      />
+
       {/* Header */}
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>

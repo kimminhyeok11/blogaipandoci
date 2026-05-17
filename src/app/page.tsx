@@ -164,12 +164,16 @@ export default async function HomePage() {
               </h1>
               <p className="subheadline">{featuredPost.excerpt}</p>
               <div className="byline">
-                {featuredPost.user?.role === "admin" ? (
-                  <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
-                    {featuredPost.user?.nickname || featuredPost.user?.email?.split("@")[0] || "익명"}
-                  </Link>
+                {featuredPost.user ? (
+                  featuredPost.user.role === "admin" ? (
+                    <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2" title="작성자 정보 보기">
+                      {featuredPost.user.nickname || featuredPost.user.email?.split("@")[0] || "관리자"}
+                    </Link>
+                  ) : (
+                    <span>{featuredPost.user.nickname || featuredPost.user.email?.split("@")[0] || "기고가"}</span>
+                  )
                 ) : (
-                  <span>{featuredPost.user?.nickname || featuredPost.user?.email?.split("@")[0] || "익명"}</span>
+                  <span className="text-muted">작성자 정보 없음</span>
                 )}
                 <span className="byline-sep">|</span>
                 <span suppressHydrationWarning>
@@ -261,12 +265,16 @@ export default async function HomePage() {
                     </span>
                     <span className="text-rule">·</span>
                     <span className="font-sans text-2xs text-muted">
-                      {post.user?.role === "admin" ? (
-                        <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
-                          {post.user?.nickname || post.user?.email?.split("@")[0] || "익명"}
-                        </Link>
+                      {post.user ? (
+                        post.user.role === "admin" ? (
+                          <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2" title="작성자 정보 보기">
+                            {post.user.nickname || post.user.email?.split("@")[0] || "관리자"}
+                          </Link>
+                        ) : (
+                          post.user.nickname || post.user.email?.split("@")[0] || "기고가"
+                        )
                       ) : (
-                        post.user?.nickname || post.user?.email?.split("@")[0] || "익명"
+                        <span className="text-muted/60">작성자 미상</span>
                       )}
                     </span>
                   </div>

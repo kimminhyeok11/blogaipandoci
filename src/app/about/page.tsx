@@ -21,8 +21,54 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+
+  // Organization Schema
+  const orgData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "法 BLOG",
+    url: SITE_URL,
+    logo: `${SITE_URL}/opengraph-image.png`,
+    description: "생활형 법률·정책 이슈를 분석하는 독립 미디어",
+    email: "salad20c@gmail.com",
+    sameAs: [],
+  };
+
+  // Breadcrumb Schema
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "홈",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "소개",
+        item: `${SITE_URL}/about`,
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-paper">
+      {/* JSON-LD 스크립트 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgData) }}
+        suppressHydrationWarning
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        suppressHydrationWarning
+      />
+
       {/* Header */}
       <header className="masthead">
         <div className="masthead-pub">깊이 있는 분석과 인사이트</div>
