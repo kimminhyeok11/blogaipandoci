@@ -26,7 +26,14 @@ export async function GET(request: Request) {
       query = query.eq("case_type", caseType);
     }
     if (q.trim()) {
-      query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%,content.ilike.%${q}%`);
+      // 공백/특수문자로 분리하여 각 키워드 OR 검색
+      const keywords = q.trim().split(/[\s\→\,\.]+/).filter(k => k.length > 1);
+      if (keywords.length > 0) {
+        const conditions = keywords.map(k => 
+          `title.ilike.%${k}%,excerpt.ilike.%${k}%,content.ilike.%${k}%`
+        );
+        query = query.or(conditions.join(','));
+      }
     }
 
     const { data, error } = await query
