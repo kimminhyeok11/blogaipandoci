@@ -93,7 +93,8 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
     return null;
   }
 
-  const { data, error } = await supabase
+  // posts 조회 (user 조인 제거)
+  const { data: postData, error } = await supabase
     .from("posts")
     .select(`
       id,
@@ -122,7 +123,6 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
       timeline_steps,
       is_ai_assisted,
       reviewed_at,
-      user:users(nickname, email, role),
       tags(id, name, slug)
     `)
     .eq("slug", slug)
@@ -130,13 +130,24 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
     .not("published_at", "is", null)
     .single();
 
-  if (error) {
+  if (error || !postData) {
     console.error('[getPost] Error fetching post:', error);
     return null;
   }
 
-  console.log('[getPost] Post found:', data ? 'yes' : 'no');
-  return data as Post;
+  // user 별도 조회
+  let userData = null;
+  if (postData.user_id) {
+    const { data: user } = await supabase
+      .from("users")
+      .select("nickname, email, role")
+      .eq("id", postData.user_id)
+      .single();
+    userData = user;
+  }
+
+  console.log('[getPost] Post found, user:', userData);
+  return { ...postData, user: userData } as Post;
 });
 
 // 제목으로 게시글 찾기 (slug 변경 후 301 리다이렉트용)
@@ -149,7 +160,7 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
 
   if (timestampMatch) {
     // 유사한 slug 패턴을 가진 최근 게시글 검색
-    const { data, error } = await supabase
+    const { data: postData, error } = await supabase
       .from('posts')
       .select(`
         id,
@@ -175,8 +186,7 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
         common_mistakes,
         timeline_steps,
         tags,
-        user_id,
-        user:users(nickname, avatar_url, email, role)
+        user_id
       `)
       .eq('published', true)
       .not('published_at', 'is', null)
@@ -185,8 +195,18 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
       .limit(1)
       .single();
 
-    if (!error && data) {
-      return data as Post;
+    if (!error && postData) {
+      // user 별도 조회
+      let userData = null;
+      if (postData.user_id) {
+        const { data: user } = await supabase
+          .from("users")
+          .select("nickname, email, role")
+          .eq("id", postData.user_id)
+          .single();
+        userData = user;
+      }
+      return { ...postData, user: userData } as Post;
     }
   }
 
@@ -216,7 +236,7 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
 
   const tagIds = currentPost.tags?.map((t) => t.id) || [];
 
-  let relatedPosts: Post[] = [];
+  let relatedPostsRaw: any[] = [];
 
   // 태그가 있는 경우: 같은 태그를 가진 글 먼저 검색
   if (tagIds.length > 0) {
@@ -231,7 +251,7 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
         cover_image_alt,
         published_at,
         view_count,
-        user:users(nickname),
+        user_id,
         tags!inner(id, name, slug)
       `)
       .eq("published", true)
@@ -242,14 +262,14 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
       .limit(6);
 
     if (taggedPosts) {
-      relatedPosts = taggedPosts as Post[];
+      relatedPostsRaw = taggedPosts;
     }
   }
 
   // 태그 기반 결과가 4개 미만이면 최신글로 보충
-  if (relatedPosts.length < 4) {
-    const excludeIds = [currentPost.id, ...relatedPosts.map((p) => p.id)];
-    const needMore = 6 - relatedPosts.length;
+  if (relatedPostsRaw.length < 4) {
+    const excludeIds = [currentPost.id, ...relatedPostsRaw.map((p) => p.id)];
+    const needMore = 6 - relatedPostsRaw.length;
 
     const { data: recentPosts } = await supabase
       .from("posts")
@@ -262,7 +282,7 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
         cover_image_alt,
         published_at,
         view_count,
-        user:users(nickname),
+        user_id,
         tags(id, name, slug)
       `)
       .eq("published", true)
@@ -272,9 +292,34 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
       .limit(needMore);
 
     if (recentPosts) {
-      relatedPosts = [...relatedPosts, ...(recentPosts as Post[])];
+      relatedPostsRaw = [...relatedPostsRaw, ...recentPosts];
     }
   }
+
+  // user_id 목록 수집 및 users 조회
+  const uniqueUserIds = new Set<string>();
+  relatedPostsRaw.forEach((p: { user_id?: string }) => {
+    if (p.user_id) uniqueUserIds.add(p.user_id);
+  });
+  const userIds = Array.from(uniqueUserIds);
+  let usersMap: Record<string, { nickname: string | null }> = {};
+  
+  if (userIds.length > 0) {
+    const { data: users } = await supabase
+      .from("users")
+      .select("id, nickname")
+      .in("id", userIds);
+    
+    users?.forEach((u: any) => {
+      usersMap[u.id] = { nickname: u.nickname };
+    });
+  }
+
+  // user 매핑
+  const relatedPosts = relatedPostsRaw.map((post) => ({
+    ...post,
+    user: usersMap[post.user_id] || null,
+  })) as Post[];
 
   return relatedPosts.slice(0, 6);
 }
