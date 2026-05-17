@@ -218,10 +218,6 @@ export default async function SituationHubPage({
           suppressHydrationWarning
         />
       )}
-      {isThin && (
-        <meta name="robots" content="noindex, follow" />
-      )}
-
       <header className="masthead">
         <div className="masthead-pub">상황별 절차 안내</div>
         <Link href="/" className="masthead-title">法 BLOG</Link>

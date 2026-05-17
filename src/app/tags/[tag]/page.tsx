@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { Tag } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -12,6 +13,17 @@ export const revalidate = 3600;
 
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
   const tag = decodeURIComponent(params.tag);
+  const posts = await getPostsByTag(tag);
+
+  // 글 3개 미만은 thin content → noindex
+  if (posts.length < 3) {
+    return {
+      title: `#${tag} 관련 글 | 法 BLOG`,
+      description: `${tag} 주제의 법률·정책·사회 심층 분석 글 모음`,
+      robots: { index: false, follow: true },
+    };
+  }
+
   return {
     title: `#${tag} 관련 글 | 法 BLOG`,
     description: `${tag} 주제의 법률·정책·사회 심층 분석 글 모음`,
@@ -34,7 +46,7 @@ interface TagPageProps {
   params: { tag: string };
 }
 
-async function getPostsByTag(tagSlug: string): Promise<Post[]> {
+const getPostsByTag = cache(async function getPostsByTag(tagSlug: string): Promise<Post[]> {
   try {
     // 1. 태그 slug로 tag_id 찾기
     const { data: tagData, error: tagError } = await (supabase
@@ -74,7 +86,7 @@ async function getPostsByTag(tagSlug: string): Promise<Post[]> {
     console.error("Error fetching posts by tag:", error);
     return [];
   }
-}
+});
 
 export default async function TagPage({ params }: TagPageProps) {
   const tag = decodeURIComponent(params.tag);

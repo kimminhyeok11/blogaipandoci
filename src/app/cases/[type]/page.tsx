@@ -97,6 +97,12 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
   }
 
   const posts = await getPostsByCaseType(caseType);
+
+  // 글이 없는 case_type → 404 (soft 404 방지)
+  if (posts.length === 0) {
+    notFound();
+  }
+
   const style = STAGE_LABELS[caseType] || { color: "text-ink", bg: "bg-cream" };
 
   // BreadcrumbSchema 데이터
@@ -186,17 +192,7 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
           </p>
         </div>
 
-        {posts.length === 0 ? (
-          <div className="text-center py-16 border border-rule bg-cream rounded-sm">
-            <p className="font-sans text-sm text-muted mb-2">
-              아직 이 유형의 절차 글이 없습니다.
-            </p>
-            <Link href="/cases" className="font-sans text-xs text-rust hover:underline">
-              다른 유형 보기 →
-            </Link>
-          </div>
-        ) : (
-          <div className="grid gap-6">
+        <div className="grid gap-6">
             {posts.map((post) => (
               <article
                 key={post.id}
@@ -255,7 +251,6 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
               </article>
             ))}
           </div>
-        )}
       </main>
     </div>
   );
