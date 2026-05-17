@@ -114,7 +114,8 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const data = await getSituationData(params.slug);
+  const decodedSlug = decodeURIComponent(params.slug);
+  const data = await getSituationData(decodedSlug);
   if (!data) notFound();
 
   const title = `${data.phrase} | 실제 절차 경험 모음`;
@@ -157,7 +158,8 @@ export default async function SituationHubPage({
 }: {
   params: { slug: string };
 }) {
-  const data = await getSituationData(params.slug);
+  const decodedSlug = decodeURIComponent(params.slug);
+  const data = await getSituationData(decodedSlug);
   if (!data) notFound();
 
   const { phrase, case_type, posts, stuckStages, mergedTimeline, nextStages, isThin } = data;
