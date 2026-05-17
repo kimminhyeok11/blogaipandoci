@@ -43,26 +43,63 @@ async function getPosts() {
   }
 
   try {
-    const { data: popularPosts } = await supabase
+    // posts 조회 (users는 별도로 가져와서 매핑)
+    const { data: popularPosts, error: popError } = await supabase
       .from("posts")
-      .select("id, title, excerpt, slug, published_at, view_count, user_id, current_stage, case_type, user:users(nickname, email, role)")
+      .select("id, title, excerpt, slug, published_at, view_count, user_id, current_stage, case_type")
       .eq("published", true)
       .not("published_at", "is", null)
       .order("view_count", { ascending: false })
       .limit(1);
 
-    const { data: latestPosts } = await supabase
+    const { data: latestPosts, error: lateError } = await supabase
       .from("posts")
-      .select("id, title, excerpt, slug, published_at, view_count, user_id, current_stage, case_type, user:users(nickname, email, role)")
+      .select("id, title, excerpt, slug, published_at, view_count, user_id, current_stage, case_type")
       .eq("published", true)
       .not("published_at", "is", null)
       .order("published_at", { ascending: false })
       .limit(10);
 
-    return {
-      featuredPost: popularPosts?.[0] || null,
-      recentPosts: latestPosts || []
-    };
+    if (popError) console.error("Popular posts error:", popError);
+    if (lateError) console.error("Latest posts error:", lateError);
+
+    // user_id 목록 수집
+    const allPosts = [...(popularPosts || []), ...(latestPosts || [])];
+    const uniqueUserIds = new Set<string>();
+    allPosts.forEach((post: { user_id?: string }) => {
+      if (post.user_id) uniqueUserIds.add(post.user_id);
+    });
+    const userIds = Array.from(uniqueUserIds);
+
+    // users 별도 조회
+    type UserInfo = { nickname: string | null; email: string | null; role: string | null };
+    let usersMap: Record<string, UserInfo> = {};
+    if (userIds.length > 0) {
+      const { data: users } = await supabase
+        .from("users")
+        .select("id, nickname, email, role")
+        .in("id", userIds);
+
+      if (users) {
+        (users as { id: string; nickname: string | null; email: string | null; role: string | null }[]).forEach((user) => {
+          usersMap[user.id] = { nickname: user.nickname, email: user.email, role: user.role };
+        });
+      }
+    }
+
+    // posts에 user 매핑
+    const mapPostWithUser = (post: any): Post => ({
+      ...post,
+      user: usersMap[post.user_id] || null
+    });
+
+    const featuredPost = popularPosts?.[0] ? mapPostWithUser(popularPosts[0]) : null;
+    const recentPosts = (latestPosts || []).map(mapPostWithUser);
+
+    console.log("[DEBUG] Featured post user:", featuredPost?.user);
+    console.log("[DEBUG] Recent posts users:", recentPosts.map((p: Post) => ({ title: p.title.slice(0, 20), user: p.user })));
+
+    return { featuredPost, recentPosts };
   } catch (err) {
     console.error("Failed to fetch posts:", err);
     return { featuredPost: null, recentPosts: [] };
