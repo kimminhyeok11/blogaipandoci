@@ -1,5 +1,6 @@
 import { marked } from "marked";
 import DOMPurify from "isomorphic-dompurify";
+import { addInternalLinks } from "./internal-links";
 
 // marked 렌더러 커스터마이징 (v18 호환)
 const renderer = {
@@ -280,9 +281,11 @@ export function processMarkdown(text: string): string {
       ALLOWED_ATTR: [
         'href', 'title', 'alt', 'src', 'class', 'loading', 'target', 'rel',
         'frameborder', 'allow', 'allowfullscreen', 'scrolling',
-        'width', 'height', 'start'
+        'width', 'height', 'start', 'data-internal-link'
       ],
     });
+    // SEO: 문맥 기반 내부링크 자동화 (보안 정제 후 적용)
+    html = addInternalLinks(html, 5); // 글당 최대 5개 내부링크
     return html;
   } catch {
     return text;

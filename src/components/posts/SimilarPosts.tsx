@@ -25,21 +25,107 @@ export async function fetchSimilarPosts(postId: string): Promise<SimilarPost[]> 
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
+    // 원본 글의 메타데이터 조회 (embedding + case_type + current_stage)
     const { data: post } = await admin
       .from("posts")
-      .select("embedding")
+      .select("id, embedding, case_type, current_stage")
       .eq("id", postId)
       .single();
 
-    if (!post?.embedding) return [];
+    if (!post) return [];
 
-    const { data: similar } = await admin.rpc("match_similar_posts", {
-      query_embedding: post.embedding,
-      exclude_post_id: postId,
-      match_count: 4,
-    });
+    let similarPosts: SimilarPost[] = [];
 
-    return similar || [];
+    // 1. embedding 기반 유사 글 검색 (semantic search)
+    if (post.embedding) {
+      const { data: similar } = await admin.rpc("match_similar_posts", {
+        query_embedding: post.embedding,
+        exclude_post_id: postId,
+        match_count: 6,
+      });
+      similarPosts = similar || [];
+    }
+
+    // 2. embedding 결과가 부족하면 case_type/current_stage 기반으로 보충
+    if (similarPosts.length < 4 && (post.case_type || post.current_stage)) {
+      const existingIds = new Set(similarPosts.map((p) => p.id));
+      existingIds.add(postId);
+
+      let fallbackQuery = admin
+        .from("posts")
+        .select(
+          "id, title, slug, excerpt, case_type, current_stage, published_at, view_count"
+        )
+        .eq("published", true)
+        .not("published_at", "is", null)
+        .order("view_count", { ascending: false })
+        .limit(6);
+
+      // case_type이 있으면 같은 유형 우선
+      if (post.case_type) {
+        fallbackQuery = fallbackQuery.eq("case_type", post.case_type);
+      }
+
+      // current_stage가 있으면 같은 단계도 고려 (or 조건으로)
+      if (post.current_stage && !post.case_type) {
+        fallbackQuery = fallbackQuery.eq("current_stage", post.current_stage);
+      }
+
+      const { data: fallbackPosts } = await fallbackQuery;
+
+      if (fallbackPosts) {
+        const newPosts = fallbackPosts
+          .filter((p) => !existingIds.has(p.id))
+          .map(
+            (p): SimilarPost => ({
+              ...p,
+              similarity: 0.5, // fallback은 낮은 similarity
+            })
+          );
+
+        similarPosts = [...similarPosts, ...newPosts];
+      }
+    }
+
+    // 3. 여전히 부족하면 같은 case_type의 인기글로 추가 보충
+    if (similarPosts.length < 4 && post.case_type) {
+      const existingIds = new Set(similarPosts.map((p) => p.id));
+      existingIds.add(postId);
+
+      const { data: popularPosts } = await admin
+        .from("posts")
+        .select(
+          "id, title, slug, excerpt, case_type, current_stage, published_at, view_count"
+        )
+        .eq("published", true)
+        .not("published_at", "is", null)
+        .eq("case_type", post.case_type)
+        .order("view_count", { ascending: false })
+        .limit(4);
+
+      if (popularPosts) {
+        const newPosts = popularPosts
+          .filter((p) => !existingIds.has(p.id))
+          .map(
+            (p): SimilarPost => ({
+              ...p,
+              similarity: 0.3,
+            })
+          );
+
+        similarPosts = [...similarPosts, ...newPosts];
+      }
+    }
+
+    // 중복 제거 및 최대 4개 반환
+    const seen = new Set<string>();
+    return similarPosts
+      .filter((p) => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      })
+      .slice(0, 4);
   } catch {
     return [];
   }

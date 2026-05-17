@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { maskPII, calculateRiskScore } from "@/lib/pii-mask";
+import { checkRateLimit, getClientIP, createRateLimitHeaders } from "@/lib/rate-limit";
 
 async function sendTelegramAlert(message: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -66,6 +67,20 @@ function maskComment(comment: any, requesterId: string | null, requesterRole: st
 // GET /api/comments - 댓글 목록 조회
 export async function GET(request: Request) {
   try {
+    // Rate limit: 60 requests per minute per IP
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(clientIP, "comments_get", 60, 60000);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+        {
+          status: 429,
+          headers: createRateLimitHeaders(rateLimit),
+        }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get("post_id");
 
@@ -150,6 +165,20 @@ export async function GET(request: Request) {
 // POST /api/comments - 댓글/질문 작성
 export async function POST(request: Request) {
   try {
+    // Rate limit: 5 requests per minute per IP (댓글 작성 제한)
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(clientIP, "comments_post", 5, 60000);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "댓글 작성이 너무 빠릅니다. 잠시 후 다시 시도해주세요." },
+        {
+          status: 429,
+          headers: createRateLimitHeaders(rateLimit),
+        }
+      );
+    }
+
     const body = await request.json();
     const {
       post_id,

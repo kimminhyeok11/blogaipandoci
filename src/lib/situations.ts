@@ -1,5 +1,31 @@
 import { createClient } from "@supabase/supabase-js";
 
+// 안전 디코딩: 이미 인코딩된 문자열 방지
+function safeDecode(value: string): string {
+  try {
+    if (value.includes("%")) {
+      const decoded = decodeURIComponent(value);
+      // 이중 인코딩 감지 (%25는 %를 의미)
+      if (decoded.includes("%25") || value.includes("%25")) {
+        console.error("[situations] double encoded slug detected:", value);
+      }
+      return decoded;
+    }
+    return value;
+  } catch {
+    return value;
+  }
+}
+
+// slug에 %25(이중 인코딩) 포함 여부 체크
+function checkDoubleEncoding(slug: string, context: string): void {
+  if (slug.includes("%25")) {
+    console.error(`[situations] CRITICAL: double encoded slug in ${context}:`, slug);
+  } else if (slug.includes("%")) {
+    console.warn(`[situations] WARNING: percent-encoded slug in ${context}:`, slug);
+  }
+}
+
 function makeAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,15 +43,23 @@ export interface SituationItem {
   score: number;
 }
 
-// phrase를 URL slug로 변환
+// phrase를 URL slug로 변환 (UTF-8 원본만 반환, 인코딩 금지)
 export function phraseToSlug(phrase: string): string {
-  return phrase
+  // 이미 인코딩된 문자열이 들어온 경우 디코딩
+  const decodedPhrase = safeDecode(phrase);
+
+  const slug = decodedPhrase
     .trim()
     .replace(/\s+/g, "-")
     .replace(/[^\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318Fa-z0-9-]/gi, "")
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 50);
+
+  // 최종 검증: 인코딩된 문자가 있으면 경고
+  checkDoubleEncoding(slug, "phraseToSlug output");
+
+  return slug;
 }
 
 // 블로그형 수식어 제거 + 18~24자 제한으로 행동형 phrase 정제
@@ -154,8 +188,11 @@ export async function refreshSituationsCache(): Promise<void> {
         const rawPhrase = p.current_stage || p.title;
         const phrase = sanitizeSituationPhrase(rawPhrase);
 
-        // situation_slug: 허브 페이지 URL용
+        // situation_slug: 허브 페이지 URL용 (UTF-8 원본만 저장)
         const situation_slug = phraseToSlug(phrase);
+
+        // 저장 전 검증: 인코딩된 상태로 저장되면 안 됨
+        checkDoubleEncoding(situation_slug, "refreshSituationsCache pre-save");
 
         // target_url: 허브 페이지 우선, 없으면 직접 글
         const target_url = situation_slug

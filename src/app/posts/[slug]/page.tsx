@@ -16,6 +16,7 @@ import { RelatedPosts } from "@/components/posts/RelatedPosts";
 import { SimilarPosts, fetchSimilarPosts } from "@/components/posts/SimilarPosts";
 import { getThumbnailUrl } from "@/utils/image";
 import { PostContent } from "@/components/posts/PostContent";
+import { FreshnessBadge } from "@/components/posts/FreshnessBadge";
 
 import { TocSidebar } from "@/components/posts/TocSidebar";
 const PostActions = dynamicImport(() => import("@/components/posts/PostActions").then(m => ({ default: m.PostActions })), { ssr: false });
@@ -466,6 +467,49 @@ export default async function PostPage({ params }: PostPageProps) {
     },
   };
 
+  // WebPageSchema 데이터 (검색 결과 구조 안정화)
+  const webPageSchemaData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": postUrl,
+    url: postUrl,
+    name: post.title,
+    description: post.excerpt || post.meta_description || post.title,
+    isPartOf: {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: "法 BLOG",
+      url: SITE_URL,
+    },
+    about: post.case_type
+      ? {
+          "@type": "Thing",
+          name: post.case_type,
+        }
+      : undefined,
+    datePublished: post.published_at || post.created_at,
+    dateModified: post.updated_at || post.published_at || post.created_at,
+    inLanguage: "ko-KR",
+  };
+
+  // CommentSchema 데이터 (댓글 SEO 강화)
+  const commentSchemaData = initialComments.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": postUrl,
+    commentCount: initialComments.length,
+    comment: initialComments.slice(0, 5).map((comment: any) => ({
+      "@type": "Comment",
+      text: comment.content?.slice(0, 200) || "",
+      author: {
+        "@type": "Person",
+        name: comment.nickname || "익명",
+      },
+      datePublished: comment.created_at,
+      ...(comment.like_count > 0 && { upvoteCount: comment.like_count }),
+    })),
+  } : null;
+
   // BreadcrumbSchema 데이터
   const breadcrumbSchemaData = {
     "@context": "https://schema.org",
@@ -503,6 +547,16 @@ export default async function PostPage({ params }: PostPageProps) {
       />
       <script
         type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchemaData) }}
+      />
+      {commentSchemaData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(commentSchemaData) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchemaData) }}
       />
       {/* Navigation - 스마트 스티키 헤더 */}
@@ -536,7 +590,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Cover Image - LCP 최적화 */}
         {post.cover_image && (
-          <div 
+          <div
             className="max-w-content mx-auto px-4 sm:px-6 mb-8 relative bg-cream"
             style={{ aspectRatio: "16/9", maxHeight: "400px" }}
           >
@@ -552,6 +606,15 @@ export default async function PostPage({ params }: PostPageProps) {
             />
           </div>
         )}
+
+        {/* Stale 콘텐츠 알림 (90일 이상 지난 글) */}
+        <div className="max-w-content mx-auto px-4 sm:px-6 mb-6">
+          <FreshnessBadge
+            updatedAt={post.updated_at}
+            publishedAt={post.published_at}
+            caseType={post.case_type}
+          />
+        </div>
 
         {/* Article Content with TOC - 레이아웃 개선 */}
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
