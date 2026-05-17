@@ -42,11 +42,13 @@ async function getSituationData(situationSlug: string): Promise<{
   const supabase = getServiceSupabase();
 
   // situations_cache에서 해당 slug 조회
-  const { data: cached } = await supabase
+  const { data: cached, error: cachedError } = await supabase
     .from("situations_cache")
     .select("phrase, case_type")
     .eq("situation_slug", situationSlug)
     .maybeSingle();
+
+  console.log("[situations] slug:", situationSlug, "| cached:", JSON.stringify(cached), "| error:", JSON.stringify(cachedError));
 
   if (!cached) return null;
 
