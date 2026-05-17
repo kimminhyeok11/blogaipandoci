@@ -4,6 +4,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { getTrendingSituations, getStuckStages } from "@/lib/situations";
 import fs from 'fs';
 import path from 'path';
+import type { Metadata } from "next";
 
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
@@ -11,6 +12,22 @@ const ClientHeader = dynamicImport(() => import("@/components/layout/ClientHeade
 const SituationSearch = dynamicImport(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
 
 export const revalidate = 3600;
+
+// 페이지 번호별 고유 메타데이터
+export async function generateMetadata({ params }: { params: { index: string } }): Promise<Metadata> {
+  const pageNum = parseInt(params.index, 10) || 1;
+  const title = pageNum === 1 
+    ? "法 BLOG - 법률, 기술, 비즈니스 깊이 있는 분석"
+    : `${pageNum}페이지 | 法 BLOG - 최신 글 모음`;
+  
+  return {
+    title,
+    description: `${pageNum}페이지 - 법률, 정책, 사회 이슈에 관한 심층 분석 콘텐츠 모음.`,
+    alternates: {
+      canonical: pageNum === 1 ? SITE_URL_HOME : `${SITE_URL_HOME}/home/${pageNum}`,
+    },
+  };
+}
 
 interface Post {
   id: string;

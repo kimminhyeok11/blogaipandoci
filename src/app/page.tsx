@@ -2,11 +2,21 @@ import Link from "next/link";
 import dynamicImport from "next/dynamic";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getTrendingSituations, getStuckStages } from "@/lib/situations";
+import type { Metadata } from "next";
 
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 const ClientHeader = dynamicImport(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
 const SituationSearch = dynamicImport(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
+
+// 홈페이지 메타데이터 (SEO: 동일 제목 문제 해결)
+export const metadata: Metadata = {
+  title: "法 BLOG - 법률, 기술, 비즈니스 깊이 있는 분석",
+  description: "법률, 정책, 사회 이슈에 관한 심층 분석 콘텐츠. 실제 판례와 데이터를 기반으로 한 현실적인 인사이트를 제공합니다.",
+  alternates: {
+    canonical: SITE_URL_HOME,
+  },
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
