@@ -315,11 +315,24 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
     });
   }
 
-  // user 매핑
-  const relatedPosts = relatedPostsRaw.map((post) => ({
-    ...post,
-    user: usersMap[post.user_id] || null,
-  })) as Post[];
+  // user 매핑 + slug 디코딩 (percent-encoded slug 문제 해결)
+  const relatedPosts = relatedPostsRaw.map((post) => {
+    // slug가 percent-encoded되어 있으면 디코딩
+    let decodedSlug = post.slug;
+    try {
+      if (post.slug && post.slug.includes('%')) {
+        decodedSlug = decodeURIComponent(post.slug);
+      }
+    } catch {
+      // 디코딩 실패 시 원본 유지
+    }
+    
+    return {
+      ...post,
+      slug: decodedSlug,
+      user: usersMap[post.user_id] || null,
+    };
+  }) as Post[];
 
   return relatedPosts.slice(0, 6);
 }
