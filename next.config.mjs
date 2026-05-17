@@ -88,6 +88,15 @@ const nextConfig = {
       },
     ];
   },
+  // Rewrite: .xml 확장자 URL을 라우트 핸들러로 매핑
+  async rewrites() {
+    return [
+      {
+        source: '/sitemaps/:file.xml',
+        destination: '/sitemaps/:file',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
