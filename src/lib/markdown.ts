@@ -358,10 +358,11 @@ export async function processMarkdownAsync(text: string): Promise<string> {
       .replace(/([~])\s*\n/g, "$1 ") // 줄바꿈 전 공백 추가
       .replace(/\n\s*([~])/g, " $1"); // 줄바꿈 후 공백 추가
 
-    const html = marked.parse(processed, { 
-      async: false,
-      renderer,
-    }) as string;
+    // marked v18 - 동기 파싱
+    let html = marked.parse(processed, { async: false }) as string;
+    
+    // 후처리: URL → 임베드 변환
+    html = postprocessEmbeds(html);
     
     // XSS 방지 (isomorphic-dompurify로 서버/클라이언트 모두 처리)
     const cleanHtml = DOMPurify.sanitize(html, {
