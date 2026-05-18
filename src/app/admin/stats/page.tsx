@@ -418,28 +418,14 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper">
-      {/* Header */}
-      <header className="border-b-3 border-double border-ink">
-        <div className="max-w-content mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-cream transition-colors"
-                aria-label="홈으로"
-              >
-                <ArrowLeft size={20} />
-              </Link>
-              <h1 className="font-sans text-sm font-medium text-ink">
-                관리자 통계
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="space-y-4 sm:space-y-6">
+      {/* 페이지 타이틀 */}
+      <div className="flex items-center gap-2">
+        <BarChart3 className="w-5 h-5 text-rust" />
+        <h2 className="font-sans font-semibold text-lg text-ink">통계 대시보드</h2>
+      </div>
 
-      <main className="max-w-content mx-auto px-4 sm:px-6 py-8">
+      <main>
         {/* 조회수 대시보드 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <StatCard
