@@ -172,6 +172,11 @@ export function CommentItem({
             {isEdited && (
               <span className="text-muted text-xs">(수정됨)</span>
             )}
+            {parentId && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs font-medium bg-rust/10 text-rust rounded-sm">
+                답글
+              </span>
+            )}
           </div>
 
           {isSecret ? (
