@@ -565,6 +565,28 @@ export function addInternalLinks(
 
       if (foundInHtml === -1) continue;
 
+      // 이미 a 태그 내부인지 확인 (href 속성값 내부 제외)
+      const beforeHtml = html.slice(0, foundInHtml);
+      const lastOpenTag = beforeHtml.lastIndexOf("<");
+      const lastCloseTag = beforeHtml.lastIndexOf(">");
+      
+      // <a ...> 태그 내부에 있는지 확인
+      if (lastOpenTag > lastCloseTag) {
+        // 현재 태그 내부 - a 태그인지 확인
+        const tagContent = html.slice(lastOpenTag, foundInHtml);
+        if (tagContent.toLowerCase().startsWith("<a ") || tagContent.toLowerCase().startsWith("<a>")) {
+          continue; // a 태그 내부면 변환하지 않음
+        }
+      }
+      
+      // a 태그 내부의 텍스트인지 확인 (닫히지 않은 a 태그 검색)
+      const lastOpenA = beforeHtml.toLowerCase().lastIndexOf("<a ");
+      const lastCloseA = beforeHtml.toLowerCase().lastIndexOf("</a>");
+      if (lastOpenA > lastCloseA) {
+        // 현재 a 태그 내부에 있음
+        continue;
+      }
+
       // 보호 영역 확인
       if (isProtectedArea(html, foundInHtml)) continue;
 
@@ -606,7 +628,7 @@ export function addInternalLinks(
       const beforeKeyword = result.slice(0, foundInHtml + paraOffset);
       const afterKeyword = result.slice(foundInHtml + paraOffset);
       
-      const replacement = `<a href="${item.url}" class="internal-context-link text-rust hover:text-rust-light border-b border-rust/30 hover:border-rust transition-colors" data-internal-link="true">${anchorText}</a>`;
+      const replacement = `<a href="${item.url}" class="internal-context-link text-rust hover:text-rust-light border-b border-rust/30 hover:border-rust transition-colors" data-internal-link="true" data-processed="true">${anchorText}</a>`;
       
       const match = afterKeyword.match(keywordRegex);
       if (match && match.index !== undefined) {
