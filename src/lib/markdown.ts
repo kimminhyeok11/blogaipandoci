@@ -1,6 +1,6 @@
 import { marked } from "marked";
 import DOMPurify from "isomorphic-dompurify";
-import { addInternalLinks } from "./internal-links";
+import { addInternalLinks, addInternalLinksAsync } from "./internal-links";
 
 // marked 렌더러 커스터마이징 (v18 호환)
 const renderer = {
@@ -346,4 +346,40 @@ export function extractImagesFromHtml(html: string): Array<{ src: string; alt?: 
   }
   
   return images;
+}
+
+// async 버전: DB에서 키워드 가져와서 처리
+export async function processMarkdownAsync(text: string): Promise<string> {
+  if (!text) return "";
+  try {
+    // 전처리: 단일 ~ 취소선 오인식 방지
+    let processed = text
+      .replace(/(?<![\d\s])\s*~\s*(?![\d\s~])/g, " ") // 단일 ~ 제거
+      .replace(/([~])\s*\n/g, "$1 ") // 줄바꿈 전 공백 추가
+      .replace(/\n\s*([~])/g, " $1"); // 줄바꿈 후 공백 추가
+
+    const html = marked.parse(processed, { 
+      async: false,
+      renderer,
+    }) as string;
+    
+    // XSS 방지 (isomorphic-dompurify로 서버/클라이언트 모두 처리)
+    const cleanHtml = DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: [
+        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'del', 's', 'strike',
+        'a', 'img', 'code', 'pre', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'ul', 'ol', 'li', 'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+        'div', 'span', 'sup', 'sub', 'iframe'
+      ],
+      ALLOWED_ATTR: [
+        'href', 'title', 'alt', 'src', 'class', 'loading', 'target', 'rel',
+        'frameborder', 'allow', 'allowfullscreen', 'scrolling',
+        'width', 'height', 'start', 'data-internal-link'
+      ],
+    });
+    // SEO: 문맥 기반 내부링크 자동화 (DB에서 키워드 가져옴)
+    return await addInternalLinksAsync(cleanHtml, 5);
+  } catch {
+    return text;
+  }
 }

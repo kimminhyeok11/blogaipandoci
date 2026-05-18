@@ -11,7 +11,58 @@
 // - 자연문장 내부에만 삽입 (문장 경계 고려)
 // - money keyword 과삽입 금지
 
+import { cache } from "react";
+
 export interface KeywordLink {
+  keyword: string;
+  url: string;
+  priority: number;
+  category: string;
+  anchorVariants?: string[];
+}
+
+// DB에서 키워드 조회 (캐싱 적용)
+export const fetchKeywordsFromDB = cache(async (): Promise<KeywordLink[]> => {
+  try {
+    // 서버 사이드에서만 실행
+    if (typeof window !== "undefined") {
+      return [];
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/keywords`, {
+      next: { revalidate: 3600 }, // 1시간 캐싱
+    });
+
+    if (!response.ok) {
+      console.error("[Internal Links] Failed to fetch keywords from DB");
+      return [];
+    }
+
+    const data = await response.json();
+    return data.keywords || [];
+  } catch (error) {
+    console.error("[Internal Links] Error fetching keywords:", error);
+    return [];
+  }
+});
+
+// DB 키워드 + 하드코딩 폴백 병합
+export async function getSortedKeywords(): Promise<KeywordLink[]> {
+  const dbKeywords = await fetchKeywordsFromDB();
+  
+  // DB에 데이터가 있으면 사용, 없으면 하드코딩 사용
+  const keywords = dbKeywords.length > 0 ? dbKeywords : LEGAL_KEYWORDS;
+  
+  // 우선순위 정렬 (긴 키워드 우선, 같은 길이면 priority 높은 순)
+  return [...keywords].sort((a, b) => {
+    const lenDiff = b.keyword.length - a.keyword.length;
+    if (lenDiff !== 0) return lenDiff;
+    return b.priority - a.priority;
+  });
+}
+
+// 기존 인터페이스 (호환성 유지)
+export interface LegacyKeywordLink {
   keyword: string;
   url: string;
   priority: number;
@@ -437,12 +488,34 @@ function findSentenceBoundaries(text: string): Array<{ start: number; end: numbe
  * - 주변 100자 내 링크 중복 금지
  * - 자연문장 내부에만 삽입
  */
+// 전역 캐시된 키워드 (서버 사이드)
+let cachedKeywords: KeywordLink[] | null = null;
+let lastCacheTime = 0;
+const CACHE_TTL = 60 * 60 * 1000; // 1시간
+
+// 캐시된 키워드 가져오기 (서버 사이드)
+export async function getCachedKeywords(): Promise<KeywordLink[]> {
+  const now = Date.now();
+  
+  if (cachedKeywords && (now - lastCacheTime) < CACHE_TTL) {
+    return cachedKeywords;
+  }
+  
+  const keywords = await getSortedKeywords();
+  cachedKeywords = keywords;
+  lastCacheTime = now;
+  return keywords;
+}
+
 export function addInternalLinks(
   html: string,
-  maxTotalLinks: number = 5
+  maxTotalLinks: number = 5,
+  keywords?: KeywordLink[]
 ): string {
   if (!html) return html;
 
+  const keywordsToUse = keywords && keywords.length > 0 ? keywords : SORTED_KEYWORDS;
+  
   let result = html;
   const linkedKeywords = new Set<string>();
   const linkedPositions: number[] = [];
@@ -458,7 +531,7 @@ export function addInternalLinks(
     let paraOffset = 0;
 
     // 키워드 우선순위 순으로 처리
-    for (const item of SORTED_KEYWORDS) {
+    for (const item of keywordsToUse) {
       if (totalLinks >= maxTotalLinks) break;
       if (linkedKeywords.has(item.keyword)) continue; // 이미 링크된 키워드 제외
       if (paraModified) break; // 문단당 1개만
@@ -527,7 +600,7 @@ export function addInternalLinks(
       const keywordRegex = new RegExp(`(${escapedKeyword})`, "i");
       
       // anchor text 다양화
-      const anchorText = item.anchorVariants[0] || item.keyword;
+      const anchorText = item.anchorVariants?.[0] || item.keyword;
       
       // 해당 위치에서만 치환
       const beforeKeyword = result.slice(0, foundInHtml + paraOffset);
@@ -556,12 +629,14 @@ export function addInternalLinks(
  */
 export function extractContextKeywords(
   content: string,
-  maxKeywords: number = 3
+  maxKeywords: number = 3,
+  keywords?: KeywordLink[]
 ): string[] {
   const found: string[] = [];
   const contentLower = content.toLowerCase();
+  const keywordsToUse = keywords && keywords.length > 0 ? keywords : SORTED_KEYWORDS;
 
-  for (const item of SORTED_KEYWORDS) {
+  for (const item of keywordsToUse) {
     if (found.length >= maxKeywords) break;
     if (contentLower.includes(item.keyword.toLowerCase())) {
       found.push(item.keyword);
@@ -569,4 +644,27 @@ export function extractContextKeywords(
   }
 
   return found;
+}
+
+/**
+ * async 버전: DB에서 키워드 가져와서 내부링크 추가
+ * 서버 사이드에서 사용 (React Server Components 등)
+ */
+export async function addInternalLinksAsync(
+  html: string,
+  maxTotalLinks: number = 5
+): Promise<string> {
+  const keywords = await getCachedKeywords();
+  return addInternalLinks(html, maxTotalLinks, keywords);
+}
+
+/**
+ * async 버전: DB에서 키워드 가져와서 문맥 키워드 추출
+ */
+export async function extractContextKeywordsAsync(
+  content: string,
+  maxKeywords: number = 3
+): Promise<string[]> {
+  const keywords = await getCachedKeywords();
+  return extractContextKeywords(content, maxKeywords, keywords);
 }

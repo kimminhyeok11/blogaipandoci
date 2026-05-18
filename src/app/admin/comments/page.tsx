@@ -39,10 +39,9 @@ export default function AdminCommentsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.role !== "admin") return;
-    if (!session?.access_token) return;
+    // layout.tsx에서 권한 체크 완료, filter 변경시에만 로드
     fetchComments();
-  }, [user, session, filter]);
+  }, [filter]);
 
   const fetchComments = async () => {
     if (!session?.access_token) return;

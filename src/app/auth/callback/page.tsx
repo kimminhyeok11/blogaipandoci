@@ -25,6 +25,28 @@ export default function AuthCallbackPage() {
 
       const user = session.user;
 
+      // 신규 회원가입 감지 (created_at이 5분 이내)
+      const createdAt = new Date(user.created_at);
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const isNewUser = createdAt > fiveMinutesAgo;
+
+      // 신규 회원가입 알림 발송
+      if (isNewUser) {
+        try {
+          await fetch("/api/admin/notify-signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: user.email,
+              userId: user.id,
+              nickname: user.user_metadata?.nickname || null,
+            }),
+          });
+        } catch (err) {
+          console.error("[Signup] Notification failed:", err);
+        }
+      }
+
       // DB에서 닉네임 확인
       const { data: profile } = await supabase
         .from("users")
@@ -35,7 +57,7 @@ export default function AuthCallbackPage() {
       const isKakaoUser = user.app_metadata?.provider === "kakao";
       const hasValidNickname =
         profile?.nickname &&
-        profile.nickname !== user.email?.split("@")[0];
+        profile?.nickname !== user.email?.split("@")[0];
 
       if (isKakaoUser && !hasValidNickname) {
         // 카카오 첫 로그인 → 닉네임 설정 화면

@@ -1,13 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, LogOut, Loader2, Edit3, Shield, CheckCircle, XCircle, Save, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/Toast";
-import { StickyNav } from "@/components/layout/StickyNav";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useToast } from "@/components/ui/Toast";
+import Link from "next/link";
+import { 
+  User, Mail, Edit3, Save, X, Loader2, LogOut, 
+  CheckCircle, XCircle, Shield, Edit, AlertTriangle,
+  BarChart3, MessageSquare, Link2, Flag, Settings,
+  ChevronDown, ChevronUp, FileText
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { StickyNav } from "@/components/layout/StickyNav";
+
+// 관리자 메뉴 아이템
+interface AdminMenuItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  color?: string;
+}
 
 interface UserProfile {
   id: string;
@@ -32,6 +45,29 @@ export default function ProfilePage() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawConfirm, setWithdrawConfirm] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const adminMenuRef = useRef<HTMLDivElement>(null);
+
+  // 외부 클릭 시 관리자 메뉴 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (adminMenuRef.current && !adminMenuRef.current.contains(e.target as Node)) {
+        setShowAdminMenu(false);
+      }
+    };
+    if (showAdminMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showAdminMenu]);
+
+  const adminMenuItems: AdminMenuItem[] = [
+    { href: "/admin/stats", label: "통계 대시보드", icon: BarChart3 },
+    { href: "/admin/comments", label: "댓글 관리", icon: MessageSquare },
+    { href: "/admin/keywords", label: "키워드 관리", icon: Link2 },
+    { href: "/admin/reports", label: "신고 관리", icon: Flag },
+    { href: "/admin/settings", label: "설정", icon: Settings },
+  ];
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -296,23 +332,39 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-3">
+            {/* 관리자 드롭다운 메뉴 */}
             {authUser?.role === 'admin' && (
-              <>
-                <Link
-                  href="/admin/stats"
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-ink/80 transition-colors"
+              <div className="relative" ref={adminMenuRef}>
+                <button
+                  onClick={() => setShowAdminMenu(!showAdminMenu)}
+                  className="flex items-center justify-between w-full px-4 py-3 bg-ink text-paper font-sans text-sm font-medium rounded-sm hover:bg-ink/80 transition-colors"
                 >
-                  <Shield size={16} />
-                  관리자 페이지
-                </Link>
-                <Link
-                  href="/admin/reports"
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-600 text-paper font-sans text-sm font-medium rounded-sm hover:bg-red-700 transition-colors"
-                >
-                  <Shield size={16} />
-                  신고 관리
-                </Link>
-              </>
+                  <div className="flex items-center gap-2">
+                    <Shield size={16} />
+                    <span>관리자 메뉴</span>
+                  </div>
+                  {showAdminMenu ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+                
+                {showAdminMenu && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-sm shadow-lg z-50 overflow-hidden">
+                    {adminMenuItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setShowAdminMenu(false)}
+                          className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                        >
+                          <Icon size={16} className="text-gray-500" />
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
 
             {authUser?.role === 'admin' && (

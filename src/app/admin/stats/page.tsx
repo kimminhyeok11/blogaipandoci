@@ -118,19 +118,7 @@ export default function StatsPage() {
   const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (isAuthLoading) return;
-    if (!user) {
-      window.location.href = "/login?redirect=/admin/stats";
-      return;
-    }
-
-    // 관리자 권한 체크
-    if (user.role !== 'admin') {
-      showToast("관리자 권한이 필요합니다", "error");
-      window.location.href = "/";
-      return;
-    }
-
+    // layout.tsx에서 권한 체크 완료
     if (!hasFetched.current) {
       hasFetched.current = true;
       // 병렬 호출 + 개별 에러 처리
@@ -142,7 +130,7 @@ export default function StatsPage() {
       fetchAutoSaves();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, session, isAuthLoading]);
+  }, []);
 
   const fetchStats = async () => {
     try {

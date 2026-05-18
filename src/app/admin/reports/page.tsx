@@ -31,13 +31,9 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthLoading) return;
-    if (user?.role !== "admin") {
-      router.replace("/");
-      return;
-    }
+    // layout.tsx에서 권한 체크 완료
     fetchReports();
-  }, [user, session, isAuthLoading]);
+  }, []);
 
   const fetchReports = async () => {
     setLoading(true);
