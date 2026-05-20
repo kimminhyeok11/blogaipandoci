@@ -31,6 +31,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 // 이후: 캐싱된 페이지 제공 → 1시간 후 재검증
 export const revalidate = 3600;
 
+// generateStaticParams 없이도 모든 slug 런타임에 처리
+export const dynamicParams = true;
+
 // generateStaticParams 제거: 빌드 시점에 글 미리 생성하지 않음
 // 대신 첫 방문 시 SSR로 생성하고 ISR로 캐싱
 
