@@ -12,16 +12,19 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 export const revalidate = 3600;
 
 // DB 기반 category 스타일 매핑 (slug → 스타일)
+// 기존 7개: 한글 slug 유지 (운영 안정성), 신규 2개: 영어 slug
 const CATEGORY_STYLES: Record<string, { color: string; bg: string }> = {
-  "criminal":              { color: "text-slate-800",  bg: "bg-slate-100 border-slate-200" },
-  "civil":                 { color: "text-blue-800",   bg: "bg-blue-100 border-blue-200" },
-  "family":                { color: "text-pink-800",   bg: "bg-pink-100 border-pink-200" },
-  "labor":                 { color: "text-purple-800", bg: "bg-purple-100 border-purple-200" },
-  "real-estate":           { color: "text-emerald-800",bg: "bg-emerald-100 border-emerald-200" },
-  "school-violence":       { color: "text-red-800",    bg: "bg-red-100 border-red-200" },
-  "intellectual-property": { color: "text-amber-800",  bg: "bg-amber-100 border-amber-200" },
-  "traffic-accident":      { color: "text-orange-800", bg: "bg-orange-100 border-orange-200" },
-  "bankruptcy":            { color: "text-cyan-800",   bg: "bg-cyan-100 border-cyan-200" },
+  // 기존 7개 - 한글 slug (DB와 일치)
+  "형사":              { color: "text-slate-800",  bg: "bg-slate-100 border-slate-200" },
+  "민사":              { color: "text-blue-800",   bg: "bg-blue-100 border-blue-200" },
+  "이혼·가족":          { color: "text-pink-800",   bg: "bg-pink-100 border-pink-200" },
+  "노동":              { color: "text-purple-800", bg: "bg-purple-100 border-purple-200" },
+  "부동산":             { color: "text-emerald-800",bg: "bg-emerald-100 border-emerald-200" },
+  "학교폭력":            { color: "text-red-800",    bg: "bg-red-100 border-red-200" },
+  "지식재산권":          { color: "text-amber-800",  bg: "bg-amber-100 border-amber-200" },
+  // 신규 2개 - 영어 slug
+  "traffic-accident":  { color: "text-orange-800", bg: "bg-orange-100 border-orange-200" },
+  "bankruptcy":        { color: "text-cyan-800",   bg: "bg-cyan-100 border-cyan-200" },
 };
 
 const EXPERT_BADGE: Record<string, string> = {
