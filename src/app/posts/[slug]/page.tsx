@@ -389,34 +389,35 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 }
 
 export default async function PostPage({ params }: PostPageProps) {
-  console.log('[PostPage] params.slug:', params.slug);
-  const decodedSlug = decodeURIComponent(params.slug);
-  console.log('[PostPage] decodedSlug:', decodedSlug);
+  try {
+    console.log('[PostPage] params.slug:', params.slug);
+    const decodedSlug = decodeURIComponent(params.slug);
+    console.log('[PostPage] decodedSlug:', decodedSlug);
 
-  // 1. 정확한 매핑 테이블 확인 (가장 우선)
-  const mappedSlug = getMappedSlug(decodedSlug);
-  if (mappedSlug) {
-    // 301 영구 리다이렉트
-    permanentRedirect(`/posts/${mappedSlug}`);
-  }
-
-  // 2. 잘못된 slug 패턴 감지 시 제목 추론 시도
-  if (isInvalidSlugPattern(decodedSlug)) {
-    const correctPost = await findPostByTitleGuess(decodedSlug);
-
-    if (correctPost) {
-      // 301 영구 리다이렉트 (SEO 가치 전달)
-      permanentRedirect(`/posts/${correctPost.slug}`);
+    // 1. 정확한 매핑 테이블 확인 (가장 우선)
+    const mappedSlug = getMappedSlug(decodedSlug);
+    if (mappedSlug) {
+      // 301 영구 리다이렉트
+      permanentRedirect(`/posts/${mappedSlug}`);
     }
-    // 찾지 못하면 404
-    notFound();
-  }
 
-  const post = await getPost(decodedSlug);
+    // 2. 잘못된 slug 패턴 감지 시 제목 추론 시도
+    if (isInvalidSlugPattern(decodedSlug)) {
+      const correctPost = await findPostByTitleGuess(decodedSlug);
 
-  if (!post) {
-    notFound();
-  }
+      if (correctPost) {
+        // 301 영구 리다이렉트 (SEO 가치 전달)
+        permanentRedirect(`/posts/${correctPost.slug}`);
+      }
+      // 찾지 못하면 404
+      notFound();
+    }
+
+    const post = await getPost(decodedSlug);
+
+    if (!post) {
+      notFound();
+    }
 
   // 관련 글 + 초기 댓글 병렬 fetch
   const [relatedPosts, initialComments, similarPosts] = await Promise.all([
@@ -703,4 +704,8 @@ export default async function PostPage({ params }: PostPageProps) {
       </main>
     </div>
   );
+  } catch (error) {
+    console.error('[PostPage] Unexpected error:', error);
+    notFound(); // 예외 발생 시 500 대신 404 처리
+  }
 }
