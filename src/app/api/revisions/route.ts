@@ -67,7 +67,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { post_id, title, content, excerpt } = body;
+    const { post_id, title, content, excerpt, meta_title, meta_description, cover_image, cover_image_alt, slug } = body;
 
     if (!post_id || !title || !content) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -115,6 +115,11 @@ export async function POST(request: Request) {
         title,
         content,
         excerpt: excerpt || null,
+        meta_title: meta_title || null,
+        meta_description: meta_description || null,
+        cover_image: cover_image || null,
+        cover_image_alt: cover_image_alt || null,
+        slug: slug || null,
         revision_number: nextRevisionNumber,
       })
       .select()
