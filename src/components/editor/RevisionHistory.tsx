@@ -10,6 +10,11 @@ interface Revision {
   title: string;
   content: string;
   excerpt: string;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  cover_image?: string | null;
+  cover_image_alt?: string | null;
+  slug?: string | null;
   created_at: string;
   revision_number: number;
 }

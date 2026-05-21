@@ -594,6 +594,14 @@ function WritePageContent() {
                   setTitle(revision.title);
                   setContent(revision.content);
                   setExcerpt(revision.excerpt);
+                  // 메타 정보 복원 (SEO 데이터 유지)
+                  setMetaTitle(revision.meta_title || revision.title || "");
+                  setMetaDescription(revision.meta_description || revision.excerpt || "");
+                  // 대표이미지 복원
+                  setCoverImage(revision.cover_image || null);
+                  setCoverImageAlt(revision.cover_image_alt || null);
+                  // slug는 복원하지 않음 - 현재 URL 유지 필수!
+                  // revision.slug는 조회만 가능, 복원 대상에서 제외
                 }}
               />
             )}

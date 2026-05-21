@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 
     const { data: revisions, error } = await serviceSupabase
       .from("post_revisions")
-      .select("id, title, content, excerpt, created_at, revision_number")
+      .select("id, title, content, excerpt, meta_title, meta_description, cover_image, cover_image_alt, slug, created_at, revision_number")
       .eq("post_id", post.id)
       .order("created_at", { ascending: false })
       .limit(limit);

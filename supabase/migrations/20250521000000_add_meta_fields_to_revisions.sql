@@ -17,3 +17,10 @@ COMMENT ON COLUMN post_revisions.meta_description IS 'SEO 메타 디스크립션
 COMMENT ON COLUMN post_revisions.cover_image IS '대표이미지 URL (복원 시 사용)';
 COMMENT ON COLUMN post_revisions.cover_image_alt IS '대표이미지 대체텍스트 (복원 시 사용)';
 COMMENT ON COLUMN post_revisions.slug IS '글 슬러그 (복원 시 사용)';
+
+-- 성능 최적화 인덱스
+CREATE INDEX IF NOT EXISTS idx_revisions_post_id 
+ON post_revisions(post_id);
+
+CREATE INDEX IF NOT EXISTS idx_revisions_revision_number 
+ON post_revisions(post_id, revision_number DESC);
