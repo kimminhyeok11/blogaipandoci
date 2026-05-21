@@ -26,14 +26,35 @@ export async function GET() {
     return new Response("Supabase connection failed", { status: 500 });
   }
 
+  // 1. 태그 목록 조회
   const { data: tags } = await supabase
     .from("tags")
-    .select("slug, updated_at, post_tags(count)")
+    .select("id, slug, updated_at")
     .order("name", { ascending: true });
 
-  const tagXml = (tags || [])
-    .filter((tag: any) => (tag.post_tags?.[0]?.count ?? 0) >= 2)
-    .map((tag: any) => `  <url>
+  // 2. 각 태그별 글 개수 조회 후 필터링 (PostgREST relation 대신 안전한 방식)
+  const tagsWithCount = await Promise.all(
+    (tags || []).map(async (tag) => {
+      const { count, error: countError } = await supabase
+        .from("post_tags")
+        .select("*", { count: "exact", head: true })
+        .eq("tag_id", tag.id);
+      
+      if (countError) {
+        console.error(`[sitemap:tags] Count error for tag ${tag.slug}:`, countError);
+      }
+      
+      return {
+        ...tag,
+        postCount: count || 0,
+      };
+    })
+  );
+
+  // 글 2개 이상인 태그만 sitemap에 포함
+  const tagXml = tagsWithCount
+    .filter((tag) => tag.postCount >= 2)
+    .map((tag) => `  <url>
     <loc>${escapeXml(`${baseUrl}/tags/${encodeURIComponent(tag.slug)}`)}</loc>
     <lastmod>${new Date(tag.updated_at).toISOString().split("T")[0]}</lastmod>
     <changefreq>monthly</changefreq>

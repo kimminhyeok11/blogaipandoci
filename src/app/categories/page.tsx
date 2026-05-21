@@ -38,21 +38,37 @@ interface TagData {
 
 async function getTags(): Promise<TagData[]> {
   try {
+    // 1. 태그 목록 조회
     const { data: tagData, error } = await supabase
       .from("tags")
-      .select("name, slug, post_tags(count)");
+      .select("id, name, slug");
 
     if (error) throw error;
+    if (!tagData) return [];
 
-    return (tagData || [])
-      .map((tag: any) => ({
-        name: tag.name,
-        slug: tag.slug,
-        count: tag.post_tags?.[0]?.count || 0,
-      }))
-      .sort((a: TagData, b: TagData) => b.count - a.count);
+    // 2. 각 태그별 글 개수 별도 조회 (PostgREST relation 대신 안전한 방식)
+    const tagsWithCount = await Promise.all(
+      tagData.map(async (tag) => {
+        const { count, error: countError } = await supabase
+          .from("post_tags")
+          .select("*", { count: "exact", head: true })
+          .eq("tag_id", tag.id);
+        
+        if (countError) {
+          console.error(`[getTags] Count error for tag ${tag.slug}:`, countError);
+        }
+        
+        return {
+          name: tag.name,
+          slug: tag.slug,
+          count: count || 0,
+        };
+      })
+    );
+
+    return tagsWithCount.sort((a, b) => b.count - a.count);
   } catch (err) {
-    console.error("Error fetching tags:", err);
+    console.error("[getTags] Failed to fetch tags:", err);
     return [];
   }
 }
