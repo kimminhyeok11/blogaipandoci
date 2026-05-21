@@ -37,6 +37,16 @@ CREATE INDEX IF NOT EXISTS idx_revisions_revision_number
 ON post_revisions(post_id, revision_number DESC);
 
 -- race condition 방지를 위한 unique constraint
-ALTER TABLE post_revisions
-ADD CONSTRAINT IF NOT EXISTS unique_post_revision
-UNIQUE (post_id, revision_number);
+-- 이미 있으면 무시 (마이그레이션 재실행 시)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'unique_post_revision' 
+        AND conrelid = 'post_revisions'::regclass
+    ) THEN
+        ALTER TABLE post_revisions
+        ADD CONSTRAINT unique_post_revision
+        UNIQUE (post_id, revision_number);
+    END IF;
+END $$;
