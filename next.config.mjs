@@ -19,6 +19,7 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],
+    serverExternalPackages: ['xss'],
   },
   images: {
     unoptimized: false,

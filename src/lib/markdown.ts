@@ -1,5 +1,5 @@
 import { marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
+import xss from "xss";
 import { addInternalLinks, addInternalLinksAsync } from "./internal-links";
 
 // marked 렌더러 커스터마이징 (v18 호환)
@@ -271,19 +271,22 @@ export function processMarkdown(text: string): string {
     // 후처리: URL → 임베드 변환
     html = postprocessEmbeds(html);
     // 보안: XSS 방지 HTML 정제 (script 태그 등 제거)
-    html = DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: [
-        'p', 'br', 'strong', 'em', 'del', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'figure',
-        'figcaption', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'iframe',
-        'div', 'span'
-      ],
-      ALLOWED_ATTR: [
-        'href', 'title', 'alt', 'src', 'class', 'loading', 'target', 'rel',
-        'frameborder', 'allow', 'allowfullscreen', 'scrolling',
-        'width', 'height', 'start', 'data-internal-link'
-      ],
-    });
+    const xssOptions = {
+      whiteList: {
+        p: [], br: [], strong: [], em: [], del: [],
+        h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+        ul: [], ol: [], li: [], blockquote: [], code: [], pre: [],
+        a: ['href', 'title', 'class', 'target', 'rel'],
+        img: ['src', 'alt', 'class', 'loading'],
+        figure: [], figcaption: [],
+        table: [], thead: [], tbody: [], tr: [], th: [], td: [],
+        hr: [], iframe: ['src', 'frameborder', 'allow', 'allowfullscreen', 'scrolling', 'class'],
+        div: ['class'], span: ['class']
+      },
+      stripIgnoreTag: true,
+      stripIgnoreTagBody: ['script', 'style']
+    };
+    html = xss(html, xssOptions);
     // SEO: 문맥 기반 내부링크 자동화 (보안 정제 후 적용)
     html = addInternalLinks(html, 5); // 글당 최대 5개 내부링크
     return html;
@@ -364,20 +367,23 @@ export async function processMarkdownAsync(text: string): Promise<string> {
     // 후처리: URL → 임베드 변환
     html = postprocessEmbeds(html);
     
-    // XSS 방지 (isomorphic-dompurify로 서버/클라이언트 모두 처리)
-    const cleanHtml = DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: [
-        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'del', 's', 'strike',
-        'a', 'img', 'code', 'pre', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'ul', 'ol', 'li', 'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-        'div', 'span', 'sup', 'sub', 'iframe'
-      ],
-      ALLOWED_ATTR: [
-        'href', 'title', 'alt', 'src', 'class', 'loading', 'target', 'rel',
-        'frameborder', 'allow', 'allowfullscreen', 'scrolling',
-        'width', 'height', 'start', 'data-internal-link'
-      ],
-    });
+    // XSS 방지 (xss 라이브러리로 서버/클라이언트 모두 처리)
+    const xssOptions = {
+      whiteList: {
+        p: [], br: [], strong: [], b: [], em: [], i: [], u: [], del: [], s: [], strike: [],
+        a: ['href', 'title', 'class', 'target', 'rel'],
+        img: ['src', 'alt', 'class', 'loading'],
+        code: [], pre: [], blockquote: [],
+        h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+        ul: [], ol: [], li: [], hr: [],
+        table: [], thead: [], tbody: [], tr: [], th: [], td: [],
+        div: ['class'], span: ['class'], sup: [], sub: [],
+        iframe: ['src', 'frameborder', 'allow', 'allowfullscreen', 'scrolling', 'class']
+      },
+      stripIgnoreTag: true,
+      stripIgnoreTagBody: ['script', 'style']
+    };
+    const cleanHtml = xss(html, xssOptions);
     // SEO: 문맥 기반 내부링크 자동화 (DB에서 키워드 가져옴)
     return await addInternalLinksAsync(cleanHtml, 5);
   } catch {
