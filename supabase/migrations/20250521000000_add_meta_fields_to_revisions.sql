@@ -1,7 +1,18 @@
 -- post_revisions 테이블에 메타 정보 및 SEO 필드 추가
 -- 목적: revision 복원 시 게시글 전체 상태(메타데이터 포함) 완전 복원
 
--- meta 정보 컬럼 추가
+-- 먼저 테이블이 없으면 기본 구조로 생성
+CREATE TABLE IF NOT EXISTS post_revisions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  excerpt TEXT,
+  revision_number INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 그 다음 meta 정보 컬럼 추가 (이미 있으면 무시)
 ALTER TABLE post_revisions
 ADD COLUMN IF NOT EXISTS meta_title TEXT,
 ADD COLUMN IF NOT EXISTS meta_description TEXT,
