@@ -13,14 +13,21 @@ export const revalidate = 3600;
 
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
   const tag = decodeURIComponent(params.tag);
+  
+  // ✅ DB에 존재하는 태그인지 확인 (랜덤 URL 방지)
+  const tagExists = await checkTagExists(tag);
+  if (!tagExists) {
+    notFound(); // 존재하지 않는 태그 → 404
+  }
+  
   const posts = await getPostsByTag(tag);
 
-  // 글 3개 미만은 thin content → noindex
-  if (posts.length < 3) {
+  // 글 0개 또는 3개 미만은 thin content → noindex
+  if (posts.length === 0 || posts.length < 3) {
     return {
       title: `#${tag} 관련 글 | 法 BLOG`,
       description: `${tag} 관련 글 ${posts.length}개 모음`,
-      robots: { index: false, follow: true },
+      robots: { index: false, follow: true }, // noindex: thin content 방지
     };
   }
 
@@ -49,6 +56,21 @@ interface Post {
 interface TagPageProps {
   params: { tag: string };
 }
+
+// 태그 존재 여부 확인 (DB에 실제로 있는 태그인지)
+const checkTagExists = cache(async function checkTagExists(tagSlug: string): Promise<boolean> {
+  try {
+    const { data, error } = await (supabase
+      .from("tags") as any)
+      .select("id")
+      .eq("slug", tagSlug)
+      .single();
+    
+    return !error && !!data;
+  } catch {
+    return false;
+  }
+});
 
 const getPostsByTag = cache(async function getPostsByTag(tagSlug: string): Promise<Post[]> {
   try {
@@ -94,10 +116,17 @@ const getPostsByTag = cache(async function getPostsByTag(tagSlug: string): Promi
 
 export default async function TagPage({ params }: TagPageProps) {
   const tag = decodeURIComponent(params.tag);
+  
+  // ✅ DB에 존재하는 태그인지 확인 (랜덤 URL 방지)
+  const tagExists = await checkTagExists(tag);
+  if (!tagExists) {
+    notFound(); // 존재하지 않는 태그 → 404
+  }
+  
   const posts = await getPostsByTag(tag);
 
   // ✅ 글이 없어도 404 아님 - 빈 상태 페이지 표시
-  // 태그는 의미적으로 존재할 수 있음 (미래 글 대비)
+  // (실제 사용된 태그지만 현재 글이 없는 경우)
   const hasPosts = posts.length > 0;
 
   // BreadcrumbSchema 데이터
