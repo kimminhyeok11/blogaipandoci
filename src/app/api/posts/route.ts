@@ -310,6 +310,17 @@ export async function POST(request: Request) {
       finalContent = appendRelatedLinks(content, relatedPosts);
     }
 
+    // case_type → category_id 자동 매핑
+    let categoryId = null;
+    if (case_type) {
+      const { data: cat } = await serviceSupabase
+        .from("categories")
+        .select("id")
+        .eq("name", case_type)
+        .single();
+      if (cat) categoryId = cat.id;
+    }
+
     const { data, error } = await serviceSupabase
       .from("posts")
       .insert({
@@ -325,6 +336,7 @@ export async function POST(request: Request) {
         user_id: userId,
         published_at: published ? new Date().toISOString() : null,
         case_type: case_type || null,
+        category_id: categoryId,
         current_stage: current_stage || null,
         next_stage: next_stage || null,
         estimated_duration: estimated_duration || null,
@@ -489,6 +501,21 @@ export async function PUT(request: Request) {
       finalContent = appendRelatedLinks(content, relatedPosts);
     }
 
+    // case_type 변경 시 category_id 자동 매핑
+    let categoryIdUpdate = undefined;
+    if (case_type !== undefined) {
+      if (case_type === null || case_type === "") {
+        categoryIdUpdate = null;
+      } else {
+        const { data: cat } = await serviceSupabase
+          .from("categories")
+          .select("id")
+          .eq("name", case_type)
+          .single();
+        categoryIdUpdate = cat?.id || null;
+      }
+    }
+
     const { data, error } = await serviceSupabase
       .from("posts")
       .update({
@@ -509,6 +536,7 @@ export async function PUT(request: Request) {
           : null,
         updated_at: new Date().toISOString(),
         case_type: case_type !== undefined ? (case_type || null) : undefined,
+        ...(categoryIdUpdate !== undefined && { category_id: categoryIdUpdate }),
         current_stage: current_stage !== undefined ? (current_stage || null) : undefined,
         next_stage: next_stage !== undefined ? (next_stage || null) : undefined,
         estimated_duration: estimated_duration !== undefined ? (estimated_duration || null) : undefined,
