@@ -441,11 +441,20 @@ export default async function PostPage({ params }: PostPageProps) {
       notFound();
     }
 
-  // 관련 글 + 초기 댓글 병렬 fetch
+  // 관련 글 + 초기 댓글 병렬 fetch (개별 에러 방어)
   const [relatedPosts, initialComments, similarPosts] = await Promise.all([
-    getRelatedPosts(post),
-    getInitialComments(post.id),
-    fetchSimilarPosts(post.id),
+    getRelatedPosts(post).catch(err => {
+      console.error('[PostPage] getRelatedPosts failed:', err);
+      return [];
+    }),
+    getInitialComments(post.id).catch(err => {
+      console.error('[PostPage] getInitialComments failed:', err);
+      return [];
+    }),
+    fetchSimilarPosts(post.id).catch(err => {
+      console.error('[PostPage] fetchSimilarPosts failed:', err);
+      return [];
+    }),
   ]);
 
   // 본문에서 첫 이미지 추출 (Article Schema용)
