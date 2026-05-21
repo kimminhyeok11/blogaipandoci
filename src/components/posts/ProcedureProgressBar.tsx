@@ -5,23 +5,45 @@ interface Props {
 }
 
 const STAGE_COLORS: Record<string, string> = {
-  "상속·유언": "bg-amber-600",
-  "채무·금전": "bg-red-600",
-  "형사·고소": "bg-slate-700",
-  "전세·임대차": "bg-blue-600",
+  // 새 카테고리 (14개)
+  "형사": "bg-slate-700",
+  "민사": "bg-blue-700",
   "이혼·가족": "bg-pink-600",
-  "계약·거래": "bg-emerald-600",
-  "행정·기타": "bg-purple-600",
+  "노동": "bg-purple-600",
+  "부동산": "bg-emerald-600",
+  "학교폭력": "bg-red-600",
+  "지식재산권": "bg-amber-600",
+  "교통사고": "bg-orange-600",
+  "회생·파산": "bg-cyan-600",
+  "채무·금전": "bg-teal-600",
+  "전세·임대차": "bg-indigo-600",
+  "계약·거래": "bg-lime-600",
+  "행정·기타": "bg-gray-600",
+  "기타": "bg-zinc-600",
+  // 구형 case_type (하위호환)
+  "상속·유언": "bg-zinc-600", // 기타로 통합
+  "형사·고소": "bg-slate-700",
 };
 
 const STAGE_RING: Record<string, string> = {
-  "상속·유언": "ring-amber-200",
-  "채무·금전": "ring-red-200",
-  "형사·고소": "ring-slate-200",
-  "전세·임대차": "ring-blue-200",
+  // 새 카테고리 (14개)
+  "형사": "ring-slate-200",
+  "민사": "ring-blue-200",
   "이혼·가족": "ring-pink-200",
-  "계약·거래": "ring-emerald-200",
-  "행정·기타": "ring-purple-200",
+  "노동": "ring-purple-200",
+  "부동산": "ring-emerald-200",
+  "학교폭력": "ring-red-200",
+  "지식재산권": "ring-amber-200",
+  "교통사고": "ring-orange-200",
+  "회생·파산": "ring-cyan-200",
+  "채무·금전": "ring-teal-200",
+  "전세·임대차": "ring-indigo-200",
+  "계약·거래": "ring-lime-200",
+  "행정·기타": "ring-gray-200",
+  "기타": "ring-zinc-200",
+  // 구형 case_type (하위호환)
+  "상속·유언": "ring-zinc-200",
+  "형사·고소": "ring-slate-200",
 };
 
 const EXPERT_BADGE: Record<string, { label: string; cls: string }> = {
