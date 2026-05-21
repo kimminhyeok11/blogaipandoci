@@ -311,14 +311,19 @@ function WritePageContent() {
     }
   }, [showToast, session?.access_token]);
 
-  // 이미지 삽입 시 cover_image, cover_image_alt 업데이트
-  const handleImageInsert = useCallback((url: string, alt: string) => {
-    // 첫번째 이미지만 cover_image로 저장
-    if (!coverImage) {
-      setCoverImage(url);
-      setCoverImageAlt(alt);
-    }
-  }, [coverImage]);
+  // 이미지를 대표이미지로 수동 설정
+  const handleSetCoverImage = useCallback((url: string, alt: string) => {
+    setCoverImage(url);
+    setCoverImageAlt(alt);
+    showToast("대표이미지가 설정되었습니다.", "success");
+  }, [showToast]);
+
+  // 대표이미지 해제
+  const handleRemoveCoverImage = useCallback(() => {
+    setCoverImage(null);
+    setCoverImageAlt(null);
+    showToast("대표이미지가 해제되었습니다.", "info");
+  }, [showToast]);
 
   const handleSubmit = async (published: boolean = false) => {
     // 유효성 검사
@@ -809,7 +814,6 @@ function WritePageContent() {
             setContent={setContent}
             preview={preview}
             onImageUpload={handleImageUpload}
-            onImageInsert={handleImageInsert}
           />
 
           {/* 하단 고정 글자수 바 */}
