@@ -6,6 +6,12 @@ import type { Metadata } from "next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
+interface TagData {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 // ISR: 1시간마다 재생성
 export const revalidate = 3600;
 
@@ -44,7 +50,7 @@ async function getTags(): Promise<TagData[]> {
 
     // 2. 각 태그별 글 개수 별도 조회 (PostgREST relation 대신 안전한 방식)
     const tagsWithCount = await Promise.all(
-      tagData.map(async (tag) => {
+      tagData.map(async (tag: TagData) => {
         const { count, error: countError } = await supabase
           .from("post_tags")
           .select("*", { count: "exact", head: true })
