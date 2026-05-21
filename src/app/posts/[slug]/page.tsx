@@ -192,25 +192,38 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
 
 // 초기 댓글 목록 서버 fetch (비로그인 기준 — 비공개 댓글 제외)
 async function getInitialComments(postId: string) {
-  const supabase = getServerSupabase();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("comments")
-    .select("id, content, nickname, is_anonymous, is_secret, created_at, updated_at, is_edited, like_count, reply_count, user_id, parent_id, question_type, topic_tags, context_answers")
-    .eq("post_id", postId)
-    .eq("is_secret", false)
-    .is("parent_id", null)
-    .order("created_at", { ascending: false })
-    .limit(30);
-  return data || [];
+  try {
+    const supabase = getServerSupabase();
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("comments")
+      .select("id, content, nickname, is_anonymous, is_secret, created_at, updated_at, is_edited, like_count, reply_count, user_id, parent_id, question_type, topic_tags, context_answers")
+      .eq("post_id", postId)
+      .eq("is_secret", false)
+      .is("parent_id", null)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) {
+      console.error('[getInitialComments] Error:', error);
+      return [];
+    }
+    return data || [];
+  } catch (error) {
+    console.error('[getInitialComments] Unexpected error:', error);
+    return [];
+  }
 }
 
 // 관련 글 가져오기 (태그 기반 또는 최신글)
 async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
-  const supabase = getServerSupabase();
-  if (!supabase) return [];
+  try {
+    const supabase = getServerSupabase();
+    if (!supabase) return [];
 
-  const tagIds = currentPost.tags?.map((t) => t.id) || [];
+    console.log('[getRelatedPosts] post.id:', currentPost.id);
+    console.log('[getRelatedPosts] post.tags:', currentPost.tags);
+
+    const tagIds = currentPost.tags?.map((t) => t.id) || [];
 
   let relatedPostsRaw: any[] = [];
 
@@ -311,18 +324,23 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
   }) as Post[];
 
   return relatedPosts.slice(0, 6);
+  } catch (error) {
+    console.error('[getRelatedPosts] Error:', error);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
-  const decodedSlug = decodeURIComponent(params.slug);
-  console.log('[generateMetadata] params.slug:', params.slug);
-  console.log('[generateMetadata] decodedSlug:', decodedSlug);
-  const post = await getPost(decodedSlug);
-  console.log('[generateMetadata] post found:', post ? 'yes' : 'no');
+  try {
+    const decodedSlug = decodeURIComponent(params.slug);
+    console.log('[generateMetadata] params.slug:', params.slug);
+    console.log('[generateMetadata] decodedSlug:', decodedSlug);
+    const post = await getPost(decodedSlug);
+    console.log('[generateMetadata] post found:', post ? 'yes' : 'no');
 
-  if (!post) {
-    notFound();
-  }
+    if (!post) {
+      notFound();
+    }
 
   const postUrl = `${SITE_URL}/posts/${post.slug}`;
 
@@ -386,6 +404,10 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       canonical: postUrl,
     },
   };
+  } catch (error) {
+    console.error('[generateMetadata] Error:', error);
+    throw error; // rethrow to trigger 500 with logging
+  }
 }
 
 export default async function PostPage({ params }: PostPageProps) {
