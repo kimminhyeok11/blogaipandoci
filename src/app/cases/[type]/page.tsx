@@ -11,19 +11,15 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 // ISR: 1시간마다 재생성
 export const revalidate = 3600;
 
-const VALID_CASE_TYPES = [
-  "상속·유언", "채무·금전", "형사·고소", "전세·임대차",
-  "이혼·가족", "계약·거래", "행정·기타",
-];
-
-const STAGE_LABELS: Record<string, { color: string; bg: string }> = {
-  "상속·유언":   { color: "text-amber-800",  bg: "bg-amber-100 border-amber-200" },
-  "채무·금전":   { color: "text-red-800",    bg: "bg-red-100 border-red-200" },
-  "형사·고소":   { color: "text-slate-800",  bg: "bg-slate-100 border-slate-200" },
-  "전세·임대차": { color: "text-blue-800",   bg: "bg-blue-100 border-blue-200" },
-  "이혼·가족":   { color: "text-pink-800",   bg: "bg-pink-100 border-pink-200" },
-  "계약·거래":   { color: "text-emerald-800",bg: "bg-emerald-100 border-emerald-200" },
-  "행정·기타":   { color: "text-purple-800", bg: "bg-purple-100 border-purple-200" },
+// DB 기반 category 스타일 매핑 (slug → 스타일)
+const CATEGORY_STYLES: Record<string, { color: string; bg: string }> = {
+  "형사":   { color: "text-slate-800",  bg: "bg-slate-100 border-slate-200" },
+  "민사":   { color: "text-blue-800",   bg: "bg-blue-100 border-blue-200" },
+  "이혼·가족": { color: "text-pink-800",   bg: "bg-pink-100 border-pink-200" },
+  "노동":   { color: "text-purple-800", bg: "bg-purple-100 border-purple-200" },
+  "부동산":  { color: "text-emerald-800",bg: "bg-emerald-100 border-emerald-200" },
+  "학교폭력": { color: "text-red-800",    bg: "bg-red-100 border-red-200" },
+  "지식재산권": { color: "text-amber-800",  bg: "bg-amber-100 border-amber-200" },
 };
 
 const EXPERT_BADGE: Record<string, string> = {
@@ -31,6 +27,16 @@ const EXPERT_BADGE: Record<string, string> = {
   "법무사권장": "bg-amber-100 text-amber-800 border border-amber-200",
   "변호사권장": "bg-red-100 text-red-800 border border-red-200",
 };
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  post_count: number;
+}
 
 interface CasePost {
   id: string;
@@ -49,7 +55,31 @@ interface CaseTypePageProps {
   params: { type: string };
 }
 
-const getPostsByCaseType = cache(async function getPostsByCaseType(caseType: string): Promise<CasePost[]> {
+// DB에서 category 존재 여부 확인
+const getCategoryBySlug = cache(async function getCategoryBySlug(slug: string): Promise<Category | null> {
+  try {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name, slug, description, seo_title, seo_description, post_count")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .single();
+
+    if (error || !data) {
+      console.error(`[getCategoryBySlug] Category not found: ${slug}`, error);
+      return null;
+    }
+
+    return data as Category;
+  } catch (err) {
+    console.error(`[getCategoryBySlug] Error: ${slug}`, err);
+    return null;
+  }
+});
+
+// category_id 기반으로 posts 조회
+const getPostsByCategoryId = cache(async function getPostsByCategoryId(categoryId: string): Promise<CasePost[]> {
   try {
     const supabase = getServiceSupabase();
     const { data, error } = await supabase
@@ -57,7 +87,8 @@ const getPostsByCaseType = cache(async function getPostsByCaseType(caseType: str
       .select("id, title, excerpt, slug, published_at, view_count, current_stage, next_stage, expert_level, estimated_duration")
       .eq("published", true)
       .not("published_at", "is", null)
-      .eq("case_type", caseType)
+      .eq("category_id", categoryId)
+      .order("published_at", { ascending: false })
       .order("published_at", { ascending: false });
 
     if (error) throw error;
@@ -69,47 +100,54 @@ const getPostsByCaseType = cache(async function getPostsByCaseType(caseType: str
 });
 
 export async function generateMetadata({ params }: CaseTypePageProps): Promise<Metadata> {
-  const caseType = decodeURIComponent(params.type);
-  if (!VALID_CASE_TYPES.includes(caseType)) return {};
+  const slug = decodeURIComponent(params.type);
+  const category = await getCategoryBySlug(slug);
 
-  const posts = await getPostsByCaseType(caseType);
+  if (!category) return {};
+
+  const posts = await getPostsByCategoryId(category.id);
   const topPost = [...posts].sort((a, b) => b.view_count - a.view_count)[0];
+  
+  // DB의 SEO 메타 사용, 없으면 기본값
+  const title = category.seo_title || `${category.name} 절차 안내 | 法 BLOG`;
   const description = posts.length > 0
-    ? `${caseType} 실제 절차 경험 ${posts.length}건. 「${topPost?.title.slice(0, 30) ?? caseType}」 등 단계별 실무 정보.`
-    : `${caseType} 관련 실제 절차 경험을 담은 글 모음입니다.`;
+    ? `${category.name} 실제 절차 경험 ${posts.length}건. 「${topPost?.title.slice(0, 30) ?? category.name}」 등 단계별 실무 정보.`
+    : (category.seo_description || `${category.name} 관련 실제 절차 경험을 담은 글 모음입니다.`);
 
   return {
-    title: `${caseType} 절차 안내 | 法 BLOG`,
+    title,
     description,
     openGraph: {
-      title: `${caseType} 절차 안내 | 法 BLOG`,
+      title,
       description,
       type: "website",
       locale: "ko_KR",
-      url: `${SITE_URL}/cases/${caseType}`,
+      url: `${SITE_URL}/cases/${slug}`,
       siteName: "法 BLOG",
-      images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: `${caseType} 절차 안내` }],
+      images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: `${category.name} 절차 안내` }],
     },
     alternates: {
-      canonical: `${SITE_URL}/cases/${caseType}`,
+      canonical: `${SITE_URL}/cases/${slug}`,
     },
   };
 }
 
 export default async function CaseTypePage({ params }: CaseTypePageProps) {
-  const caseType = decodeURIComponent(params.type);
+  const slug = decodeURIComponent(params.type);
 
-  if (!VALID_CASE_TYPES.includes(caseType)) {
+  // ✅ DB 기반 category 존재 여부 확인 (하드코딩 상수 제거)
+  const category = await getCategoryBySlug(slug);
+  if (!category) {
     notFound();
   }
 
-  const posts = await getPostsByCaseType(caseType);
+  const posts = await getPostsByCategoryId(category.id);
 
   // ✅ 글이 없어도 404 아님 - 빈 상태 페이지 표시
   // (soft 404 방지, 사용자가 직접 글 쓸 수 있는 진입점 제공)
   const hasPosts = posts.length > 0;
 
-  const style = STAGE_LABELS[caseType] || { color: "text-ink", bg: "bg-cream" };
+  const style = CATEGORY_STYLES[category.name] || { color: "text-ink", bg: "bg-cream" };
 
   // BreadcrumbSchema 데이터
   const breadcrumbData = {
@@ -131,8 +169,8 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
       {
         "@type": "ListItem",
         position: 3,
-        name: `${caseType} 절차`,
-        item: `${SITE_URL}/cases/${caseType}`,
+        name: `${category.name} 절차`,
+        item: `${SITE_URL}/cases/${slug}`,
       },
     ],
   };
@@ -141,9 +179,9 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
   const collectionData = posts.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `${caseType} 절차 안내`,
-    description: `${caseType} 관련 실제 절차 경험 글 ${posts.length}개`,
-    url: `${SITE_URL}/cases/${encodeURIComponent(caseType)}`,
+    name: `${category.name} 절차 안내`,
+    description: `${category.name} 관련 실제 절차 경험 글 ${posts.length}개`,
+    url: `${SITE_URL}/cases/${encodeURIComponent(slug)}`,
     isPartOf: {
       "@type": "WebSite",
       name: "法 BLOG",
@@ -188,7 +226,7 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-3">
             <Layers className="text-rust" size={28} />
-            <h1 className="text-2xl font-black text-ink">{caseType}</h1>
+            <h1 className="text-2xl font-black text-ink">{category.name}</h1>
             <span className={`px-2.5 py-1 rounded-sm text-xs font-medium border ${style.bg} ${style.color}`}>
               {posts.length}건
             </span>
@@ -264,7 +302,7 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
           <div className="text-center py-16 border-2 border-dashed border-rule/50 rounded-sm">
             <Layers className="mx-auto text-muted/40 mb-4" size={48} />
             <h3 className="text-lg font-bold text-ink mb-2">
-              아직 등록된 {caseType} 글이 없습니다
+              아직 등록된 {category.name} 글이 없습니다
             </h3>
             <p className="text-muted text-sm mb-6 max-w-md mx-auto">
               이 유형의 실제 절차 경험을 공유해 주세요. 다른 사람들에게 큰 도움이 됩니다.
