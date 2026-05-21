@@ -31,7 +31,9 @@ export interface Post {
   reviewed_at: string | null;
   user?: User;
   tags?: Tag[];
-  case_type?: string | null;
+  category_id?: string | null;
+  category?: { id: string; name: string; slug: string } | null;
+  case_type?: string | null; // categories.name과 동일 (legacy, category 기준으로 마이그레이션 완료)
   current_stage?: string | null;
   next_stage?: string | null;
   estimated_duration?: string | null;

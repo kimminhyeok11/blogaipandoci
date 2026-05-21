@@ -229,14 +229,14 @@ export async function refreshSituationsCache(): Promise<void> {
   }
 }
 
-// situations_cache가 비어있을 때 fallback
+// situations_cache가 비어있을 때 fallback (카테고리 기준)
 function getDefaultSituations(): SituationItem[] {
   return [
-    { phrase: "경찰 출석요구 받음", case_type: "형사·고소", source_post_id: null, target_url: "/cases/형사·고소", situation_slug: null, score: 0 },
+    { phrase: "경찰 출석요구 받음", case_type: "형사", source_post_id: null, target_url: "/cases/형사", situation_slug: null, score: 0 },
     { phrase: "통장압류 문자 받음", case_type: "채무·금전", source_post_id: null, target_url: "/cases/채무·금전", situation_slug: null, score: 0 },
     { phrase: "전세금 반환 계속 미뤄짐", case_type: "전세·임대차", source_post_id: null, target_url: "/cases/전세·임대차", situation_slug: null, score: 0 },
-    { phrase: "가족이 빚을 남기고 사망", case_type: "상속·유언", source_post_id: null, target_url: "/cases/상속·유언", situation_slug: null, score: 0 },
-    { phrase: "지급명령 서류 받음", case_type: "채무·금전", source_post_id: null, target_url: "/cases/채무·금전", situation_slug: null, score: 0 },
+    { phrase: "가족이 빚을 남기고 사망", case_type: "기타", source_post_id: null, target_url: "/cases/기타", situation_slug: null, score: 0 },
+    { phrase: "지급명령 서류 받음", case_type: "민사", source_post_id: null, target_url: "/cases/민사", situation_slug: null, score: 0 },
     { phrase: "이혼 또는 양육권 문제", case_type: "이혼·가족", source_post_id: null, target_url: "/cases/이혼·가족", situation_slug: null, score: 0 },
   ];
 }

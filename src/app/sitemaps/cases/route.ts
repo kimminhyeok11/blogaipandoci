@@ -19,21 +19,35 @@ function escapeXml(str: string): string {
 
 // 사건 유형별 페이지 sitemap
 export async function GET() {
-  const baseUrl = "https://lawtiphub.com";
-  const supabase = getServerSupabase();
+  try {
+    const baseUrl = "https://lawtiphub.com";
+    const supabase = getServerSupabase();
 
-  if (!supabase) {
-    return new Response("Supabase connection failed", { status: 500 });
-  }
+    if (!supabase) {
+      console.error("[Sitemap/Cases] Supabase connection failed");
+      return new Response("Supabase connection failed", { status: 500 });
+    }
 
-  const { data: posts } = await supabase
-    .from("posts")
-    .select("case_type, updated_at")
-    .eq("published", true)
-    .not("published_at", "is", null)
-    .not("case_type", "is", null);
+    // categories 테이블 기준으로 sitemap 생성 (활성 카테고리만)
+    const { data: categories, error } = await supabase
+      .from("categories")
+      .select("slug, updated_at")
+      .eq("is_active", true)
+      .gt("post_count", 0);
 
-  const caseTypes = Array.from(new Set((posts || []).map((r: any) => r.case_type).filter(Boolean)));
+    if (error) {
+      console.error("[Sitemap/Cases] DB error:", error);
+      throw error;
+    }
+
+    // invalid category skip (null/undefined slug 제거)
+    const caseTypes = (categories || [])
+      .map((c: any) => c.slug)
+      .filter((slug: string | null | undefined) => typeof slug === 'string' && slug.length > 0);
+
+    if (caseTypes.length === 0) {
+      console.warn("[Sitemap/Cases] No active categories found");
+    }
 
   const caseXml = caseTypes.map((ct: string) => `  <url>
     <loc>${escapeXml(`${baseUrl}/cases/${encodeURIComponent(ct)}`)}</loc>
@@ -47,10 +61,22 @@ export async function GET() {
 ${caseXml}
 </urlset>`;
 
-  return new Response(sitemap, {
-    headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, s-maxage=3600",
-    },
-  });
+    return new Response(sitemap, {
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Cache-Control": "public, max-age=3600, s-maxage=3600",
+      },
+    });
+  } catch (err) {
+    console.error("[Sitemap/Cases] Unexpected error:", err);
+    // sitemap 500은 SEO에 치명적이므로 빈 sitemap 반환 (graceful degradation)
+    return new Response(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+</urlset>`, {
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Cache-Control": "public, max-age=60",
+      },
+    });
+  }
 }

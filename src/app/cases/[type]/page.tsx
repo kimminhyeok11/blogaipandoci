@@ -12,9 +12,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 export const revalidate = 3600;
 
 // DB 기반 category 스타일 매핑 (slug → 스타일)
-// 기존 7개: 한글 slug 유지 (운영 안정성), 신규 2개: 영어 slug
+// mixed slug: 한글(기존) + 영어(신규) 병행 운영
 const CATEGORY_STYLES: Record<string, { color: string; bg: string }> = {
-  // 기존 7개 - 한글 slug (DB와 일치)
+  // 한글 slug (기존 7개 + 4개 + 기타)
   "형사":              { color: "text-slate-800",  bg: "bg-slate-100 border-slate-200" },
   "민사":              { color: "text-blue-800",   bg: "bg-blue-100 border-blue-200" },
   "이혼·가족":          { color: "text-pink-800",   bg: "bg-pink-100 border-pink-200" },
@@ -22,10 +22,17 @@ const CATEGORY_STYLES: Record<string, { color: string; bg: string }> = {
   "부동산":             { color: "text-emerald-800",bg: "bg-emerald-100 border-emerald-200" },
   "학교폭력":            { color: "text-red-800",    bg: "bg-red-100 border-red-200" },
   "지식재산권":          { color: "text-amber-800",  bg: "bg-amber-100 border-amber-200" },
-  // 신규 2개 - 영어 slug
+  "채무·금전":           { color: "text-teal-800",   bg: "bg-teal-100 border-teal-200" },
+  "전세·임대차":          { color: "text-indigo-800", bg: "bg-indigo-100 border-indigo-200" },
+  "계약·거래":           { color: "text-lime-800",   bg: "bg-lime-100 border-lime-200" },
+  "행정·기타":           { color: "text-gray-800",   bg: "bg-gray-100 border-gray-200" },
+  "기타":               { color: "text-zinc-800",   bg: "bg-zinc-100 border-zinc-200" },
+  // 영어 slug (신규 2개)
   "traffic-accident":  { color: "text-orange-800", bg: "bg-orange-100 border-orange-200" },
   "bankruptcy":        { color: "text-cyan-800",   bg: "bg-cyan-100 border-cyan-200" },
 };
+
+const DEFAULT_STYLE = { color: "text-ink", bg: "bg-cream" };
 
 const EXPERT_BADGE: Record<string, string> = {
   "직접가능":   "bg-emerald-100 text-emerald-800 border border-emerald-200",
@@ -152,7 +159,12 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
   // (soft 404 방지, 사용자가 직접 글 쓸 수 있는 진입점 제공)
   const hasPosts = posts.length > 0;
 
-  const style = CATEGORY_STYLES[slug] || { color: "text-ink", bg: "bg-cream" };
+  const style = CATEGORY_STYLES[slug] ?? DEFAULT_STYLE;
+  
+  // [CategoryFallback] 로깅 (transitional mode)
+  if (!CATEGORY_STYLES[slug]) {
+    console.warn('[CategoryFallback] Unknown slug:', slug, '- using default style');
+  }
 
   // BreadcrumbSchema 데이터
   const breadcrumbData = {

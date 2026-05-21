@@ -13,7 +13,7 @@ import { useWriteForm } from "./hooks/useWriteForm";
 import { useAutoSave } from "./hooks/useAutoSave";
 import type { MarkdownEditorRef } from "@/components/editor/MarkdownEditor";
 
-const CASE_TYPES = ["상속·유언", "채무·금전", "형사·고소", "전세·임대차", "이혼·가족", "계약·거래", "행정·기타"];
+const CASE_TYPES = ["형사", "민사", "이혼·가족", "노동", "부동산", "학교폭력", "지식재산권", "교통사고", "회생·파산", "채무·금전", "전세·임대차", "계약·거래", "행정·기타", "기타"];
 const EXPERT_LEVELS = ["직접가능", "법무사권장", "변호사권장"];
 
 const EMPTY_PROCEDURE = {
