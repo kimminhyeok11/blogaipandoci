@@ -40,11 +40,26 @@ ALTER TABLE posts
 ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES categories(id) ON DELETE SET NULL;
 
 -- 4. 기존 case_type 데이터를 category_id로 마이그레이션
--- NOTE: 실행 시 기존 데이터가 있어야 함
+-- case_type(한글) → categories.name 기준 매핑
 UPDATE posts p
 SET category_id = c.id
 FROM categories c
-WHERE p.case_type = c.slug
+WHERE p.case_type = c.name
+  AND p.category_id IS NULL;
+
+-- 4-2. 세부 case_type 매핑 (예: "형사·고소" → "형사")
+UPDATE posts p
+SET category_id = c.id
+FROM categories c
+WHERE (p.case_type LIKE '형사%' AND c.name = '형사')
+   OR (p.case_type LIKE '민사%' AND c.name = '민사')
+   OR (p.case_type LIKE '이혼%' OR p.case_type LIKE '가족%' AND c.name = '이혼·가족')
+   OR (p.case_type LIKE '노동%' AND c.name = '노동')
+   OR (p.case_type LIKE '부동산%' AND c.name = '부동산')
+   OR (p.case_type LIKE '학교%' OR p.case_type LIKE '폭력%' AND c.name = '학교폭력')
+   OR (p.case_type LIKE '지식%' OR p.case_type LIKE '저작권%' AND c.name = '지식재산권')
+   OR (p.case_type LIKE '교통%' OR p.case_type LIKE '사고%' AND c.name = '교통사고')
+   OR (p.case_type LIKE '회생%' OR p.case_type LIKE '파산%' AND c.name = '회생·파산')
   AND p.category_id IS NULL;
 
 -- 5. categories.post_count 업데이트
