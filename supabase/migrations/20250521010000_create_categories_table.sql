@@ -48,19 +48,27 @@ WHERE p.case_type = c.name
   AND p.category_id IS NULL;
 
 -- 4-2. 세부 case_type 매핑 (예: "형사·고소" → "형사")
+-- 주의: OR 그룹 전체를 괄호로 감싸야 함 (SQL 우선순위: AND > OR)
 UPDATE posts p
 SET category_id = c.id
 FROM categories c
-WHERE (p.case_type LIKE '형사%' AND c.name = '형사')
-   OR (p.case_type LIKE '민사%' AND c.name = '민사')
-   OR (p.case_type LIKE '이혼%' OR p.case_type LIKE '가족%' AND c.name = '이혼·가족')
-   OR (p.case_type LIKE '노동%' AND c.name = '노동')
-   OR (p.case_type LIKE '부동산%' AND c.name = '부동산')
-   OR (p.case_type LIKE '학교%' OR p.case_type LIKE '폭력%' AND c.name = '학교폭력')
-   OR (p.case_type LIKE '지식%' OR p.case_type LIKE '저작권%' AND c.name = '지식재산권')
-   OR (p.case_type LIKE '교통%' OR p.case_type LIKE '사고%' AND c.name = '교통사고')
-   OR (p.case_type LIKE '회생%' OR p.case_type LIKE '파산%' AND c.name = '회생·파산')
-  AND p.category_id IS NULL;
+WHERE (
+       (p.case_type LIKE '형사%' AND c.name = '형사')
+    OR (p.case_type LIKE '민사%' AND c.name = '민사')
+    OR (p.case_type LIKE '이혼%' AND c.name = '이혼·가족')
+    OR (p.case_type LIKE '가족%' AND c.name = '이혼·가족')
+    OR (p.case_type LIKE '노동%' AND c.name = '노동')
+    OR (p.case_type LIKE '부동산%' AND c.name = '부동산')
+    OR (p.case_type LIKE '학교%' AND c.name = '학교폭력')
+    OR (p.case_type LIKE '폭력%' AND c.name = '학교폭력')
+    OR (p.case_type LIKE '지식%' AND c.name = '지식재산권')
+    OR (p.case_type LIKE '저작권%' AND c.name = '지식재산권')
+    OR (p.case_type LIKE '교통%' AND c.name = '교통사고')
+    OR (p.case_type LIKE '사고%' AND c.name = '교통사고')
+    OR (p.case_type LIKE '회생%' AND c.name = '회생·파산')
+    OR (p.case_type LIKE '파산%' AND c.name = '회생·파산')
+)
+AND p.category_id IS NULL;
 
 -- 5. categories.post_count 업데이트
 UPDATE categories c
