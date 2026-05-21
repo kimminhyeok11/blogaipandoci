@@ -93,13 +93,14 @@ function WritePageContent() {
     autoSave.save({ title, content, excerpt, tags });
   }, [hasContent, title, content, excerpt, tags, autoSave]);
 
-  // 자동 저장 (10초마다, 제출 중엔 차단)
+  // 자동 저장 (타이핑 후 10초 debounce, 제출 중엔 차단)
   useEffect(() => {
     if (!title && !content) return;
     if (isSubmitting) return;
+    if (isRestoringRevisionRef.current) return; // 복원 중 skip
     
-    // 10초마다 자동 저장 (사용자 피드백 개선)
-    const interval = setInterval(() => {
+    // 타이핑 후 10초 debounce 저장 (불필요한 저장 감소)
+    const timer = setTimeout(() => {
       saveToLocalStorage();
     }, 10000);
 
@@ -118,11 +119,11 @@ function WritePageContent() {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      clearInterval(interval);
+      clearTimeout(timer); // 타이핑 중이면 타이머 취소
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [saveToLocalStorage, title, content]);
+  }, [saveToLocalStorage, title, content, excerpt, tags, isSubmitting]);
 
   // 페이지 로드 시 복원 배너 표시 (새 글 모드)
   useEffect(() => {
