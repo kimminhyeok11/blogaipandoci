@@ -130,8 +130,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to save revision", detail: insertError.message }, { status: 500 });
     }
 
-    // 최대 10개 유지 — 초과분(오래된 것) 자동 삭제
-    const MAX_REVISIONS = 10;
+    // 최대 30개 유지 — 초과분(오래된 것) 자동 삭제
+    const MAX_REVISIONS = 30;
     const { data: allRevisions } = await serviceSupabase
       .from("post_revisions")
       .select("id")

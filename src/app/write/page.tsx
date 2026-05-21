@@ -79,6 +79,8 @@ function WritePageContent() {
   const [coverImageAlt, setCoverImageAlt] = useState<string | null>(null);
   const [metaTitle, setMetaTitle] = useState<string>("");
   const [metaDescription, setMetaDescription] = useState<string>("");
+  // revision 복원 중 autosave 루프 방지
+  const isRestoringRevisionRef = useRef(false);
 
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
@@ -86,6 +88,8 @@ function WritePageContent() {
   // localStorage에 임시 저장
   const saveToLocalStorage = useCallback(() => {
     if (!hasContent) return;
+    // revision 복원 중에는 autosave skip (루프 방지)
+    if (isRestoringRevisionRef.current) return;
     autoSave.save({ title, content, excerpt, tags });
   }, [hasContent, title, content, excerpt, tags, autoSave]);
 
@@ -591,6 +595,9 @@ function WritePageContent() {
                 currentTitle={title}
                 currentExcerpt={excerpt}
                 onRestore={(revision) => {
+                  // 복원 중 플래그 설정 (autosave 루프 방지)
+                  isRestoringRevisionRef.current = true;
+                  
                   setTitle(revision.title);
                   setContent(revision.content);
                   setExcerpt(revision.excerpt);
@@ -602,6 +609,11 @@ function WritePageContent() {
                   setCoverImageAlt(revision.cover_image_alt || null);
                   // slug는 복원하지 않음 - 현재 URL 유지 필수!
                   // revision.slug는 조회만 가능, 복원 대상에서 제외
+                  
+                  // 복원 완료 후 플래그 해제 (약간 지연)
+                  setTimeout(() => {
+                    isRestoringRevisionRef.current = false;
+                  }, 500);
                 }}
               />
             )}

@@ -35,3 +35,8 @@ ON post_revisions(post_id);
 
 CREATE INDEX IF NOT EXISTS idx_revisions_revision_number 
 ON post_revisions(post_id, revision_number DESC);
+
+-- race condition 방지를 위한 unique constraint
+ALTER TABLE post_revisions
+ADD CONSTRAINT IF NOT EXISTS unique_post_revision
+UNIQUE (post_id, revision_number);
