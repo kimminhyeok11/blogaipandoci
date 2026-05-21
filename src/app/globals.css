@@ -33,6 +33,18 @@ body {
   overflow-x: hidden;
 }
 
+/* 링크 및 긴 URL 자동 줄바꿈 - 모바일 가로스크롤 방지 */
+a, p, span {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* excerpt/description 텍스트 특별 처리 */
+.line-clamp-2, .line-clamp-3, .excerpt-text {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
 /* Screen reader only - SEO용 숨김 텍스트 */
 .sr-only {
   position: absolute;
