@@ -267,6 +267,7 @@ export async function POST(request: Request) {
     const token = authHeader.replace("Bearer ", "");
     const body = await request.json();
     const { title, slug, content, excerpt, cover_image, cover_image_alt, published,
+      meta_title, meta_description,
       case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level,
       timeline_steps
     } = body;
@@ -319,6 +320,8 @@ export async function POST(request: Request) {
         cover_image,
         cover_image_alt,
         published,
+        meta_title: meta_title || null,
+        meta_description: meta_description || null,
         user_id: userId,
         published_at: published ? new Date().toISOString() : null,
         case_type: case_type || null,
@@ -440,6 +443,7 @@ export async function PUT(request: Request) {
     const token = authHeader.replace("Bearer ", "");
     const body = await request.json();
     const { id, title, slug, content, excerpt, cover_image, cover_image_alt, published,
+      meta_title, meta_description,
       case_type, current_stage, next_stage, estimated_duration, involved_agencies, common_mistakes, expert_level,
       timeline_steps
     } = body;
@@ -495,6 +499,8 @@ export async function PUT(request: Request) {
         ...(cover_image !== undefined ? { cover_image } : {}),
         ...(cover_image_alt !== undefined ? { cover_image_alt } : {}),
         published,
+        meta_title: meta_title || null,
+        meta_description: meta_description || null,
         // 이미 발행된 글이면 published_at 유지, 신규 발행 시에만 현재 시간 설정
         published_at: published
           ? (existingPost.published && existingPost.published_at
