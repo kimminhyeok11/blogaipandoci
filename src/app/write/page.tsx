@@ -684,6 +684,63 @@ function WritePageContent() {
               className="w-full text-2xl sm:text-3xl font-black text-ink placeholder-muted/50 bg-transparent border-none focus:outline-none focus:ring-0 mb-3"
             />
 
+            {/* 대표이미지 선택 UI */}
+            <div className="mt-4 mb-6 p-4 bg-cream/30 border border-rule rounded-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-muted">대표이미지</span>
+                
+                {coverImage ? (
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="relative w-16 h-16 rounded-sm overflow-hidden border border-rule">
+                      <img 
+                        src={coverImage} 
+                        alt={coverImageAlt || '대표이미지'}
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute top-0 right-0 px-1.5 py-0.5 text-[10px] font-medium bg-rust text-paper rounded-bl-sm">
+                        ✓ 설정됨
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted truncate">
+                        {coverImageAlt || '이미지'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoverImage}
+                      className="px-3 py-1.5 text-xs font-medium text-rust hover:bg-rust/10 rounded-sm transition-colors"
+                    >
+                      해제
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex-1">
+                    <p className="text-xs text-muted">
+                      설정된 대표이미지 없음
+                    </p>
+                    <p className="text-xs text-muted/70 mt-0.5">
+                      본문에 이미지를 넣고 복사해서 여기에 붙여넣거나, 이미지 URL을 직접 입력하세요
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              {/* 이미지 URL 직접 입력 */}
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="이미지 URL 직접 입력 (선택)"
+                  className="flex-1 px-3 py-2 text-sm border border-rule rounded-sm bg-paper focus:outline-none focus:border-rust"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleSetCoverImage(e.target.value, title || '대표이미지');
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
             {/* 메타 타이틀/디스크립션 */}
             <div className="flex flex-col sm:flex-row gap-3 mb-3">
               <div className="flex-1">
