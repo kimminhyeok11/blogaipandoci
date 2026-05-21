@@ -96,10 +96,9 @@ export default async function TagPage({ params }: TagPageProps) {
   const tag = decodeURIComponent(params.tag);
   const posts = await getPostsByTag(tag);
 
-  // 글이 없는 태그 페이지 → 404 (soft 404 방지)
-  if (posts.length === 0) {
-    notFound();
-  }
+  // ✅ 글이 없어도 404 아님 - 빈 상태 페이지 표시
+  // 태그는 의미적으로 존재할 수 있음 (미래 글 대비)
+  const hasPosts = posts.length > 0;
 
   // BreadcrumbSchema 데이터
   const breadcrumbData = {
@@ -191,36 +190,56 @@ export default async function TagPage({ params }: TagPageProps) {
           </p>
         </div>
 
-        <div className="grid gap-6">
-            {posts.map((post) => (
-              <article
-                key={post.id}
-                className="group border-b border-rule pb-6 last:border-0"
-              >
-                <Link href={`/posts/${post.slug}`} className="block">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="font-sans text-2xs text-rust">#{tag}</span>
-                    <span className="text-rule">·</span>
-                    <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
-                      {new Date(post.published_at).toLocaleDateString("ko-KR")}
-                    </span>
-                    <span className="text-rule">·</span>
-                    <span className="font-sans text-2xs text-muted">
-                      {post.view_count.toLocaleString()}회 읽음
-                    </span>
-                  </div>
-                  <h2 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">
-                    {post.title}
-                  </h2>
-                  {post.excerpt && (
-                    <p className="font-sans text-sm text-muted leading-relaxed line-clamp-2">
-                      {post.excerpt}
-                    </p>
-                  )}
-                </Link>
-              </article>
-            ))}
+        {/* 글 목록 또는 빈 상태 */}
+        {hasPosts ? (
+          <div className="grid gap-6">
+              {posts.map((post) => (
+                <article
+                  key={post.id}
+                  className="group border-b border-rule pb-6 last:border-0"
+                >
+                  <Link href={`/posts/${post.slug}`} className="block">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-sans text-2xs text-rust">#{tag}</span>
+                      <span className="text-rule">·</span>
+                      <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
+                        {new Date(post.published_at).toLocaleDateString("ko-KR")}
+                      </span>
+                      <span className="text-rule">·</span>
+                      <span className="font-sans text-2xs text-muted">
+                        {post.view_count.toLocaleString()}회 읽음
+                      </span>
+                    </div>
+                    <h2 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">
+                      {post.title}
+                    </h2>
+                    {post.excerpt && (
+                      <p className="font-sans text-sm text-muted leading-relaxed line-clamp-2">
+                        {post.excerpt}
+                      </p>
+                    )}
+                  </Link>
+                </article>
+              ))}
+            </div>
+        ) : (
+          /* 빈 상태 - 관련 콘텐츠 제안 */
+          <div className="text-center py-16 border-2 border-dashed border-rule/50 rounded-sm">
+            <Tag className="mx-auto text-muted/40 mb-4" size={48} />
+            <h3 className="text-lg font-bold text-ink mb-2">
+              #{tag} 관련 글이 아직 없습니다
+            </h3>
+            <p className="text-muted text-sm mb-6 max-w-md mx-auto">
+              이 주제에 대한 경험을 공유해 주세요. 다른 사람들에게 큰 도움이 됩니다.
+            </p>
+            <Link
+              href="/write"
+              className="inline-flex items-center px-4 py-2 bg-rust text-paper rounded-sm hover:bg-rust-light transition-colors font-medium"
+            >
+              첫 글 작성하기
+            </Link>
           </div>
+        )}
       </main>
     </div>
   );

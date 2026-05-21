@@ -105,10 +105,9 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
 
   const posts = await getPostsByCaseType(caseType);
 
-  // 글이 없는 case_type → 404 (soft 404 방지)
-  if (posts.length === 0) {
-    notFound();
-  }
+  // ✅ 글이 없어도 404 아님 - 빈 상태 페이지 표시
+  // (soft 404 방지, 사용자가 직접 글 쓸 수 있는 진입점 제공)
+  const hasPosts = posts.length > 0;
 
   const style = STAGE_LABELS[caseType] || { color: "text-ink", bg: "bg-cream" };
 
@@ -199,65 +198,85 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
           </p>
         </div>
 
-        <div className="grid gap-6">
-            {posts.map((post) => (
-              <article
-                key={post.id}
-                className="group border-b border-rule pb-6 last:border-0"
-              >
-                <Link href={`/posts/${post.slug}`} className="block">
-                  {/* 절차 단계 진행 표시 */}
-                  {(post.current_stage || post.next_stage) && (
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      {post.current_stage && (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs border ${style.bg} ${style.color}`}>
-                          {post.current_stage}
-                        </span>
-                      )}
-                      {post.current_stage && post.next_stage && (
-                        <span className="text-muted text-xs">→</span>
-                      )}
-                      {post.next_stage && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs border border-rule/40 text-muted bg-cream/40">
-                          {post.next_stage}
-                        </span>
-                      )}
-                      {post.expert_level && (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${EXPERT_BADGE[post.expert_level] || "bg-cream/40 text-muted"}`}>
-                          {post.expert_level}
-                        </span>
-                      )}
-                      {post.estimated_duration && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs border border-rule/30 text-muted bg-cream/20">
-                          약 {post.estimated_duration}
-                        </span>
-                      )}
+        {/* 글 목록 또는 빈 상태 */}
+        {hasPosts ? (
+          <div className="grid gap-6">
+              {posts.map((post) => (
+                <article
+                  key={post.id}
+                  className="group border-b border-rule pb-6 last:border-0"
+                >
+                  <Link href={`/posts/${post.slug}`} className="block">
+                    {/* 절차 단계 진행 표시 */}
+                    {(post.current_stage || post.next_stage) && (
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        {post.current_stage && (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs border ${style.bg} ${style.color}`}>
+                            {post.current_stage}
+                          </span>
+                        )}
+                        {post.current_stage && post.next_stage && (
+                          <span className="text-muted text-xs">→</span>
+                        )}
+                        {post.next_stage && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs border border-rule/40 text-muted bg-cream/40">
+                            {post.next_stage}
+                          </span>
+                        )}
+                        {post.expert_level && (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${EXPERT_BADGE[post.expert_level] || "bg-cream/40 text-muted"}`}>
+                            {post.expert_level}
+                          </span>
+                        )}
+                        {post.estimated_duration && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs border border-rule/30 text-muted bg-cream/20">
+                            약 {post.estimated_duration}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 날짜 + 조회수 */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
+                        {new Date(post.published_at).toLocaleDateString("ko-KR")}
+                      </span>
+                      <span className="text-rule">·</span>
+                      <span className="font-sans text-2xs text-muted">
+                        {post.view_count.toLocaleString()}회 읽음
+                      </span>
                     </div>
-                  )}
 
-                  {/* 날짜 + 조회수 */}
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
-                      {new Date(post.published_at).toLocaleDateString("ko-KR")}
-                    </span>
-                    <span className="text-rule">·</span>
-                    <span className="font-sans text-2xs text-muted">
-                      {post.view_count.toLocaleString()}회 읽음
-                    </span>
-                  </div>
-
-                  <h2 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">
-                    {post.title}
-                  </h2>
-                  {post.excerpt && (
-                    <p className="font-sans text-sm text-muted leading-relaxed line-clamp-2">
-                      {post.excerpt}
-                    </p>
-                  )}
-                </Link>
-              </article>
-            ))}
+                    <h2 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">
+                      {post.title}
+                    </h2>
+                    {post.excerpt && (
+                      <p className="font-sans text-sm text-muted leading-relaxed line-clamp-2">
+                        {post.excerpt}
+                      </p>
+                    )}
+                  </Link>
+                </article>
+              ))}
+            </div>
+        ) : (
+          /* 빈 상태 - 글이 없는 경우 */
+          <div className="text-center py-16 border-2 border-dashed border-rule/50 rounded-sm">
+            <Layers className="mx-auto text-muted/40 mb-4" size={48} />
+            <h3 className="text-lg font-bold text-ink mb-2">
+              아직 등록된 {caseType} 글이 없습니다
+            </h3>
+            <p className="text-muted text-sm mb-6 max-w-md mx-auto">
+              이 유형의 실제 절차 경험을 공유해 주세요. 다른 사람들에게 큰 도움이 됩니다.
+            </p>
+            <Link
+              href="/write"
+              className="inline-flex items-center px-4 py-2 bg-rust text-paper rounded-sm hover:bg-rust-light transition-colors font-medium"
+            >
+              첫 글 작성하기
+            </Link>
           </div>
+        )}
       </main>
     </div>
   );
