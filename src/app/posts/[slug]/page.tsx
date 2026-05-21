@@ -457,22 +457,26 @@ export default async function PostPage({ params }: PostPageProps) {
     }),
   ]);
 
-  // 본문에서 첫 이미지 추출 (Article Schema용)
-  const imgMatch = post.content?.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
+  // Null-safe 변수 선언 (모든 후속 코드에서 사용)
+  const safeTitle = post.title || "제목 없음";
+  const safeContent = post.content || "";
+
+  // 본문에서 첫 이미지 추출 (Article Schema용) - null-safe
+  const imgMatch = safeContent.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
   const firstImage = post.cover_image || imgMatch?.[1] || undefined;
   const postUrl = `${SITE_URL}/posts/${post.slug}`;
   const authorName = post.user?.nickname || post.user?.email?.split('@')[0] || "익명";
   const authorEmail = post.user?.email || undefined;
   const authorAvatar = post.user?.avatar_url || `${SITE_URL}/icon.png`;
 
-  // ArticleSchema 데이터
+  // ArticleSchema 데이터 (null-safe)
   const articleSchemaData = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    headline: post.title.slice(0, 110),
+    headline: safeTitle.slice(0, 110),
     description: post.excerpt || undefined,
-    wordCount: post.content ? post.content.replace(/\s+/g, ' ').trim().split(' ').length : undefined,
-    articleBody: post.content?.replace(/[#*`\[\]()]/g, '').replace(/!\[.*?\]\(.*?\)/g, '').slice(0, 500),
+    wordCount: safeContent ? safeContent.replace(/\s+/g, ' ').trim().split(' ').length : undefined,
+    articleBody: safeContent.replace(/[#*`\[\]()]/g, '').replace(/!\[.*?\]\(.*?\)/g, '').slice(0, 500),
     author: {
       "@type": "Person",
       name: authorName,
@@ -520,8 +524,8 @@ export default async function PostPage({ params }: PostPageProps) {
     isFamilyFriendly: true,
     ...(post.tags && post.tags.length > 0 && { 
       keywords: post.tags.map((t) => t.name).join(", "),
-      articleSection: post.tags[0]?.name,
-      about: post.tags.map((tag) => ({
+      articleSection: post.tags[0]?.name || undefined,
+      about: post.tags.filter(tag => tag.name).map((tag) => ({
         "@type": "Thing",
         name: tag.name,
       })),
