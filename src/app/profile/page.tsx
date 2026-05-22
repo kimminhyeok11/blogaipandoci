@@ -11,7 +11,7 @@ import {
   BarChart3, MessageSquare, Link2, Flag, Settings,
   ChevronDown, ChevronUp
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { StickyNav } from "@/components/layout/StickyNav";
 
 // 관리자 메뉴 아이템

@@ -10,7 +10,6 @@ import {
   FileText, 
   TrendingUp, 
   Calendar,
-  ArrowLeft,
   Loader2,
   ImageIcon,
   Trash2,
@@ -828,7 +827,7 @@ export default function StatsPage() {
                   } else {
                     showToast(result.message, 'error');
                   }
-                } catch (error) {
+                } catch {
                   showToast('IndexNow 제출 중 오류 발생', 'error');
                 } finally {
                   setIsIndexNowLoading(false);

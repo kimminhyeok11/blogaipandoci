@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ThumbsUp, MessageSquare, Eye, Clock, MoreHorizontal, Trash2 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 
 interface QuestionCardProps {
   id: string;

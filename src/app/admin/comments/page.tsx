@@ -68,7 +68,7 @@ export default function AdminCommentsPage() {
       if (!response.ok) throw new Error("승인 실패");
       showToast("댓글이 승인되었습니다", "success");
       fetchComments();
-    } catch (error) {
+    } catch {
       showToast("승인 실패", "error");
     }
   };
@@ -82,7 +82,7 @@ export default function AdminCommentsPage() {
       if (!response.ok) throw new Error("숨김 실패");
       showToast("댓글이 숨겨졌습니다", "success");
       fetchComments();
-    } catch (error) {
+    } catch {
       showToast("숨김 실패", "error");
     }
   };
@@ -102,7 +102,7 @@ export default function AdminCommentsPage() {
       if (!response.ok) throw new Error("삭제 실패");
       showToast("댓글이 삭제되었습니다", "success");
       fetchComments();
-    } catch (error) {
+    } catch {
       showToast("삭제 실패", "error");
     }
   };
@@ -123,7 +123,7 @@ export default function AdminCommentsPage() {
       a.click();
       
       showToast("내보내기 완료", "success");
-    } catch (error) {
+    } catch {
       showToast("내보내기 실패", "error");
     }
   };

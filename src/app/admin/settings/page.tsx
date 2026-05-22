@@ -7,8 +7,7 @@ import {
   MessageCircle,
   CheckCircle,
   AlertTriangle,
-  Loader2,
-  RefreshCw
+  Loader2
 } from "lucide-react";
 
 export default function AdminSettingsPage() {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Mail, Lock, Eye, EyeOff, MessageCircle, User, CheckCircle, XCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/utils/cn";
 import { useToast } from "@/components/ui/Toast";
 

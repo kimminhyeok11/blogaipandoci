@@ -1,51 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Post } from '@/types';
+import { getAdminSupabase } from '@/lib/supabase/admin';
+import { getServerSupabase } from '@/lib/supabase/server';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// ─────────────────────────────────────────────────────────────
+// 하위 호환 re-export
+// 새 코드는 @/lib/supabase/client, server, admin 을 직접 import할 것
+// ─────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClient = any;
+// 서버/클라이언트 공용 anon 클라이언트
+// - 서버 컴포넌트: persistSession:false (쿠키 없음)
+// - 브라우저:     @/lib/supabase/client 를 직접 import할 것
+export const supabase = getServerSupabase();
 
-// globalThis를 사용하여 Next.js 청크 분리 환경에서도 진짜 싱글톤 보장
-const globalForSupabase = globalThis as unknown as {
-  __supabase_client?: SupabaseClient;
-  __supabase_service?: SupabaseClient;
-};
-
-// Supabase 클라이언트 (싱글톤) - 클라이언트용
-export const getSupabaseClient = (): SupabaseClient => {
-  if (!globalForSupabase.__supabase_client) {
-    globalForSupabase.__supabase_client = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    });
-  }
-  return globalForSupabase.__supabase_client;
-};
-
-export const supabase: SupabaseClient = getSupabaseClient();
-
-// 서비스 역할 클라이언트 - 서버/API용 (RLS 우회)
-export const getServiceSupabase = (): SupabaseClient => {
-  if (!supabaseServiceRoleKey) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
-  }
-  if (!globalForSupabase.__supabase_service) {
-    globalForSupabase.__supabase_service = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-  }
-  return globalForSupabase.__supabase_service;
-};
-
+// 서비스 롤 클라이언트 (RLS 우회) - API route/서버 전용
+// 절대 클라이언트 컴포넌트에서 호출 금지
+export const getServiceSupabase = getAdminSupabase;
 
 // 타입 헬퍼 - 테이블 타입 명시적 추출
 export type PostsTable = {
@@ -57,16 +27,6 @@ export type PostsTable = {
     updated_at?: string;
   };
   Update: Partial<PostsTable['Insert']>;
-};
-
-// 타입 안전한 테이블 헬퍼 - as any 중복 제거
-export const db = {
-  posts: () => supabase.from('posts'),
-  users: () => supabase.from('users'),
-  tags: () => supabase.from('tags'),
-  postRevisions: () => supabase.from('post_revisions'),
-  userStats: () => supabase.from('user_stats'),
-  uploadLogs: () => supabase.from('upload_logs'),
 };
 
 // API 에러 타입 정의
@@ -90,3 +50,10 @@ export interface ApiResponse<T> {
     status: number;
   };
 }
+
+// 내부 타입 헬퍼 (하위 호환)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getSupabaseClient = (): any => getServerSupabase();
+
+// createClient 재export (일부 API route에서 직접 사용)
+export { createClient };

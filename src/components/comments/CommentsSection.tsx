@@ -6,7 +6,7 @@ import { QuestionCard } from "./QuestionCard";
 import { CommentItem, CommentItemProps } from "./CommentItem";
 import { SimilarCases } from "./SimilarCases";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { supabase } from "@/lib/supabase"; // 닉네임 조회용
+import { supabase } from "@/lib/supabase/client"; // 닉네임 조회용
 
 interface Comment {
   id: string;

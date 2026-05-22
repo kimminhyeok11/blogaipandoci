@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Flag, Trash2, EyeOff, AlertTriangle, Loader2 } from "lucide-react";
@@ -25,7 +24,6 @@ interface ReportGroup {
 
 export default function AdminReportsPage() {
   const { user, session, isLoading: isAuthLoading } = useAuth();
-  const router = useRouter();
   const { showToast } = useToast();
   const [reportGroups, setReportGroups] = useState<ReportGroup[]>([]);
   const [loading, setLoading] = useState(true);
