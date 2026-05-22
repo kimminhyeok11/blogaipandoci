@@ -39,10 +39,6 @@ const nextConfig = {
   generateEtags: true,
   compress: true,
   poweredByHeader: false,
-  // 캐시 무효화 - 매 빌드마다 새로운 ID
-  generateBuildId: async () => {
-    return Date.now().toString();
-  },
   // 캐시 설정: 정적 파일만 명시 (HTML 페이지는 Next.js ISR revalidate 자동 처리)
   async headers() {
     return [
