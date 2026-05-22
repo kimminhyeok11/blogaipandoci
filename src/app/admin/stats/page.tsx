@@ -1031,9 +1031,9 @@ export default function StatsPage() {
                       )}
                     </div>
 
-                    {/* 이미지 썸네일 */}
+                    {/* 이미지 썸네일 - onError fallback으로 img 유지 (next/image는 src 직접 교체 불가) */}
                     <div className="aspect-square bg-gray-100">
-                      <img
+                      <img // eslint-disable-line @next/next/no-img-element
                         src={image.url}
                         alt={image.name}
                         className="w-full h-full object-cover"

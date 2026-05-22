@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Pencil, Eye, Save, Check, Send, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { generateSlug } from "@/utils/image";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -712,10 +713,12 @@ function WritePageContent() {
                 {coverImage ? (
                   <div className="flex items-center gap-3 flex-1">
                     <div className="relative w-16 h-16 rounded-sm overflow-hidden border border-rule">
-                      <img 
-                        src={coverImage} 
+                      <Image
+                        src={coverImage}
                         alt={coverImageAlt || '대표이미지'}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="64px"
+                        className="object-cover"
                       />
                       <span className="absolute top-0 right-0 px-1.5 py-0.5 text-[10px] font-medium bg-rust text-paper rounded-bl-sm">
                         ✓ 설정됨

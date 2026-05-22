@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Metadata } from "next";
 import { getServiceSupabase } from "@/lib/supabase";
 import type { Post } from "@/types";
@@ -169,12 +170,13 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
                 <Link href={`/posts/${post.slug}`} className="block">
                   <div className="flex gap-4">
                     {post.cover_image && (
-                      <div className="flex-shrink-0 w-32 h-24 bg-cream rounded-sm overflow-hidden">
-                        <img
+                      <div className="relative flex-shrink-0 w-32 h-24 bg-cream rounded-sm overflow-hidden">
+                        <Image
                           src={post.cover_image}
                           alt={post.cover_image_alt || post.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
+                          fill
+                          sizes="128px"
+                          className="object-cover"
                         />
                       </div>
                     )}
