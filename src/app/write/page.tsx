@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, Suspense, lazy } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Pencil, Eye, Save, Check, Send, Loader2 } from "lucide-react";
@@ -46,9 +46,6 @@ const notifyIndexNow = async (path: string, token?: string) => {
   }
 };
 
-const MarkdownEditor = lazy(() =>
-  import("@/components/editor/MarkdownEditor").then((mod) => ({ default: mod.MarkdownEditor }))
-);
 
 function WritePageContent() {
   const router = useRouter();
@@ -62,7 +59,7 @@ function WritePageContent() {
 
   // 폼 상태 관리
   const form = useWriteForm();
-  const { title, setTitle, content, setContent, excerpt, setExcerpt, tags, setTags, hasContent, setForm } = form;
+  const { title, setTitle, content, setContent, excerpt, setExcerpt, tags, setTags, hasContent } = form;
 
   // 자동 저장
   const autoSave = useAutoSave(editSlug);
@@ -144,8 +141,8 @@ function WritePageContent() {
           const data = await response.json();
           // 제목이 3자 이상인 게시글만 필터링
           const posts = (data.posts || [])
-            .filter((post: any) => post.title && post.title.length >= 3)
-            .map((post: any) => ({ title: post.title, slug: post.slug }));
+            .filter((post: { title?: string; slug: string }) => post.title && post.title.length >= 3)
+            .map((post: { title: string; slug: string }) => ({ title: post.title, slug: post.slug }));
           setExistingPosts(posts);
         }
       } catch (err) {

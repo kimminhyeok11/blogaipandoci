@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       const slug = tagName.toLowerCase().replace(/\s+/g, "-");
       
       // 태그 조회 또는 생성
-      let { data: existingTag } = await serviceSupabase
+      const { data: existingTag } = await serviceSupabase
         .from("tags")
         .select("id")
         .eq("slug", slug)

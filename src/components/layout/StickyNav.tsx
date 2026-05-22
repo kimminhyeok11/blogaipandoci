@@ -12,7 +12,7 @@ interface StickyNavProps {
 }
 
 // throttle 유틸리티
-function throttle<T extends (...args: any[]) => void>(func: T, limit: number): T {
+function throttle<T extends (...args: unknown[]) => void>(func: T, limit: number): T {
   let inThrottle: boolean;
   return ((...args: Parameters<T>) => {
     if (!inThrottle) {

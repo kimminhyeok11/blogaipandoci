@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 const STORAGE_KEY = "scroll-positions";
 
 export function ScrollRestoration() {
   const pathname = usePathname();
-  const scrollPositions = useRef<Record<string, number>>({});
 
   // 페이지 이동 전 스크롤 위치 저장
   useEffect(() => {

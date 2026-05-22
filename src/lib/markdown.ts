@@ -3,9 +3,13 @@ import xss from "xss";
 import { addInternalLinks, addInternalLinksAsync } from "./internal-links";
 
 // marked 렌더러 커스터마이징 (v18 호환)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MarkedToken = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MarkedParser = any;
 const renderer = {
   // 링크 처리: 외부 링크는 새 탭, 내부 링크는 현재 탭
-  link(this: any, token: { href: string; title?: string | null; tokens: any[] }) {
+  link(this: MarkedParser, token: { href: string; title?: string | null; tokens: MarkedToken[] }) {
     const text = this.parser.parseInline(token.tokens);
     const href = token.href;
     // 외부 링크 체크 (http://, https://, //로 시작)
@@ -32,7 +36,7 @@ const renderer = {
   },
 
   // 인용구 스타일링 (CSS .prose-journal blockquote에서 관리)
-  blockquote(this: any, token: { tokens: any[] }) {
+  blockquote(this: MarkedParser, token: { tokens: MarkedToken[] }) {
     const body = this.parser.parse(token.tokens);
     return `<blockquote>${body}</blockquote>`;
   },
@@ -43,17 +47,17 @@ const renderer = {
   },
 
   // 리스트 스타일링 (CSS .prose-journal ul/ol에서 관리, 체크리스트만 특수 클래스)
-  list(this: any, token: { items: any[]; ordered: boolean; start?: number | "" }) {
+  list(this: MarkedParser, token: { items: MarkedToken[]; ordered: boolean; start?: number | "" }) {
     const type = token.ordered ? 'ol' : 'ul';
-    const hasTask = token.items.some((item: any) => item.task);
-    const body = token.items.map((item: any) => this.listitem(item)).join('');
+    const hasTask = token.items.some((item: MarkedToken) => item.task);
+    const body = token.items.map((item: MarkedToken) => this.listitem(item)).join('');
     const startAttr = token.ordered && token.start !== 1 ? ` start="${token.start}"` : '';
     const cls = hasTask ? ' class="checklist"' : '';
     return `<${type}${cls}${startAttr}>${body}</${type}>`;
   },
 
   // 리스트 아이템 스타일링 (체크리스트 포함)
-  listitem(this: any, token: { tokens: any[]; checked?: boolean; task?: boolean }) {
+  listitem(this: MarkedParser, token: { tokens: MarkedToken[]; checked?: boolean; task?: boolean }) {
     const text = this.parser.parse(token.tokens, !!token.task);
 
     if (token.task) {
@@ -69,13 +73,13 @@ const renderer = {
   },
 
   // 테이블 스타일링
-  table(this: any, token: { header: any[]; rows: any[][] }) {
-    const headerHtml = token.header.map((cell: any) => {
+  table(this: MarkedParser, token: { header: MarkedToken[]; rows: MarkedToken[][] }) {
+    const headerHtml = token.header.map((cell: MarkedToken) => {
       const text = this.parser.parseInline(cell.tokens);
       return `<th class="border border-rule px-3 py-2 bg-cream font-bold text-left">${text}</th>`;
     }).join('');
-    const bodyHtml = token.rows.map((row: any) =>
-      `<tr>${row.map((cell: any) => {
+    const bodyHtml = token.rows.map((row: MarkedToken) =>
+      `<tr>${row.map((cell: MarkedToken) => {
         const text = this.parser.parseInline(cell.tokens);
         return `<td class="border border-rule px-3 py-2">${text}</td>`;
       }).join('')}</tr>`
@@ -84,13 +88,13 @@ const renderer = {
   },
 
   // 헤딩 스타일링 (CSS .prose-journal h1~h6에서 관리)
-  heading(this: any, token: { tokens: any[]; depth: number }) {
+  heading(this: MarkedParser, token: { tokens: MarkedToken[]; depth: number }) {
     const text = this.parser.parseInline(token.tokens);
     return `<h${token.depth}>${text}</h${token.depth}>`;
   },
 
   // 단락 스타일링 (CSS .prose-journal p에서 관리)
-  paragraph(this: any, token: { tokens: any[] }) {
+  paragraph(this: MarkedParser, token: { tokens: MarkedToken[] }) {
     const text = this.parser.parseInline(token.tokens);
     // 이미지만 있는 단락은 p 태그 없이 바로 반환 (figure 중첩 방지)
     if (token.tokens.length === 1 && token.tokens[0].type === 'image') {
@@ -100,19 +104,19 @@ const renderer = {
   },
 
   // 볼드 텍스트 렌더링
-  strong(this: any, token: { tokens: any[] }) {
+  strong(this: MarkedParser, token: { tokens: MarkedToken[] }) {
     const text = this.parser.parseInline(token.tokens);
     return `<strong>${text}</strong>`;
   },
 
   // 이탤릭 텍스트 렌더링
-  em(this: any, token: { tokens: any[] }) {
+  em(this: MarkedParser, token: { tokens: MarkedToken[] }) {
     const text = this.parser.parseInline(token.tokens);
     return `<em>${text}</em>`;
   },
 
   // 취소선 렌더링
-  del(this: any, token: { tokens: any[] }) {
+  del(this: MarkedParser, token: { tokens: MarkedToken[] }) {
     const text = this.parser.parseInline(token.tokens);
     return `<del>${text}</del>`;
   },
@@ -122,6 +126,7 @@ const renderer = {
 marked.use({
   gfm: true,
   breaks: true,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   renderer: renderer as any,  // 타입 단언으로 v18 호환
 });
 
@@ -356,7 +361,7 @@ export async function processMarkdownAsync(text: string): Promise<string> {
   if (!text) return "";
   try {
     // 전처리: 단일 ~ 취소선 오인식 방지
-    let processed = text
+    const processed = text
       .replace(/(?<![\d\s])\s*~\s*(?![\d\s~])/g, " ") // 단일 ~ 제거
       .replace(/([~])\s*\n/g, "$1 ") // 줄바꿈 전 공백 추가
       .replace(/\n\s*([~])/g, " $1"); // 줄바꿈 후 공백 추가

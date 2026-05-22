@@ -32,7 +32,6 @@ export function CommentItem({
   nickname,
   isAnonymous,
   createdAt,
-  updatedAt,
   isEdited = false,
   likeCount,
   replyCount,
@@ -74,7 +73,7 @@ export function CommentItem({
       const data = await response.json();
       setLiked(data.liked);
       setLocalLikeCount(data.like_count ?? (liked ? localLikeCount - 1 : localLikeCount + 1));
-    } catch (error) {
+    } catch {
       showToast("좋아요 처리에 실패했습니다", "error");
     }
   };
@@ -103,7 +102,7 @@ export function CommentItem({
 
       showToast("댓글이 삭제되었습니다", "success");
       onDelete?.(id);
-    } catch (error) {
+    } catch {
       showToast("삭제에 실패했습니다", "error");
     }
   };

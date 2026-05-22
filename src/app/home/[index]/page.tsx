@@ -1,6 +1,5 @@
 import Link from "next/link";
 import dynamicImport from "next/dynamic";
-import { getServiceSupabase } from "@/lib/supabase";
 import { getTrendingSituations, getStuckStages } from "@/lib/situations";
 import fs from 'fs';
 import path from 'path';
@@ -54,6 +53,7 @@ function getSupabase() {
   return createClient(supabaseUrl, supabaseAnonKey);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getPosts() {
   console.log("[BUILD DEBUG] getPosts called");
 
@@ -110,8 +110,8 @@ async function getPosts() {
 }
 
 // 페이지 컴포넌트를 동기 함수로 변경하여 빌드 시점에 호출되도록 함
-export default async function HomePage({ params }: { params: { index: string } }) {
-  const [situations, stuckStages] = await Promise.all([
+export default async function HomePage({ params: _params }: { params: { index: string } }) {
+  const [situations, _stuckStages] = await Promise.all([
     getTrendingSituations(8),
     getStuckStages(6),
   ]);

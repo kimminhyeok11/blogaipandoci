@@ -58,7 +58,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ revisions: revisions || [] });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch revisions" }, { status: 500 });
   }
 }
@@ -148,7 +148,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, revision });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to save revision" }, { status: 500 });
   }
 }

@@ -39,7 +39,7 @@ export async function GET() {
   const userIds = Array.from(uniqueUserIds);
   
   // users 별도 조회
-  let usersMap: Record<string, { nickname: string | null }> = {};
+  const usersMap: Record<string, { nickname: string | null }> = {};
   if (userIds.length > 0) {
     const { data: users } = await supabase
       .from("users")

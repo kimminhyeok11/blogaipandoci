@@ -7,9 +7,9 @@ import { useToast } from "@/components/ui/Toast";
 import Link from "next/link";
 import { 
   User, Mail, Edit3, Save, X, Loader2, LogOut, 
-  CheckCircle, XCircle, Shield, Edit, AlertTriangle,
+  CheckCircle, XCircle, Shield,
   BarChart3, MessageSquare, Link2, Flag, Settings,
-  ChevronDown, ChevronUp, FileText
+  ChevronDown, ChevronUp
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { StickyNav } from "@/components/layout/StickyNav";

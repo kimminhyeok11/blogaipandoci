@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo, forwardRef, useImperativeHandle } from "react";
-import { Bold, Italic, Quote, List, ListOrdered, Link as LinkIcon, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { processMarkdown } from "@/lib/markdown";
 import { useToast } from "@/components/ui/Toast";
@@ -21,7 +21,7 @@ interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  minHeight?: string;
+  minHeight?: string; // reserved for future use
   onImageUpload?: (file: File) => Promise<string>;
   onImageInsert?: (url: string, alt: string) => void;
   preview?: boolean;
@@ -32,7 +32,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   value,
   onChange,
   placeholder = "마크다운으로 글을 작성하세요...",
-  minHeight = "400px",
+  minHeight: _minHeight = "400px",
   onImageUpload,
   onImageInsert,
   preview = false,
@@ -142,7 +142,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       const textarea = e.currentTarget;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
-      const lines = value.substring(0, start).split('\n');
       const currentLineStart = value.lastIndexOf('\n', start - 1) + 1;
       
       if (e.shiftKey) {
@@ -328,7 +327,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       setImageCaption("");
       setImageLink("");
       setShowImageModal(true);
-    } catch (err) {
+    } catch {
       showToast("이미지 업로드에 실패했습니다.", "error");
     } finally {
       setIsUploading(false);

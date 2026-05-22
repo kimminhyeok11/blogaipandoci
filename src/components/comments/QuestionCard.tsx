@@ -29,8 +29,8 @@ interface QuestionCardProps {
 
 export function QuestionCard({
   id,
-  postTitle,
-  postSlug,
+  postTitle: _postTitle,
+  postSlug: _postSlug,
   nickname,
   content,
   questionType,
@@ -73,9 +73,8 @@ export function QuestionCard({
       setLiked(!liked);
       setLocalLikeCount(liked ? localLikeCount - 1 : localLikeCount + 1);
       onLike?.();
-    } catch (error) {
-      showToast("좋아요 처리에 실패했습니다", "error");
-    }
+    } catch {
+      showToast("좋아요 처리에 실패했습니다", "error");    }
   };
 
   const handleDelete = async () => {

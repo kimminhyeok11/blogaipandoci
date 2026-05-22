@@ -7,8 +7,6 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import { ScrollRestoration } from "@/components/utils/ScrollRestoration";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
-import Link from "next/link";
-
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 const notoSerifKR = Noto_Serif_KR({

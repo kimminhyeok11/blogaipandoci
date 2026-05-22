@@ -98,7 +98,7 @@ export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
       showToast("질문이 등록되었습니다. 검토 후 공개됩니다.", "success");
       setFormData({ whoProblem: "본인", questionType: "", currentSituation: [], procedure: [], concern: "", content: "" });
       onSuccess?.();
-    } catch (error) {
+    } catch {
       showToast("질문 등록에 실패했습니다", "error");
     } finally {
       setIsSubmitting(false);

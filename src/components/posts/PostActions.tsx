@@ -13,7 +13,7 @@ interface PostActionsProps {
   authorId: string;
 }
 
-function PostActionsComponent({ postId, slug, authorId }: PostActionsProps) {
+function PostActionsComponent({ postId: _postId, slug, authorId }: PostActionsProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const { user, session } = useAuth();

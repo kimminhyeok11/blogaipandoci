@@ -162,7 +162,7 @@ export default async function SituationHubPage({
   const data = await getSituationData(decodedSlug);
   if (!data) notFound();
 
-  const { phrase, case_type, posts, stuckStages, mergedTimeline, nextStages, isThin } = data;
+  const { phrase, case_type, posts, stuckStages, mergedTimeline, nextStages, isThin: _isThin } = data;
 
   // HowTo schema (timeline_steps 2개 이상일 때만)
   const howToSchema = mergedTimeline.length >= 2 ? {

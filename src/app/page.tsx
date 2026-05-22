@@ -1,6 +1,5 @@
 import Link from "next/link";
 import dynamicImport from "next/dynamic";
-import { getServiceSupabase } from "@/lib/supabase";
 import { getTrendingSituations, getStuckStages } from "@/lib/situations";
 import type { Metadata } from "next";
 
@@ -89,7 +88,7 @@ async function getPosts() {
 
     // users 별도 조회
     type UserInfo = { nickname: string | null; email: string | null; role: string | null };
-    let usersMap: Record<string, UserInfo> = {};
+    const usersMap: Record<string, UserInfo> = {};
     if (userIds.length > 0) {
       const { data: users } = await supabase
         .from("users")

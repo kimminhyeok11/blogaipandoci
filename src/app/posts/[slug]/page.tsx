@@ -5,7 +5,7 @@ import Image from "next/image";
 import dynamicImport from "next/dynamic";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
-import { getServiceSupabase, supabase as anonSupabase } from "@/lib/supabase";
+import { supabase as anonSupabase } from "@/lib/supabase";
 import type { Post } from "@/types";
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
@@ -291,7 +291,7 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
     if (p.user_id) uniqueUserIds.add(p.user_id);
   });
   const userIds = Array.from(uniqueUserIds);
-  let usersMap: Record<string, { nickname: string | null }> = {};
+  const usersMap: Record<string, { nickname: string | null }> = {};
   
   if (userIds.length > 0) {
     const { data: users } = await supabase

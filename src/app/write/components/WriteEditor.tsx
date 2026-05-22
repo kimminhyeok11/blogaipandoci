@@ -4,7 +4,7 @@ import { forwardRef, useState, useCallback, useRef, useEffect } from "react";
 import { MarkdownEditor, MarkdownEditorRef } from "@/components/editor/MarkdownEditor";
 import { 
   Bold, Italic, Link, Image, Quote, 
-  Heading, List, ListOrdered, Code, 
+  Heading, List, ListOrdered,
   ChevronUp, ChevronDown, Keyboard
 } from "lucide-react";
 
@@ -20,7 +20,7 @@ export const WriteEditor = forwardRef<MarkdownEditorRef, WriteEditorProps>(
   function WriteEditor({ content, setContent, preview, onImageUpload, onImageInsert }, ref) {
     const [showShortcuts, setShowShortcuts] = useState(false);
     const [showMoreTools, setShowMoreTools] = useState(false);
-    const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+    const [_isKeyboardVisible, setIsKeyboardVisible] = useState(false);
     const moreMenuRef = useRef<HTMLDivElement>(null);
 
     // 외부 클릭 시 더보기 메뉴 닫기

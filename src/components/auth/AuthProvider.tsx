@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session, User, AuthChangeEvent } from "@supabase/supabase-js";
 
 interface AuthUser extends User {
   role?: string;
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     // 초기 세션 확인 (onAuthStateChange가 지연될 경우 대비)
-    supabase.auth.getSession().then((res: any) => {
+    supabase.auth.getSession().then((res: { data: { session: Session | null } }) => {
       if (!isMounted) return;
       if (!res.data.session) {
         setIsLoading(false);
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // onAuthStateChange 콜백 내에서는 Supabase DB 호출 금지 (auth lock deadlock 방지)
     // 세션만 동기적으로 세팅하고, role fetch는 별도 처리
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: any, currentSession: any) => {
+      (_event: AuthChangeEvent, currentSession: Session | null) => {
         if (!isMounted) return;
         
         setSession(currentSession);

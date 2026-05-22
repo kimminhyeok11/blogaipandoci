@@ -86,7 +86,7 @@ export function ArticleSchema({
   title,
   description,
   author,
-  authorId,
+  authorId: _authorId,
   datePublished,
   dateModified,
   url,

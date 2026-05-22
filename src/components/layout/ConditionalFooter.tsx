@@ -6,8 +6,6 @@ import { Rss, FileText, LayoutGrid, Mail } from "lucide-react";
 
 export function ConditionalFooter() {
   const pathname = usePathname();
-  const currentYear = new Date().getFullYear();
-  
   // write 페이지에서는 푸터 숨김 (티스토리 스타일)
   if (pathname === "/write") {
     return null;
