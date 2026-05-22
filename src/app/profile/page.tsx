@@ -101,6 +101,8 @@ export default function ProfilePage() {
     };
 
     fetchProfile();
+  // showToast는 useToast()의 stable reference로 의존성 불필요
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser, isAuthLoading, router]);
 
   const checkNickname = async (value: string) => {

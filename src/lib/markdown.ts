@@ -3,10 +3,32 @@ import xss from "xss";
 import { addInternalLinks, addInternalLinksAsync } from "./internal-links";
 
 // marked 렌더러 커스터마이징 (v18 호환)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type MarkedToken = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type MarkedParser = any;
+// marked v18 내부 토큰 구조 - 실제로 사용하는 필드만 명시
+interface MarkedToken {
+  type?: string;
+  text?: string;
+  raw?: string;
+  href?: string;
+  title?: string | null;
+  tokens?: MarkedToken[];
+  checked?: boolean;
+  task?: boolean;
+  ordered?: boolean;
+  start?: number | "";
+  items?: MarkedToken[];
+  header?: MarkedToken[];
+  rows?: MarkedToken[][];
+  depth?: number;
+  lang?: string;
+}
+// marked v18 파서 컨텍스트 - this로 접근하는 메서드만 명시
+interface MarkedParser {
+  parser: {
+    parse(tokens: MarkedToken[], top?: boolean): string;
+    parseInline(tokens: MarkedToken[]): string;
+  };
+  listitem(token: MarkedToken): string;
+}
 const renderer = {
   // 링크 처리: 외부 링크는 새 탭, 내부 링크는 현재 탭
   link(this: MarkedParser, token: { href: string; title?: string | null; tokens: MarkedToken[] }) {
@@ -75,12 +97,12 @@ const renderer = {
   // 테이블 스타일링
   table(this: MarkedParser, token: { header: MarkedToken[]; rows: MarkedToken[][] }) {
     const headerHtml = token.header.map((cell: MarkedToken) => {
-      const text = this.parser.parseInline(cell.tokens);
+      const text = this.parser.parseInline(cell.tokens ?? []);
       return `<th class="border border-rule px-3 py-2 bg-cream font-bold text-left">${text}</th>`;
     }).join('');
-    const bodyHtml = token.rows.map((row: MarkedToken) =>
+    const bodyHtml = token.rows.map((row: MarkedToken[]) =>
       `<tr>${row.map((cell: MarkedToken) => {
-        const text = this.parser.parseInline(cell.tokens);
+        const text = this.parser.parseInline(cell.tokens ?? []);
         return `<td class="border border-rule px-3 py-2">${text}</td>`;
       }).join('')}</tr>`
     ).join('');
@@ -97,7 +119,7 @@ const renderer = {
   paragraph(this: MarkedParser, token: { tokens: MarkedToken[] }) {
     const text = this.parser.parseInline(token.tokens);
     // 이미지만 있는 단락은 p 태그 없이 바로 반환 (figure 중첩 방지)
-    if (token.tokens.length === 1 && token.tokens[0].type === 'image') {
+    if (token.tokens.length === 1 && token.tokens[0]?.type === 'image') {
       return text;
     }
     return `<p>${text}</p>`;

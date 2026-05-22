@@ -1,6 +1,7 @@
 import Link from "next/link";
 import dynamicImport from "next/dynamic";
 import { getTrendingSituations, getStuckStages } from "@/lib/situations";
+import { supabase } from "@/lib/supabase";
 import type { Metadata } from "next";
 
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
@@ -33,25 +34,7 @@ interface Post {
   user?: { nickname: string | null; email: string | null; role?: string | null };
 }
 
-function getSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Supabase environment variables not set");
-    return null;
-  }
-
-  const { createClient } = require('@supabase/supabase-js');
-  return createClient(supabaseUrl, supabaseAnonKey);
-}
-
 async function getPosts() {
-  const supabase = getSupabase();
-  if (!supabase) {
-    return { featuredPost: null, recentPosts: [] };
-  }
-
   try {
     console.log("[DEBUG] getPosts started");
     // posts 조회 (users는 별도로 가져와서 매핑)

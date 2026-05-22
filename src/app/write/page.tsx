@@ -283,6 +283,8 @@ function WritePageContent() {
     };
 
     loadPost();
+  // autoSave, set* 함수는 stable reference이며 hasLoadedPost.current로 1회만 실행됨
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editSlug, router, user, session, isAuthLoading]);
 
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {

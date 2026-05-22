@@ -103,7 +103,7 @@ export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, postId, user, dbNickname, showToast, onSuccess]);
+  }, [formData, postId, user, dbNickname, showToast, onSuccess, session?.access_token]);
 
   // 비로그인 시 로그인 유도 UI
   if (!user) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { ThumbsUp } from "lucide-react";
 
@@ -27,11 +27,7 @@ export function SimilarCases({ postId, questionType, topicTags }: SimilarCasesPr
   const [cases, setCases] = useState<SimilarCase[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchSimilarCases();
-  }, [postId, questionType, topicTags]);
-
-  const fetchSimilarCases = async () => {
+  const fetchSimilarCases = useCallback(async () => {
     try {
       // 1차: 현재 글 embedding 기반 RPC 검색 (가장 정확)
       const postEmbedRes = await fetch("/api/comments/similar-by-post", {
@@ -78,7 +74,11 @@ export function SimilarCases({ postId, questionType, topicTags }: SimilarCasesPr
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId, questionType, topicTags]);
+
+  useEffect(() => {
+    fetchSimilarCases();
+  }, [fetchSimilarCases]);
 
   if (loading) {
     return null;

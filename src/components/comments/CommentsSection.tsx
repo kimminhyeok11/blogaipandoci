@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { QuestionForm } from "./QuestionForm";
 import { QuestionCard } from "./QuestionCard";
 import { CommentItem, CommentItemProps } from "./CommentItem";
@@ -48,14 +48,7 @@ export function CommentsSection({ postId, postSlug, postTitle, initialComments =
   const [globalLoadingMsg, setGlobalLoadingMsg] = useState("");
   const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    // 로그인 상태 변경 시에만 재fetch (secret 댓글 표시 갱신)
-    if (user?.id) {
-      fetchComments();
-    }
-  }, [user?.id]);
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const headers: Record<string, string> = {};
       if (session?.access_token) {
@@ -70,7 +63,14 @@ export function CommentsSection({ postId, postSlug, postTitle, initialComments =
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId, session?.access_token]);
+
+  useEffect(() => {
+    // 로그인 상태 변경 시에만 재fetch (secret 댓글 표시 갱신)
+    if (user?.id) {
+      fetchComments();
+    }
+  }, [user?.id, fetchComments]);
 
   const handleCommentSuccess = async () => {
     setGlobalLoading(true);
