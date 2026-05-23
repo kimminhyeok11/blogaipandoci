@@ -67,7 +67,7 @@ async function getSituationData(situationSlug: string): Promise<{
     query = query.eq("case_type", case_type);
   }
 
-  const { data: posts } = await query;
+  const { data: posts } = await query as { data: HubPost[] | null };
 
   // current_stage 집계 (막히는 절차)
   const stageCounts: Record<string, number> = {};

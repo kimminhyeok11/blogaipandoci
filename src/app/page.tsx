@@ -44,7 +44,7 @@ async function getPosts() {
       .eq("published", true)
       .not("published_at", "is", null)
       .order("view_count", { ascending: false })
-      .limit(1);
+      .limit(1) as { data: Array<{ id: string; title: string; excerpt: string | null; slug: string; published_at: string; view_count: number; user_id: string; current_stage: string | null; case_type: string | null }> | null; error: Error | null };
 
     const { data: latestPosts, error: lateError } = await supabase
       .from("posts")
@@ -52,7 +52,7 @@ async function getPosts() {
       .eq("published", true)
       .not("published_at", "is", null)
       .order("published_at", { ascending: false })
-      .limit(10);
+      .limit(10) as { data: Array<{ id: string; title: string; excerpt: string | null; slug: string; published_at: string; view_count: number; user_id: string; current_stage: string | null; case_type: string | null }> | null; error: Error | null };
 
     console.log("[DEBUG] popularPosts count:", popularPosts?.length || 0);
     console.log("[DEBUG] latestPosts count:", latestPosts?.length || 0);

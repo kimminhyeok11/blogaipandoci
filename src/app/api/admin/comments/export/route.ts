@@ -18,7 +18,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 
-    const { data: profile } = await supabaseAdmin.from("users").select("role").eq("id", user.id).single();
+    const { data: profile } = await supabaseAdmin.from("users").select("role").eq("id", user.id).single<{ role: string }>();
     if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
 
     const { searchParams } = new URL(request.url);

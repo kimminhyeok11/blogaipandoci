@@ -191,16 +191,23 @@ function removeInjectedInlineLinks(content: string): string {
   return content.replace(/\[([^\]]+)\]\(\/posts\/[^)]+\)/g, '$1');
 }
 
+// 관련 글 섹션이 이미 존재하는지 확인
+function hasRelatedSection(content: string): boolean {
+  const normalized = content.replace(/\r\n/g, '\n');
+  return /\n[-]{3}\n+#{1,4}\s*(?:📌\s*)?관련 글\n/.test(normalized);
+}
+
 function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
   if (relatedPosts.length === 0) return content;
 
-  // 기존 관련 글 섹션 제거 (이모지 유무, 개행 방식 차이 모두 커버)
-  const cleaned = content
-    .replace(/\r\n/g, '\n')
-    .replace(/\n[-]{3}\n+#{1,4}\s*(?:📌\s*)?관련 글\n[\s\S]*$/, '');
+  // 이미 관련 글 섹션이 있으면 그대로 유지 (사용자 편집 존중)
+  if (hasRelatedSection(content)) {
+    return content;
+  }
 
-  // 이전에 삽입된 인라인 /posts/ 링크 제거 후 재삽입 (구 슬러그 → 새 슬러그)
-  const unlinked = removeInjectedInlineLinks(cleaned);
+  // 관련 글 섹션이 없을 때만 새로 삽입
+  // 이전에 삽입된 인라인 /posts/ 링크 제거 후 재삽입
+  const unlinked = removeInjectedInlineLinks(content);
 
   // 본문 인라인 링크 삽입
   const withInline = injectInlineLinks(unlinked, relatedPosts);

@@ -33,6 +33,7 @@ export const metadata: Metadata = {
 };
 
 interface TagData {
+  id: string;
   name: string;
   slug: string;
   count: number;
@@ -61,6 +62,7 @@ async function getTags(): Promise<TagData[]> {
         }
         
         return {
+          id: tag.id,
           name: tag.name,
           slug: tag.slug,
           count: count || 0,

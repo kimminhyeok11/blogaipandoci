@@ -57,13 +57,13 @@ async function getCaseCounts(): Promise<CaseCount[]> {
       .select("category_id, categories!inner(name)")
       .eq("published", true)
       .not("published_at", "is", null)
-      .not("category_id", "is", null);
+      .not("category_id", "is", null) as { data: Array<{ categories: { name: string } | null }> | null; error: Error | null };
 
     if (error) throw error;
 
     const counts: Record<string, number> = {};
     for (const row of data || []) {
-      const categoryName = (row.categories as any)?.name;
+      const categoryName = row.categories?.name;
       if (categoryName) {
         counts[categoryName] = (counts[categoryName] || 0) + 1;
       }

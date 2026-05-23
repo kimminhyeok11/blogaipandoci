@@ -6,7 +6,7 @@ import dynamicImport from "next/dynamic";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
 import { supabase as anonSupabase } from "@/lib/supabase";
-import type { Post } from "@/types";
+import type { Post, Tag, User } from "@/types";
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { TrustBadge } from "@/components/posts/TrustBadge";
@@ -104,7 +104,7 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
     .eq("slug", slug)
     .eq("published", true)
     .not("published_at", "is", null)
-    .single();
+    .single<Post & { tags: Tag[] }>();
 
   if (error || !postData) {
     console.error('[getPost] Error fetching post:', error);
@@ -116,9 +116,9 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
   if (postData.user_id) {
     const { data: user } = await supabase
       .from("users")
-      .select("nickname, email, role")
+      .select("id, nickname, email, role, avatar_url, created_at, updated_at")
       .eq("id", postData.user_id)
-      .single();
+      .single<User>();
     userData = user;
   }
 
@@ -169,7 +169,7 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
       .ilike('slug', `%${timestampMatch[1]}`)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .single<Post & { tags: Tag[] }>();
 
     if (!error && postData) {
       // user 별도 조회
@@ -177,12 +177,12 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
       if (postData.user_id) {
         const { data: user } = await supabase
           .from("users")
-          .select("nickname, email, role")
+          .select("id, nickname, email, role, avatar_url, created_at, updated_at")
           .eq("id", postData.user_id)
-          .single();
+          .single<User>();
         userData = user;
       }
-      return { ...postData, user: userData } as Post;
+      return { ...postData, user: userData || undefined };
     }
   }
 
