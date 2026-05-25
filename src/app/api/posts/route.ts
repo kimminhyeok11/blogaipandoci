@@ -515,8 +515,11 @@ export async function PUT(request: Request) {
     // 발행 시 관련 글 자동 삽입 (수정 시에도 갱신)
     let finalContent = content;
     if (published) {
+      console.log('[PUT] received content has 관련글:', content.includes('### 📌 관련 글') || content.includes('### 관련 글'));
       const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
+      console.log('[PUT] findRelatedPosts count:', relatedPosts.length);
       finalContent = appendRelatedLinks(content, relatedPosts);
+      console.log('[PUT] finalContent has 관련글:', finalContent.includes('### 📌 관련 글'));
     }
 
     // case_type 변경 시 category_id 자동 매핑
