@@ -415,32 +415,32 @@ a, p, span {
 .prose-journal .table-wrapper {
   width: 100%;
   overflow-x: auto;
-  margin: 2.5rem 0;
+  -webkit-overflow-scrolling: touch;
+  margin: 2rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .prose-journal table {
   width: 100%;
-  min-width: min(500px, 100vw - 2rem);
+  min-width: 480px;
   border-collapse: collapse;
   font-size: 0.9375rem;
   line-height: 1.6;
 }
 
-/* 표가 큰 경우 전체 콘텐츠를 확장하여 일관된 너비 유지 */
-.prose-journal:has(.table-wrapper) {
-  min-width: min-content;
-}
-
 .prose-journal th {
   border: 1px solid var(--rule);
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.875rem;
   background: var(--cream);
   font-weight: 700;
   text-align: left;
   color: var(--ink);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .prose-journal th:first-child {
@@ -453,8 +453,9 @@ a, p, span {
 
 .prose-journal td {
   border: 1px solid var(--rule);
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.875rem;
   color: var(--ink);
+  vertical-align: top;
 }
 
 .prose-journal tr:nth-child(even) {
@@ -463,6 +464,24 @@ a, p, span {
 
 .prose-journal tr:hover {
   background: rgba(237, 231, 215, 0.25);
+}
+
+@media (max-width: 640px) {
+  .prose-journal .table-wrapper {
+    margin: 1.5rem -0.5rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .prose-journal table {
+    font-size: 0.8125rem;
+  }
+
+  .prose-journal th,
+  .prose-journal td {
+    padding: 0.5rem 0.625rem;
+  }
 }
 
 .prose-journal hr {

@@ -98,15 +98,17 @@ const renderer = {
   table(this: MarkedParser, token: { header: MarkedToken[]; rows: MarkedToken[][] }) {
     const headerHtml = token.header.map((cell: MarkedToken) => {
       const text = this.parser.parseInline(cell.tokens ?? []);
-      return `<th class="border border-rule px-3 py-2 bg-cream font-bold text-left">${text}</th>`;
+      const align = (cell as { align?: string }).align;
+      return `<th${align ? ` align="${align}"` : ''}>${text}</th>`;
     }).join('');
     const bodyHtml = token.rows.map((row: MarkedToken[]) =>
       `<tr>${row.map((cell: MarkedToken) => {
         const text = this.parser.parseInline(cell.tokens ?? []);
-        return `<td class="border border-rule px-3 py-2">${text}</td>`;
+        const align = (cell as { align?: string }).align;
+        return `<td${align ? ` align="${align}"` : ''}>${text}</td>`;
       }).join('')}</tr>`
     ).join('');
-    return `<table class="w-full border-collapse my-4 text-sm"><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
+    return `<div class="table-wrapper"><table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
   },
 
   // 헤딩 스타일링 (CSS .prose-journal h1~h6에서 관리)
@@ -306,7 +308,7 @@ export function processMarkdown(text: string): string {
         a: ['href', 'title', 'class', 'target', 'rel'],
         img: ['src', 'alt', 'class', 'loading'],
         figure: [], figcaption: [],
-        table: [], thead: [], tbody: [], tr: [], th: [], td: [],
+        table: ['class'], thead: [], tbody: [], tr: [], th: ['class', 'align'], td: ['class', 'align'],
         hr: [], iframe: ['src', 'frameborder', 'allow', 'allowfullscreen', 'scrolling', 'class'],
         div: ['class'], span: ['class']
       },
@@ -403,7 +405,7 @@ export async function processMarkdownAsync(text: string): Promise<string> {
         code: [], pre: [], blockquote: [],
         h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
         ul: [], ol: [], li: [], hr: [],
-        table: [], thead: [], tbody: [], tr: [], th: [], td: [],
+        table: ['class'], thead: [], tbody: [], tr: [], th: ['class', 'align'], td: ['class', 'align'],
         div: ['class'], span: ['class'], sup: [], sub: [],
         iframe: ['src', 'frameborder', 'allow', 'allowfullscreen', 'scrolling', 'class']
       },
