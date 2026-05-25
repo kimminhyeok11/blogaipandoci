@@ -98,13 +98,12 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
       expert_level,
       timeline_steps,
       is_ai_assisted,
-      reviewed_at,
-      tags(id, name, slug)
+      reviewed_at
     `)
     .eq("slug", slug)
     .eq("published", true)
     .not("published_at", "is", null)
-    .single<Post & { tags: Tag[] }>();
+    .single<Post>();
 
   if (error || !postData) {
     console.error('[getPost] Error fetching post:', error);
@@ -122,8 +121,15 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
     userData = user;
   }
 
+  // 태그 별도 조회 (post_tags 조인 테이블 경유)
+  const { data: postTagsData } = await supabase
+    .from("post_tags")
+    .select("tags(id, name, slug)")
+    .eq("post_id", postData.id);
+  const tags: Tag[] = (postTagsData ?? []).map((pt: { tags: Tag | null }) => pt.tags).filter((t): t is Tag => t !== null);
+
   console.log('[getPost] Post found, user:', userData);
-  return { ...postData, user: userData } as Post;
+  return { ...postData, user: userData, tags } as Post;
 });
 
 // 제목으로 게시글 찾기 (slug 변경 후 301 리다이렉트용)
@@ -226,31 +232,28 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
 
   let relatedPostsRaw: any[] = [];
 
-  // 태그가 있는 경우: 같은 태그를 가진 글 먼저 검색
+  // 태그가 있는 경우: 같은 태그를 가진 글 먼저 검색 (post_tags 경유)
   if (tagIds.length > 0) {
-    const { data: taggedPosts } = await supabase
-      .from("posts")
-      .select(`
-        id,
-        title,
-        slug,
-        excerpt,
-        cover_image,
-        cover_image_alt,
-        published_at,
-        view_count,
-        user_id,
-        tags!inner(id, name, slug)
-      `)
-      .eq("published", true)
-      .not("published_at", "is", null)
-      .in("tags.id", tagIds)
-      .neq("id", currentPost.id)
-      .order("published_at", { ascending: false })
-      .limit(6);
+    const { data: taggedPostIds } = await supabase
+      .from("post_tags")
+      .select("post_id")
+      .in("tag_id", tagIds)
+      .neq("post_id", currentPost.id);
 
-    if (taggedPosts) {
-      relatedPostsRaw = taggedPosts;
+    const relatedIds = Array.from(new Set((taggedPostIds ?? []).map((r: { post_id: string }) => r.post_id))).slice(0, 6);
+
+    if (relatedIds.length > 0) {
+      const { data: taggedPosts } = await supabase
+        .from("posts")
+        .select(`id, title, slug, excerpt, cover_image, cover_image_alt, published_at, view_count, user_id`)
+        .eq("published", true)
+        .not("published_at", "is", null)
+        .in("id", relatedIds)
+        .order("published_at", { ascending: false });
+
+      if (taggedPosts) {
+        relatedPostsRaw = taggedPosts;
+      }
     }
   }
 
@@ -270,8 +273,7 @@ async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
         cover_image_alt,
         published_at,
         view_count,
-        user_id,
-        tags(id, name, slug)
+        user_id
       `)
       .eq("published", true)
       .not("published_at", "is", null)

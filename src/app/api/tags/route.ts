@@ -68,7 +68,7 @@ export async function POST(request: Request) {
         .from("tags")
         .select("id")
         .eq("slug", slug)
-        .single();
+        .maybeSingle();
 
       let tagId;
       if (existingTag) {
