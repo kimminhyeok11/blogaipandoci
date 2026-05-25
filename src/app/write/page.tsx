@@ -474,7 +474,8 @@ function WritePageContent() {
           await notifyIndexNow(`/posts/${slug}`, session?.access_token);
         }
         
-        router.push(`/posts/${slug}`);
+        // window.location으로 강제 풀 리로드 → revalidatePath 이후 최신 내용 즉시 반영
+        window.location.href = `/posts/${slug}`;
       } else {
         // 신규 작성: API 호출
         const response = await fetch("/api/posts", {
@@ -529,7 +530,8 @@ function WritePageContent() {
           await notifyIndexNow(`/posts/${slug}`, session?.access_token);
         }
         
-        router.push(`/posts/${slug}`);
+        // window.location으로 강제 풀 리로드 → revalidatePath 이후 최신 내용 즉시 반영
+        window.location.href = `/posts/${slug}`;
       }
     } catch (err) {
       console.error("저장 오류:", err);

@@ -430,13 +430,13 @@ export async function POST(request: Request) {
 
     // 캐시 즉시 갱신
     if (published) {
-      revalidatePath("/");
-      revalidatePath("/posts");
-      revalidatePath(`/posts/${finalSlug}`);
-      revalidatePath("/tags");
-      revalidatePath("/categories");
-      revalidatePath("/cases");
-      if (case_type) revalidatePath(`/cases/${encodeURIComponent(case_type)}`);
+      revalidatePath("/", "page");
+      revalidatePath("/posts", "page");
+      revalidatePath(`/posts/${finalSlug}`, "page");
+      revalidatePath("/tags", "page");
+      revalidatePath("/categories", "page");
+      revalidatePath("/cases", "page");
+      if (case_type) revalidatePath(`/cases/${encodeURIComponent(case_type)}`, "page");
 
       // IndexNow 알림 (신규 발행)
       const { key, host } = getIndexNowConfig();
@@ -494,7 +494,7 @@ export async function PUT(request: Request) {
     // Check if user owns this post
     const { data: existingPost, error: fetchError } = await serviceSupabase
       .from("posts")
-      .select("user_id, published_at, published")
+      .select("user_id, published_at, published, slug")
       .eq("id", id)
       .single();
 
@@ -633,13 +633,17 @@ export async function PUT(request: Request) {
     }
 
     // 캐시 즉시 갱신
-    revalidatePath("/");
-    revalidatePath("/posts");
-    revalidatePath(`/posts/${slug}`);
-    revalidatePath("/tags");
-    revalidatePath("/categories");
-    revalidatePath("/cases");
-    if (case_type) revalidatePath(`/cases/${encodeURIComponent(case_type)}`);
+    revalidatePath("/", "page");
+    revalidatePath("/posts", "page");
+    revalidatePath(`/posts/${slug}`, "page");
+    // 슬러그가 변경된 경우 이전 슬러그도 무효화
+    if (existingPost.slug && existingPost.slug !== slug) {
+      revalidatePath(`/posts/${existingPost.slug}`, "page");
+    }
+    revalidatePath("/tags", "page");
+    revalidatePath("/categories", "page");
+    revalidatePath("/cases", "page");
+    if (case_type) revalidatePath(`/cases/${encodeURIComponent(case_type)}`, "page");
 
     // IndexNow 알림 + situations_cache 갱신 (수정)
     if (published) {
