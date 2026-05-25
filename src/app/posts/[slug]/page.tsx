@@ -161,7 +161,6 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
         involved_agencies,
         common_mistakes,
         timeline_steps,
-        tags,
         user_id
       `)
       .eq('published', true)
@@ -169,7 +168,7 @@ async function findPostByTitleGuess(slug: string): Promise<Post | null> {
       .ilike('slug', `%${timestampMatch[1]}`)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single<Post & { tags: Tag[] }>();
+      .single<Post>();
 
     if (!error && postData) {
       // user 별도 조회
