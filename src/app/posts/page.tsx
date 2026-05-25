@@ -206,7 +206,7 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
                           {new Date(post.published_at || post.created_at).toLocaleDateString("ko-KR")}
                         </span>
                         <span className="text-rule">·</span>
-                        <span className="font-sans text-2xs text-muted">
+                        <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
                           {post.view_count.toLocaleString()}회 읽음
                         </span>
                       </div>

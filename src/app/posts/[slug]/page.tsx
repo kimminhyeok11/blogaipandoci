@@ -650,11 +650,11 @@ export default async function PostPage({ params }: PostPageProps) {
               <span>{authorName}</span>
             )}
             <span className="byline-sep">|</span>
-            <span>
+            <span suppressHydrationWarning>
               {new Date(post.published_at || post.created_at).toLocaleDateString("ko-KR")}
             </span>
             <span className="byline-sep">|</span>
-            <span>{post.view_count.toLocaleString()} 회 읽음</span>
+            <span suppressHydrationWarning>{post.view_count.toLocaleString()} 회 읽음</span>
           </div>
         </section>
 

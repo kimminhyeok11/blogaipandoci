@@ -357,7 +357,7 @@ export default async function SituationHubPage({
                       {post.excerpt}
                     </p>
                   )}
-                  <p className="mt-2 font-sans text-2xs text-muted/60">
+                  <p className="mt-2 font-sans text-2xs text-muted/60" suppressHydrationWarning>
                     {new Date(post.published_at).toLocaleDateString("ko-KR")} · {post.view_count.toLocaleString()}회 읽음
                   </p>
                 </Link>

@@ -217,7 +217,7 @@ export default async function HomePage() {
                   {new Date(featuredPost.published_at).toLocaleDateString("ko-KR")}
                 </span>
                 <span className="byline-sep">|</span>
-                <span>{featuredPost.view_count.toLocaleString()} 회 읽음</span>
+                <span suppressHydrationWarning>{featuredPost.view_count.toLocaleString()} 회 읽음</span>
               </div>
               <Link
                 href={`/posts/${featuredPost.slug}`}
