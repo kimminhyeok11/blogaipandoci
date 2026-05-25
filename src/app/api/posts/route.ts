@@ -571,11 +571,31 @@ export async function PUT(request: Request) {
       .single();
 
     if (error) {
-      console.error("Failed to update post:", error);
+      console.error("[PUT] DB 업데이트 실패:", error.message);
       return NextResponse.json(
         { error: error.message },
         { status: 500 }
       );
+    }
+
+    // DB에 실제로 반영됐는지 검증 (재조회)
+    const { data: verifyData, error: verifyError } = await serviceSupabase
+      .from("posts")
+      .select("id, title, slug, updated_at, cover_image")
+      .eq("id", id)
+      .single();
+
+    if (verifyError) {
+      console.error("[PUT] DB 검증 조회 실패:", verifyError.message);
+    } else {
+      console.log("[PUT] DB 저장 검증:", {
+        id: verifyData.id,
+        title: verifyData.title,
+        slug: verifyData.slug,
+        updated_at: verifyData.updated_at,
+        cover_image: verifyData.cover_image ? verifyData.cover_image.slice(0, 60) + "..." : null,
+        content_length: data?.content?.length ?? 0,
+      });
     }
 
     // embedding 재생성 (비동기, 발행 상태일 때만)
