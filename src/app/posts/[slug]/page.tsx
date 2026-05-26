@@ -6,6 +6,7 @@ import dynamicImport from "next/dynamic";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ViewCounter } from "@/components/posts/ViewCounter";
 import { supabase as anonSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import type { Post, Tag, User } from "@/types";
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
@@ -37,9 +38,16 @@ export const dynamicParams = true;
 // generateStaticParams 제거: 빌드 시점에 글 미리 생성하지 않음
 // 대신 첫 방문 시 SSR로 생성하고 ISR로 캐싱
 
-// 서버용 Supabase 클라이언트 (빌드 시점에도 데이터 가져오기 위해 anonSupabase 사용)
+// 서버용 Supabase 클라이언트 (서비스롤로 Primary DB 직접 조회 - replica lag 방지)
 function getServerSupabase() {
-  // 빌드 시점에도 데이터를 가져올 수 있도록 anonSupabase 우선 사용
+  // 서비스롤 키가 있으면 Primary DB 직접 조회, 없으면 anonSupabase fallback
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (url && serviceKey) {
+    return createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+  }
   return anonSupabase;
 }
 
