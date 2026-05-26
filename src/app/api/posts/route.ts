@@ -581,7 +581,7 @@ export async function PUT(request: Request) {
     // DB에 실제로 반영됐는지 검증 (재조회)
     const { data: verifyData, error: verifyError } = await serviceSupabase
       .from("posts")
-      .select("id, title, slug, updated_at, cover_image")
+      .select("id, title, slug, updated_at, cover_image, published, published_at")
       .eq("id", id)
       .single();
 
@@ -592,6 +592,8 @@ export async function PUT(request: Request) {
         id: verifyData.id,
         title: verifyData.title,
         slug: verifyData.slug,
+        published: verifyData.published,
+        published_at: verifyData.published_at,
         updated_at: verifyData.updated_at,
         cover_image: verifyData.cover_image ? verifyData.cover_image.slice(0, 60) + "..." : null,
         content_length: data?.content?.length ?? 0,
