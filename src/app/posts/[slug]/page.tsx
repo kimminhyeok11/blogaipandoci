@@ -135,8 +135,10 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
     .select("tags(id, name, slug)")
     .eq("post_id", postData.id);
   const tags: Tag[] = (postTagsData ?? [])
-    .flatMap((pt: { tags: Tag[] | null }) => pt.tags || [])
-    .filter((t): t is Tag => t !== null);
+    .map((pt: { tags: any }) => pt.tags)
+    .filter(Boolean)
+    .flat()
+    .map((t: any) => ({ ...t, created_at: t.created_at || new Date().toISOString() })) as Tag[];
 
   console.log('[getPost] Post found, user:', userData);
   return { ...postData, user: userData, tags } as Post;
