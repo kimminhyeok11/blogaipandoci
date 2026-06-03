@@ -68,7 +68,7 @@ async function getPosts(page: number): Promise<{ posts: Post[]; total: number }>
     return { posts: [], total: 0 };
   }
 
-  return { posts: data || [], total: count || 0 };
+  return { posts: (data || []) as unknown as Post[], total: count || 0 };
 }
 
 export default async function PostsPage({ searchParams }: { searchParams: { page?: string } }) {

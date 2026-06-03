@@ -28,6 +28,7 @@ interface Comment {
   post_slug?: string;
   replies?: Comment[];
 }
+export type { Comment };
 
 interface CommentsSectionProps {
   postId: string;

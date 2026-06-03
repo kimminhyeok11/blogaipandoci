@@ -8,6 +8,7 @@ import { ViewCounter } from "@/components/posts/ViewCounter";
 import { supabase as anonSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import type { Post, Tag, User } from "@/types";
+import type { Comment } from "@/components/comments/CommentsSection";
 import { getMappedSlug } from "@/lib/slug-mapping";
 import { StickyNav } from "@/components/layout/StickyNav";
 import { TrustBadge } from "@/components/posts/TrustBadge";
@@ -745,7 +746,7 @@ export default async function PostPage({ params }: PostPageProps) {
         <SimilarPosts posts={similarPosts} />
 
         {/* Comments Section - 질문/댓글 */}
-        <CommentsSection postId={post.id} postSlug={post.slug} postTitle={post.title} initialComments={initialComments} />
+        <CommentsSection postId={post.id} postSlug={post.slug} postTitle={post.title} initialComments={initialComments as unknown as Comment[]} />
 
         {/* Related Posts - 이어서 읽기 */}
         <RelatedPosts posts={relatedPosts} currentPostId={post.id} />

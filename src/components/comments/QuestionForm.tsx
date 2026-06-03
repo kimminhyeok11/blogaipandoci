@@ -46,7 +46,7 @@ export function QuestionForm({ postId, onSuccess }: QuestionFormProps) {
       .select("nickname")
       .eq("id", user.id)
       .single()
-      .then(({ data }: { data: { nickname: string } | null }) => {
+      .then(({ data }) => {
         if (data?.nickname) setDbNickname(data.nickname);
       });
   }, [user]);
