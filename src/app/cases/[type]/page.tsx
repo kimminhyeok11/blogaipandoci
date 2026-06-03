@@ -9,7 +9,21 @@ import type { Metadata } from "next";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 // ISR: 1시간마다 재생성
-export const revalidate = 3600;\n// ��� Ȱ�� ī�װ��� ��� ���� ����\nexport async function generateStaticParams() {\n  const supabase = getServiceSupabase();\n  const { data: categories } = await supabase\n    .from("categories")\n    .select("slug")\n    .eq("is_active", true);\n  \n  return (categories || []).map((cat) => ({\n    type: cat.slug,\n  }));\n}\n
+export const revalidate = 3600;
+
+// DB의 활성 카테고리로 정적 경로 생성
+export async function generateStaticParams() {
+  const supabase = getServiceSupabase();
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("slug")
+    .eq("is_active", true);
+
+  return ((categories as { slug: string }[] | null) || []).map((cat) => ({
+    type: cat.slug,
+  }));
+}
+
 
 // DB 기반 category 스타일 매핑 (slug → 스타일)
 // mixed slug: 한글(기존) + 영어(신규) 병행 운영
