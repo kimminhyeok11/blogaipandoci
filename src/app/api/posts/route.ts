@@ -196,14 +196,24 @@ function appendRelatedLinks(content: string, relatedPosts: { title: string; slug
   if (relatedPosts.length === 0) return content;
 
   // 기존 관련글 섹션 제거 (재발행 시 최신화)
-  // 다양한 형식 지원: ---, 📌, 관련 글 등
-  const withoutRelatedSection = content
-    .replace(/\n\n---\n\n### 📌 관련 글\n[\s\S]*$/m, '')
-    .replace(/\n\n---\n\n### 관련 글\n[\s\S]*$/m, '')
-    .replace(/\n\n---\n\n### 📌 관련글\n[\s\S]*$/m, '')
-    .replace(/\n\n---\n\n### 관련글\n[\s\S]*$/m, '')
-    .replace(/\n\n---\n\n#### 📌 관련 글\n[\s\S]*$/m, '')
-    .replace(/\n\n---\n\n#### 관련 글\n[\s\S]*$/m, '');
+  // 더 강력한 제거: "---" 이후 모든 관련글 섹션 제거
+  let withoutRelatedSection = content;
+
+  // 다양한 형식의 관련글 섹션 패턴
+  const patterns = [
+    /\n\n---\n\n### 📌 관련 글\n[\s\S]*$/m,
+    /\n\n---\n\n### 관련 글\n[\s\S]*$/m,
+    /\n\n---\n\n### 📌 관련글\n[\s\S]*$/m,
+    /\n\n---\n\n### 관련글\n[\s\S]*$/m,
+    /\n\n---\n\n#### 📌 관련 글\n[\s\S]*$/m,
+    /\n\n---\n\n#### 관련 글\n[\s\S]*$/m,
+    /\n\n---\n\n#{1,4}\s*관련\s*글\n[\s\S]*$/m,
+    /\n\n---\n\n#{1,4}\s*📌\s*관련\s*글\n[\s\S]*$/m,
+  ];
+
+  for (const pattern of patterns) {
+    withoutRelatedSection = withoutRelatedSection.replace(pattern, '');
+  }
 
   // 이전에 삽입된 인라인 /posts/ 링크 제거 후 재삽입
   const unlinked = removeInjectedInlineLinks(withoutRelatedSection);
