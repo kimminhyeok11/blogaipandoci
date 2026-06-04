@@ -192,12 +192,6 @@ function removeInjectedInlineLinks(content: string): string {
   return content.replace(/\[([^\]]+)\]\(\/posts\/[^)]+\)/g, '$1');
 }
 
-// 관련 글 섹션이 이미 존재하는지 확인
-function hasRelatedSection(content: string): boolean {
-  const normalized = content.replace(/\r\n/g, '\n');
-  return /\n[-]{3}\n+#{1,4}\s*(?:📌\s*)?관련 글\n/.test(normalized);
-}
-
 function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
   if (relatedPosts.length === 0) return content;
 
