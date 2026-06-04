@@ -397,6 +397,18 @@ function WritePageContent() {
         }
       }
 
+      // 메타 설명 자동 생성 (본문 기반, excerpt와 중복 방지)
+      const generateMetaDescription = (title: string, content: string): string => {
+        // 본문에서 첫 문장 추출
+        const firstSentence = content.split(/[.!?]/)[0]?.trim() || "";
+        // 제목 + 첫 문장 조합 (최대 155자)
+        const combined = `${title} - ${firstSentence}`;
+        return combined.slice(0, 155);
+      };
+
+      // 메타 설명이 없으면 자동 생성
+      const finalMetaDescription = metaDescription || generateMetaDescription(title.trim(), processedContent);
+
       if (isEditMode && postId) {
         // 수정 모드: API 호출
 
@@ -430,7 +442,7 @@ function WritePageContent() {
             cover_image: coverImage || undefined,
             cover_image_alt: coverImageAlt || undefined,
             meta_title: metaTitle || title.trim() || null,
-            meta_description: metaDescription || finalExcerpt || null,
+            meta_description: finalMetaDescription,
             ...procedureFields,
           }),
         });
@@ -493,7 +505,7 @@ function WritePageContent() {
             cover_image: coverImage || null,
             cover_image_alt: coverImageAlt || null,
             meta_title: metaTitle || title.trim() || null,
-            meta_description: metaDescription || finalExcerpt || null,
+            meta_description: finalMetaDescription,
             case_type: procedureMeta.case_type || null,
             current_stage: procedureMeta.current_stage || null,
             next_stage: procedureMeta.next_stage || null,
