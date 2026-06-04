@@ -19,6 +19,43 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],
+    // 번들 크기 최적화
+    turbo: {
+      rules: [
+        {
+          test: /\.(png|jpg|jpeg|gif|webp|avif)$/i,
+          type: 'asset/resource',
+        },
+      ],
+    },
+  },
+  // 번들 최적화
+  webpack: (config) => {
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          vendor: {
+            name: 'vendor',
+            chunks: 'all',
+            test: /node_modules/,
+            priority: 20,
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            chunks: 'all',
+            priority: 10,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+        },
+      },
+    };
+    return config;
   },
   images: {
     unoptimized: false,
