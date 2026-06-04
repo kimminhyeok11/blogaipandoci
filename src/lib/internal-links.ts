@@ -46,12 +46,12 @@ export const fetchKeywordsFromDB = cache(async (): Promise<KeywordLink[]> => {
   }
 });
 
-// DB 키워드 + 하드코딩 폴백 병합
+// DB 키워드만 사용 (관리자 페이지 시스템)
 export async function getSortedKeywords(): Promise<KeywordLink[]> {
   const dbKeywords = await fetchKeywordsFromDB();
   
-  // DB에 데이터가 있으면 사용, 없으면 하드코딩 사용
-  const keywords = dbKeywords.length > 0 ? dbKeywords : LEGAL_KEYWORDS;
+  // DB에서 가져온 키워드만 사용
+  const keywords = dbKeywords;
   
   // 우선순위 정렬 (긴 키워드 우선, 같은 길이면 priority 높은 순)
   return [...keywords].sort((a, b) => {
@@ -71,322 +71,7 @@ export interface LegacyKeywordLink {
   anchorVariants: string[];
 }
 
-// 핵심 법률/절차 키워드 매핑 (사건 흐름 기반 우선순위)
-export const LEGAL_KEYWORDS: KeywordLink[] = [
-  // === 형사/고소 (높은 우선순위) ===
-  {
-    keyword: "형사 고소",
-    url: "/cases/형사·고소",
-    priority: 100,
-    category: "형사",
-    anchorVariants: ["형사 고소", "고소", "형사고소"],
-  },
-  {
-    keyword: "고소장",
-    url: "/cases/형사·고소",
-    priority: 90,
-    category: "형사",
-    anchorVariants: ["고소장", "고소장 작성"],
-  },
-  {
-    keyword: "불송치",
-    url: "/search?q=불송치",
-    priority: 85,
-    category: "형사",
-    anchorVariants: ["불송치", "불송치 처분"],
-  },
-  {
-    keyword: "기소",
-    url: "/search?q=기소",
-    priority: 80,
-    category: "형사",
-    anchorVariants: ["기소", "기소됨"],
-  },
-  {
-    keyword: "경찰 조사",
-    url: "/search?q=경찰조사",
-    priority: 85,
-    category: "형사",
-    anchorVariants: ["경찰 조사", "경찰조사"],
-  },
-  {
-    keyword: "검찰 조사",
-    url: "/search?q=검찰조사",
-    priority: 80,
-    category: "형사",
-    anchorVariants: ["검찰 조사", "검찰조사"],
-  },
-
-  // === 손해배상/민사 (높은 우선순위) ===
-  {
-    keyword: "손해배상",
-    url: "/cases/민사·소송",
-    priority: 95,
-    category: "민사",
-    anchorVariants: ["손해배상", "손해 배상", "손해배상청구"],
-  },
-  {
-    keyword: "소송",
-    url: "/cases/민사·소송",
-    priority: 80,
-    category: "민사",
-    anchorVariants: ["소송", "민사소송"],
-  },
-  {
-    keyword: "소장",
-    url: "/search?q=소장",
-    priority: 75,
-    category: "민사",
-    anchorVariants: ["소장", "소장 접수"],
-  },
-  {
-    keyword: "판결",
-    url: "/search?q=판결",
-    priority: 75,
-    category: "민사",
-    anchorVariants: ["판결", "판결이 나옴"],
-  },
-  {
-    keyword: "상고",
-    url: "/search?q=상고",
-    priority: 70,
-    category: "민사",
-    anchorVariants: ["상고", "상고심"],
-  },
-  {
-    keyword: "항소",
-    url: "/search?q=항소",
-    priority: 70,
-    category: "민사",
-    anchorVariants: ["항소", "항소심"],
-  },
-
-  // === 강제집행 (높은 우선순위 - 다음 절차) ===
-  {
-    keyword: "강제집행",
-    url: "/search?q=강제집행",
-    priority: 90,
-    category: "강제집행",
-    anchorVariants: ["강제집행", "강제 집행"],
-  },
-  {
-    keyword: "압류",
-    url: "/search?q=압류",
-    priority: 85,
-    category: "강제집행",
-    anchorVariants: ["압류", "압류 조치"],
-  },
-  {
-    keyword: "동산압류",
-    url: "/search?q=동산압류",
-    priority: 80,
-    category: "강제집행",
-    anchorVariants: ["동산압류", "동산 압류"],
-  },
-  {
-    keyword: "부동산압류",
-    url: "/search?q=부동산압류",
-    priority: 80,
-    category: "강제집행",
-    anchorVariants: ["부동산압류", "부동산 압류"],
-  },
-  {
-    keyword: "경매",
-    url: "/search?q=경매",
-    priority: 80,
-    category: "강제집행",
-    anchorVariants: ["경매", "강제경매"],
-  },
-  {
-    keyword: "지급명령",
-    url: "/cases/채무·금전",
-    priority: 85,
-    category: "강제집행",
-    anchorVariants: ["지급명령", "지급명령 신청"],
-  },
-  {
-    keyword: "이의신청",
-    url: "/search?q=이의신청",
-    priority: 75,
-    category: "강제집행",
-    anchorVariants: ["이의신청", "이의 신청"],
-  },
-
-  // === 전세/임대차 (높은 우선순위) ===
-  {
-    keyword: "전세금 반환",
-    url: "/cases/전세·임대차",
-    priority: 100,
-    category: "전세",
-    anchorVariants: ["전세금 반환", "전세금반환"],
-  },
-  {
-    keyword: "전세사기",
-    url: "/cases/전세·임대차",
-    priority: 95,
-    category: "전세",
-    anchorVariants: ["전세사기", "전세 사기"],
-  },
-  {
-    keyword: "보증금 반환",
-    url: "/cases/전세·임대차",
-    priority: 90,
-    category: "전세",
-    anchorVariants: ["보증금 반환", "보증금반환"],
-  },
-  {
-    keyword: "임차권",
-    url: "/cases/전세·임대차",
-    priority: 85,
-    category: "전세",
-    anchorVariants: ["임차권", "임차권 등록"],
-  },
-  {
-    keyword: "우선변제권",
-    url: "/search?q=우선변제권",
-    priority: 80,
-    category: "전세",
-    anchorVariants: ["우선변제권", "우선변제"],
-  },
-  {
-    keyword: "확정일자",
-    url: "/search?q=확정일자",
-    priority: 80,
-    category: "전세",
-    anchorVariants: ["확정일자", "확정일자 신고"],
-  },
-
-  // === 채무/금전 (중간 우선순위) ===
-  {
-    keyword: "채무",
-    url: "/cases/채무·금전",
-    priority: 85,
-    category: "채무",
-    anchorVariants: ["채무", "채무 관계"],
-  },
-  {
-    keyword: "채권",
-    url: "/cases/채무·금전",
-    priority: 75,
-    category: "채무",
-    anchorVariants: ["채권", "채권자"],
-  },
-  {
-    keyword: "개인회생",
-    url: "/search?q=개인회생",
-    priority: 80,
-    category: "채무",
-    anchorVariants: ["개인회생", "회생신청"],
-  },
-  {
-    keyword: "파산",
-    url: "/search?q=파산",
-    priority: 75,
-    category: "채무",
-    anchorVariants: ["파산", "파산신청"],
-  },
-
-  // === 상속/유언 (중간 우선순위) ===
-  {
-    keyword: "상속",
-    url: "/cases/상속·유언",
-    priority: 90,
-    category: "상속",
-    anchorVariants: ["상속", "상속절차"],
-  },
-  {
-    keyword: "한정승인",
-    url: "/cases/상속·유언",
-    priority: 95,
-    category: "상속",
-    anchorVariants: ["한정승인", "한정 승인"],
-  },
-  {
-    keyword: "상속포기",
-    url: "/search?q=상속포기",
-    priority: 85,
-    category: "상속",
-    anchorVariants: ["상속포기", "상속 포기"],
-  },
-
-  // === 이혼/가족 (중간 우선순위) ===
-  {
-    keyword: "이혼",
-    url: "/cases/이혼·가족",
-    priority: 90,
-    category: "이혼",
-    anchorVariants: ["이혼", "이혼소송"],
-  },
-  {
-    keyword: "양육권",
-    url: "/cases/이혼·가족",
-    priority: 85,
-    category: "이혼",
-    anchorVariants: ["양육권", "양육권 분쟁"],
-  },
-
-  // === 노동 (낮은 우선순위) ===
-  {
-    keyword: "부당해고",
-    url: "/cases/노동·근로",
-    priority: 90,
-    category: "노동",
-    anchorVariants: ["부당해고", "부당 해고"],
-  },
-  {
-    keyword: "해고",
-    url: "/cases/노동·근로",
-    priority: 85,
-    category: "노동",
-    anchorVariants: ["해고", "해고 통보"],
-  },
-  {
-    keyword: "산업재해",
-    url: "/cases/노동·근로",
-    priority: 80,
-    category: "노동",
-    anchorVariants: ["산업재해", "산재"],
-  },
-
-  // === 세금/행정 (낮은 우선순위) ===
-  {
-    keyword: "세무조사",
-    url: "/cases/세금·행정",
-    priority: 85,
-    category: "세금",
-    anchorVariants: ["세무조사", "세무 조사"],
-  },
-  {
-    keyword: "행정심판",
-    url: "/cases/세금·행정",
-    priority: 80,
-    category: "세금",
-    anchorVariants: ["행정심판", "행정 심판"],
-  },
-
-  // === 절차 일반 (가장 낮은 우선순위 - 과삽입 방지) ===
-  {
-    keyword: "법원",
-    url: "/search?q=법원",
-    priority: 60,
-    category: "절차",
-    anchorVariants: ["법원", "관할법원"],
-  },
-  {
-    keyword: "증거",
-    url: "/search?q=증거",
-    priority: 60,
-    category: "절차",
-    anchorVariants: ["증거", "증거자료"],
-  },
-];
-
-// 우선순위 내림차순 정렬 (긴 키워드 우선)
-export const SORTED_KEYWORDS = [...LEGAL_KEYWORDS].sort((a, b) => {
-  const lenDiff = b.keyword.length - a.keyword.length;
-  if (lenDiff !== 0) return lenDiff;
-  return b.priority - a.priority;
-});
+// 하드코딩된 키워드 배열 제거 - 이제 DB에서만 가져옴
 
 /**
  * HTML 파싱하여 문단(paragraph) 단위로 분리
@@ -514,7 +199,8 @@ export function addInternalLinks(
 ): string {
   if (!html) return html;
 
-  const keywordsToUse = keywords && keywords.length > 0 ? keywords : SORTED_KEYWORDS;
+  // 키워드가 없으면 빈 배열 사용 (링크 생성 안됨)
+  const keywordsToUse = keywords && keywords.length > 0 ? keywords : [];
   
   let result = html;
   const linkedKeywords = new Set<string>();
@@ -656,7 +342,8 @@ export function extractContextKeywords(
 ): string[] {
   const found: string[] = [];
   const contentLower = content.toLowerCase();
-  const keywordsToUse = keywords && keywords.length > 0 ? keywords : SORTED_KEYWORDS;
+  // 키워드가 없으면 빈 배열 사용
+  const keywordsToUse = keywords && keywords.length > 0 ? keywords : [];
 
   for (const item of keywordsToUse) {
     if (found.length >= maxKeywords) break;

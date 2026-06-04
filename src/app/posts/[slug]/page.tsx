@@ -27,16 +27,28 @@ const CommentsSection = dynamicImport(() => import("@/components/comments/Commen
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 // ISR: 1시간마다 재생성 (SSR + CDN 캐싱)
-// 빌드 시점: 글 미리 생성 안 함 (빠른 배포)
+// 빌드 시점: 최신 100개 글 미리 생성 (크롤러 색인 최적화)
 // 첫 방문: SSR로 생성 → CDN/Edge 캐싱
 // 이후: 캐싱된 페이지 제공 → 1시간 후 재검증
 export const revalidate = 3600;
 
-// generateStaticParams 없이도 모든 slug 런타임에 처리
-export const dynamicParams = true;
+// 빌드 시점에 최신 100개 게시글 미리 생성 (크롤러가 정적 HTML 수집)
+export async function generateStaticParams() {
+  const supabase = getServerSupabase();
+  const { data: posts } = await supabase
+    .from("posts")
+    .select("slug")
+    .eq("published", true)
+    .order("published_at", { ascending: false })
+    .limit(100);
 
-// generateStaticParams 제거: 빌드 시점에 글 미리 생성하지 않음
-// 대신 첫 방문 시 SSR로 생성하고 ISR로 캐싱
+  return (posts || []).map((post: any) => ({
+    slug: post.slug,
+  }));
+}
+
+// generateStaticParams에 없는 slug도 런타임에 처리
+export const dynamicParams = true;
 
 // 서버용 Supabase 클라이언트 (서비스롤로 Primary DB 직접 조회 - replica lag 방지)
 function getServerSupabase() {
@@ -355,7 +367,18 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       notFound();
     }
 
-  const postUrl = `${SITE_URL}/posts/${post.slug}`;
+  // slug가 percent-encoded되어 있으면 디코딩 (canonical 태그 오류 방지)
+  let canonicalSlug = post.slug;
+  try {
+    if (post.slug && post.slug.includes('%')) {
+      canonicalSlug = decodeURIComponent(post.slug);
+    }
+  } catch {
+    // 디코딩 실패 시 원본 유지
+  }
+  // 한글 URL을 percent-encoding으로 변환 (구글 크롤러 호환)
+  const encodedSlug = encodeURIComponent(canonicalSlug);
+  const postUrl = `${SITE_URL}/posts/${encodedSlug}`;
 
   const rawDesc = post.meta_description || post.excerpt || "";
   const description = rawDesc.length >= 120
@@ -389,6 +412,17 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     description,
     keywords: post.title.split(" ").filter((w: string) => w.length > 1),
     authors: post.user?.nickname ? [{ name: post.user.nickname }] : undefined,
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+        'max-video-preview': -1,
+      },
+    },
     openGraph: {
       title: post.title,
       description,
@@ -477,7 +511,16 @@ export default async function PostPage({ params }: PostPageProps) {
   // 본문에서 첫 이미지 추출 (Article Schema용) - null-safe
   const imgMatch = safeContent.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
   const firstImage = post.cover_image || imgMatch?.[1] || undefined;
-  const postUrl = `${SITE_URL}/posts/${post.slug}`;
+  // slug가 percent-encoded되어 있으면 디코딩 (canonical 태그 오류 방지)
+  let canonicalSlug = post.slug;
+  try {
+    if (post.slug && post.slug.includes('%')) {
+      canonicalSlug = decodeURIComponent(post.slug);
+    }
+  } catch {
+    // 디코딩 실패 시 원본 유지
+  }
+  const postUrl = `${SITE_URL}/posts/${canonicalSlug}`;
   const authorName = post.user?.nickname || post.user?.email?.split('@')[0] || "익명";
   const authorEmail = post.user?.email || undefined;
   const authorAvatar = post.user?.avatar_url || `${SITE_URL}/icon.png`;

@@ -82,8 +82,18 @@ export async function GET() {
         )
         .join("\n");
 
+      // slug가 percent-encoded되어 있으면 디코딩 (sitemap 오류 방지)
+      let sitemapSlug = post.slug;
+      try {
+        if (post.slug && post.slug.includes('%')) {
+          sitemapSlug = decodeURIComponent(post.slug);
+        }
+      } catch {
+        // 디코딩 실패 시 원본 유지
+      }
+
       return `  <url>
-    <loc>${escapeXml(`${baseUrl}/posts/${encodeURIComponent(post.slug)}`)}</loc>
+    <loc>${escapeXml(`${baseUrl}/posts/${sitemapSlug}`)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

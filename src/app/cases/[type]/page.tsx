@@ -9,12 +9,28 @@ import type { Metadata } from "next";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 // ISR: 1시간마다 재생성
-export const revalidate = 3600;\n// ��� Ȱ�� ī�װ��� ��� ���� ����\nexport async function generateStaticParams() {\n  const supabase = getServiceSupabase();\n  const { data: categories } = await supabase\n    .from("categories")\n    .select("slug")\n    .eq("is_active", true);\n  \n  return (categories || []).map((cat) => ({\n    type: cat.slug,\n  }));\n}\n
+export const revalidate = 3600;
+
+// 정적 파라미터 생성 - 활성화된 카테고리 슬러그 목록
+export async function generateStaticParams() {
+  const supabase = getServiceSupabase();
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("slug")
+    .eq("is_active", true);
+
+  return (categories || []).map((cat: any) => ({
+    type: cat.slug,
+  }));
+}
+
+// generateStaticParams에 없는 slug도 런타임에 처리
+export const dynamicParams = true;
+
 
 // DB 기반 category 스타일 매핑 (slug → 스타일)
-// mixed slug: 한글(기존) + 영어(신규) 병행 운영
+// 한글 slug로 통일
 const CATEGORY_STYLES: Record<string, { color: string; bg: string }> = {
-  // 한글 slug (기존 7개 + 4개 + 기타)
   "형사":              { color: "text-slate-800",  bg: "bg-slate-100 border-slate-200" },
   "민사":              { color: "text-blue-800",   bg: "bg-blue-100 border-blue-200" },
   "이혼·가족":          { color: "text-pink-800",   bg: "bg-pink-100 border-pink-200" },
@@ -22,14 +38,13 @@ const CATEGORY_STYLES: Record<string, { color: string; bg: string }> = {
   "부동산":             { color: "text-emerald-800",bg: "bg-emerald-100 border-emerald-200" },
   "학교폭력":            { color: "text-red-800",    bg: "bg-red-100 border-red-200" },
   "지식재산권":          { color: "text-amber-800",  bg: "bg-amber-100 border-amber-200" },
+  "교통사고":            { color: "text-orange-800", bg: "bg-orange-100 border-orange-200" },
+  "회생·파산":           { color: "text-cyan-800",   bg: "bg-cyan-100 border-cyan-200" },
   "채무·금전":           { color: "text-teal-800",   bg: "bg-teal-100 border-teal-200" },
   "전세·임대차":          { color: "text-indigo-800", bg: "bg-indigo-100 border-indigo-200" },
   "계약·거래":           { color: "text-lime-800",   bg: "bg-lime-100 border-lime-200" },
   "행정·기타":           { color: "text-gray-800",   bg: "bg-gray-100 border-gray-200" },
   "기타":               { color: "text-zinc-800",   bg: "bg-zinc-100 border-zinc-200" },
-  // 영어 slug (신규 2개)
-  "traffic-accident":  { color: "text-orange-800", bg: "bg-orange-100 border-orange-200" },
-  "bankruptcy":        { color: "text-cyan-800",   bg: "bg-cyan-100 border-cyan-200" },
 };
 
 const DEFAULT_STYLE = { color: "text-ink", bg: "bg-cream" };
@@ -198,7 +213,7 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
     "@type": "CollectionPage",
     name: `${category.name} 절차 안내`,
     description: `${category.name} 관련 실제 절차 경험 글 ${posts.length}개`,
-    url: `${SITE_URL}/cases/${encodeURIComponent(slug)}`,
+    url: `${SITE_URL}/cases/${slug}`,
     isPartOf: {
       "@type": "WebSite",
       name: "法 BLOG",

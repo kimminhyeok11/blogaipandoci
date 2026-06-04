@@ -26,12 +26,20 @@ export const slugMapping: Record<string, string> = {
   "전세보증금-7천-날리고-빚쟁이-됐을-": "전세보증금-7천-날리고-빚쟁이-됐을",
 };
 
-// slug 정규화 (앞뒤 슬래시 제거, 디코딩)
+// slug 정규화 (앞뒤 슬래시 제거, 디코딩, 에러 처리)
 export function normalizeSlug(slug: string): string {
-  return decodeURIComponent(slug)
-    .replace(/^\//, "")
-    .replace(/\/$/, "")
-    .replace(/^posts\//, "");
+  try {
+    return decodeURIComponent(slug)
+      .replace(/^\//, "")
+      .replace(/\/$/, "")
+      .replace(/^posts\//, "");
+  } catch {
+    // 디코딩 실패 시 원본에서 슬래시만 제거
+    return slug
+      .replace(/^\//, "")
+      .replace(/\/$/, "")
+      .replace(/^posts\//, "");
+  }
 }
 
 // 매핑된 slug 조회

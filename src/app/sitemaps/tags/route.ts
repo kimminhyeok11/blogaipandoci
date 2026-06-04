@@ -54,12 +54,23 @@ export async function GET() {
   // 글 2개 이상인 태그만 sitemap에 포함
   const tagXml = tagsWithCount
     .filter((tag) => tag.postCount >= 2)
-    .map((tag) => `  <url>
-    <loc>${escapeXml(`${baseUrl}/tags/${encodeURIComponent(tag.slug)}`)}</loc>
+    .map((tag) => {
+      // slug가 percent-encoded되어 있으면 디코딩 (sitemap 오류 방지)
+      let sitemapSlug = tag.slug;
+      try {
+        if (tag.slug && tag.slug.includes('%')) {
+          sitemapSlug = decodeURIComponent(tag.slug);
+        }
+      } catch {
+        // 디코딩 실패 시 원본 유지
+      }
+      return `  <url>
+    <loc>${escapeXml(`${baseUrl}/tags/${sitemapSlug}`)}</loc>
     <lastmod>${new Date(tag.updated_at).toISOString().split("T")[0]}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
-  </url>`).join("\n");
+  </url>`;
+    }).join("\n");
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
