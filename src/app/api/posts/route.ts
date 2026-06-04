@@ -201,14 +201,11 @@ function hasRelatedSection(content: string): boolean {
 function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
   if (relatedPosts.length === 0) return content;
 
-  // 이미 관련 글 섹션이 있으면 그대로 유지 (사용자 편집 존중)
-  if (hasRelatedSection(content)) {
-    return content;
-  }
+  // 기존 관련글 섹션 제거 (재발행 시 최신화)
+  const withoutRelatedSection = content.replace(/\n\n---\n\n### 📌 관련 글\n[\s\S]*$/, '');
 
-  // 관련 글 섹션이 없을 때만 새로 삽입
   // 이전에 삽입된 인라인 /posts/ 링크 제거 후 재삽입
-  const unlinked = removeInjectedInlineLinks(content);
+  const unlinked = removeInjectedInlineLinks(withoutRelatedSection);
 
   // 본문 인라인 링크 삽입
   const withInline = injectInlineLinks(unlinked, relatedPosts);
