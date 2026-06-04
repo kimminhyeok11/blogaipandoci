@@ -196,7 +196,14 @@ function appendRelatedLinks(content: string, relatedPosts: { title: string; slug
   if (relatedPosts.length === 0) return content;
 
   // 기존 관련글 섹션 제거 (재발행 시 최신화)
-  const withoutRelatedSection = content.replace(/\n\n---\n\n### 📌 관련 글\n[\s\S]*$/, '');
+  // 다양한 형식 지원: ---, 📌, 관련 글 등
+  const withoutRelatedSection = content
+    .replace(/\n\n---\n\n### 📌 관련 글\n[\s\S]*$/m, '')
+    .replace(/\n\n---\n\n### 관련 글\n[\s\S]*$/m, '')
+    .replace(/\n\n---\n\n### 📌 관련글\n[\s\S]*$/m, '')
+    .replace(/\n\n---\n\n### 관련글\n[\s\S]*$/m, '')
+    .replace(/\n\n---\n\n#### 📌 관련 글\n[\s\S]*$/m, '')
+    .replace(/\n\n---\n\n#### 관련 글\n[\s\S]*$/m, '');
 
   // 이전에 삽입된 인라인 /posts/ 링크 제거 후 재삽입
   const unlinked = removeInjectedInlineLinks(withoutRelatedSection);
