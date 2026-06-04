@@ -167,7 +167,7 @@ export function SimilarPosts({ posts }: SimilarPostsProps) {
                 {p.excerpt}
               </p>
             )}
-            <p className="mt-2 font-sans text-2xs text-muted/60">
+            <p className="mt-2 font-sans text-2xs text-muted">
               {p.view_count.toLocaleString()}회 읽음
             </p>
           </Link>

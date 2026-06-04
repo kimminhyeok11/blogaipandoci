@@ -254,7 +254,7 @@ export default async function TagPage({ params }: TagPageProps) {
         ) : (
           /* 빈 상태 - 관련 콘텐츠 제안 */
           <div className="text-center py-16 border-2 border-dashed border-rule/50 rounded-sm">
-            <Tag className="mx-auto text-muted/40 mb-4" size={48} />
+            <Tag className="mx-auto text-muted mb-4" size={48} />
             <h3 className="text-lg font-bold text-ink mb-2">
               #{tag} 관련 글이 아직 없습니다
             </h3>

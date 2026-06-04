@@ -263,7 +263,7 @@ export default async function SituationHubPage({
                   </span>
                   <span className="font-sans text-xs text-ink">{step}</span>
                   {i < mergedTimeline.length - 1 && (
-                    <span className="text-muted/40 text-xs">→</span>
+                    <span className="text-muted text-xs">→</span>
                   )}
                 </li>
               ))}
@@ -357,7 +357,7 @@ export default async function SituationHubPage({
                       {post.excerpt}
                     </p>
                   )}
-                  <p className="mt-2 font-sans text-2xs text-muted/60" suppressHydrationWarning>
+                  <p className="mt-2 font-sans text-2xs text-muted" suppressHydrationWarning>
                     {new Date(post.published_at).toLocaleDateString("ko-KR")} · {post.view_count.toLocaleString()}회 읽음
                   </p>
                 </Link>

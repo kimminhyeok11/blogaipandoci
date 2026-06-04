@@ -30,6 +30,7 @@ interface KeywordFormData {
   priority: number;
   category: string;
   is_active: boolean;
+  urlType: "direct" | "search";
 }
 
 const CATEGORIES = [
@@ -51,6 +52,7 @@ export default function AdminKeywordsPage() {
     priority: 50,
     category: "",
     is_active: true,
+    urlType: "direct", // SEO를 위해 기본값은 직접 링크
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -88,6 +90,7 @@ export default function AdminKeywordsPage() {
       priority: 50,
       category: "",
       is_active: true,
+      urlType: "direct",
     });
     setIsModalOpen(true);
   };
@@ -100,6 +103,7 @@ export default function AdminKeywordsPage() {
       priority: keyword.priority,
       category: keyword.category || "",
       is_active: keyword.is_active,
+      urlType: keyword.url.startsWith("/search") ? "search" : "direct",
     });
     setIsModalOpen(true);
   };
@@ -108,6 +112,43 @@ export default function AdminKeywordsPage() {
     setIsModalOpen(false);
     setEditingKeyword(null);
     setDeleteConfirm(null);
+  };
+
+  // URL 자동 생성 함수
+  const generateUrl = (keyword: string, category: string, urlType: "direct" | "search") => {
+    if (urlType === "search") {
+      return `/search?q=${encodeURIComponent(keyword)}`;
+    } else {
+      // direct: /cases/형사-고소 형태
+      const categorySlug = category ? `/${category}` : "";
+      const keywordSlug = keyword.replace(/·/g, "-").replace(/\s+/g, "-");
+      return `/cases${categorySlug}/${keywordSlug}`;
+    }
+  };
+
+  // 키워드 또는 카테고리 변경 시 URL 자동 생성
+  const handleKeywordChange = (value: string) => {
+    setFormData({
+      ...formData,
+      keyword: value,
+      url: generateUrl(value, formData.category, formData.urlType),
+    });
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setFormData({
+      ...formData,
+      category: value,
+      url: generateUrl(formData.keyword, value, formData.urlType),
+    });
+  };
+
+  const handleUrlTypeChange = (value: "direct" | "search") => {
+    setFormData({
+      ...formData,
+      urlType: value,
+      url: generateUrl(formData.keyword, formData.category, value),
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -307,7 +348,7 @@ export default function AdminKeywordsPage() {
                 <input
                   type="text"
                   value={formData.keyword}
-                  onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
+                  onChange={(e) => handleKeywordChange(e.target.value)}
                   placeholder="예: 형사 고소"
                   className="w-full px-3 py-2 border border-ink rounded-sm focus:ring-2 focus:ring-rust focus:border-transparent bg-paper font-sans text-sm"
                   required
@@ -319,16 +360,46 @@ export default function AdminKeywordsPage() {
 
               <div>
                 <label className="block text-sm font-medium font-sans text-ink mb-1">
+                  URL 형태
+                </label>
+                <div className="flex gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => handleUrlTypeChange("direct")}
+                    className={`flex-1 px-3 py-2 border rounded-sm font-sans text-sm transition-colors ${
+                      formData.urlType === "direct"
+                        ? "bg-rust text-paper border-rust"
+                        : "bg-paper text-ink border-ink hover:bg-cream"
+                    }`}
+                  >
+                    직접 링크 (/cases/)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleUrlTypeChange("search")}
+                    className={`flex-1 px-3 py-2 border rounded-sm font-sans text-sm transition-colors ${
+                      formData.urlType === "search"
+                        ? "bg-rust text-paper border-rust"
+                        : "bg-paper text-ink border-ink hover:bg-cream"
+                    }`}
+                  >
+                    검색 링크 (/search?q=)
+                  </button>
+                </div>
+                <label className="block text-sm font-medium font-sans text-ink mb-1">
                   URL *
                 </label>
                 <input
                   type="text"
                   value={formData.url}
                   onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                  placeholder="예: /cases/형사·고소"
+                  placeholder={formData.urlType === "direct" ? "예: /cases/형사-고소" : "예: /search?q=강제집행"}
                   className="w-full px-3 py-2 border border-ink rounded-sm focus:ring-2 focus:ring-rust focus:border-transparent bg-paper font-sans text-sm"
                   required
                 />
+                <p className="text-xs text-muted mt-1 font-sans">
+                  키워드나 카테고리를 변경하면 URL이 자동으로 생성됩니다
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -352,7 +423,7 @@ export default function AdminKeywordsPage() {
                   </label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
                     className="w-full px-3 py-2 border border-ink rounded-sm focus:ring-2 focus:ring-rust focus:border-transparent bg-paper font-sans text-sm"
                   >
                     <option value="">선택</option>

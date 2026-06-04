@@ -832,7 +832,7 @@ function WritePageContent() {
                 {showProcedure ? <span>▲</span> : <span>▼</span>}
                 절차 정보
                 {Object.values(procedureMeta).some(v => v.trim() !== "") && <span className="text-rust ml-1">●</span>}
-                <span className="text-muted/50 ml-1">(법률 절차 글에만 입력)</span>
+                <span className="text-muted ml-1">(법률 절차 글에만 입력)</span>
               </button>
 
               {showProcedure && (
@@ -874,7 +874,7 @@ function WritePageContent() {
                   <div className="sm:col-span-2">
                     <label className="block text-xs text-muted mb-1">
                       사건 진행 타임라인
-                      <span className="text-muted/50 ml-1 font-normal">(→ 로 구분)</span>
+                      <span className="text-muted ml-1 font-normal">(→ 로 구분)</span>
                     </label>
                     <input
                       type="text"
