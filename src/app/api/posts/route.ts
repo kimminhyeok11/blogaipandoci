@@ -618,6 +618,16 @@ export async function PUT(request: Request) {
       });
     }
 
+    // 캐시 즉시 갱신 (수정 시)
+    if (published) {
+      revalidatePath("/", "page");
+      revalidatePath("/posts", "page");
+      revalidatePath(`/posts/${slug}`, "page");
+      revalidatePath("/tags", "page");
+      revalidatePath("/situations", "page");
+      revalidatePath("/cases", "page");
+    }
+
     // embedding 재생성 (비동기, 발행 상태일 때만)
     if (published && data?.id && process.env.OPENAI_API_KEY) {
       const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
