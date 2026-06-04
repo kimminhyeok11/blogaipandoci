@@ -88,7 +88,9 @@ export function OrganizationSchema() {
       name: "대한민국",
     },
     publishingPrinciples: `${SITE_URL}/about`,
-    sameAs: [],
+    sameAs: [
+      "https://www.threads.com/@ilovemom_2026",
+    ],
   };
   return (
     <script
