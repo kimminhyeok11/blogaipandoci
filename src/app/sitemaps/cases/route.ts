@@ -49,12 +49,23 @@ export async function GET() {
       console.warn("[Sitemap/Cases] No active categories found");
     }
 
-  const caseXml = caseTypes.map((ct: string) => `  <url>
-    <loc>${escapeXml(`${baseUrl}/cases/${encodeURIComponent(ct)}`)}</loc>
+  const caseXml = caseTypes.map((ct: string) => {
+    // slug가 percent-encoded되어 있으면 디코딩 (sitemap 오류 방지)
+    let sitemapSlug = ct;
+    try {
+      if (ct && ct.includes('%')) {
+        sitemapSlug = decodeURIComponent(ct);
+      }
+    } catch {
+      // 디코딩 실패 시 원본 유지
+    }
+    return `  <url>
+    <loc>${escapeXml(`${baseUrl}/cases/${sitemapSlug}`)}</loc>
     <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-  </url>`).join("\n");
+  </url>`;
+  }).join("\n");
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

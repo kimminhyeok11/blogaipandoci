@@ -107,7 +107,7 @@ export function ProcedureProgressBar({ post }: Props) {
                           ? `${accentBg} text-white ring-2 ${accentRing} ring-offset-1`
                           : isPast
                           ? "bg-rule/40 text-muted"
-                          : "bg-paper border border-rule/50 text-muted/60",
+                          : "bg-paper border border-rule/50 text-muted",
                       ].join(" ")}
                     >
                       {isPast ? "✓" : i + 1}
@@ -115,7 +115,7 @@ export function ProcedureProgressBar({ post }: Props) {
                     <span
                       className={[
                         "font-sans text-2xs text-center max-w-[72px] leading-tight",
-                        isCurrent ? "text-ink font-semibold" : isPast ? "text-muted/60 line-through" : isNext ? "text-muted" : "text-muted/50",
+                        isCurrent ? "text-ink font-semibold" : isPast ? "text-muted line-through" : isNext ? "text-muted" : "text-muted",
                       ].join(" ")}
                     >
                       {step}
@@ -126,7 +126,7 @@ export function ProcedureProgressBar({ post }: Props) {
                       </span>
                     )}
                     {isNext && !isCurrent && (
-                      <span className="font-sans text-2xs px-1.5 py-0.5 rounded-sm border border-rule/40 text-muted/70 whitespace-nowrap">
+                      <span className="font-sans text-2xs px-1.5 py-0.5 rounded-sm border border-rule/40 text-muted whitespace-nowrap">
                         다음
                       </span>
                     )}
@@ -157,7 +157,7 @@ export function ProcedureProgressBar({ post }: Props) {
               </div>
             )}
             {current_stage && next_stage && (
-              <div className="flex items-center gap-1 text-muted/40">
+              <div className="flex items-center gap-1 text-muted">
                 <span className="w-6 h-px bg-rule/40 block" />
                 <span className="text-xs">→</span>
                 <span className="w-6 h-px bg-rule/40 block" />
@@ -168,7 +168,7 @@ export function ProcedureProgressBar({ post }: Props) {
                 <div className="w-3.5 h-3.5 rounded-full border-2 border-rule/40 bg-paper" />
                 <div className="flex flex-col">
                   <span className="text-sm text-muted">{next_stage}</span>
-                  <span className="font-sans text-2xs text-muted/60">다음 단계</span>
+                  <span className="font-sans text-2xs text-muted">다음 단계</span>
                 </div>
               </div>
             )}

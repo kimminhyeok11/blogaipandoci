@@ -311,7 +311,7 @@ export default async function HomePage() {
                           post.user.nickname || post.user.email?.split("@")[0] || "기고가"
                         )
                       ) : (
-                        <span className="text-muted/60">작성자 미상</span>
+                        <span className="text-muted">작성자 미상</span>
                       )}
                     </span>
                   </div>

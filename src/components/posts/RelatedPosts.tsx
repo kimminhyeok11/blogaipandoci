@@ -70,9 +70,9 @@ export function RelatedPosts({ posts, currentPostId }: RelatedPostsProps) {
                   {post.excerpt}
                 </p>
               )}
-              <div className="flex items-center justify-between mt-3 text-xs text-muted/80 font-sans border-t border-rule/30 pt-3">
+              <div className="flex items-center justify-between mt-3 text-xs text-muted font-sans border-t border-rule/30 pt-3">
                 <span>{post.view_count.toLocaleString()}회 읽음</span>
-                <span className="text-rust/70 group-hover:text-rust transition-colors">
+                <span className="text-rust group-hover:text-rust transition-colors">
                   자세히 보기 →
                 </span>
               </div>
