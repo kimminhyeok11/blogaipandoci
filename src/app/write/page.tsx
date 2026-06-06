@@ -383,19 +383,9 @@ function WritePageContent() {
 
       // 태그 파싱
       const tagList = tags.split(",").map(t => t.trim()).filter(Boolean);
-      
-      // 자동 내부 링크 삽입 (발행 시에만 적용)
+
+      // 내부 링크 및 관련 글 섹션은 API에서 처리 (중복 방지)
       let processedContent = content.trim();
-      if (published && existingPosts.length > 0) {
-        // 수정 모드: editSlug, 신규: 생성된 slug
-        const currentSlug = isEditMode ? editSlug : slug;
-        processedContent = autoInsertInternalLinks(processedContent, currentSlug || undefined);
-        // 링크가 삽입되었으면 content 상태도 업데이트 (에디터에 반영)
-        if (processedContent !== content.trim()) {
-          setContent(processedContent);
-          showToast('자동으로 관련 글 링크가 삽입되었습니다', 'info');
-        }
-      }
 
       // 메타 설명 자동 생성 (본문 기반, excerpt와 중복 방지)
       const generateMetaDescription = (title: string, content: string): string => {
