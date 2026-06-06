@@ -141,6 +141,20 @@ const getPost = cache(async function getPost(slug: string): Promise<Post | null>
     userData = user;
   }
 
+  // user 조회 실패 시 기본값 설정
+  if (!userData && postData.user_id) {
+    console.warn('[getPost] User not found for user_id:', postData.user_id);
+    userData = {
+      id: postData.user_id,
+      nickname: null,
+      email: null,
+      role: null,
+      avatar_url: null,
+      created_at: null,
+      updated_at: null,
+    };
+  }
+
   // 태그 별도 조회 (post_tags 조인 테이블 경유)
   const { data: postTagsData } = await supabase
     .from("post_tags")
@@ -752,7 +766,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
               {/* 본문 내용 - max-w-article로 중앙 정렬 */}
               <div className="article-body-content">
-                <PostContent contentMarkdown={post.content} removeFirstImage={!!post.cover_image} />
+                <PostContent contentMarkdown={post.content} removeFirstImage={!!post.cover_image} coverImageUrl={post.cover_image || undefined} />
               </div>
 
               {/* 절차 실무 정보 (방문 기관, 자주 하는 실수) */}

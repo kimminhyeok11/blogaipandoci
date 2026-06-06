@@ -533,17 +533,18 @@ function WritePageContent() {
         }
 
         showToast(published ? "글이 발행되었습니다." : "임시 저장되었습니다.", "success");
-        
+
         // 임시 저장 데이터 정리
         autoSave.clear();
-        
+
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
-          await notifyIndexNow(`/posts/${slug}`, session?.access_token);
+          await notifyIndexNow(`/posts/${newPost.slug}`, session?.access_token);
         }
-        
+
         // window.location으로 강제 풀 리로드 → revalidatePath 이후 최신 내용 즉시 반영
-        window.location.href = `/posts/${slug}`;
+        // API에서 반환한 실제 slug 사용 (중복 시 suffix 추가됨)
+        window.location.href = `/posts/${newPost.slug}`;
       }
     } catch (err) {
       console.error("저장 오류:", err);
