@@ -391,8 +391,10 @@ function WritePageContent() {
       const generateMetaDescription = (title: string, content: string): string => {
         // 본문에서 첫 문장 추출
         const firstSentence = content.split(/[.!?]/)[0]?.trim() || "";
-        // 제목 + 첫 문장 조합 (최대 155자)
-        const combined = `${title} - ${firstSentence}`;
+        // 첫 문장이 없으면 본문 앞부분 요약
+        const summary = firstSentence || content.slice(0, 100).replace(/[#*`\[\]()!]/g, "").trim();
+        // 제목 + 요약 조합 (최대 155자)
+        const combined = summary ? `${title} - ${summary}` : title;
         return combined.slice(0, 155);
       };
 
