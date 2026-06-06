@@ -167,10 +167,10 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
       if (keywordIdx === -1) continue;
       if (isExcluded(keywordIdx)) continue;
 
-      // 첫 번째 등장 위치에만 링크 삽입
+      // 첫 번째 등장 위치에만 링크 삽입 (HTML 형식 통일)
       result =
         result.slice(0, keywordIdx) +
-        `[${keyword}](/posts/${post.slug})` +
+        `<a href="/posts/${post.slug}" class="internal-context-link text-rust hover:text-rust-light border-b border-rust/30 hover:border-rust transition-colors">${keyword}</a>` +
         result.slice(keywordIdx + keyword.length);
 
       usedKeywords.add(keyword);
@@ -188,8 +188,8 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
 // 본문 하단에 관련 글 링크 마크다운 삽입 + 본문 인라인 링크 삽입
 // 이전 발행 시 삽입된 인라인 내부 링크 제거 (재발행 시 최신 슬러그로 교체하기 위해)
 function removeInjectedInlineLinks(content: string): string {
-  // [키워드](/posts/슬러그) 형태의 링크를 키워드 텍스트로만 복원
-  return content.replace(/\[([^\]]+)\]\(\/posts\/[^)]+\)/g, '$1');
+  // HTML <a> 태그 형태의 링크를 키워드 텍스트로만 복원
+  return content.replace(/<a[^>]*href=["']\/posts\/[^"']+["'][^>]*>([^<]+)<\/a>/gi, '$1');
 }
 
 function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
