@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { notifyIndexNow } from "@/lib/indexnow";
 import { refreshSituationsCache } from "@/lib/situations";
-import { addInternalLinks } from "@/lib/internal-links";
+import { addInternalLinks, getCachedKeywords } from "@/lib/internal-links";
 
 const makeAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -425,7 +425,8 @@ export async function POST(request: Request) {
     let finalContent = content;
     if (published) {
       // DB 키워드 기반 내부 링크 추가 (마크다운 형식)
-      finalContent = addInternalLinks(content, 5);
+      const keywords = await getCachedKeywords();
+      finalContent = addInternalLinks(content, 5, keywords);
 
       // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
       const relatedPosts = await findRelatedPosts(serviceSupabase, title, finalSlug);
@@ -625,7 +626,8 @@ export async function PUT(request: Request) {
       console.log('[PUT] received content has 관련글:', content.includes('### 📌 관련 글') || content.includes('### 관련 글'));
 
       // DB 키워드 기반 내부 링크 추가 (마크다운 형식)
-      finalContent = addInternalLinks(content, 5);
+      const keywords = await getCachedKeywords();
+      finalContent = addInternalLinks(content, 5, keywords);
 
       // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
       const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);

@@ -212,14 +212,19 @@ export function addInternalLinks(
     if (totalLinks >= maxTotalLinks) break;
     if (linkedKeywords.has(item.keyword)) continue;
 
-    // 키워드 탐색 (마크다운 링크 제외)
-    const keywordIndex = result.indexOf(item.keyword);
-    if (keywordIndex === -1) continue;
+    // 링크 삽입 (마크다운 형식)
+    const escapedKeyword = item.keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const keywordRegex = new RegExp(`(${escapedKeyword})`, "i");
+
+    const match = result.match(keywordRegex);
+    if (!match || match.index === undefined) continue;
+
+    const keywordIndex = match.index;
 
     // 이미 링크된 영역 확인
     const beforeText = result.slice(0, keywordIndex);
     const lastOpenLink = beforeText.lastIndexOf("[");
-    const lastCloseLink = beforeText.lastIndexOf("](");
+    const lastCloseLink = beforeText.lastIndexOf("]");
 
     // 이미 링크 내부에 있는지 확인
     if (lastOpenLink > lastCloseLink) {
@@ -227,9 +232,10 @@ export function addInternalLinks(
     }
 
     // 코드 블록 내부 확인
-    const lastCodeBlock = beforeText.lastIndexOf("```");
-    const lastCodeEnd = beforeText.lastIndexOf("```");
-    if (lastCodeBlock > lastCodeEnd) {
+    const codeBlockMatches = beforeText.match(/```/g);
+    const codeBlockCount = codeBlockMatches ? codeBlockMatches.length : 0;
+    if (codeBlockCount % 2 !== 0) {
+      // 홀수면 코드 블록 내부
       continue;
     }
 
@@ -239,21 +245,14 @@ export function addInternalLinks(
     );
     if (tooClose) continue;
 
-    // 링크 삽입 (마크다운 형식)
-    const escapedKeyword = item.keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const keywordRegex = new RegExp(`(${escapedKeyword})`, "i");
+    const anchorText = item.anchorVariants?.[0] || item.keyword;
+    const replacement = `[${anchorText}](${item.url})`;
 
-    const match = result.match(keywordRegex);
-    if (match && match.index !== undefined) {
-      const anchorText = item.anchorVariants?.[0] || item.keyword;
-      const replacement = `[${anchorText}](${item.url})`;
+    result = result.slice(0, keywordIndex) + replacement + result.slice(keywordIndex + match[0].length);
 
-      result = result.slice(0, match.index) + replacement + result.slice(match.index + match[0].length);
-
-      linkedKeywords.add(item.keyword);
-      linkedPositions.push(match.index);
-      totalLinks++;
-    }
+    linkedKeywords.add(item.keyword);
+    linkedPositions.push(keywordIndex);
+    totalLinks++;
   }
 
   return result;
