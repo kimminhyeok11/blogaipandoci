@@ -75,7 +75,7 @@ function calculateTitleSimilarity(titleA: string, titleB: string): number {
   return jaccardScore * 0.5 + substringScore * 0.3 + keywordScore * 0.2;
 }
 
-// 관련 글 찾기: 제목 유사도 기반
+// 관련 글 찾기: 벡터 검색 기반 (embedding 사용)
 async function findRelatedPosts(
   serviceSupabase: any,
   title: string,
@@ -83,7 +83,95 @@ async function findRelatedPosts(
   maxCount: number = 5
 ): Promise<{ title: string; slug: string }[]> {
   try {
-    // 기존 발행된 글 전체 조회
+    // OpenAI API 키가 없으면 기존 방식 사용
+    if (!process.env.OPENAI_API_KEY) {
+      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+    }
+
+    // 현재 제목 embedding 생성
+    const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model: "text-embedding-3-small", input: title }),
+    });
+
+    if (!embeddingResponse.ok) {
+      console.error("Embedding 생성 실패, 기존 방식 사용");
+      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+    }
+
+    const embeddingData = await embeddingResponse.json();
+    const queryVector = embeddingData?.data?.[0]?.embedding;
+
+    if (!Array.isArray(queryVector) || queryVector.length !== 1536) {
+      console.error("잘못된 벡터 차원, 기존 방식 사용");
+      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+    }
+
+    // embedding이 있는 글들 조회
+    const { data: posts, error } = await serviceSupabase
+      .from('posts')
+      .select('title, slug, embedding')
+      .eq('published', true)
+      .not('published_at', 'is', null)
+      .neq('slug', excludeSlug)
+      .not('embedding', 'is', null)
+      .order('published_at', { ascending: false })
+      .limit(200);
+
+    if (error || !posts || posts.length === 0) {
+      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+    }
+
+    // 코사인 유사도 계산
+    const scored = posts
+      .map((post: any) => {
+        const embedding = JSON.parse(post.embedding);
+        if (!Array.isArray(embedding) || embedding.length !== 1536) return null;
+
+        const similarity = cosineSimilarity(queryVector, embedding);
+        return { ...post, score: similarity };
+      })
+      .filter((p: any) => p !== null && p.score >= 0.5) // 유사도 0.5 이상만
+      .sort((a: any, b: any) => b.score - a.score)
+      .slice(0, maxCount)
+      .map(({ title, slug }: any) => ({ title, slug }));
+
+    return scored.length > 0 ? scored : findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+  } catch (err) {
+    console.error('벡터 검색 실패, 기존 방식 사용:', err);
+    return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+  }
+}
+
+// 코사인 유사도 계산
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < vecA.length; i++) {
+    const a = vecA[i] ?? 0;
+    const b = vecB[i] ?? 0;
+    dotProduct += a * b;
+    normA += a * a;
+    normB += b * b;
+  }
+
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+// 기존 방식: 제목 유사도 기반 (폴백)
+async function findRelatedPostsByTitle(
+  serviceSupabase: any,
+  title: string,
+  excludeSlug: string,
+  maxCount: number = 5
+): Promise<{ title: string; slug: string }[]> {
+  try {
     const { data: posts, error } = await serviceSupabase
       .from('posts')
       .select('title, slug')
@@ -95,13 +183,11 @@ async function findRelatedPosts(
 
     if (error || !posts || posts.length === 0) return [];
 
-    // 각 글에 대해 제목 유사도 계산
     const scored = posts.map((post: any) => {
       const similarity = calculateTitleSimilarity(title, post.title || '');
       return { ...post, score: similarity };
     });
 
-    // 유사도 높은 순 정렬, 최소 0.1 이상 매칭된 것만
     return scored
       .filter((p: any) => p.score >= 0.1)
       .sort((a: any, b: any) => b.score - a.score)
