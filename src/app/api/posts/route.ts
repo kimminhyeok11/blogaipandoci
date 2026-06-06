@@ -167,10 +167,10 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
       if (keywordIdx === -1) continue;
       if (isExcluded(keywordIdx)) continue;
 
-      // 첫 번째 등장 위치에만 링크 삽입 (HTML 형식 통일)
+      // 첫 번째 등장 위치에만 링크 삽입 (마크다운 형식)
       result =
         result.slice(0, keywordIdx) +
-        `<a href="/posts/${post.slug}" class="internal-context-link text-rust hover:text-rust-light border-b border-rust/30 hover:border-rust transition-colors">${keyword}</a>` +
+        `[${keyword}](/posts/${post.slug})` +
         result.slice(keywordIdx + keyword.length);
 
       usedKeywords.add(keyword);
@@ -188,8 +188,8 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
 // 본문 하단에 관련 글 링크 마크다운 삽입 + 본문 인라인 링크 삽입
 // 이전 발행 시 삽입된 인라인 내부 링크 제거 (재발행 시 최신 슬러그로 교체하기 위해)
 function removeInjectedInlineLinks(content: string): string {
-  // HTML <a> 태그 형태의 링크를 키워드 텍스트로만 복원
-  return content.replace(/<a[^>]*href=["']\/posts\/[^"']+["'][^>]*>([^<]+)<\/a>/gi, '$1');
+  // 마크다운 [키워드](/posts/슬러그) 형태의 링크를 키워드 텍스트로만 복원
+  return content.replace(/\[([^\]]+)\]\(\/posts\/[^)]+\)/g, '$1');
 }
 
 function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
@@ -333,10 +333,7 @@ export async function POST(request: Request) {
     // 발행 시 관련 글 자동 삽입
     let finalContent = content;
     if (published) {
-      // DB 키워드 기반 내부 링크 추가
-      finalContent = await addInternalLinks(content, 5);
-
-      // 제목 유사도 기반 관련 글 섹션 추가
+      // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
       const relatedPosts = await findRelatedPosts(serviceSupabase, title, finalSlug);
       finalContent = appendRelatedLinks(finalContent, relatedPosts);
     }
