@@ -424,6 +424,9 @@ export async function POST(request: Request) {
     // 발행 시 관련 글 자동 삽입
     let finalContent = content;
     if (published) {
+      // DB 키워드 기반 내부 링크 추가 (마크다운 형식)
+      finalContent = addInternalLinks(content, 5);
+
       // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
       const relatedPosts = await findRelatedPosts(serviceSupabase, title, finalSlug);
       finalContent = appendRelatedLinks(finalContent, relatedPosts);
@@ -620,6 +623,9 @@ export async function PUT(request: Request) {
     let finalContent = content;
     if (published) {
       console.log('[PUT] received content has 관련글:', content.includes('### 📌 관련 글') || content.includes('### 관련 글'));
+
+      // DB 키워드 기반 내부 링크 추가 (마크다운 형식)
+      finalContent = addInternalLinks(content, 5);
 
       // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
       const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);

@@ -193,139 +193,66 @@ export async function getCachedKeywords(): Promise<KeywordLink[]> {
 }
 
 export function addInternalLinks(
-  html: string,
+  markdown: string,
   maxTotalLinks: number = 5,
   keywords?: KeywordLink[]
 ): string {
-  if (!html) return html;
+  if (!markdown) return markdown;
 
   // 키워드가 없으면 빈 배열 사용 (링크 생성 안됨)
   const keywordsToUse = keywords && keywords.length > 0 ? keywords : [];
-  
-  let result = html;
+
+  let result = markdown;
   const linkedKeywords = new Set<string>();
   const linkedPositions: number[] = [];
   let totalLinks = 0;
 
-  // 문단 단위로 처리
-  const paragraphs = extractParagraphs(html);
-
-  for (const para of paragraphs) {
+  // 키워드 우선순위 순으로 처리
+  for (const item of keywordsToUse) {
     if (totalLinks >= maxTotalLinks) break;
+    if (linkedKeywords.has(item.keyword)) continue;
 
-    let paraModified = false;
-    let paraOffset = 0;
+    // 키워드 탐색 (마크다운 링크 제외)
+    const keywordIndex = result.indexOf(item.keyword);
+    if (keywordIndex === -1) continue;
 
-    // 키워드 우선순위 순으로 처리
-    for (const item of keywordsToUse) {
-      if (totalLinks >= maxTotalLinks) break;
-      if (linkedKeywords.has(item.keyword)) continue; // 이미 링크된 키워드 제외
-      if (paraModified) break; // 문단당 1개만
+    // 이미 링크된 영역 확인
+    const beforeText = result.slice(0, keywordIndex);
+    const lastOpenLink = beforeText.lastIndexOf("[");
+    const lastCloseLink = beforeText.lastIndexOf("](");
 
-      // 키워드 탐색 (HTML 태그 제외한 텍스트에서)
-      const cleanText = para.text.replace(/<[^>]*>/g, "");
-      const keywordIndex = cleanText.indexOf(item.keyword);
+    // 이미 링크 내부에 있는지 확인
+    if (lastOpenLink > lastCloseLink) {
+      continue;
+    }
 
-      if (keywordIndex === -1) continue;
+    // 코드 블록 내부 확인
+    const lastCodeBlock = beforeText.lastIndexOf("```");
+    const lastCodeEnd = beforeText.lastIndexOf("```");
+    if (lastCodeBlock > lastCodeEnd) {
+      continue;
+    }
 
-      // 원본 HTML에서의 위치 계산
-      let textPos = 0;
-      let htmlPos = 0;
-      let foundInHtml = -1;
+    // 주변 100자 내 링크 중복 확인
+    const tooClose = linkedPositions.some(
+      (pos) => Math.abs(pos - keywordIndex) < 100
+    );
+    if (tooClose) continue;
 
-      for (let i = 0; i < para.text.length; i++) {
-        if (para.text[i] === "<") {
-          // 태그 시작 - 태그 내부는 텍스트 위치 증가 없음
-          while (i < para.text.length && para.text[i] !== ">") {
-            i++;
-          }
-        } else {
-          if (textPos === keywordIndex) {
-            foundInHtml = para.start + htmlPos;
-            break;
-          }
-          textPos++;
-        }
-        htmlPos++;
-      }
+    // 링크 삽입 (마크다운 형식)
+    const escapedKeyword = item.keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const keywordRegex = new RegExp(`(${escapedKeyword})`, "i");
 
-      if (foundInHtml === -1) continue;
-
-      // 이미 a 태그 내부인지 확인 (href 속성값 내부 제외)
-      const beforeHtml = html.slice(0, foundInHtml);
-      const lastOpenTag = beforeHtml.lastIndexOf("<");
-      const lastCloseTag = beforeHtml.lastIndexOf(">");
-      
-      // <a ...> 태그 내부에 있는지 확인
-      if (lastOpenTag > lastCloseTag) {
-        // 현재 태그 내부 - a 태그인지 확인
-        const tagContent = html.slice(lastOpenTag, foundInHtml);
-        if (tagContent.toLowerCase().startsWith("<a ") || tagContent.toLowerCase().startsWith("<a>")) {
-          continue; // a 태그 내부면 변환하지 않음
-        }
-      }
-      
-      // a 태그 내부의 텍스트인지 확인 (닫히지 않은 a 태그 검색)
-      const lastOpenA = beforeHtml.toLowerCase().lastIndexOf("<a ");
-      const lastCloseA = beforeHtml.toLowerCase().lastIndexOf("</a>");
-      if (lastOpenA > lastCloseA) {
-        // 현재 a 태그 내부에 있음
-        continue;
-      }
-
-      // 보호 영역 확인
-      if (isProtectedArea(html, foundInHtml)) continue;
-
-      // 주변 100자 내 링크 중복 확인
-      const tooClose = linkedPositions.some(
-        (pos) => Math.abs(pos - foundInHtml) < 100
-      );
-      if (tooClose) continue;
-
-      // 자연문장 내부 확인 (문장 중간에 있는지)
-      const paraTextBefore = cleanText.slice(0, keywordIndex);
-      const paraTextAfter = cleanText.slice(keywordIndex + item.keyword.length);
-      const sentenceBoundaries = findSentenceBoundaries(cleanText);
-      
-      let inMiddleOfSentence = false;
-      for (const boundary of sentenceBoundaries) {
-        if (keywordIndex > boundary.start && keywordIndex < boundary.end - 10) {
-          // 문장 끝에서 10자 이상 떨어져 있어야 함
-          const wordsBefore = paraTextBefore.trim().split(/\s+/).length;
-          const wordsAfter = paraTextAfter.trim().split(/\s+/).length;
-          
-          // 앞뒤로 최소 3단어씩 있어야 자연스러운 문장 내부
-          if (wordsBefore >= 3 && wordsAfter >= 3) {
-            inMiddleOfSentence = true;
-          }
-        }
-      }
-      
-      if (!inMiddleOfSentence) continue;
-
-      // 링크 삽입
-      const escapedKeyword = item.keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const keywordRegex = new RegExp(`(${escapedKeyword})`, "i");
-      
-      // anchor text 다양화
+    const match = result.match(keywordRegex);
+    if (match && match.index !== undefined) {
       const anchorText = item.anchorVariants?.[0] || item.keyword;
-      
-      // 해당 위치에서만 치환
-      const beforeKeyword = result.slice(0, foundInHtml + paraOffset);
-      const afterKeyword = result.slice(foundInHtml + paraOffset);
-      
-      const replacement = `<a href="${item.url}" class="internal-context-link text-rust hover:text-rust-light border-b border-rust/30 hover:border-rust transition-colors" data-internal-link="true" data-processed="true">${anchorText}</a>`;
-      
-      const match = afterKeyword.match(keywordRegex);
-      if (match && match.index !== undefined) {
-        result = beforeKeyword + afterKeyword.slice(0, match.index) + replacement + afterKeyword.slice(match.index + match[0].length);
-        
-        linkedKeywords.add(item.keyword);
-        linkedPositions.push(foundInHtml);
-        totalLinks++;
-        paraModified = true;
-        paraOffset += replacement.length - match[0].length;
-      }
+      const replacement = `[${anchorText}](${item.url})`;
+
+      result = result.slice(0, match.index) + replacement + result.slice(match.index + match[0].length);
+
+      linkedKeywords.add(item.keyword);
+      linkedPositions.push(match.index);
+      totalLinks++;
     }
   }
 
