@@ -245,8 +245,9 @@ export async function GET(request: Request) {
       const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
       if (!authUser) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
 
-      const { data: profile } = await serviceSupabase.from("users").select("role").eq("id", authUser.id).single();
-      if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
+      const { data: profile, error: profileError } = await serviceSupabase.from("users").select("role").eq("id", authUser.id).single();
+      if (profileError || !profile) return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
+      if (profile.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
 
       const { data, error, count } = await serviceSupabase
         .from("posts")
@@ -309,13 +310,17 @@ export async function POST(request: Request) {
     const userId = authUser.id;
 
     // 관리자만 글 작성 가능
-    const { data: profile } = await serviceSupabase
+    const { data: profile, error: profileError } = await serviceSupabase
       .from("users")
       .select("role")
       .eq("id", authUser.id)
       .single();
 
-    if (profile?.role !== "admin") {
+    if (profileError || !profile) {
+      return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
+    }
+
+    if (profile.role !== "admin") {
       return NextResponse.json({ error: "Forbidden - 관리자만 글을 작성할 수 있습니다" }, { status: 403 });
     }
 
@@ -495,9 +500,12 @@ export async function PUT(request: Request) {
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const { data: profile } = await serviceSupabase
+    const { data: profile, error: profileError } = await serviceSupabase
       .from("users").select("role").eq("id", authUser.id).single();
-    if (profile?.role !== "admin") {
+    if (profileError || !profile) {
+      return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
+    }
+    if (profile.role !== "admin") {
       return NextResponse.json({ error: "Forbidden - 관리자만 글을 수정할 수 있습니다" }, { status: 403 });
     }
 
@@ -526,11 +534,8 @@ export async function PUT(request: Request) {
     let finalContent = content;
     if (published) {
       console.log('[PUT] received content has 관련글:', content.includes('### 📌 관련 글') || content.includes('### 관련 글'));
-      
-      // DB 키워드 기반 내부 링크 추가
-      finalContent = await addInternalLinks(content, 5);
-      
-      // 제목 유사도 기반 관련 글 섹션 추가
+
+      // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
       const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
       console.log('[PUT] findRelatedPosts count:', relatedPosts.length);
       finalContent = appendRelatedLinks(finalContent, relatedPosts);
