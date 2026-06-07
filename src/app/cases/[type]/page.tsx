@@ -20,17 +20,12 @@ export async function generateStaticParams() {
     .eq("is_active", true);
 
   return (categories || []).map((cat: any) => ({
-    type: normalizeSlug(cat.slug),
+    type: cat.slug,
   }));
 }
 
 // generateStaticParams에 없는 slug도 런타임에 처리
 export const dynamicParams = true;
-
-// 슬러그 형식 변환 (중간점 → 하이픈)
-function normalizeSlug(slug: string): string {
-  return slug.replace(/·/g, "-");
-}
 
 // DB 기반 category 스타일 매핑 (slug → 스타일)
 // 하이픈 slug로 통일
@@ -109,11 +104,6 @@ const getCategoryBySlug = cache(async function getCategoryBySlug(slug: string): 
   }
 });
 
-// 슬러그 형식 변환 (하이픈 → 중간점) - DB 조회용
-function denormalizeSlug(slug: string): string {
-  return slug.replace(/-/g, "·");
-}
-
 // category_id 기반으로 posts 조회
 const getPostsByCategoryId = cache(async function getPostsByCategoryId(categoryId: string): Promise<CasePost[]> {
   try {
@@ -137,8 +127,7 @@ const getPostsByCategoryId = cache(async function getPostsByCategoryId(categoryI
 
 export async function generateMetadata({ params }: CaseTypePageProps): Promise<Metadata> {
   const slug = decodeURIComponent(params.type);
-  const dbSlug = denormalizeSlug(slug);
-  const category = await getCategoryBySlug(dbSlug);
+  const category = await getCategoryBySlug(slug);
 
   if (!category) return {};
 
@@ -171,10 +160,9 @@ export async function generateMetadata({ params }: CaseTypePageProps): Promise<M
 
 export default async function CaseTypePage({ params }: CaseTypePageProps) {
   const slug = decodeURIComponent(params.type);
-  const dbSlug = denormalizeSlug(slug);
 
   // ✅ DB 기반 category 존재 여부 확인 (하드코딩 상수 제거)
-  const category = await getCategoryBySlug(dbSlug);
+  const category = await getCategoryBySlug(slug);
   if (!category) {
     notFound();
   }
