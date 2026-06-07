@@ -75,7 +75,7 @@ export default function ValidateLinksPage() {
     if (!result) return;
     setBatchRematching(true);
     try {
-      const issuesWithSuggestion = filteredIssues.filter(issue => issue.suggestedSlug);
+      const issuesWithSuggestion = result.issues.filter(issue => issue.suggestedSlug);
       for (const issue of issuesWithSuggestion) {
         await handleRematch(issue);
       }
