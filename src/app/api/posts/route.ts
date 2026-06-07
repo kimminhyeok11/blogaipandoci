@@ -165,10 +165,7 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
     normB += b * b;
   }
 
-  const denominator = Math.sqrt(normA) * Math.sqrt(normB);
-  if (denominator === 0) return 0; // 제로 나눗셈 방지
-
-  return dotProduct / denominator;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
 // 기존 방식: 제목 유사도 기반 (폴백)

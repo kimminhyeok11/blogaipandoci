@@ -192,12 +192,6 @@ export async function getCachedKeywords(): Promise<KeywordLink[]> {
   return keywords;
 }
 
-// 캐시 무효화 (키워드 변경 시 호출)
-export function invalidateKeywordsCache(): void {
-  cachedKeywords = null;
-  lastCacheTime = 0;
-}
-
 export function addInternalLinks(
   markdown: string,
   maxTotalLinks: number = 5,
