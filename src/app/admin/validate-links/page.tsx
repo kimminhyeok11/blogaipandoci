@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Link2, Image as ImageIcon, RefreshCw, ExternalLink, CheckCircle, Wrench } from "lucide-react";
+import { Link2, RefreshCw, ExternalLink, CheckCircle, Wrench } from "lucide-react";
 
 interface Issue {
   type: "internal_link";
