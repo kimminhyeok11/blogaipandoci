@@ -648,10 +648,16 @@ export async function PUT(request: Request) {
       finalContent = addInternalLinks(content, 5, keywords);
 
       // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
-      const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
-      console.log('[PUT] findRelatedPosts count:', relatedPosts.length);
-      finalContent = appendRelatedLinks(finalContent, relatedPosts);
-      console.log('[PUT] finalContent has 관련글:', finalContent.includes('### 📌 관련 글'));
+      // 사용자가 이미 관련글 섹션을 지웠으면 다시 추가하지 않음
+      const hasRelatedSection = content.includes('### 📌 관련 글') || content.includes('### 관련 글');
+      if (!hasRelatedSection) {
+        const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
+        console.log('[PUT] findRelatedPosts count:', relatedPosts.length);
+        finalContent = appendRelatedLinks(finalContent, relatedPosts);
+        console.log('[PUT] finalContent has 관련글:', finalContent.includes('### 📌 관련 글'));
+      } else {
+        console.log('[PUT] 사용자가 관련글 섹션을 지웠으므로 다시 추가하지 않음');
+      }
     }
 
     // case_type 변경 시 category_id 자동 매핑
