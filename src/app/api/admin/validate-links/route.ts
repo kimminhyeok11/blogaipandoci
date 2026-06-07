@@ -20,15 +20,10 @@ function extractInternalLinks(content: string): string[] {
   return links;
 }
 
-// 이미지 URL에서 슬러그 추출
-function extractImageSlug(imageUrl: string): string | null {
-  if (!imageUrl) return null;
-  // Supabase storage URL에서 파일명 추출
-  const match = imageUrl.match(/\/([^\/]+)\.(jpg|jpeg|png|webp|avif|gif)$/i);
-  return match && match[1] ? match[1] : null;
-}
+// 이미지 URL 검증 제거 (cover_image는 게시물 슬러그와 관계 없음)
+// 이미지 URL은 별도 검증 불필요
 
-// 제목에서 슬러그 추정
+// 제목에서 슬러그 추정 (더 정확한 매칭)
 function estimateSlugFromTitle(title: string): string {
   return title
     .toLowerCase()
@@ -36,6 +31,31 @@ function estimateSlugFromTitle(title: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .trim();
+}
+
+// 제목으로 슬러그 찾기 (유사도 기반)
+function findSlugByTitle(title: string, titleToSlug: Map<string, string>): string | null {
+  // 정확히 일치하는 제목 찾기
+  if (titleToSlug.has(title)) {
+    return titleToSlug.get(title) || null;
+  }
+
+  // 슬러그 추정으로 찾기
+  const estimatedSlug = estimateSlugFromTitle(title);
+  const exactMatch = Array.from(titleToSlug.entries()).find(([_, slug]) => slug === estimatedSlug);
+  if (exactMatch) {
+    return exactMatch[1];
+  }
+
+  // 부분 일치 찾기 (제목의 일부가 포함된 경우)
+  const partialMatch = Array.from(titleToSlug.entries()).find(([t]) =>
+    t.includes(title) || title.includes(t)
+  );
+  if (partialMatch) {
+    return partialMatch[1];
+  }
+
+  return null;
 }
 
 export async function GET(request: Request) {
@@ -90,37 +110,20 @@ export async function GET(request: Request) {
       for (const linkSlug of internalLinks) {
         if (!actualSlugs.has(linkSlug)) {
           // 슬러그가 존재하지 않음
-          // 제목으로 슬러그 추정
-          const suggestedPost = Array.from(titleToSlug.entries()).find(([title]) =>
-            estimateSlugFromTitle(title) === linkSlug
-          );
+          // 제목으로 슬러그 찾기 (유사도 기반)
+          const suggestedSlug = findSlugByTitle(linkSlug, titleToSlug);
           issues.push({
             type: "internal_link",
             postId: post.id,
             postTitle: post.title,
             postSlug: post.slug,
             invalidSlug: linkSlug,
-            suggestedSlug: suggestedPost ? suggestedPost[1] : undefined,
+            suggestedSlug: suggestedSlug || undefined,
           });
         }
       }
 
-      // 이미지 URL 검증
-      const imageSlug = extractImageSlug(post.cover_image || "");
-      if (imageSlug && !actualSlugs.has(imageSlug)) {
-        // 이미지 파일명이 슬러그와 일치하지 않음
-        const suggestedPost = Array.from(titleToSlug.entries()).find(([title]) =>
-          estimateSlugFromTitle(title) === imageSlug
-        );
-        issues.push({
-          type: "image_url",
-          postId: post.id,
-          postTitle: post.title,
-          postSlug: post.slug,
-          invalidSlug: imageSlug,
-          suggestedSlug: suggestedPost ? suggestedPost[1] : undefined,
-        });
-      }
+      // 이미지 URL 검증 제거 (cover_image는 게시물 슬러그와 관계 없음)
     }
 
     return NextResponse.json({
@@ -152,16 +155,16 @@ export async function POST(request: Request) {
     if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
 
     const body = await request.json();
-    const { postId, invalidSlug, suggestedSlug, type } = body;
+    const { postId, invalidSlug, suggestedSlug } = body;
 
-    if (!postId || !invalidSlug || !suggestedSlug || !type) {
+    if (!postId || !invalidSlug || !suggestedSlug) {
       return NextResponse.json({ error: "필수 파라미터 부족" }, { status: 400 });
     }
 
     // 글 조회
     const { data: post, error: postError } = await admin
       .from("posts")
-      .select("id, content, cover_image")
+      .select("id, content")
       .eq("id", postId)
       .single();
 
@@ -169,43 +172,20 @@ export async function POST(request: Request) {
       throw new Error("글 조회 실패");
     }
 
-    let updatedContent = post.content;
-    let updatedCoverImage = post.cover_image;
-
     // 내부 링크 재매칭
-    if (type === "internal_link") {
-      updatedContent = post.content.replace(
-        new RegExp(`\\[([^\\]]+)\\]\\(\\/posts\\/${invalidSlug}\\)`, "g"),
-        `[$1](/posts/${suggestedSlug})`
-      );
-    }
+    const updatedContent = post.content.replace(
+      new RegExp(`\\[([^\\]]+)\\]\\(\\/posts\\/${invalidSlug}\\)`, "g"),
+      `[$1](/posts/${suggestedSlug})`
+    );
 
-    // 이미지 URL 재매칭
-    if (type === "image_url") {
-      if (post.cover_image) {
-        updatedCoverImage = post.cover_image.replace(
-          new RegExp(`/${invalidSlug}\\.(jpg|jpeg|png|webp|avif|gif)$`, "i"),
-          `/${suggestedSlug}.$1`
-        );
-      }
-    }
-
-    // DB 업데이트
-    const updateData: any = {};
-    if (type === "internal_link" && updatedContent !== post.content) {
-      updateData.content = updatedContent;
-    }
-    if (type === "image_url" && updatedCoverImage !== post.cover_image) {
-      updateData.cover_image = updatedCoverImage;
-    }
-
-    if (Object.keys(updateData).length === 0) {
+    if (updatedContent === post.content) {
       return NextResponse.json({ error: "변경사항 없음" }, { status: 400 });
     }
 
+    // DB 업데이트
     const { error: updateError } = await admin
       .from("posts")
-      .update(updateData)
+      .update({ content: updatedContent })
       .eq("id", postId);
 
     if (updateError) {

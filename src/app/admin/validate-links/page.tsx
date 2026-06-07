@@ -5,7 +5,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { Link2, Image as ImageIcon, RefreshCw, ExternalLink, CheckCircle, Wrench } from "lucide-react";
 
 interface Issue {
-  type: "internal_link" | "image_url";
+  type: "internal_link";
   postId: string;
   postTitle: string;
   postSlug: string;
@@ -23,7 +23,6 @@ export default function ValidateLinksPage() {
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<ValidationResult | null>(null);
-  const [filter, setFilter] = useState<"all" | "internal_link" | "image_url">("all");
   const [rematching, setRematching] = useState<string | null>(null);
   const [batchRematching, setBatchRematching] = useState(false);
 
@@ -58,7 +57,6 @@ export default function ValidateLinksPage() {
           postId: issue.postId,
           invalidSlug: issue.invalidSlug,
           suggestedSlug: issue.suggestedSlug,
-          type: issue.type,
         }),
       });
       const data = await response.json();
@@ -89,14 +87,12 @@ export default function ValidateLinksPage() {
   };
 
   useEffect(() => {
-    if (session) {
+    if (session && !result) {
       fetchValidation();
     }
-  }, [session]);
+  }, [session, result]);
 
-  const filteredIssues = result?.issues.filter((issue) =>
-    filter === "all" ? true : issue.type === filter
-  ) || [];
+  const filteredIssues = result?.issues || [];
 
   return (
     <div className="space-y-6">
@@ -156,34 +152,6 @@ export default function ValidateLinksPage() {
         </div>
       )}
 
-      {/* 필터 */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setFilter("all")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === "all" ? "bg-rust text-paper" : "bg-paper text-ink hover:bg-cream"
-          }`}
-        >
-          전체
-        </button>
-        <button
-          onClick={() => setFilter("internal_link")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === "internal_link" ? "bg-rust text-paper" : "bg-paper text-ink hover:bg-cream"
-          }`}
-        >
-          내부 링크
-        </button>
-        <button
-          onClick={() => setFilter("image_url")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === "image_url" ? "bg-rust text-paper" : "bg-paper text-ink hover:bg-cream"
-          }`}
-        >
-          이미지 URL
-        </button>
-      </div>
-
       {/* 로딩 */}
       {loading && (
         <div className="flex items-center justify-center py-12">
@@ -206,19 +174,13 @@ export default function ValidateLinksPage() {
           {filteredIssues.map((issue, index) => (
             <div key={index} className="bg-paper border border-ink rounded-sm p-4">
               <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${issue.type === "internal_link" ? "bg-blue-100" : "bg-purple-100"}`}>
-                  {issue.type === "internal_link" ? (
-                    <Link2 className="w-4 h-4 text-blue-600" />
-                  ) : (
-                    <ImageIcon className="w-4 h-4 text-purple-600" />
-                  )}
+                <div className="p-2 rounded-lg bg-blue-100">
+                  <Link2 className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      issue.type === "internal_link" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-                    }`}>
-                      {issue.type === "internal_link" ? "내부 링크" : "이미지 URL"}
+                    <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                      내부 링크
                     </span>
                     <span className="text-sm text-muted">
                       {issue.postTitle}
