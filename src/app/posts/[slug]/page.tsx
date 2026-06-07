@@ -27,12 +27,13 @@ const CommentsSection = dynamicImport(() => import("@/components/comments/Commen
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 
 // ISR: 1시간마다 재생성 (SSR + CDN 캐싱)
-// 빌드 시점: 최신 100개 글 미리 생성 (크롤러 색인 최적화)
+// 빌드 시점: 최신 50개 글만 미리 생성 (빌드 속도 최적화)
 // 첫 방문: SSR로 생성 → CDN/Edge 캐싱
 // 이후: 캐싱된 페이지 제공 → 1시간 후 재검증
 export const revalidate = 3600;
 
-// 빌드 시점에 최신 100개 게시글 미리 생성 (크롤러가 정적 HTML 수집)
+// 빌드 시점에 최신 50개 게시글만 미리 생성 (빌드 속도 최적화)
+// 나머지는 첫 방문 시 On-Demand ISR로 생성
 export async function generateStaticParams() {
   const supabase = getServerSupabase();
   const { data: posts } = await supabase
@@ -40,7 +41,7 @@ export async function generateStaticParams() {
     .select("slug")
     .eq("published", true)
     .order("published_at", { ascending: false })
-    .limit(100);
+    .limit(50);
 
   return (posts || []).map((post: any) => ({
     slug: post.slug,
