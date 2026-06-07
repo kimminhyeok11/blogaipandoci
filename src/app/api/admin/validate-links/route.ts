@@ -34,10 +34,19 @@ function estimateSlugFromTitle(title: string): string {
 }
 
 // 제목으로 슬러그 찾기 (유사도 기반)
-function findSlugByTitle(title: string, titleToSlug: Map<string, string>): string | null {
+function findSlugByTitle(
+  title: string,
+  titleToSlug: Map<string, string>,
+  categoryNameToSlug?: Map<string, string>
+): string | null {
   // 정확히 일치하는 제목 찾기
   if (titleToSlug.has(title)) {
     return titleToSlug.get(title) || null;
+  }
+
+  // 카테고리 name-slug 매핑에서 찾기 (cases/ 형식의 링크용)
+  if (categoryNameToSlug && categoryNameToSlug.has(title)) {
+    return categoryNameToSlug.get(title)!;
   }
 
   // 슬러그 추정으로 찾기
@@ -53,6 +62,16 @@ function findSlugByTitle(title: string, titleToSlug: Map<string, string>): strin
   );
   if (partialMatch) {
     return partialMatch[1];
+  }
+
+  // 카테고리 부분 일치 찾기
+  if (categoryNameToSlug) {
+    const categoryPartialMatch = Array.from(categoryNameToSlug.entries()).find(([t]) =>
+      t.includes(title) || title.includes(t)
+    );
+    if (categoryPartialMatch) {
+      return categoryPartialMatch[1];
+    }
   }
 
   return null;
@@ -82,6 +101,16 @@ export async function GET(request: Request) {
       throw new Error("글 조회 실패");
     }
 
+    // 카테고리 조회 (cases/ 형식의 링크 검증용)
+    const { data: categories, error: categoriesError } = await admin
+      .from("categories")
+      .select("name, slug")
+      .eq("is_active", true);
+
+    if (categoriesError) {
+      console.error("카테고리 조회 오류:", categoriesError);
+    }
+
     // 실제 슬러그 목록
     const actualSlugs = new Map<string, { id: string; title: string }>();
     posts.forEach(post => {
@@ -92,6 +121,12 @@ export async function GET(request: Request) {
     const titleToSlug = new Map<string, string>();
     posts.forEach(post => {
       titleToSlug.set(post.title, post.slug);
+    });
+
+    // 카테고리 name-slug 매핑 (cases/ 형식의 링크 검증용)
+    const categoryNameToSlug = new Map<string, string>();
+    (categories || []).forEach(cat => {
+      categoryNameToSlug.set(cat.name, cat.slug);
     });
 
     const issues: Array<{
@@ -111,7 +146,7 @@ export async function GET(request: Request) {
         if (!actualSlugs.has(linkSlug)) {
           // 슬러그가 존재하지 않음
           // 제목으로 슬러그 찾기 (유사도 기반)
-          const suggestedSlug = findSlugByTitle(linkSlug, titleToSlug);
+          const suggestedSlug = findSlugByTitle(linkSlug, titleToSlug, categoryNameToSlug);
           issues.push({
             type: "internal_link",
             postId: post.id,
