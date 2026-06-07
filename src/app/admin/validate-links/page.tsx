@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { AlertTriangle, Link2, Image as ImageIcon, RefreshCw, ExternalLink, CheckCircle } from "lucide-react";
+import { AlertTriangle, Link2, Image as ImageIcon, RefreshCw, ExternalLink, CheckCircle, Wrench } from "lucide-react";
 
 interface Issue {
   type: "internal_link" | "image_url";
@@ -24,6 +24,8 @@ export default function ValidateLinksPage() {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [filter, setFilter] = useState<"all" | "internal_link" | "image_url">("all");
+  const [rematching, setRematching] = useState<string | null>(null);
+  const [batchRematching, setBatchRematching] = useState(false);
 
   const fetchValidation = async () => {
     setLoading(true);
@@ -39,6 +41,50 @@ export default function ValidateLinksPage() {
       console.error("검증 실패:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRematch = async (issue: Issue) => {
+    if (!issue.suggestedSlug) return;
+    setRematching(issue.postId);
+    try {
+      const response = await fetch("/api/admin/validate-links", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          postId: issue.postId,
+          invalidSlug: issue.invalidSlug,
+          suggestedSlug: issue.suggestedSlug,
+          type: issue.type,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        // 재검증
+        await fetchValidation();
+      }
+    } catch (error) {
+      console.error("재매칭 실패:", error);
+    } finally {
+      setRematching(null);
+    }
+  };
+
+  const handleBatchRematch = async () => {
+    if (!result) return;
+    setBatchRematching(true);
+    try {
+      const issuesWithSuggestion = filteredIssues.filter(issue => issue.suggestedSlug);
+      for (const issue of issuesWithSuggestion) {
+        await handleRematch(issue);
+      }
+    } catch (error) {
+      console.error("일괄 재매칭 실패:", error);
+    } finally {
+      setBatchRematching(false);
     }
   };
 
@@ -62,14 +108,30 @@ export default function ValidateLinksPage() {
             잘못된 슬러그를 참조하는 내부 링크와 이미지 URL을 검증합니다
           </p>
         </div>
-        <button
-          onClick={fetchValidation}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-rust text-paper rounded-lg hover:bg-rust/90 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          재검증
-        </button>
+        <div className="flex gap-2">
+          {result && result.issueCount > 0 && (
+            <button
+              onClick={handleBatchRematch}
+              disabled={batchRematching || loading}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-paper rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              {batchRematching ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Wrench className="w-4 h-4" />
+              )}
+              일괄 수정
+            </button>
+          )}
+          <button
+            onClick={fetchValidation}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-rust text-paper rounded-lg hover:bg-rust/90 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            재검증
+          </button>
+        </div>
       </div>
 
       {/* 통계 */}
@@ -174,6 +236,20 @@ export default function ValidateLinksPage() {
                       </div>
                     )}
                     <div className="flex gap-2 mt-3">
+                      {issue.suggestedSlug && (
+                        <button
+                          onClick={() => handleRematch(issue)}
+                          disabled={rematching === issue.postId}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-rust text-paper rounded-lg text-xs font-medium hover:bg-rust/90 transition-colors disabled:opacity-50"
+                        >
+                          {rematching === issue.postId ? (
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Wrench className="w-3 h-3" />
+                          )}
+                          자동 수정
+                        </button>
+                      )}
                       <a
                         href={`/write?edit=${issue.postSlug}`}
                         target="_blank"

@@ -136,3 +136,93 @@ export async function GET(request: Request) {
     );
   }
 }
+
+// POST /api/admin/validate-links - 자동 재매칭
+export async function POST(request: Request) {
+  try {
+    const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
+    if (!token) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
+
+    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    const { data: { user }, error: authErr } = await anon.auth.getUser(token);
+    if (authErr || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
+
+    const admin = makeAdmin();
+    const { data: profile } = await admin.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
+
+    const body = await request.json();
+    const { postId, invalidSlug, suggestedSlug, type } = body;
+
+    if (!postId || !invalidSlug || !suggestedSlug || !type) {
+      return NextResponse.json({ error: "필수 파라미터 부족" }, { status: 400 });
+    }
+
+    // 글 조회
+    const { data: post, error: postError } = await admin
+      .from("posts")
+      .select("id, content, cover_image")
+      .eq("id", postId)
+      .single();
+
+    if (postError || !post) {
+      throw new Error("글 조회 실패");
+    }
+
+    let updatedContent = post.content;
+    let updatedCoverImage = post.cover_image;
+
+    // 내부 링크 재매칭
+    if (type === "internal_link") {
+      updatedContent = post.content.replace(
+        new RegExp(`\\[([^\\]]+)\\]\\(\\/posts\\/${invalidSlug}\\)`, "g"),
+        `[$1](/posts/${suggestedSlug})`
+      );
+    }
+
+    // 이미지 URL 재매칭
+    if (type === "image_url") {
+      if (post.cover_image) {
+        updatedCoverImage = post.cover_image.replace(
+          new RegExp(`/${invalidSlug}\\.(jpg|jpeg|png|webp|avif|gif)$`, "i"),
+          `/${suggestedSlug}.$1`
+        );
+      }
+    }
+
+    // DB 업데이트
+    const updateData: any = {};
+    if (type === "internal_link" && updatedContent !== post.content) {
+      updateData.content = updatedContent;
+    }
+    if (type === "image_url" && updatedCoverImage !== post.cover_image) {
+      updateData.cover_image = updatedCoverImage;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "변경사항 없음" }, { status: 400 });
+    }
+
+    const { error: updateError } = await admin
+      .from("posts")
+      .update(updateData)
+      .eq("id", postId);
+
+    if (updateError) {
+      throw new Error("DB 업데이트 실패");
+    }
+
+    // 캐시 갱신
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/posts", "page");
+    revalidatePath(`/posts/${post.id}`, "page");
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("재매칭 실패:", error);
+    return NextResponse.json(
+      { error: "재매칭 실패" },
+      { status: 500 }
+    );
+  }
+}
