@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { AlertTriangle, Link2, Image as ImageIcon, RefreshCw, ExternalLink, CheckCircle, Wrench } from "lucide-react";
+import { Link2, Image as ImageIcon, RefreshCw, ExternalLink, CheckCircle, Wrench } from "lucide-react";
 
 interface Issue {
   type: "internal_link" | "image_url";
@@ -20,7 +20,7 @@ interface ValidationResult {
 }
 
 export default function ValidateLinksPage() {
-  const { user, session } = useAuth();
+  const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [filter, setFilter] = useState<"all" | "internal_link" | "image_url">("all");
