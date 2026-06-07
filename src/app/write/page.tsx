@@ -444,20 +444,23 @@ function WritePageContent() {
           throw new Error(errorData.error || "글 수정에 실패했습니다.");
         }
 
+        const result = await response.json();
+        const updatedPost = result.data;
+
         // 태그 저장 (API에서 기존 태그 삭제 후 새로 저장)
         await saveTags(postId, tagList);
 
         showToast(published ? "글이 수정되었습니다." : "임시 저장되었습니다.", "success");
-        
+
         // 임시 저장 데이터 정리
         autoSave.clear();
-        
+
         // 히스토리 저장 (수정 시)
         if (postId && user?.id) {
           try {
             await fetch("/api/revisions", {
               method: "POST",
-              headers: { 
+              headers: {
                 "Content-Type": "application/json",
                 'Authorization': `Bearer ${session?.access_token}`
               },
@@ -472,14 +475,15 @@ function WritePageContent() {
             console.error("히스토리 저장 실패:", err);
           }
         }
-        
+
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
-          await notifyIndexNow(`/posts/${slug}`, session?.access_token);
+          await notifyIndexNow(`/posts/${updatedPost.slug}`, session?.access_token);
         }
-        
+
         // window.location으로 강제 풀 리로드 → revalidatePath 이후 최신 내용 즉시 반영
-        window.location.href = `/posts/${slug}`;
+        // API에서 반환된 실제 slug 사용 (slug 변경 시 대응)
+        window.location.href = `/posts/${updatedPost.slug}`;
       } else {
         // 신규 작성: API 호출
         const response = await fetch("/api/posts", {
