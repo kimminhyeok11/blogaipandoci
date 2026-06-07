@@ -36,10 +36,10 @@ const CASE_TYPE_META: Record<string, { emoji: string; desc: string }> = {
   "지식재산권": { emoji: "💡", desc: "저작권, 특허, 상표권 등 지식재산권 절차 경험" },
   "교통사고":   { emoji: "🚗", desc: "음주운전, 12대 중과실, 보험사 대응 등 교통사고 절차 경험" },
   "회생-파산":  { emoji: "💳", desc: "개인회생, 파산 신청, 채무 조정 등 절차 경험" },
-  "채무·금전":   { emoji: "�", desc: "지급명령, 통장압류, 재산조회 등 채무 관련 절차 경험" },
+  "채무-금전":   { emoji: "�", desc: "지급명령, 통장압류, 재산조회 등 채무 관련 절차 경험" },
   "전세-임대차": { emoji: "🏡", desc: "임차권등기, 전세금 반환, 명도소송 등 임대차 절차 경험" },
-  "계약·거래":   { emoji: "�", desc: "계약해제, 손해배상, 내용증명 등 계약 분쟁 절차 경험" },
-  "행정·기타":   { emoji: "🏛️", desc: "행정심판, 이의신청 등 행정 절차 및 기타 경험" },
+  "계약-거래":   { emoji: "�", desc: "계약해제, 손해배상, 내용증명 등 계약 분쟁 절차 경험" },
+  "행정-기타":   { emoji: "🏛️", desc: "행정심판, 이의신청 등 행정 절차 및 기타 경험" },
   "기타":       { emoji: "📌", desc: "기타 법률 문제 및 절차 경험" },
 };
 
@@ -91,11 +91,10 @@ export default async function CasesPage() {
 
   // 글이 없는 유형도 표시 (0건 회색 처리)
   const allTypes = Object.keys(CASE_TYPE_META).map((key) => {
-    const slugKey = key.replace(/·/g, "-");
-    const caseCount = caseCounts.find((c) => c.slug === slugKey);
+    const caseCount = caseCounts.find((c) => c.slug === key);
     return {
       case_type: key,
-      slug: caseCount?.slug || slugKey,
+      slug: caseCount?.slug || key,
       count: caseCount?.count || 0,
     };
   });
