@@ -207,15 +207,18 @@ export async function POST(request: Request) {
       throw new Error("글 조회 실패");
     }
 
+    // 슬러그 이스케이프 처리
+    const escapedInvalidSlug = invalidSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     // 내부 링크 재매칭 (/posts/ 형식)
     let updatedContent = post.content.replace(
-      new RegExp(`\\[([^\\]]+)\\]\\(\\/posts\\/${invalidSlug}\\)`, "g"),
+      new RegExp(`\\[([^\\]]+)\\]\\(\\/posts\\/${escapedInvalidSlug}\\)`, "g"),
       `[$1](/posts/${suggestedSlug})`
     );
 
     // 내부 링크 재매칭 (/cases/ 형식)
     updatedContent = updatedContent.replace(
-      new RegExp(`\\[([^\\]]+)\\]\\(\\/cases\\/${invalidSlug}\\)`, "g"),
+      new RegExp(`\\[([^\\]]+)\\]\\(\\/cases\\/${escapedInvalidSlug}\\)`, "g"),
       `[$1](/cases/${suggestedSlug})`
     );
 
