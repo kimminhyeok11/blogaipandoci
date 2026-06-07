@@ -27,6 +27,11 @@ export async function generateStaticParams() {
 // generateStaticParams에 없는 slug도 런타임에 처리
 export const dynamicParams = true;
 
+// 슬러그 형식 변환 (중간점 → 하이픈)
+function normalizeSlug(slug: string): string {
+  return slug.replace(/·/g, "-");
+}
+
 // DB 기반 category 스타일 매핑 (slug → 스타일)
 // 하이픈 slug로 통일
 const CATEGORY_STYLES: Record<string, { color: string; bg: string }> = {
@@ -127,7 +132,8 @@ const getPostsByCategoryId = cache(async function getPostsByCategoryId(categoryI
 
 export async function generateMetadata({ params }: CaseTypePageProps): Promise<Metadata> {
   const slug = decodeURIComponent(params.type);
-  const category = await getCategoryBySlug(slug);
+  const normalizedSlug = normalizeSlug(slug);
+  const category = await getCategoryBySlug(normalizedSlug);
 
   if (!category) return {};
 
@@ -160,9 +166,10 @@ export async function generateMetadata({ params }: CaseTypePageProps): Promise<M
 
 export default async function CaseTypePage({ params }: CaseTypePageProps) {
   const slug = decodeURIComponent(params.type);
+  const normalizedSlug = normalizeSlug(slug);
 
   // ✅ DB 기반 category 존재 여부 확인 (하드코딩 상수 제거)
-  const category = await getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(normalizedSlug);
   if (!category) {
     notFound();
   }
@@ -173,7 +180,7 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
   // (soft 404 방지, 사용자가 직접 글 쓸 수 있는 진입점 제공)
   const hasPosts = posts.length > 0;
 
-  const style = CATEGORY_STYLES[slug] ?? DEFAULT_STYLE;
+  const style = CATEGORY_STYLES[normalizedSlug] ?? DEFAULT_STYLE;
   
   // [CategoryFallback] 로깅 (transitional mode)
   if (!CATEGORY_STYLES[slug]) {
