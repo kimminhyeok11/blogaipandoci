@@ -209,7 +209,7 @@ export default function ValidateLinksPage() {
                           ) : (
                             <Wrench className="w-3 h-3" />
                           )}
-                          자동 수정
+                          개별수정
                         </button>
                       )}
                       <a
