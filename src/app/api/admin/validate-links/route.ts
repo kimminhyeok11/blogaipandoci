@@ -172,10 +172,16 @@ export async function POST(request: Request) {
       throw new Error("글 조회 실패");
     }
 
-    // 내부 링크 재매칭
-    const updatedContent = post.content.replace(
+    // 내부 링크 재매칭 (/posts/ 형식)
+    let updatedContent = post.content.replace(
       new RegExp(`\\[([^\\]]+)\\]\\(\\/posts\\/${invalidSlug}\\)`, "g"),
       `[$1](/posts/${suggestedSlug})`
+    );
+
+    // 내부 링크 재매칭 (/cases/ 형식)
+    updatedContent = updatedContent.replace(
+      new RegExp(`\\[([^\\]]+)\\]\\(\\/cases\\/${invalidSlug}\\)`, "g"),
+      `[$1](/cases/${suggestedSlug})`
     );
 
     if (updatedContent === post.content) {
