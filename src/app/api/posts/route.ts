@@ -129,11 +129,15 @@ async function findRelatedPosts(
     // 코사인 유사도 계산
     const scored = posts
       .map((post: any) => {
-        const embedding = JSON.parse(post.embedding);
-        if (!Array.isArray(embedding) || embedding.length !== 1536) return null;
+        try {
+          const embedding = JSON.parse(post.embedding);
+          if (!Array.isArray(embedding) || embedding.length !== 1536) return null;
 
-        const similarity = cosineSimilarity(queryVector, embedding);
-        return { ...post, score: similarity };
+          const similarity = cosineSimilarity(queryVector, embedding);
+          return { ...post, score: similarity };
+        } catch {
+          return null; // JSON 파싱 실패 시 null 반환
+        }
       })
       .filter((p: any) => p !== null && p.score >= 0.5) // 유사도 0.5 이상만
       .sort((a: any, b: any) => b.score - a.score)
@@ -161,7 +165,10 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
     normB += b * b;
   }
 
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  const denominator = Math.sqrt(normA) * Math.sqrt(normB);
+  if (denominator === 0) return 0; // 제로 나눗셈 방지
+
+  return dotProduct / denominator;
 }
 
 // 기존 방식: 제목 유사도 기반 (폴백)
@@ -410,15 +417,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Forbidden - 관리자만 글을 작성할 수 있습니다" }, { status: 403 });
     }
 
-    // slug 중복 확인 후 자동 suffix 추가
+    // slug 중복 확인 후 자동 suffix 추가 (동시 요청 시 충돌 방지)
     let finalSlug = slug;
-    const { data: existing } = await serviceSupabase
-      .from("posts")
-      .select("id")
-      .eq("slug", slug)
-      .maybeSingle();
-    if (existing) {
-      finalSlug = `${slug.slice(0, 20)}-${Date.now().toString(36).slice(-4)}`;
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    while (attempts < maxAttempts) {
+      const { data: existing } = await serviceSupabase
+        .from("posts")
+        .select("id")
+        .eq("slug", finalSlug)
+        .maybeSingle();
+
+      if (!existing) break;
+
+      // 유니크한 suffix 생성 (랜덤 + 타임스탬프)
+      const randomSuffix = Math.random().toString(36).slice(-4);
+      const timestampSuffix = Date.now().toString(36).slice(-4);
+      finalSlug = `${slug.slice(0, 20)}-${timestampSuffix}${randomSuffix}`;
+      attempts++;
+    }
+
+    if (attempts >= maxAttempts) {
+      return NextResponse.json({ error: "슬러그 생성 실패 (동시 요청 과다)" }, { status: 500 });
     }
 
     // 발행 시 관련 글 자동 삽입

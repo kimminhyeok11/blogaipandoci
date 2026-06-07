@@ -181,15 +181,21 @@ const CACHE_TTL = 60 * 60 * 1000; // 1시간
 // 캐시된 키워드 가져오기 (서버 사이드)
 export async function getCachedKeywords(): Promise<KeywordLink[]> {
   const now = Date.now();
-  
+
   if (cachedKeywords && (now - lastCacheTime) < CACHE_TTL) {
     return cachedKeywords;
   }
-  
+
   const keywords = await getSortedKeywords();
   cachedKeywords = keywords;
   lastCacheTime = now;
   return keywords;
+}
+
+// 캐시 무효화 (키워드 변경 시 호출)
+export function invalidateKeywordsCache(): void {
+  cachedKeywords = null;
+  lastCacheTime = 0;
 }
 
 export function addInternalLinks(
