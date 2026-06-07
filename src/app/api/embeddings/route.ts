@@ -43,22 +43,37 @@ export async function POST(request: Request) {
     if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
 
     const body = await request.json();
-    const { comment_id, text } = body;
+    const { comment_id, text, post_id } = body;
 
-    if (!comment_id || !text) {
-      return NextResponse.json({ error: "comment_id와 text 필수" }, { status: 400 });
+    // 댓글 embedding 생성
+    if (comment_id && text) {
+      const embedding = await createEmbedding(text);
+
+      const { error } = await admin
+        .from("comments")
+        .update({ embedding: JSON.stringify(embedding) })
+        .eq("id", comment_id);
+
+      if (error) throw error;
+
+      return NextResponse.json({ success: true });
     }
 
-    const embedding = await createEmbedding(text);
+    // 글 embedding 생성 (요청시에만)
+    if (post_id && text) {
+      const embedding = await createEmbedding(text);
 
-    const { error } = await admin
-      .from("comments")
-      .update({ embedding: JSON.stringify(embedding) })
-      .eq("id", comment_id);
+      const { error } = await admin
+        .from("posts")
+        .update({ embedding: JSON.stringify(embedding) })
+        .eq("id", post_id);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: "comment_id+text 또는 post_id+text 필수" }, { status: 400 });
   } catch (error) {
     console.error("Embedding 생성 실패:", error);
     return NextResponse.json({ error: "Embedding 생성 실패" }, { status: 500 });

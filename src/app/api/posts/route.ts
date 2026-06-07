@@ -748,35 +748,47 @@ export async function PUT(request: Request) {
       revalidatePath("/cases", "page");
     }
 
-    // embedding 재생성 (비동기, 발행 상태일 때만)
+    // embedding 재생성 (비동기, 발행 상태일 때만, 기존 벡터가 없을 때만)
     if (published && data?.id && process.env.OPENAI_API_KEY) {
-      const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
-      const embeddingText = [
-        title,
-        stagePart,
-        excerpt || "",
-        finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 5500),
-      ].filter(Boolean).join(" ");
-      fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
-      }).then(r => r.json()).then(embRes => {
-        if (embRes?.error) {
-          console.error("[embedding/post-update] OpenAI 오류:", embRes.error.message);
-          return;
-        }
-        const vec = embRes?.data?.[0]?.embedding;
-        if (!Array.isArray(vec) || vec.length !== 1536) {
-          console.error("[embedding/post-update] 잘못된 벡터 차원:", vec?.length);
-          return;
-        }
-        serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id)
-          .then(({ error: dbErr }) => { if (dbErr) console.error("[embedding/post-update] DB 저장 실패:", dbErr.message); });
-      }).catch((err) => { console.error("[embedding/post-update] 네트워크 오류:", err?.message); });
+      // 기존 벡터 확인
+      const { data: existingPost } = await serviceSupabase
+        .from("posts")
+        .select("embedding")
+        .eq("id", data.id)
+        .single();
+
+      // 기존 벡터가 없을 때만 생성
+      if (!existingPost?.embedding) {
+        const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
+        const embeddingText = [
+          title,
+          stagePart,
+          excerpt || "",
+          finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 5500),
+        ].filter(Boolean).join(" ");
+        fetch("https://api.openai.com/v1/embeddings", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
+        }).then(r => r.json()).then(embRes => {
+          if (embRes?.error) {
+            console.error("[embedding/post-update] OpenAI 오류:", embRes.error.message);
+            return;
+          }
+          const vec = embRes?.data?.[0]?.embedding;
+          if (!Array.isArray(vec) || vec.length !== 1536) {
+            console.error("[embedding/post-update] 잘못된 벡터 차원:", vec?.length);
+            return;
+          }
+          serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id)
+            .then(({ error: dbErr }) => { if (dbErr) console.error("[embedding/post-update] DB 저장 실패:", dbErr.message); });
+        }).catch((err) => { console.error("[embedding/post-update] 네트워크 오류:", err?.message); });
+      } else {
+        console.log("[embedding/post-update] 기존 벡터가 있어서 재생성하지 않음");
+      }
     }
 
     // process_embedding 재생성
