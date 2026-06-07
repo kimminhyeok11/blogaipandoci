@@ -45,6 +45,7 @@ const CASE_TYPE_META: Record<string, { emoji: string; desc: string }> = {
 
 interface CaseCount {
   case_type: string;
+  slug: string;
   count: number;
 }
 
@@ -54,23 +55,30 @@ async function getCaseCounts(): Promise<CaseCount[]> {
     // categories 테이블 기준으로 집계 (category_id 기반)
     const { data, error } = await supabase
       .from("posts")
-      .select("category_id, categories!inner(name)")
+      .select("category_id, categories!inner(name, slug)")
       .eq("published", true)
       .not("published_at", "is", null)
-      .not("category_id", "is", null) as { data: Array<{ categories: { name: string } | null }> | null; error: Error | null };
+      .not("category_id", "is", null) as { data: Array<{ categories: { name: string; slug: string } | null }> | null; error: Error | null };
 
     if (error) throw error;
 
-    const counts: Record<string, number> = {};
+    const counts: Record<string, { count: number; slug: string }> = {};
     for (const row of data || []) {
-      const categoryName = row.categories?.name;
-      if (categoryName) {
-        counts[categoryName] = (counts[categoryName] || 0) + 1;
+      const category = row.categories;
+      if (category) {
+        const categoryName = category.name;
+        const categorySlug = category.slug;
+        if (categoryName) {
+          if (!counts[categoryName]) {
+            counts[categoryName] = { count: 0, slug: categorySlug };
+          }
+          counts[categoryName].count += 1;
+        }
       }
     }
 
     return Object.entries(counts)
-      .map(([case_type, count]) => ({ case_type, count }))
+      .map(([case_type, { count, slug }]) => ({ case_type, slug, count }))
       .sort((a, b) => b.count - a.count);
   } catch (err) {
     console.error("사건 유형 집계 오류:", err);
@@ -82,10 +90,14 @@ export default async function CasesPage() {
   const caseCounts = await getCaseCounts();
 
   // 글이 없는 유형도 표시 (0건 회색 처리)
-  const allTypes = Object.keys(CASE_TYPE_META).map((key) => ({
-    case_type: key,
-    count: caseCounts.find((c) => c.case_type === key)?.count || 0,
-  }));
+  const allTypes = Object.keys(CASE_TYPE_META).map((key) => {
+    const caseCount = caseCounts.find((c) => c.case_type === key);
+    return {
+      case_type: key,
+      slug: caseCount?.slug || key.replace(/·/g, "-"),
+      count: caseCount?.count || 0,
+    };
+  });
 
   // BreadcrumbSchema 데이터
   const breadcrumbData = {
@@ -123,7 +135,7 @@ export default async function CasesPage() {
       "@type": "ListItem",
       position: index + 1,
       name: `${c.case_type} 절차 안내`,
-      url: `${SITE_URL}/cases/${c.case_type}`,
+      url: `${SITE_URL}/cases/${c.slug}`,
     })),
   } : null;
 
@@ -164,7 +176,7 @@ export default async function CasesPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {allTypes.map(({ case_type, count }) => {
+          {allTypes.map(({ case_type, slug, count }) => {
             const meta = CASE_TYPE_META[case_type];
             const hasContent = count > 0;
 
@@ -194,7 +206,7 @@ export default async function CasesPage() {
             return hasContent ? (
               <Link
                 key={case_type}
-                href={`/cases/${case_type}`}
+                href={`/cases/${slug}`}
                 className="group p-5 border border-rule rounded-sm transition-all hover:border-rust hover:shadow-sm bg-paper cursor-pointer"
               >
                 {cardContent}
