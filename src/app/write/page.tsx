@@ -14,8 +14,12 @@ import { useWriteForm } from "./hooks/useWriteForm";
 import { useAutoSave } from "./hooks/useAutoSave";
 import type { MarkdownEditorRef } from "@/components/editor/MarkdownEditor";
 
-const CASE_TYPES = ["형사", "민사", "이혼·가족", "노동", "부동산", "학교폭력", "지식재산권", "교통사고", "회생·파산", "채무·금전", "전세·임대차", "계약·거래", "행정·기타", "기타"];
 const EXPERT_LEVELS = ["직접가능", "법무사권장", "변호사권장"];
+
+interface Category {
+  name: string;
+  slug: string;
+}
 
 const EMPTY_PROCEDURE = {
   case_type: "",
@@ -73,6 +77,7 @@ function WritePageContent() {
   const [preview, setPreview] = useState(false);
   const [procedureMeta, setProcedureMeta] = useState({ ...EMPTY_PROCEDURE });
   const [showProcedure, setShowProcedure] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [coverImageAlt, setCoverImageAlt] = useState<string | null>(null);
   const [metaTitle, setMetaTitle] = useState<string>("");
@@ -82,6 +87,20 @@ function WritePageContent() {
 
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
+
+  // categories 가져오기
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        const data = await response.json();
+        setCategories(data.categories || []);
+      } catch (error) {
+        console.error("카테고리 가져오기 실패:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // localStorage에 임시 저장
   const saveToLocalStorage = useCallback(() => {
@@ -850,7 +869,7 @@ function WritePageContent() {
                     <label className="block text-xs text-muted mb-1">사건 유형</label>
                     <select value={procedureMeta.case_type} onChange={(e) => setProcedureMeta({ ...procedureMeta, case_type: e.target.value })} className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none">
                       <option value="">선택 안 함</option>
-                      {CASE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      {categories.map((cat: Category) => <option key={cat.slug} value={cat.name}>{cat.name}</option>)}
                     </select>
                   </div>
                   <div>

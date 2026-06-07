@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/components/ui/Toast";
-import { 
-  Plus, 
-  Search, 
-  Pencil, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
   X,
   Loader2,
   Link2,
@@ -33,14 +33,15 @@ interface KeywordFormData {
   urlType: "direct" | "search";
 }
 
-const CATEGORIES = [
-  "형사", "민사", "강제집행", "전세", "채무", 
-  "상속", "이혼", "노동", "세금", "행정"
-];
+interface Category {
+  name: string;
+  slug: string;
+}
 
 export default function AdminKeywordsPage() {
   const { showToast } = useToast();
   const [keywords, setKeywords] = useState<Keyword[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -81,6 +82,20 @@ export default function AdminKeywordsPage() {
   useEffect(() => {
     fetchKeywords();
   }, [fetchKeywords]);
+
+  // categories 가져오기
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        const data = await response.json();
+        setCategories(data.categories || []);
+      } catch (error) {
+        console.error("카테고리 가져오기 실패:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const openCreateModal = () => {
     setEditingKeyword(null);
@@ -237,8 +252,8 @@ export default function AdminKeywordsPage() {
             className="pl-10 pr-8 py-2 border border-ink rounded-sm focus:ring-2 focus:ring-rust focus:border-transparent appearance-none bg-paper font-sans text-sm"
           >
             <option value="">전체 카테고리</option>
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
+            {categories.map((cat: Category) => (
+              <option key={cat.slug} value={cat.name}>{cat.name}</option>
             ))}
           </select>
         </div>
@@ -427,8 +442,8 @@ export default function AdminKeywordsPage() {
                     className="w-full px-3 py-2 border border-ink rounded-sm focus:ring-2 focus:ring-rust focus:border-transparent bg-paper font-sans text-sm"
                   >
                     <option value="">선택</option>
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
+                    {categories.map((cat: Category) => (
+                      <option key={cat.slug} value={cat.name}>{cat.name}</option>
                     ))}
                   </select>
                 </div>

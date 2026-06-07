@@ -27,7 +27,6 @@ export async function generateStaticParams() {
 // generateStaticParams에 없는 slug도 런타임에 처리
 export const dynamicParams = true;
 
-
 // DB 기반 category 스타일 매핑 (slug → 스타일)
 // 한글 slug로 통일
 const CATEGORY_STYLES: Record<string, { color: string; bg: string }> = {
