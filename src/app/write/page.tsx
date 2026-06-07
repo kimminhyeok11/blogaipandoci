@@ -155,9 +155,9 @@ function WritePageContent() {
   }, []);
 
   // 자동 내부 링크 삽입 함수
-  const autoInsertInternalLinks = useCallback((contentText: string, currentSlug?: string): string => {
+  const _autoInsertInternalLinks = useCallback((contentText: string, currentSlug?: string): string => {
     if (!existingPosts.length) return contentText;
-    
+
     let processedContent = contentText;
     
     // 게시글 수가 많을 수 있으니, 길이순으로 정렬 (긴 제목 먼저 처리 - 부분 매칭 방지)
@@ -385,7 +385,7 @@ function WritePageContent() {
       const tagList = tags.split(",").map(t => t.trim()).filter(Boolean);
 
       // 내부 링크 및 관련 글 섹션은 API에서 처리 (중복 방지)
-      let processedContent = content.trim();
+      const processedContent = content.trim();
 
       // 메타 설명 자동 생성 (본문 기반, excerpt와 중복 방지)
       const generateMetaDescription = (title: string, content: string): string => {
