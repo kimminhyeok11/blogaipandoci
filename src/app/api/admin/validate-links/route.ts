@@ -199,7 +199,7 @@ export async function POST(request: Request) {
     // 글 조회
     const { data: post, error: postError } = await admin
       .from("posts")
-      .select("id, content")
+      .select("id, content, title, slug")
       .eq("id", postId)
       .single();
 
@@ -219,14 +219,20 @@ export async function POST(request: Request) {
       `[$1](/cases/${suggestedSlug})`
     );
 
-    if (updatedContent === post.content) {
+    // 글 slug 수정 (현재 slug가 invalidSlug와 일치하는 경우)
+    const updateData: { content: string; slug?: string } = { content: updatedContent };
+    if (post.slug === invalidSlug) {
+      updateData.slug = suggestedSlug;
+    }
+
+    if (updatedContent === post.content && !updateData.slug) {
       return NextResponse.json({ error: "변경사항 없음" }, { status: 400 });
     }
 
     // DB 업데이트
     const { error: updateError } = await admin
       .from("posts")
-      .update({ content: updatedContent })
+      .update(updateData)
       .eq("id", postId);
 
     if (updateError) {
@@ -237,6 +243,9 @@ export async function POST(request: Request) {
     const { revalidatePath } = await import("next/cache");
     revalidatePath("/posts", "page");
     revalidatePath(`/posts/${post.id}`, "page");
+    if (updateData.slug) {
+      revalidatePath(`/posts/${invalidSlug}`, "page");
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
