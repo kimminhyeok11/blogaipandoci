@@ -107,7 +107,7 @@ const getPostsByTag = cache(async function getPostsByTag(tagSlug: string): Promi
       .order("published_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as unknown as Post[];
   } catch (error) {
     console.error("Error fetching posts by tag:", error);
     return [];

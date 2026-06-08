@@ -51,7 +51,7 @@ async function getTags(): Promise<TagData[]> {
 
     // 2. 각 태그별 글 개수 별도 조회 (PostgREST relation 대신 안전한 방식)
     const tagsWithCount = await Promise.all(
-      tagData.map(async (tag: TagData) => {
+      tagData.map(async (tag) => {
         const { count, error: countError } = await supabase
           .from("post_tags")
           .select("*", { count: "exact", head: true })
