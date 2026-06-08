@@ -92,6 +92,16 @@ export async function getCachedKeywords(): Promise<KeywordLink[]> {
   return keywords;
 }
 
+// URL 슬러그 안전하게 처리 (특수 문자 제거)
+export function safeSlug(slug: string): string {
+  return slug
+    .replace(/[·•·]/g, "-")  // 중간점을 하이픈으로 변환
+    .replace(/[^\w\s-]/g, "")  // 특수 문자 제거
+    .replace(/\s+/g, "-")      // 공백을 하이픈으로 변환
+    .replace(/-+/g, "-")       // 연속된 하이픈을 하나로
+    .replace(/^-+|-+$/g, "");  // 앞뒤 하이픈 제거
+}
+
 export function addInternalLinks(
   markdown: string,
   maxTotalLinks: number = 5,
@@ -159,7 +169,9 @@ export function addInternalLinks(
     const anchorText = item.anchorVariants?.[0] || item.keyword;
     // 대괄호 제거 (마크다운 링크 형식 깨짐 방지)
     const safeAnchorText = anchorText.replace(/\[/g, '').replace(/\]/g, '');
-    const replacement = `[${safeAnchorText}](${item.url})`;
+    // URL 슬러그 안전하게 처리
+    const safeUrl = item.url.replace(/\/cases\/([^/]+)/, (match, slug) => `/cases/${safeSlug(slug)}`);
+    const replacement = `[${safeAnchorText}](${safeUrl})`;
 
     result = result.slice(0, keywordIndex) + replacement + result.slice(keywordIndex + match[0].length);
 
