@@ -95,14 +95,20 @@ export async function getCachedKeywords(): Promise<KeywordLink[]> {
 export function addInternalLinks(
   markdown: string,
   maxTotalLinks: number = 5,
-  keywords?: KeywordLink[]
+  keywords?: KeywordLink[],
+  currentPostUrl?: string
 ): string {
   if (!markdown) return markdown;
 
   // 키워드가 없으면 빈 배열 사용 (링크 생성 안됨)
   const keywordsToUse = keywords && keywords.length > 0 ? keywords : [];
 
-  let result = markdown;
+  // 기존 내부링크 제거 (재발행 시 최신 슬러그로 교체하기 위해)
+  // 마크다운 링크 형식: [텍스트](URL)
+  // /posts/ 또는 /cases/로 시작하는 링크만 제거 (안전한 정규식 사용)
+  let result = markdown.replace(/\[([^\]]+)\]\(\/posts\/[^)]+\)/g, '$1');
+  result = result.replace(/\[([^\]]+)\]\(\/cases\/[^)]+\)/g, '$1');
+
   const linkedKeywords = new Set<string>();
   const linkedPositions: number[] = [];
   let totalLinks = 0;
@@ -111,6 +117,11 @@ export function addInternalLinks(
   for (const item of keywordsToUse) {
     if (totalLinks >= maxTotalLinks) break;
     if (linkedKeywords.has(item.keyword)) continue;
+
+    // 자기글 링크 방지
+    if (currentPostUrl && item.url === currentPostUrl) {
+      continue;
+    }
 
     // 링크 삽입 (마크다운 형식)
     const escapedKeyword = item.keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -146,7 +157,9 @@ export function addInternalLinks(
     if (tooClose) continue;
 
     const anchorText = item.anchorVariants?.[0] || item.keyword;
-    const replacement = `[${anchorText}](${item.url})`;
+    // 대괄호 제거 (마크다운 링크 형식 깨짐 방지)
+    const safeAnchorText = anchorText.replace(/\[/g, '').replace(/\]/g, '');
+    const replacement = `[${safeAnchorText}](${item.url})`;
 
     result = result.slice(0, keywordIndex) + replacement + result.slice(keywordIndex + match[0].length);
 

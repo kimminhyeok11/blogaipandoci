@@ -25,6 +25,7 @@ export default function ValidateLinksPage() {
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [rematching, setRematching] = useState<string | null>(null);
   const [batchRematching, setBatchRematching] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, currentTitle: "" });
 
   const fetchValidation = async () => {
     setLoading(true);
@@ -44,7 +45,6 @@ export default function ValidateLinksPage() {
   };
 
   const handleRematch = async (issue: Issue) => {
-    if (!issue.suggestedSlug) return;
     setRematching(issue.postId);
     try {
       const response = await fetch("/api/admin/validate-links", {
@@ -55,17 +55,14 @@ export default function ValidateLinksPage() {
         },
         body: JSON.stringify({
           postId: issue.postId,
-          invalidSlug: issue.invalidSlug,
-          suggestedSlug: issue.suggestedSlug,
         }),
       });
       const data = await response.json();
-      if (data.success) {
-        // 재검증
-        await fetchValidation();
+      if (!data.success) {
+        console.error("재발행 실패:", data.error);
       }
     } catch (error) {
-      console.error("재매칭 실패:", error);
+      console.error("재발행 실패:", error);
     } finally {
       setRematching(null);
     }
@@ -74,15 +71,28 @@ export default function ValidateLinksPage() {
   const handleBatchRematch = async () => {
     if (!result) return;
     setBatchRematching(true);
+    // 중복된 postId 제거 (한 글당 한 번만 재발행)
+    const uniqueIssues = Array.from(
+      new Map(result.issues.map(issue => [issue.postId, issue])).values()
+    );
+    setBatchProgress({ current: 0, total: uniqueIssues.length, currentTitle: "" });
     try {
-      const issuesWithSuggestion = result.issues.filter(issue => issue.suggestedSlug);
-      for (const issue of issuesWithSuggestion) {
-        await handleRematch(issue);
+      // 중복 제거된 문제에 재발행 트리거
+      for (let i = 0; i < uniqueIssues.length; i++) {
+        const issue = uniqueIssues[i];
+        if (issue) {
+          setBatchProgress({ current: i, total: uniqueIssues.length, currentTitle: issue.postTitle });
+          await handleRematch(issue);
+          setBatchProgress({ current: i + 1, total: uniqueIssues.length, currentTitle: issue.postTitle });
+        }
       }
+      // 일괄수정 완료 후 재검증
+      await fetchValidation();
     } catch (error) {
-      console.error("일괄 재매칭 실패:", error);
+      console.error("일괄 재발행 실패:", error);
     } finally {
       setBatchRematching(false);
+      setBatchProgress({ current: 0, total: 0, currentTitle: "" });
     }
   };
 
@@ -112,11 +122,19 @@ export default function ValidateLinksPage() {
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-paper rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
             >
               {batchRematching ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>{batchProgress.current}/{batchProgress.total}</span>
+                  {batchProgress.currentTitle && (
+                    <span className="text-xs opacity-70">: {batchProgress.currentTitle.slice(0, 20)}...</span>
+                  )}
+                </>
               ) : (
-                <Wrench className="w-4 h-4" />
+                <>
+                  <Wrench className="w-4 h-4" />
+                  <span>일괄 수정</span>
+                </>
               )}
-              일괄 수정
             </button>
           )}
           <button
@@ -182,9 +200,14 @@ export default function ValidateLinksPage() {
                     <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
                       내부 링크
                     </span>
-                    <span className="text-sm text-muted">
+                    <a
+                      href={`/posts/${issue.postSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-muted hover:text-rust underline underline-offset-2"
+                    >
                       {issue.postTitle}
-                    </span>
+                    </a>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div>

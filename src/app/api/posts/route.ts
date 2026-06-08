@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { notifyIndexNow } from "@/lib/indexnow";
@@ -207,8 +207,13 @@ async function findRelatedPostsByTitle(
 // - 글 제목에서 핵심 키워드(3자 이상) 추출
 // - 본문에서 첫 번째 등장 위치에만 링크 삽입 (과도한 링크 방지)
 // - 코드블록·헤딩·이미 링크된 구간 제외
-function injectInlineLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
+// - 자기글 제외
+function injectInlineLinks(content: string, relatedPosts: { title: string; slug: string }[], currentSlug: string): string {
   if (relatedPosts.length === 0) return content;
+
+  // 자기글 제외
+  const filteredPosts = relatedPosts.filter(post => post.slug !== currentSlug);
+  if (filteredPosts.length === 0) return content;
 
   // 코드블록 위치 수집 (링크 삽입 제외 구간)
   const codeBlockRanges: [number, number][] = [];
@@ -241,7 +246,7 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
   const usedKeywords = new Set<string>();
 
   // 관련 글마다 핵심 키워드 추출 후 본문 치환 (글당 최대 1개 키워드만)
-  for (const post of relatedPosts) {
+  for (const post of filteredPosts) {
     // 제목에서 불용어 제외 3자 이상 키워드 추출, 긴 것 우선
     const keywords = post.title
       .split(/[\s\-·,()]+/)
@@ -282,7 +287,7 @@ function removeInjectedInlineLinks(content: string): string {
   return content.replace(/\[([^\]]+)\]\(\/posts\/[^)]+\)/g, '$1');
 }
 
-function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
+function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[], currentSlug: string): string {
   if (relatedPosts.length === 0) return content;
 
   // 기존 관련글 섹션 제거 (재발행 시 최신화)
@@ -308,8 +313,8 @@ function appendRelatedLinks(content: string, relatedPosts: { title: string; slug
   // 이전에 삽입된 인라인 /posts/ 링크 제거 후 재삽입
   const unlinked = removeInjectedInlineLinks(withoutRelatedSection);
 
-  // 본문 인라인 링크 삽입
-  const withInline = injectInlineLinks(unlinked, relatedPosts);
+  // 본문 인라인 링크 삽입 (자기글 제외)
+  const withInline = injectInlineLinks(unlinked, relatedPosts, currentSlug);
 
   const links = relatedPosts
     .map(p => `- [${p.title}](/posts/${p.slug})`)
@@ -361,7 +366,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ posts: data, count });
+    return NextResponse.json({ posts: data, count }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+      },
+    });
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     return NextResponse.json(
@@ -444,11 +453,12 @@ export async function POST(request: Request) {
     if (published) {
       // DB 키워드 기반 내부 링크 추가 (마크다운 형식)
       const keywords = await getCachedKeywords();
-      finalContent = addInternalLinks(content, 5, keywords);
+      const currentPostUrl = `/posts/${finalSlug}`;
+      finalContent = addInternalLinks(content, 5, keywords, currentPostUrl);
 
       // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
       const relatedPosts = await findRelatedPosts(serviceSupabase, title, finalSlug);
-      finalContent = appendRelatedLinks(finalContent, relatedPosts);
+      finalContent = appendRelatedLinks(finalContent, relatedPosts, finalSlug);
     }
 
     // case_type → category_id 자동 매핑
@@ -528,6 +538,27 @@ export async function POST(request: Request) {
       }).catch((err) => { console.error("[embedding/post] 네트워크 오류:", err?.message); });
     }
 
+    // IndexNow 알림 (비동기, 발행 시에만)
+    if (published && data?.id && process.env.INDEXNOW_KEY) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+      const postUrl = `${siteUrl}/posts/${finalSlug}`;
+      
+      fetch(`${siteUrl}/api/indexnow-notify`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ urls: [postUrl] }),
+      }).then(r => r.json()).then(indexNowRes => {
+        if (indexNowRes.success) {
+          console.log("[IndexNow] 성공:", indexNowRes.message);
+        } else {
+          console.error("[IndexNow] 실패:", indexNowRes.message);
+        }
+      }).catch((err) => { console.error("[IndexNow] 네트워크 오류:", err?.message); });
+    }
+
     // process_embedding 생성 (절차 데이터가 있을 때만)
     if (published && data?.id && process.env.OPENAI_API_KEY && (current_stage || next_stage || (timeline_steps && timeline_steps.length > 0))) {
       const processText = [
@@ -603,19 +634,33 @@ export async function PUT(request: Request) {
 
     const serviceSupabase = makeAdmin();
 
-    // 토큰으로 실제 유저 확인 + 관리자 체크
-    const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
-    if (!authUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 서비스롤키인 경우 인증 건너뛰기 (일괄처리용)
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    console.log('[PUT] Service key exists:', !!serviceKey);
+    console.log('[PUT] Token starts with:', token.substring(0, 20));
+    console.log('[PUT] Service key starts with:', serviceKey?.substring(0, 20));
+    const isServiceKey = token === serviceKey;
+    console.log('[PUT] Is service key:', isServiceKey);
+    let authUser = null;
+
+    if (!isServiceKey) {
+      // 사용자 토큰 인증
+      const { data: { user: authUserData } } = await serviceSupabase.auth.getUser(token);
+      if (!authUserData) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      authUser = authUserData;
+
+      const { data: profile, error: profileError } = await serviceSupabase
+        .from("users").select("role").eq("id", authUser.id).single();
+      if (profileError || !profile) {
+        return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
+      }
+      if (profile.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden - 관리자만 글을 수정할 수 있습니다" }, { status: 403 });
+      }
     }
-    const { data: profile, error: profileError } = await serviceSupabase
-      .from("users").select("role").eq("id", authUser.id).single();
-    if (profileError || !profile) {
-      return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
-    }
-    if (profile.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden - 관리자만 글을 수정할 수 있습니다" }, { status: 403 });
-    }
+    // 서비스롤키인 경우 인증 건너뜀
 
     // Check if user owns this post
     const { data: existingPost, error: fetchError } = await serviceSupabase
@@ -631,7 +676,8 @@ export async function PUT(request: Request) {
       );
     }
 
-    if (existingPost.user_id !== authUser.id) {
+    // 서비스롤키가 아닌 경우에만 글 소유권 체크
+    if (!isServiceKey && authUser && existingPost.user_id !== authUser.id) {
       return NextResponse.json(
         { error: "Forbidden - Not your post" },
         { status: 403 }
@@ -645,7 +691,8 @@ export async function PUT(request: Request) {
 
       // DB 키워드 기반 내부 링크 추가 (마크다운 형식)
       const keywords = await getCachedKeywords();
-      finalContent = addInternalLinks(content, 5, keywords);
+      const currentPostUrl = `/posts/${slug}`;
+      finalContent = addInternalLinks(content, 5, keywords, currentPostUrl);
 
       // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
       // 사용자가 이미 관련글 섹션을 지웠으면 다시 추가하지 않음
@@ -653,7 +700,7 @@ export async function PUT(request: Request) {
       if (!hasRelatedSection) {
         const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
         console.log('[PUT] findRelatedPosts count:', relatedPosts.length);
-        finalContent = appendRelatedLinks(finalContent, relatedPosts);
+        finalContent = appendRelatedLinks(finalContent, relatedPosts, slug);
         console.log('[PUT] finalContent has 관련글:', finalContent.includes('### 📌 관련 글'));
       } else {
         console.log('[PUT] 사용자가 관련글 섹션을 지웠으므로 다시 추가하지 않음');
@@ -743,9 +790,27 @@ export async function PUT(request: Request) {
       revalidatePath("/", "page");
       revalidatePath("/posts", "page");
       revalidatePath(`/posts/${slug}`, "page");
+      revalidatePath(`/posts/${slug}/*`, "page");
       revalidatePath("/tags", "page");
       revalidatePath("/situations", "page");
       revalidatePath("/cases", "page");
+      revalidateTag("posts");
+      revalidateTag(`post-${id}`);
+
+      // IndexNow 알림 (비동기, 발행 시에만)
+      if (process.env.INDEXNOW_KEY) {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+        const postUrl = `${siteUrl}/posts/${slug}`;
+        const host = siteUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+        
+        notifyIndexNow([postUrl], process.env.INDEXNOW_KEY, host).then(result => {
+          if (result.success) {
+            console.log("[IndexNow PUT] 성공:", result.message);
+          } else {
+            console.error("[IndexNow PUT] 실패:", result.message);
+          }
+        }).catch((err) => { console.error("[IndexNow PUT] 네트워크 오류:", err?.message); });
+      }
     }
 
     // embedding 재생성 (비동기, 발행 상태일 때만, 기존 벡터가 없을 때만)

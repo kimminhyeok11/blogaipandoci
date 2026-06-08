@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/auth/AuthProvider";
 import {
   Plus,
   Search,
@@ -40,6 +41,7 @@ interface Category {
 
 export default function AdminKeywordsPage() {
   const { showToast } = useToast();
+  const { session } = useAuth();
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,10 @@ export default function AdminKeywordsPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [invalidUrls, setInvalidUrls] = useState<Set<string>>(new Set());
+  const [isCheckingUrls, setIsCheckingUrls] = useState(false);
+  const [isAutoAdding, setIsAutoAdding] = useState(false);
+  const [isSyncingCategories, setIsSyncingCategories] = useState(false);
 
   const fetchKeywords = useCallback(async () => {
     try {
@@ -97,6 +103,89 @@ export default function AdminKeywordsPage() {
     fetchCategories();
   }, []);
 
+  // 유효하지 않은 URL 식별
+  const checkInvalidUrls = useCallback(async () => {
+    setIsCheckingUrls(true);
+    const invalidSet = new Set<string>();
+    
+    // 로컬 개발 환경에서는 로컬 URL 사용
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const siteUrl = isLocal ? "http://localhost:3000" : (process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com");
+
+    // 병렬 처리로 속도 개선
+    const checkPromises = keywords
+      .filter(keyword => {
+        // 앵커 방식 URL은 유효성 검사 제외 (페이지가 존재하면 유효한 것으로 처리)
+        if (keyword.url.includes("#")) return false;
+        return keyword.url.startsWith("/cases/");
+      })
+      .map(async (keyword) => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
+          
+          const response = await fetch(`${siteUrl}${keyword.url}`, {
+            method: "HEAD",
+            cache: "no-store",
+            signal: controller.signal,
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            return keyword.id;
+          }
+        } catch {
+          // 에러가 발생해도 조용히 처리
+          return keyword.id;
+        }
+        return null;
+      });
+
+    const results = await Promise.all(checkPromises);
+    results.forEach(id => {
+      if (id) invalidSet.add(id);
+    });
+
+    setInvalidUrls(invalidSet);
+    setIsCheckingUrls(false);
+    
+    if (invalidSet.size > 0) {
+      showToast(`${invalidSet.size}개의 유효하지 않은 URL을 발견했습니다`, "warning");
+    } else {
+      showToast("모든 URL이 유효합니다", "success");
+    }
+  }, [keywords, showToast]);
+
+  // 유효하지 않은 URL 일괄 삭제
+  const deleteInvalidUrls = async () => {
+    if (invalidUrls.size === 0) {
+      showToast("삭제할 유효하지 않은 URL이 없습니다", "warning");
+      return;
+    }
+
+    const confirmDelete = confirm(`${invalidUrls.size}개의 유효하지 않은 URL 키워드를 삭제하시겠습니까?`);
+    if (!confirmDelete) return;
+
+    const idsToDelete = Array.from(invalidUrls);
+    for (const id of idsToDelete) {
+      try {
+        await fetch(`/api/admin/keywords/${id}`, {
+          method: "DELETE",
+          headers: {
+            ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+          },
+        });
+      } catch (err) {
+        console.error(`키워드 삭제 실패 (${id}):`, err);
+      }
+    }
+
+    showToast("유효하지 않은 URL 키워드가 삭제되었습니다", "success");
+    setInvalidUrls(new Set());
+    fetchKeywords();
+  };
+
   const openCreateModal = () => {
     setEditingKeyword(null);
     setFormData({
@@ -134,10 +223,9 @@ export default function AdminKeywordsPage() {
     if (urlType === "search") {
       return `/search?q=${encodeURIComponent(keyword)}`;
     } else {
-      // direct: /cases/형사-고소 형태
-      const categorySlug = category ? `/${category}` : "";
-      const keywordSlug = keyword.replace(/·/g, "-").replace(/\s+/g, "-");
-      return `/cases${categorySlug}/${keywordSlug}`;
+      // direct: /cases/형사 형태 (카테고리 슬러그 기반)
+      const categorySlug = category || "";
+      return `/cases/${categorySlug}`;
     }
   };
 
@@ -204,10 +292,13 @@ export default function AdminKeywordsPage() {
     try {
       const response = await fetch(`/api/admin/keywords/${id}`, {
         method: "DELETE",
+        headers: {
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
       });
 
       if (response.ok) {
-        showToast("키워드가 삭제되었습니다", "success");
+        showToast("키워드가 삭제되었습니다. 관련 글의 내부링크가 자동으로 제거됩니다.", "success");
         setDeleteConfirm(null);
         fetchKeywords();
       } else {
@@ -218,18 +309,118 @@ export default function AdminKeywordsPage() {
     }
   };
 
+  const handleAutoAdd = async () => {
+    setIsAutoAdding(true);
+    try {
+      const response = await fetch("/api/admin/keywords/auto-add", {
+        method: "POST",
+        headers: {
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        showToast(data.message, "success");
+        fetchKeywords();
+      } else {
+        const data = await response.json();
+        showToast(data.error || "자동 추가 실패", "error");
+      }
+    } catch {
+      showToast("네트워크 오류", "error");
+    } finally {
+      setIsAutoAdding(false);
+    }
+  };
+
+  const handleSyncCategories = async () => {
+    setIsSyncingCategories(true);
+    try {
+      const response = await fetch("/api/admin/categories/sync", {
+        method: "POST",
+        headers: {
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        showToast(data.message, "success");
+        // 카테고리 목록 새로고침
+        const categoriesResponse = await fetch("/api/categories");
+        const categoriesData = await categoriesResponse.json();
+        setCategories(categoriesData.categories || []);
+      } else {
+        const data = await response.json();
+        showToast(data.error || "동기화 실패", "error");
+      }
+    } catch {
+      showToast("네트워크 오류", "error");
+    } finally {
+      setIsSyncingCategories(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* 헤더 */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="font-sans font-semibold text-lg text-ink">내부링크 키워드</h2>
-        <button
-          onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-rust text-paper rounded-sm hover:bg-rust-light transition-colors font-sans text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          <span>키워드 추가</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSyncCategories}
+            disabled={isSyncingCategories}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-paper rounded-sm hover:bg-blue-700 disabled:opacity-50 transition-colors font-sans text-sm"
+          >
+            {isSyncingCategories ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            <span>{isSyncingCategories ? "동기화 중..." : "카테고리 동기화"}</span>
+          </button>
+          <button
+            onClick={handleAutoAdd}
+            disabled={isAutoAdding}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-paper rounded-sm hover:bg-green-700 disabled:opacity-50 transition-colors font-sans text-sm"
+          >
+            {isAutoAdding ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            <span>{isAutoAdding ? "추가 중..." : "CASE_TYPE_META 자동 추가"}</span>
+          </button>
+          {invalidUrls.size > 0 && (
+            <button
+              onClick={deleteInvalidUrls}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-paper rounded-sm hover:bg-red-700 transition-colors font-sans text-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>유효하지 않은 URL 삭제 ({invalidUrls.size}개)</span>
+            </button>
+          )}
+          <button
+            onClick={checkInvalidUrls}
+            disabled={isCheckingUrls}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-ink text-paper rounded-sm hover:bg-ink-light disabled:opacity-50 transition-colors font-sans text-sm"
+          >
+            {isCheckingUrls ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <AlertTriangle className="w-4 h-4" />
+            )}
+            <span>{isCheckingUrls ? "확인 중..." : "유효하지 않은 URL 확인"}</span>
+          </button>
+          <button
+            onClick={openCreateModal}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-rust text-paper rounded-sm hover:bg-rust-light transition-colors font-sans text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>키워드 추가</span>
+          </button>
+        </div>
       </div>
 
       {/* 검색 및 필터 */}
@@ -387,7 +578,7 @@ export default function AdminKeywordsPage() {
                         : "bg-paper text-ink border-ink hover:bg-cream"
                     }`}
                   >
-                    직접 링크 (/cases/)
+                    Cases 카테고리 (/cases/)
                   </button>
                   <button
                     type="button"
@@ -404,17 +595,45 @@ export default function AdminKeywordsPage() {
                 <label className="block text-sm font-medium font-sans text-ink mb-1">
                   URL *
                 </label>
-                <input
-                  type="text"
-                  value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                  placeholder={formData.urlType === "direct" ? "예: /cases/형사-고소" : "예: /search?q=강제집행"}
-                  className="w-full px-3 py-2 border border-ink rounded-sm focus:ring-2 focus:ring-rust focus:border-transparent bg-paper font-sans text-sm"
-                  required
-                />
-                <p className="text-xs text-muted mt-1 font-sans">
-                  키워드나 카테고리를 변경하면 URL이 자동으로 생성됩니다
-                </p>
+                {formData.urlType === "direct" ? (
+                  <div className="space-y-2">
+                    <select
+                      value={formData.category}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
+                      className="w-full px-3 py-2 border border-ink rounded-sm focus:ring-2 focus:ring-rust focus:border-transparent bg-paper font-sans text-sm"
+                    >
+                      <option value="">카테고리 선택</option>
+                      {categories.map((cat: Category) => (
+                        <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={formData.url}
+                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                      placeholder="/cases/형사-고소"
+                      className="w-full px-3 py-2 border border-ink rounded-sm focus:ring-2 focus:ring-rust focus:border-transparent bg-paper font-sans text-sm"
+                      required
+                    />
+                    <p className="text-xs text-muted mt-1 font-sans">
+                      카테고리를 선택하면 URL이 자동으로 생성됩니다. 직접 수정할 수도 있습니다.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      value={formData.url}
+                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                      placeholder="/search?q=강제집행"
+                      className="w-full px-3 py-2 border border-ink rounded-sm focus:ring-2 focus:ring-rust focus:border-transparent bg-paper font-sans text-sm"
+                      required
+                    />
+                    <p className="text-xs text-muted mt-1 font-sans">
+                      키워드를 변경하면 URL이 자동으로 생성됩니다
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

@@ -416,7 +416,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
         alt: post.cover_image_alt || post.title,
       }
     : {
-        url: `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&subtitle=${encodeURIComponent(description)}`,
+        url: `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&subtitle=${encodeURIComponent(description.slice(0, 100))}`,
         width: 1200,
         height: 630,
         alt: post.title,
@@ -425,7 +425,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   return {
     title,
     description,
-    keywords: post.title.split(" ").filter((w: string) => w.length > 1),
+    keywords: post.title.split(" ").filter((w: string) => w.length > 1).join(","),
     authors: post.user?.nickname ? [{ name: post.user.nickname }] : undefined,
     robots: {
       index: true,
@@ -540,14 +540,20 @@ export default async function PostPage({ params }: PostPageProps) {
   const authorEmail = post.user?.email || undefined;
   const authorAvatar = post.user?.avatar_url || `${SITE_URL}/icon.png`;
 
+  // 콘텐츠 오염 정화 (반복되는 이상한 패턴 제거)
+  const sanitizedContent = safeContent
+    .replace(/([가-힣a-zA-Z0-9\-]+)\/(posts|cases)\/([가-힣a-zA-Z0-9\-]+)\1+/g, '$1')
+    .replace(/([가-힣a-zA-Z0-9]+)\/search\?q=([가-힣a-zA-Z0-9]+)/g, '$1 $2')
+    .replace(/([가-힣a-zA-Z0-9\-]+)\/cases\/\1/g, '$1');
+
   // ArticleSchema 데이터 (null-safe)
   const articleSchemaData = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: safeTitle.slice(0, 110),
     description: post.excerpt || undefined,
-    wordCount: safeContent ? safeContent.replace(/\s+/g, ' ').trim().split(' ').length : undefined,
-    articleBody: safeContent.replace(/[#*`\[\]()]/g, '').replace(/!\[.*?\]\(.*?\)/g, '').slice(0, 500),
+    wordCount: sanitizedContent ? sanitizedContent.replace(/\s+/g, ' ').trim().split(' ').length : undefined,
+    articleBody: sanitizedContent.replace(/[#*`\[\]()]/g, '').replace(/!\[.*?\]\(.*?\)/g, '').slice(0, 500),
     author: {
       "@type": "Person",
       name: authorName,
@@ -593,8 +599,8 @@ export default async function PostPage({ params }: PostPageProps) {
     },
     isAccessibleForFree: true,
     isFamilyFriendly: true,
-    ...(post.tags && post.tags.length > 0 && { 
-      keywords: post.tags.map((t) => t.name).join(", "),
+    ...(post.tags && post.tags.length > 0 && {
+      keywords: post.tags.filter((t) => t.name && t.name.trim()).map((t) => t.name).join(", "),
       articleSection: post.tags[0]?.name || undefined,
       about: post.tags.filter(tag => tag.name).map((tag) => ({
         "@type": "Thing",

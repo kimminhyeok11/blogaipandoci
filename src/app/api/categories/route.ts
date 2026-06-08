@@ -25,7 +25,11 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ categories: categories || [] });
+    return NextResponse.json({ categories: categories || [] }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+      },
+    });
   } catch (error) {
     console.error("[Categories] Error:", error);
     return NextResponse.json(
