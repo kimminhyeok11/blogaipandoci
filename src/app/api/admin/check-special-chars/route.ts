@@ -14,7 +14,7 @@ export async function GET() {
 
     // 키워드에서 중간점 포함된 URL 확인
     const { data: keywords, error: keywordsError } = await admin
-      .from("keywords")
+      .from("internal_link_keywords")
       .select("id, keyword, url")
       .or("url.ilike.%·%,url.ilike.%•%");
 
