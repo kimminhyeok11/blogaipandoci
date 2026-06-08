@@ -14,8 +14,12 @@ import { useWriteForm } from "./hooks/useWriteForm";
 import { useAutoSave } from "./hooks/useAutoSave";
 import type { MarkdownEditorRef } from "@/components/editor/MarkdownEditor";
 
-const CASE_TYPES = ["형사", "민사", "이혼·가족", "노동", "부동산", "학교폭력", "지식재산권", "교통사고", "회생·파산", "채무·금전", "전세·임대차", "계약·거래", "행정·기타", "기타"];
 const EXPERT_LEVELS = ["직접가능", "법무사권장", "변호사권장"];
+
+interface Category {
+  name: string;
+  slug: string;
+}
 
 const EMPTY_PROCEDURE = {
   case_type: "",
@@ -73,6 +77,7 @@ function WritePageContent() {
   const [preview, setPreview] = useState(false);
   const [procedureMeta, setProcedureMeta] = useState({ ...EMPTY_PROCEDURE });
   const [showProcedure, setShowProcedure] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [coverImageAlt, setCoverImageAlt] = useState<string | null>(null);
   const [metaTitle, setMetaTitle] = useState<string>("");
@@ -82,6 +87,20 @@ function WritePageContent() {
 
   // 기존 게시글 목록 (자동 내부 링크용)
   const [existingPosts, setExistingPosts] = useState<Array<{ title: string; slug: string }>>([]);
+
+  // categories 가져오기
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        const data = await response.json();
+        setCategories(data.categories || []);
+      } catch (error) {
+        console.error("카테고리 가져오기 실패:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // localStorage에 임시 저장
   const saveToLocalStorage = useCallback(() => {
@@ -155,9 +174,9 @@ function WritePageContent() {
   }, []);
 
   // 자동 내부 링크 삽입 함수
-  const autoInsertInternalLinks = useCallback((contentText: string, currentSlug?: string): string => {
+  const _autoInsertInternalLinks = useCallback((contentText: string, currentSlug?: string): string => {
     if (!existingPosts.length) return contentText;
-    
+
     let processedContent = contentText;
     
     // 게시글 수가 많을 수 있으니, 길이순으로 정렬 (긴 제목 먼저 처리 - 부분 매칭 방지)
@@ -383,19 +402,23 @@ function WritePageContent() {
 
       // 태그 파싱
       const tagList = tags.split(",").map(t => t.trim()).filter(Boolean);
-      
-      // 자동 내부 링크 삽입 (발행 시에만 적용)
-      let processedContent = content.trim();
-      if (published && existingPosts.length > 0) {
-        // 수정 모드: editSlug, 신규: 생성된 slug
-        const currentSlug = isEditMode ? editSlug : slug;
-        processedContent = autoInsertInternalLinks(processedContent, currentSlug || undefined);
-        // 링크가 삽입되었으면 content 상태도 업데이트 (에디터에 반영)
-        if (processedContent !== content.trim()) {
-          setContent(processedContent);
-          showToast('자동으로 관련 글 링크가 삽입되었습니다', 'info');
-        }
-      }
+
+      // 내부 링크 및 관련 글 섹션은 API에서 처리 (중복 방지)
+      const processedContent = content.trim();
+
+      // 메타 설명 자동 생성 (본문 기반, excerpt와 중복 방지)
+      const generateMetaDescription = (title: string, content: string): string => {
+        // 본문에서 첫 문장 추출
+        const firstSentence = content.split(/[.!?]/)[0]?.trim() || "";
+        // 첫 문장이 없으면 본문 앞부분 요약
+        const summary = firstSentence || content.slice(0, 100).replace(/[#*`\[\]()!]/g, "").trim();
+        // 제목 + 요약 조합 (최대 155자)
+        const combined = summary ? `${title} - ${summary}` : title;
+        return combined.slice(0, 155);
+      };
+
+      // 메타 설명이 없으면 자동 생성
+      const finalMetaDescription = metaDescription || generateMetaDescription(title.trim(), processedContent);
 
       if (isEditMode && postId) {
         // 수정 모드: API 호출
@@ -430,7 +453,7 @@ function WritePageContent() {
             cover_image: coverImage || undefined,
             cover_image_alt: coverImageAlt || undefined,
             meta_title: metaTitle || title.trim() || null,
-            meta_description: metaDescription || finalExcerpt || null,
+            meta_description: finalMetaDescription,
             ...procedureFields,
           }),
         });
@@ -440,20 +463,23 @@ function WritePageContent() {
           throw new Error(errorData.error || "글 수정에 실패했습니다.");
         }
 
+        const result = await response.json();
+        const updatedPost = result.data;
+
         // 태그 저장 (API에서 기존 태그 삭제 후 새로 저장)
         await saveTags(postId, tagList);
 
         showToast(published ? "글이 수정되었습니다." : "임시 저장되었습니다.", "success");
-        
+
         // 임시 저장 데이터 정리
         autoSave.clear();
-        
+
         // 히스토리 저장 (수정 시)
         if (postId && user?.id) {
           try {
             await fetch("/api/revisions", {
               method: "POST",
-              headers: { 
+              headers: {
                 "Content-Type": "application/json",
                 'Authorization': `Bearer ${session?.access_token}`
               },
@@ -468,14 +494,15 @@ function WritePageContent() {
             console.error("히스토리 저장 실패:", err);
           }
         }
-        
+
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
-          await notifyIndexNow(`/posts/${slug}`, session?.access_token);
+          await notifyIndexNow(`/posts/${updatedPost.slug}`, session?.access_token);
         }
-        
+
         // window.location으로 강제 풀 리로드 → revalidatePath 이후 최신 내용 즉시 반영
-        window.location.href = `/posts/${slug}`;
+        // API에서 반환된 실제 slug 사용 (slug 변경 시 대응)
+        window.location.href = `/posts/${updatedPost.slug}`;
       } else {
         // 신규 작성: API 호출
         const response = await fetch("/api/posts", {
@@ -493,7 +520,7 @@ function WritePageContent() {
             cover_image: coverImage || null,
             cover_image_alt: coverImageAlt || null,
             meta_title: metaTitle || title.trim() || null,
-            meta_description: metaDescription || finalExcerpt || null,
+            meta_description: finalMetaDescription,
             case_type: procedureMeta.case_type || null,
             current_stage: procedureMeta.current_stage || null,
             next_stage: procedureMeta.next_stage || null,
@@ -521,17 +548,18 @@ function WritePageContent() {
         }
 
         showToast(published ? "글이 발행되었습니다." : "임시 저장되었습니다.", "success");
-        
+
         // 임시 저장 데이터 정리
         autoSave.clear();
-        
+
         // IndexNow 알림 (발행된 경우에만)
         if (published) {
-          await notifyIndexNow(`/posts/${slug}`, session?.access_token);
+          await notifyIndexNow(`/posts/${newPost.slug}`, session?.access_token);
         }
-        
+
         // window.location으로 강제 풀 리로드 → revalidatePath 이후 최신 내용 즉시 반영
-        window.location.href = `/posts/${slug}`;
+        // API에서 반환한 실제 slug 사용 (중복 시 suffix 추가됨)
+        window.location.href = `/posts/${newPost.slug}`;
       }
     } catch (err) {
       console.error("저장 오류:", err);
@@ -841,7 +869,7 @@ function WritePageContent() {
                     <label className="block text-xs text-muted mb-1">사건 유형</label>
                     <select value={procedureMeta.case_type} onChange={(e) => setProcedureMeta({ ...procedureMeta, case_type: e.target.value })} className="w-full font-sans text-sm text-ink bg-paper border border-rule/30 rounded-sm px-2 py-1.5 focus:border-rust focus:outline-none">
                       <option value="">선택 안 함</option>
-                      {CASE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      {categories.map((cat: Category) => <option key={cat.slug} value={cat.name}>{cat.name}</option>)}
                     </select>
                   </div>
                   <div>

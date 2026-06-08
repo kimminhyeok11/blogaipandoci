@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { 
-  BarChart3, 
-  MessageSquare, 
-  Flag, 
-  Link2, 
+import {
+  BarChart3,
+  MessageSquare,
+  Flag,
+  Link2,
   Settings,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  AlertTriangle
 } from "lucide-react";
 
 interface NavItem {
@@ -24,6 +25,7 @@ const navItems: NavItem[] = [
   { href: "/admin/comments", label: "댓글", icon: MessageSquare },
   { href: "/admin/keywords", label: "키워드", icon: Link2 },
   { href: "/admin/reports", label: "신고", icon: Flag },
+  { href: "/admin/validate-links", label: "링크 검증", icon: AlertTriangle },
   { href: "/admin/settings", label: "설정", icon: Settings },
 ];
 

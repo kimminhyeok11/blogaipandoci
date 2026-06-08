@@ -182,6 +182,7 @@ export default function StatsPage() {
     if (typeof window === 'undefined') return;
     
     const saves: AutoSaveItem[] = [];
+    const processedKeys = new Set<string>();
     
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -189,30 +190,40 @@ export default function StatsPage() {
       
       // 임시저장 키 패턴: blog_draft_xxx 또는 blog_edit_슬러그_xxx
       if (key.startsWith('blog_draft_') || key.startsWith('blog_edit_')) {
-        const timestamp = localStorage.getItem(key.replace('_title', '_timestamp') || '');
-        const title = localStorage.getItem(key) || '';
-        
         // title 키만 처리 (중복 방지)
         if (key.endsWith('_title')) {
           const baseKey = key.replace('_title', '');
+          
+          // 이미 처리한 키는 건너뜀
+          if (processedKeys.has(baseKey)) continue;
+          processedKeys.add(baseKey);
+          
           const type = baseKey.startsWith('blog_draft') ? 'new' : 'edit';
           const editSlug = type === 'edit' 
-            ? baseKey.replace('blog_edit_', '').replace(/_title|_content|_excerpt|_tags|_timestamp/g, '')
+            ? baseKey.replace('blog_edit_', '')
             : undefined;
+          
+          const title = localStorage.getItem(key) || '';
+          const content = localStorage.getItem(`${baseKey}_content`) || '';
+          const excerpt = localStorage.getItem(`${baseKey}_excerpt`) || '';
+          const tags = localStorage.getItem(`${baseKey}_tags`) || '';
+          const timestamp = localStorage.getItem(`${baseKey}_timestamp`) || new Date().toISOString();
           
           saves.push({
             key: baseKey,
             type,
             title: title || '(제목 없음)',
-            content: localStorage.getItem(`${baseKey}_content`) || '',
-            excerpt: localStorage.getItem(`${baseKey}_excerpt`) || '',
-            tags: localStorage.getItem(`${baseKey}_tags`) || '',
-            timestamp: timestamp || new Date().toISOString(),
+            content,
+            excerpt,
+            tags,
+            timestamp,
             editSlug,
           });
         }
       }
     }
+    
+    console.log('[fetchAutoSaves] Found saves:', saves.length);
     
     // 최신순 정렬
     saves.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());

@@ -92,7 +92,11 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ post: data });
+    return NextResponse.json({ post: data }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+      },
+    });
   } catch {
     return NextResponse.json(
       { error: "Internal Server Error" },

@@ -600,7 +600,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
                   value={imageAlt}
                   onChange={(e) => {
                     setImageAlt(e.target.value);
-                    setImageCaption(e.target.value);
                   }}
                   placeholder="이미지에 대한 설명을 입력하세요"
                   className="w-full px-3 py-2 border border-rule rounded-sm bg-paper text-ink font-sans text-sm focus:outline-none focus:ring-2 focus:ring-rust/20"

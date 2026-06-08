@@ -5,9 +5,10 @@ interface PostContentProps {
   contentMarkdown: string;
   onTocExtract?: (toc: TocItem[]) => void;
   removeFirstImage?: boolean;
+  coverImageUrl?: string;
 }
 
-export function PostContent({ contentMarkdown, onTocExtract, removeFirstImage = false }: PostContentProps) {
+export function PostContent({ contentMarkdown, onTocExtract, removeFirstImage = false, coverImageUrl }: PostContentProps) {
   // 서버에서 마크다운 → HTML 변환
   const contentHtml = processMarkdown(contentMarkdown);
 
@@ -17,10 +18,11 @@ export function PostContent({ contentMarkdown, onTocExtract, removeFirstImage = 
   // TOC 추출
   const toc = extractTocFromHtml(processedHtml);
 
-  // 첫 번째 이미지 제거 (썸네일 중복 방지)
+  // cover_image와 동일한 URL의 이미지만 제거 (중복 방지)
   let finalHtml = processedHtml;
-  if (removeFirstImage) {
-    finalHtml = processedHtml.replace(/<figure[^>]*>.*?<img[^>]*>.*?<\/figure>/, '');
+  if (removeFirstImage && coverImageUrl) {
+    // cover_image URL과 동일한 이미지만 제거
+    finalHtml = processedHtml.replace(new RegExp(`<figure[^>]*>.*?<img[^>]*src=["']${coverImageUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["'][^>]*>.*?<\\/figure>`, 'i'), '');
   }
 
   // 이미지 태그에 data-lightbox 속성 추가 (클라이언트에서 라이트박스 처리)

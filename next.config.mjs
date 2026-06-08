@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  swcMinify: true,
   eslint: {
     ignoreDuringBuilds: false,
   },
@@ -19,6 +20,10 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],
+  },
+  // 번들 최적화
+  webpack: (config) => {
+    return config;
   },
   images: {
     unoptimized: false,

@@ -167,60 +167,54 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
                 key={post.id}
                 className="group border-b border-rule pb-6 last:border-0"
               >
-                <Link href={`/posts/${post.slug}`} className="block">
-                  <div className="flex gap-4">
-                    {post.cover_image && (
-                      <div className="relative flex-shrink-0 w-32 h-24 bg-cream rounded-sm overflow-hidden">
-                        <Image
-                          src={post.cover_image}
-                          alt={post.cover_image_alt || post.title}
-                          fill
-                          sizes="128px"
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        {post.current_stage ? (
-                          <span className="font-sans text-2xs font-medium text-rust border border-rust/30 rounded-sm px-2 py-0.5 bg-rust/5 flex-shrink-0">
-                            {post.current_stage}
-                          </span>
-                        ) : post.case_type ? (
-                          <span className="font-sans text-2xs font-medium text-rust flex-shrink-0">
-                            {post.case_type}
-                          </span>
-                        ) : null}
-                        {(post.current_stage || post.case_type) && <span className="text-rule">·</span>}
-                        <span className="font-sans text-2xs text-muted">
-                          {post.user?.role === "admin" ? (
-                            <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
-                              {post.user?.nickname || post.user?.email?.split('@')[0] || "익명"}
-                            </Link>
-                          ) : (
-                            post.user?.nickname || post.user?.email?.split('@')[0] || "익명"
-                          )}
-                        </span>
-                        <span className="text-rule">·</span>
-                        <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
-                          {new Date(post.published_at || post.created_at).toLocaleDateString("ko-KR")}
-                        </span>
-                        <span className="text-rule">·</span>
-                        <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
-                          {post.view_count.toLocaleString()}회 읽음
-                        </span>
-                      </div>
-                      <h2 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">
-                        {post.title}
-                      </h2>
-                      {post.excerpt && (
-                        <p className="font-sans text-sm text-muted leading-relaxed line-clamp-2">
-                          {post.excerpt}
-                        </p>
-                      )}
+                <div className="flex gap-4">
+                  {post.cover_image && (
+                    <div className="relative flex-shrink-0 w-32 h-24 bg-cream rounded-sm overflow-hidden">
+                      <Image
+                        src={post.cover_image}
+                        alt={post.cover_image_alt || post.title}
+                        fill
+                        sizes="128px"
+                        className="object-cover"
+                      />
                     </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {post.current_stage ? (
+                        <span className="font-sans text-2xs font-medium text-rust border border-rust/30 rounded-sm px-2 py-0.5 bg-rust/5 flex-shrink-0">
+                          {post.current_stage}
+                        </span>
+                      ) : post.case_type ? (
+                        <span className="font-sans text-2xs font-medium text-rust flex-shrink-0">
+                          {post.case_type}
+                        </span>
+                      ) : null}
+                      {(post.current_stage || post.case_type) && <span className="text-rule">·</span>}
+                      <span className="font-sans text-2xs text-muted">
+                        {post.user?.nickname || post.user?.email?.split('@')[0] || "익명"}
+                      </span>
+                      <span className="text-rule">·</span>
+                      <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
+                        {new Date(post.published_at || post.created_at).toLocaleDateString("ko-KR")}
+                      </span>
+                      <span className="text-rule">·</span>
+                      <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
+                        {post.view_count.toLocaleString()}회 읽음
+                      </span>
+                    </div>
+                    <h2 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">
+                      <Link href={`/posts/${post.slug}`} className="hover:text-rust transition-colors">
+                        {post.title}
+                      </Link>
+                    </h2>
+                    {post.excerpt && (
+                      <p className="font-sans text-sm text-muted leading-relaxed line-clamp-2">
+                        {post.excerpt}
+                      </p>
+                    )}
                   </div>
-                </Link>
+                </div>
               </article>
             ))}
           </div>
