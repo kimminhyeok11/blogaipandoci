@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { notifyIndexNow } from "@/lib/indexnow";
 import { refreshSituationsCache } from "@/lib/situations";
-import { addInternalLinks } from "@/lib/internal-links";
+import { addInternalLinks, getCachedKeywords } from "@/lib/internal-links";
 
 const makeAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -75,7 +75,7 @@ function calculateTitleSimilarity(titleA: string, titleB: string): number {
   return jaccardScore * 0.5 + substringScore * 0.3 + keywordScore * 0.2;
 }
 
-// 관련 글 찾기: 제목 유사도 기반
+// 관련 글 찾기: 벡터 검색 기반 (embedding 사용)
 async function findRelatedPosts(
   serviceSupabase: any,
   title: string,
@@ -83,7 +83,99 @@ async function findRelatedPosts(
   maxCount: number = 5
 ): Promise<{ title: string; slug: string }[]> {
   try {
-    // 기존 발행된 글 전체 조회
+    // OpenAI API 키가 없으면 기존 방식 사용
+    if (!process.env.OPENAI_API_KEY) {
+      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+    }
+
+    // 현재 제목 embedding 생성
+    const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model: "text-embedding-3-small", input: title }),
+    });
+
+    if (!embeddingResponse.ok) {
+      console.error("Embedding 생성 실패, 기존 방식 사용");
+      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+    }
+
+    const embeddingData = await embeddingResponse.json();
+    const queryVector = embeddingData?.data?.[0]?.embedding;
+
+    if (!Array.isArray(queryVector) || queryVector.length !== 1536) {
+      console.error("잘못된 벡터 차원, 기존 방식 사용");
+      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+    }
+
+    // embedding이 있는 글들 조회
+    const { data: posts, error } = await serviceSupabase
+      .from('posts')
+      .select('title, slug, embedding')
+      .eq('published', true)
+      .not('published_at', 'is', null)
+      .neq('slug', excludeSlug)
+      .not('embedding', 'is', null)
+      .order('published_at', { ascending: false })
+      .limit(200);
+
+    if (error || !posts || posts.length === 0) {
+      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+    }
+
+    // 코사인 유사도 계산
+    const scored = posts
+      .map((post: any) => {
+        try {
+          const embedding = JSON.parse(post.embedding);
+          if (!Array.isArray(embedding) || embedding.length !== 1536) return null;
+
+          const similarity = cosineSimilarity(queryVector, embedding);
+          return { ...post, score: similarity };
+        } catch {
+          return null; // JSON 파싱 실패 시 null 반환
+        }
+      })
+      .filter((p: any) => p !== null && p.score >= 0.5) // 유사도 0.5 이상만
+      .sort((a: any, b: any) => b.score - a.score)
+      .slice(0, maxCount)
+      .map(({ title, slug }: any) => ({ title, slug }));
+
+    return scored.length > 0 ? scored : findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+  } catch (err) {
+    console.error('벡터 검색 실패, 기존 방식 사용:', err);
+    return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+  }
+}
+
+// 코사인 유사도 계산
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < vecA.length; i++) {
+    const a = vecA[i] ?? 0;
+    const b = vecB[i] ?? 0;
+    dotProduct += a * b;
+    normA += a * a;
+    normB += b * b;
+  }
+
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+// 기존 방식: 제목 유사도 기반 (폴백)
+async function findRelatedPostsByTitle(
+  serviceSupabase: any,
+  title: string,
+  excludeSlug: string,
+  maxCount: number = 5
+): Promise<{ title: string; slug: string }[]> {
+  try {
     const { data: posts, error } = await serviceSupabase
       .from('posts')
       .select('title, slug')
@@ -95,13 +187,11 @@ async function findRelatedPosts(
 
     if (error || !posts || posts.length === 0) return [];
 
-    // 각 글에 대해 제목 유사도 계산
     const scored = posts.map((post: any) => {
       const similarity = calculateTitleSimilarity(title, post.title || '');
       return { ...post, score: similarity };
     });
 
-    // 유사도 높은 순 정렬, 최소 0.1 이상 매칭된 것만
     return scored
       .filter((p: any) => p.score >= 0.1)
       .sort((a: any, b: any) => b.score - a.score)
@@ -117,8 +207,13 @@ async function findRelatedPosts(
 // - 글 제목에서 핵심 키워드(3자 이상) 추출
 // - 본문에서 첫 번째 등장 위치에만 링크 삽입 (과도한 링크 방지)
 // - 코드블록·헤딩·이미 링크된 구간 제외
-function injectInlineLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
+// - 자기글 제외
+function injectInlineLinks(content: string, relatedPosts: { title: string; slug: string }[], currentSlug: string): string {
   if (relatedPosts.length === 0) return content;
+
+  // 자기글 제외
+  const filteredPosts = relatedPosts.filter(post => post.slug !== currentSlug);
+  if (filteredPosts.length === 0) return content;
 
   // 코드블록 위치 수집 (링크 삽입 제외 구간)
   const codeBlockRanges: [number, number][] = [];
@@ -151,7 +246,7 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
   const usedKeywords = new Set<string>();
 
   // 관련 글마다 핵심 키워드 추출 후 본문 치환 (글당 최대 1개 키워드만)
-  for (const post of relatedPosts) {
+  for (const post of filteredPosts) {
     // 제목에서 불용어 제외 3자 이상 키워드 추출, 긴 것 우선
     const keywords = post.title
       .split(/[\s\-·,()]+/)
@@ -167,7 +262,7 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
       if (keywordIdx === -1) continue;
       if (isExcluded(keywordIdx)) continue;
 
-      // 첫 번째 등장 위치에만 링크 삽입
+      // 첫 번째 등장 위치에만 링크 삽입 (마크다운 형식)
       result =
         result.slice(0, keywordIdx) +
         `[${keyword}](/posts/${post.slug})` +
@@ -188,30 +283,38 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
 // 본문 하단에 관련 글 링크 마크다운 삽입 + 본문 인라인 링크 삽입
 // 이전 발행 시 삽입된 인라인 내부 링크 제거 (재발행 시 최신 슬러그로 교체하기 위해)
 function removeInjectedInlineLinks(content: string): string {
-  // [키워드](/posts/슬러그) 형태의 링크를 키워드 텍스트로만 복원
+  // 마크다운 [키워드](/posts/슬러그) 형태의 링크를 키워드 텍스트로만 복원
   return content.replace(/\[([^\]]+)\]\(\/posts\/[^)]+\)/g, '$1');
 }
 
-// 관련 글 섹션이 이미 존재하는지 확인
-function hasRelatedSection(content: string): boolean {
-  const normalized = content.replace(/\r\n/g, '\n');
-  return /\n[-]{3}\n+#{1,4}\s*(?:📌\s*)?관련 글\n/.test(normalized);
-}
-
-function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[]): string {
+function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[], currentSlug: string): string {
   if (relatedPosts.length === 0) return content;
 
-  // 이미 관련 글 섹션이 있으면 그대로 유지 (사용자 편집 존중)
-  if (hasRelatedSection(content)) {
-    return content;
+  // 기존 관련글 섹션 제거 (재발행 시 최신화)
+  // 더 강력한 제거: "---" 이후 모든 관련글 섹션 제거
+  let withoutRelatedSection = content;
+
+  // 다양한 형식의 관련글 섹션 패턴
+  const patterns = [
+    /\n\n---\n\n### 📌 관련 글\n[\s\S]*$/m,
+    /\n\n---\n\n### 관련 글\n[\s\S]*$/m,
+    /\n\n---\n\n### 📌 관련글\n[\s\S]*$/m,
+    /\n\n---\n\n### 관련글\n[\s\S]*$/m,
+    /\n\n---\n\n#### 📌 관련 글\n[\s\S]*$/m,
+    /\n\n---\n\n#### 관련 글\n[\s\S]*$/m,
+    /\n\n---\n\n#{1,4}\s*관련\s*글\n[\s\S]*$/m,
+    /\n\n---\n\n#{1,4}\s*📌\s*관련\s*글\n[\s\S]*$/m,
+  ];
+
+  for (const pattern of patterns) {
+    withoutRelatedSection = withoutRelatedSection.replace(pattern, '');
   }
 
-  // 관련 글 섹션이 없을 때만 새로 삽입
   // 이전에 삽입된 인라인 /posts/ 링크 제거 후 재삽입
-  const unlinked = removeInjectedInlineLinks(content);
+  const unlinked = removeInjectedInlineLinks(withoutRelatedSection);
 
-  // 본문 인라인 링크 삽입
-  const withInline = injectInlineLinks(unlinked, relatedPosts);
+  // 본문 인라인 링크 삽입 (자기글 제외)
+  const withInline = injectInlineLinks(unlinked, relatedPosts, currentSlug);
 
   const links = relatedPosts
     .map(p => `- [${p.title}](/posts/${p.slug})`)
@@ -237,8 +340,9 @@ export async function GET(request: Request) {
       const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
       if (!authUser) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
 
-      const { data: profile } = await serviceSupabase.from("users").select("role").eq("id", authUser.id).single();
-      if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
+      const { data: profile, error: profileError } = await serviceSupabase.from("users").select("role").eq("id", authUser.id).single();
+      if (profileError || !profile) return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
+      if (profile.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
 
       const { data, error, count } = await serviceSupabase
         .from("posts")
@@ -262,7 +366,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ posts: data, count });
+    return NextResponse.json({ posts: data, count }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+      },
+    });
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     return NextResponse.json(
@@ -301,36 +409,56 @@ export async function POST(request: Request) {
     const userId = authUser.id;
 
     // 관리자만 글 작성 가능
-    const { data: profile } = await serviceSupabase
+    const { data: profile, error: profileError } = await serviceSupabase
       .from("users")
       .select("role")
       .eq("id", authUser.id)
       .single();
 
-    if (profile?.role !== "admin") {
+    if (profileError || !profile) {
+      return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
+    }
+
+    if (profile.role !== "admin") {
       return NextResponse.json({ error: "Forbidden - 관리자만 글을 작성할 수 있습니다" }, { status: 403 });
     }
 
-    // slug 중복 확인 후 자동 suffix 추가
+    // slug 중복 확인 후 자동 suffix 추가 (동시 요청 시 충돌 방지)
     let finalSlug = slug;
-    const { data: existing } = await serviceSupabase
-      .from("posts")
-      .select("id")
-      .eq("slug", slug)
-      .maybeSingle();
-    if (existing) {
-      finalSlug = `${slug.slice(0, 20)}-${Date.now().toString(36).slice(-4)}`;
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    while (attempts < maxAttempts) {
+      const { data: existing } = await serviceSupabase
+        .from("posts")
+        .select("id")
+        .eq("slug", finalSlug)
+        .maybeSingle();
+
+      if (!existing) break;
+
+      // 유니크한 suffix 생성 (랜덤 + 타임스탬프)
+      const randomSuffix = Math.random().toString(36).slice(-4);
+      const timestampSuffix = Date.now().toString(36).slice(-4);
+      finalSlug = `${slug.slice(0, 20)}-${timestampSuffix}${randomSuffix}`;
+      attempts++;
+    }
+
+    if (attempts >= maxAttempts) {
+      return NextResponse.json({ error: "슬러그 생성 실패 (동시 요청 과다)" }, { status: 500 });
     }
 
     // 발행 시 관련 글 자동 삽입
     let finalContent = content;
     if (published) {
-      // DB 키워드 기반 내부 링크 추가
-      finalContent = await addInternalLinks(content, 5);
+      // DB 키워드 기반 내부 링크 추가 (마크다운 형식)
+      const keywords = await getCachedKeywords();
+      const currentPostUrl = `/posts/${finalSlug}`;
+      finalContent = addInternalLinks(content, 5, keywords, currentPostUrl);
 
-      // 제목 유사도 기반 관련 글 섹션 추가
+      // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
       const relatedPosts = await findRelatedPosts(serviceSupabase, title, finalSlug);
-      finalContent = appendRelatedLinks(finalContent, relatedPosts);
+      finalContent = appendRelatedLinks(finalContent, relatedPosts, finalSlug);
     }
 
     // case_type → category_id 자동 매핑
@@ -410,6 +538,27 @@ export async function POST(request: Request) {
       }).catch((err) => { console.error("[embedding/post] 네트워크 오류:", err?.message); });
     }
 
+    // IndexNow 알림 (비동기, 발행 시에만)
+    if (published && data?.id && process.env.INDEXNOW_KEY) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+      const postUrl = `${siteUrl}/posts/${finalSlug}`;
+      
+      fetch(`${siteUrl}/api/indexnow-notify`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ urls: [postUrl] }),
+      }).then(r => r.json()).then(indexNowRes => {
+        if (indexNowRes.success) {
+          console.log("[IndexNow] 성공:", indexNowRes.message);
+        } else {
+          console.error("[IndexNow] 실패:", indexNowRes.message);
+        }
+      }).catch((err) => { console.error("[IndexNow] 네트워크 오류:", err?.message); });
+    }
+
     // process_embedding 생성 (절차 데이터가 있을 때만)
     if (published && data?.id && process.env.OPENAI_API_KEY && (current_stage || next_stage || (timeline_steps && timeline_steps.length > 0))) {
       const processText = [
@@ -485,16 +634,33 @@ export async function PUT(request: Request) {
 
     const serviceSupabase = makeAdmin();
 
-    // 토큰으로 실제 유저 확인 + 관리자 체크
-    const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
-    if (!authUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 서비스롤키인 경우 인증 건너뛰기 (일괄처리용)
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    console.log('[PUT] Service key exists:', !!serviceKey);
+    console.log('[PUT] Token starts with:', token.substring(0, 20));
+    console.log('[PUT] Service key starts with:', serviceKey?.substring(0, 20));
+    const isServiceKey = token === serviceKey;
+    console.log('[PUT] Is service key:', isServiceKey);
+    let authUser = null;
+
+    if (!isServiceKey) {
+      // 사용자 토큰 인증
+      const { data: { user: authUserData } } = await serviceSupabase.auth.getUser(token);
+      if (!authUserData) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      authUser = authUserData;
+
+      const { data: profile, error: profileError } = await serviceSupabase
+        .from("users").select("role").eq("id", authUser.id).single();
+      if (profileError || !profile) {
+        return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
+      }
+      if (profile.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden - 관리자만 글을 수정할 수 있습니다" }, { status: 403 });
+      }
     }
-    const { data: profile } = await serviceSupabase
-      .from("users").select("role").eq("id", authUser.id).single();
-    if (profile?.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden - 관리자만 글을 수정할 수 있습니다" }, { status: 403 });
-    }
+    // 서비스롤키인 경우 인증 건너뜀
 
     // Check if user owns this post
     const { data: existingPost, error: fetchError } = await serviceSupabase
@@ -510,7 +676,8 @@ export async function PUT(request: Request) {
       );
     }
 
-    if (existingPost.user_id !== authUser.id) {
+    // 서비스롤키가 아닌 경우에만 글 소유권 체크
+    if (!isServiceKey && authUser && existingPost.user_id !== authUser.id) {
       return NextResponse.json(
         { error: "Forbidden - Not your post" },
         { status: 403 }
@@ -521,15 +688,23 @@ export async function PUT(request: Request) {
     let finalContent = content;
     if (published) {
       console.log('[PUT] received content has 관련글:', content.includes('### 📌 관련 글') || content.includes('### 관련 글'));
-      
-      // DB 키워드 기반 내부 링크 추가
-      finalContent = await addInternalLinks(content, 5);
-      
-      // 제목 유사도 기반 관련 글 섹션 추가
-      const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
-      console.log('[PUT] findRelatedPosts count:', relatedPosts.length);
-      finalContent = appendRelatedLinks(finalContent, relatedPosts);
-      console.log('[PUT] finalContent has 관련글:', finalContent.includes('### 📌 관련 글'));
+
+      // DB 키워드 기반 내부 링크 추가 (마크다운 형식)
+      const keywords = await getCachedKeywords();
+      const currentPostUrl = `/posts/${slug}`;
+      finalContent = addInternalLinks(content, 5, keywords, currentPostUrl);
+
+      // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
+      // 사용자가 이미 관련글 섹션을 지웠으면 다시 추가하지 않음
+      const hasRelatedSection = content.includes('### 📌 관련 글') || content.includes('### 관련 글');
+      if (!hasRelatedSection) {
+        const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
+        console.log('[PUT] findRelatedPosts count:', relatedPosts.length);
+        finalContent = appendRelatedLinks(finalContent, relatedPosts, slug);
+        console.log('[PUT] finalContent has 관련글:', finalContent.includes('### 📌 관련 글'));
+      } else {
+        console.log('[PUT] 사용자가 관련글 섹션을 지웠으므로 다시 추가하지 않음');
+      }
     }
 
     // case_type 변경 시 category_id 자동 매핑
@@ -610,35 +785,75 @@ export async function PUT(request: Request) {
       });
     }
 
-    // embedding 재생성 (비동기, 발행 상태일 때만)
+    // 캐시 즉시 갱신 (수정 시)
+    if (published) {
+      revalidatePath("/", "page");
+      revalidatePath("/posts", "page");
+      revalidatePath(`/posts/${slug}`, "page");
+      revalidatePath(`/posts/${slug}/*`, "page");
+      revalidatePath("/tags", "page");
+      revalidatePath("/situations", "page");
+      revalidatePath("/cases", "page");
+      revalidateTag("posts");
+      revalidateTag(`post-${id}`);
+
+      // IndexNow 알림 (비동기, 발행 시에만)
+      if (process.env.INDEXNOW_KEY) {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+        const postUrl = `${siteUrl}/posts/${slug}`;
+        const host = siteUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+        
+        notifyIndexNow([postUrl], process.env.INDEXNOW_KEY, host).then(result => {
+          if (result.success) {
+            console.log("[IndexNow PUT] 성공:", result.message);
+          } else {
+            console.error("[IndexNow PUT] 실패:", result.message);
+          }
+        }).catch((err) => { console.error("[IndexNow PUT] 네트워크 오류:", err?.message); });
+      }
+    }
+
+    // embedding 재생성 (비동기, 발행 상태일 때만, 기존 벡터가 없을 때만)
     if (published && data?.id && process.env.OPENAI_API_KEY) {
-      const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
-      const embeddingText = [
-        title,
-        stagePart,
-        excerpt || "",
-        finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 5500),
-      ].filter(Boolean).join(" ");
-      fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
-      }).then(r => r.json()).then(embRes => {
-        if (embRes?.error) {
-          console.error("[embedding/post-update] OpenAI 오류:", embRes.error.message);
-          return;
-        }
-        const vec = embRes?.data?.[0]?.embedding;
-        if (!Array.isArray(vec) || vec.length !== 1536) {
-          console.error("[embedding/post-update] 잘못된 벡터 차원:", vec?.length);
-          return;
-        }
-        serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id)
-          .then(({ error: dbErr }) => { if (dbErr) console.error("[embedding/post-update] DB 저장 실패:", dbErr.message); });
-      }).catch((err) => { console.error("[embedding/post-update] 네트워크 오류:", err?.message); });
+      // 기존 벡터 확인
+      const { data: existingPost } = await serviceSupabase
+        .from("posts")
+        .select("embedding")
+        .eq("id", data.id)
+        .single();
+
+      // 기존 벡터가 없을 때만 생성
+      if (!existingPost?.embedding) {
+        const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
+        const embeddingText = [
+          title,
+          stagePart,
+          excerpt || "",
+          finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 5500),
+        ].filter(Boolean).join(" ");
+        fetch("https://api.openai.com/v1/embeddings", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
+        }).then(r => r.json()).then(embRes => {
+          if (embRes?.error) {
+            console.error("[embedding/post-update] OpenAI 오류:", embRes.error.message);
+            return;
+          }
+          const vec = embRes?.data?.[0]?.embedding;
+          if (!Array.isArray(vec) || vec.length !== 1536) {
+            console.error("[embedding/post-update] 잘못된 벡터 차원:", vec?.length);
+            return;
+          }
+          serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id)
+            .then(({ error: dbErr }) => { if (dbErr) console.error("[embedding/post-update] DB 저장 실패:", dbErr.message); });
+        }).catch((err) => { console.error("[embedding/post-update] 네트워크 오류:", err?.message); });
+      } else {
+        console.log("[embedding/post-update] 기존 벡터가 있어서 재생성하지 않음");
+      }
     }
 
     // process_embedding 재생성

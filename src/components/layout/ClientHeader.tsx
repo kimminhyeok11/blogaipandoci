@@ -32,12 +32,13 @@ export function ClientHeader() {
       className={`masthead fixed top-0 left-0 right-0 z-50 bg-paper transition-transform duration-300 ${
         isHeaderVisible ? "translate-y-0" : "-translate-y-full"
       }`}
+      role="banner"
     >
       <div className="masthead-pub">Deep Analysis and Insights</div>
-      <Link href="/" className="masthead-title">
+      <Link href="/" className="masthead-title" aria-label="홈으로 이동">
         法 BLOG
       </Link>
-      <div className="masthead-date" suppressHydrationWarning>
+      <div className="masthead-date" suppressHydrationWarning aria-live="polite">
         {new Date().toLocaleDateString("en-US", {
           year: "numeric",
           month: "long",
@@ -46,7 +47,7 @@ export function ClientHeader() {
       </div>
 
       {/* Utility Navigation - 아이콘만 최소화 */}
-      <nav className="mt-1 pt-1 border-t border-rule">
+      <nav className="mt-1 pt-1 border-t border-rule" aria-label="사이트 네비게이션">
         <ul className="flex items-center justify-center gap-6">
           {user?.role === "admin" && (
             <li>
@@ -55,6 +56,7 @@ export function ClientHeader() {
                 className="p-1 text-ink hover:text-rust transition-colors"
                 title="글쓰기"
                 rel="nofollow"
+                aria-label="새 글 작성"
               >
                 <PenSquare size={16} />
               </Link>
@@ -65,6 +67,7 @@ export function ClientHeader() {
               href="/posts" 
               className="p-1 text-ink hover:text-rust transition-colors"
               title="모든 글"
+              aria-label="모든 글 보기"
             >
               <span className="font-sans text-xs font-medium">ALL</span>
             </Link>
@@ -74,6 +77,7 @@ export function ClientHeader() {
               href="/cases" 
               className="p-1 text-ink hover:text-rust transition-colors"
               title="사건 유형별 안내"
+              aria-label="사건 유형별 안내 보기"
             >
               <span className="font-sans text-xs font-medium">사건유형</span>
             </Link>
@@ -84,6 +88,7 @@ export function ClientHeader() {
               className="p-1 text-ink hover:text-rust transition-colors"
               title="검색"
               rel="nofollow"
+              aria-label="검색 페이지로 이동"
             >
               <Search size={16} />
             </Link>
@@ -95,6 +100,7 @@ export function ClientHeader() {
                 className="p-1 text-ink hover:text-rust transition-colors"
                 title="프로필"
                 rel="nofollow"
+                aria-label="프로필 페이지로 이동"
               >
                 <User size={16} />
               </Link>
@@ -104,6 +110,7 @@ export function ClientHeader() {
                 className="p-1 text-ink hover:text-rust transition-colors"
                 title="로그인"
                 rel="nofollow"
+                aria-label="로그인 페이지로 이동"
               >
                 <User size={16} />
               </Link>

@@ -1,10 +1,22 @@
 import Link from "next/link";
 import dynamicImport from "next/dynamic";
 import { getTrendingSituations, getStuckStages } from "@/lib/situations";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 
 const SITE_URL_HOME = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
+
+// 서버용 Supabase 클라이언트 (서비스롤로 Primary DB 직접 조회 - replica lag 방지)
+function getServerSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (url && serviceKey) {
+    return createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+  }
+  return null;
+}
 
 const ClientHeader = dynamicImport(() => import("@/components/layout/ClientHeader").then(m => ({ default: m.ClientHeader })), { ssr: false });
 const SituationSearch = dynamicImport(() => import("@/components/posts/SituationSearch").then(m => ({ default: m.SituationSearch })), { ssr: false });
@@ -37,8 +49,13 @@ interface Post {
 async function getPosts() {
   try {
     console.log("[DEBUG] getPosts started");
+    const serverSupabase = getServerSupabase();
+    if (!serverSupabase) {
+      console.error("[DEBUG] Server Supabase client not available");
+      return { featuredPost: null, recentPosts: [] };
+    }
     // posts 조회 (users는 별도로 가져와서 매핑)
-    const { data: popularPosts, error: popError } = await supabase
+    const { data: popularPosts, error: popError } = await serverSupabase
       .from("posts")
       .select("id, title, excerpt, slug, published_at, view_count, user_id, current_stage, case_type")
       .eq("published", true)
@@ -46,7 +63,7 @@ async function getPosts() {
       .order("view_count", { ascending: false })
       .limit(1) as { data: Array<{ id: string; title: string; excerpt: string | null; slug: string; published_at: string; view_count: number; user_id: string; current_stage: string | null; case_type: string | null }> | null; error: Error | null };
 
-    const { data: latestPosts, error: lateError } = await supabase
+    const { data: latestPosts, error: lateError } = await serverSupabase
       .from("posts")
       .select("id, title, excerpt, slug, published_at, view_count, user_id, current_stage, case_type")
       .eq("published", true)
@@ -73,7 +90,7 @@ async function getPosts() {
     type UserInfo = { nickname: string | null; email: string | null; role: string | null };
     const usersMap: Record<string, UserInfo> = {};
     if (userIds.length > 0) {
-      const { data: users } = await supabase
+      const { data: users } = await serverSupabase
         .from("users")
         .select("id, nickname, email, role")
         .in("id", userIds);
@@ -285,43 +302,43 @@ export default async function HomePage() {
                 key={post.id}
                 className="group border-b border-rule pb-8 last:border-0"
               >
-                <Link href={`/posts/${post.slug}`} className="block">
-                  <div className="flex items-center gap-3 mb-3">
-                    {post.current_stage ? (
-                      <span className="font-sans text-2xs font-medium text-rust border border-rust/30 rounded-sm px-2 py-0.5 bg-rust/5">
-                        {post.current_stage}
-                      </span>
-                    ) : (
-                      <span className="font-mono text-2xs tracking-wider uppercase text-rust">
-                        {post.case_type || "심층 분석"}
-                      </span>
-                    )}
-                    <span className="text-rule">·</span>
-                    <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
-                      {new Date(post.published_at).toLocaleDateString("ko-KR")}
+                <div className="flex items-center gap-3 mb-3">
+                  {post.current_stage ? (
+                    <span className="font-sans text-2xs font-medium text-rust border border-rust/30 rounded-sm px-2 py-0.5 bg-rust/5">
+                      {post.current_stage}
                     </span>
-                    <span className="text-rule">·</span>
-                    <span className="font-sans text-2xs text-muted">
-                      {post.user ? (
-                        post.user.role === "admin" ? (
-                          <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2" title="작성자 정보 보기">
-                            {post.user.nickname || post.user.email?.split("@")[0] || "관리자"}
-                          </Link>
-                        ) : (
-                          post.user.nickname || post.user.email?.split("@")[0] || "기고가"
-                        )
+                  ) : (
+                    <span className="font-mono text-2xs tracking-wider uppercase text-rust">
+                      {post.case_type || "심층 분석"}
+                    </span>
+                  )}
+                  <span className="text-rule">·</span>
+                  <span className="font-sans text-2xs text-muted" suppressHydrationWarning>
+                    {new Date(post.published_at).toLocaleDateString("ko-KR")}
+                  </span>
+                  <span className="text-rule">·</span>
+                  <span className="font-sans text-2xs text-muted">
+                    {post.user ? (
+                      post.user.role === "admin" ? (
+                        <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2" title="작성자 정보 보기">
+                          {post.user.nickname || post.user.email?.split("@")[0] || "관리자"}
+                        </Link>
                       ) : (
-                        <span className="text-muted">작성자 미상</span>
-                      )}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">
+                        post.user.nickname || post.user.email?.split("@")[0] || "기고가"
+                      )
+                    ) : (
+                      <span className="text-muted">작성자 미상</span>
+                    )}
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-ink mb-2 group-hover:text-rust transition-colors">
+                  <Link href={`/posts/${post.slug}`} className="hover:text-rust transition-colors">
                     {post.title}
-                  </h3>
-                  <p className="font-sans text-sm text-muted leading-relaxed">
-                    {post.excerpt}
-                  </p>
-                </Link>
+                  </Link>
+                </h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">
+                  {post.excerpt}
+                </p>
               </article>
             ))}
           </div>

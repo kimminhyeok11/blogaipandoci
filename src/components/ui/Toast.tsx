@@ -74,18 +74,29 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
     warning: "border-yellow-200 bg-yellow-50",
   };
 
+  const ariaLabels = {
+    success: "성공",
+    error: "오류",
+    info: "정보",
+    warning: "경고",
+  };
+
   return (
     <div
       className={cn(
         "flex items-center gap-3 px-4 py-3 rounded-sm border shadow-lg min-w-[300px] max-w-[400px] animate-in slide-in-from-right",
         styles[toast.type]
       )}
+      role="alert"
+      aria-live="polite"
+      aria-label={`${ariaLabels[toast.type]}: ${toast.message}`}
     >
       {icons[toast.type]}
       <p className="flex-1 font-sans text-sm text-ink">{toast.message}</p>
       <button
         onClick={onClose}
         className="text-muted hover:text-ink transition-colors"
+        aria-label="닫기"
       >
         <X size={16} />
       </button>

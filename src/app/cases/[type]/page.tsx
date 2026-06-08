@@ -19,7 +19,7 @@ export async function generateStaticParams() {
     .select("slug")
     .eq("is_active", true);
 
-  return ((categories as { slug: string }[] | null) || []).map((cat) => ({
+  return (categories || []).map((cat: any) => ({
     type: cat.slug,
   }));
 }
@@ -27,22 +27,27 @@ export async function generateStaticParams() {
 // generateStaticParams에 없는 slug도 런타임에 처리
 export const dynamicParams = true;
 
+// 슬러그 형식 변환 (중간점 → 하이픈)
+function normalizeSlug(slug: string): string {
+  return slug.replace(/·/g, "-");
+}
+
 // DB 기반 category 스타일 매핑 (slug → 스타일)
-// 한글 slug로 통일
+// 하이픈 slug로 통일
 const CATEGORY_STYLES: Record<string, { color: string; bg: string }> = {
   "형사":              { color: "text-slate-800",  bg: "bg-slate-100 border-slate-200" },
   "민사":              { color: "text-blue-800",   bg: "bg-blue-100 border-blue-200" },
-  "이혼·가족":          { color: "text-pink-800",   bg: "bg-pink-100 border-pink-200" },
+  "이혼-가족":          { color: "text-pink-800",   bg: "bg-pink-100 border-pink-200" },
   "노동":              { color: "text-purple-800", bg: "bg-purple-100 border-purple-200" },
   "부동산":             { color: "text-emerald-800",bg: "bg-emerald-100 border-emerald-200" },
   "학교폭력":            { color: "text-red-800",    bg: "bg-red-100 border-red-200" },
   "지식재산권":          { color: "text-amber-800",  bg: "bg-amber-100 border-amber-200" },
   "교통사고":            { color: "text-orange-800", bg: "bg-orange-100 border-orange-200" },
-  "회생·파산":           { color: "text-cyan-800",   bg: "bg-cyan-100 border-cyan-200" },
-  "채무·금전":           { color: "text-teal-800",   bg: "bg-teal-100 border-teal-200" },
-  "전세·임대차":          { color: "text-indigo-800", bg: "bg-indigo-100 border-indigo-200" },
-  "계약·거래":           { color: "text-lime-800",   bg: "bg-lime-100 border-lime-200" },
-  "행정·기타":           { color: "text-gray-800",   bg: "bg-gray-100 border-gray-200" },
+  "회생-파산":           { color: "text-cyan-800",   bg: "bg-cyan-100 border-cyan-200" },
+  "채무-금전":           { color: "text-teal-800",   bg: "bg-teal-100 border-teal-200" },
+  "전세-임대차":          { color: "text-indigo-800", bg: "bg-indigo-100 border-indigo-200" },
+  "계약-거래":           { color: "text-lime-800",   bg: "bg-lime-100 border-lime-200" },
+  "행정-기타":           { color: "text-gray-800",   bg: "bg-gray-100 border-gray-200" },
   "기타":               { color: "text-zinc-800",   bg: "bg-zinc-100 border-zinc-200" },
 };
 
@@ -127,7 +132,8 @@ const getPostsByCategoryId = cache(async function getPostsByCategoryId(categoryI
 
 export async function generateMetadata({ params }: CaseTypePageProps): Promise<Metadata> {
   const slug = decodeURIComponent(params.type);
-  const category = await getCategoryBySlug(slug);
+  const normalizedSlug = normalizeSlug(slug);
+  const category = await getCategoryBySlug(normalizedSlug);
 
   if (!category) return {};
 
@@ -160,9 +166,10 @@ export async function generateMetadata({ params }: CaseTypePageProps): Promise<M
 
 export default async function CaseTypePage({ params }: CaseTypePageProps) {
   const slug = decodeURIComponent(params.type);
+  const normalizedSlug = normalizeSlug(slug);
 
   // ✅ DB 기반 category 존재 여부 확인 (하드코딩 상수 제거)
-  const category = await getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(normalizedSlug);
   if (!category) {
     notFound();
   }
@@ -173,7 +180,7 @@ export default async function CaseTypePage({ params }: CaseTypePageProps) {
   // (soft 404 방지, 사용자가 직접 글 쓸 수 있는 진입점 제공)
   const hasPosts = posts.length > 0;
 
-  const style = CATEGORY_STYLES[slug] ?? DEFAULT_STYLE;
+  const style = CATEGORY_STYLES[normalizedSlug] ?? DEFAULT_STYLE;
   
   // [CategoryFallback] 로깅 (transitional mode)
   if (!CATEGORY_STYLES[slug]) {

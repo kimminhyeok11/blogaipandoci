@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "node scripts/build-data.js && next build",
     "start": "next start",
     "lint": "next lint"
@@ -21,6 +21,7 @@
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^3.8.1",
+    "self": "^1.0.0",
     "sharp": "^0.34.5",
     "tailwind-merge": "^3.5.0",
     "xss": "^1.0.15"

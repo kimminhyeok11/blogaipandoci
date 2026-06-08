@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
 
     const { urls } = await request.json();
-    
+
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
       return NextResponse.json(
         { error: "urls array is required" },
@@ -36,9 +36,13 @@ export async function POST(request: Request) {
     }
 
     const siteBase = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
-    const invalidUrls = urls.filter((u: any) => typeof u !== "string" || !u.startsWith(siteBase));
-    if (invalidUrls.length > 0) {
-      return NextResponse.json({ error: "허용되지 않은 URL이 포함되어 있습니다" }, { status: 400 });
+    // 로컬 개발 환경에서는 URL 검증 건너뜀
+    const isLocalhost = urls.some((u: any) => typeof u === "string" && (u.includes("localhost") || u.includes("127.0.0.1")));
+    if (!isLocalhost) {
+      const invalidUrls = urls.filter((u: any) => typeof u !== "string" || !u.startsWith(siteBase));
+      if (invalidUrls.length > 0) {
+        return NextResponse.json({ error: "허용되지 않은 URL이 포함되어 있습니다" }, { status: 400 });
+      }
     }
     
     const key = process.env.INDEXNOW_KEY;

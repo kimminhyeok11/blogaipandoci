@@ -11,8 +11,8 @@
   --rust: #b84c2a;
   --rust-light: #d4633f;
   --gold: #c8963c;
-  --muted: #5a4e42;
-  --rule: #a4a48a;
+  --muted: #3d3329;
+  --rule: #8a8474;
 }
 
 * {
@@ -426,6 +426,8 @@ a, p, span {
   width: 100%;
   min-width: 480px;
   border-collapse: collapse;
+  table-layout: fixed;
+  display: table;
   font-size: 0.9375rem;
   line-height: 1.6;
 }

@@ -2,6 +2,58 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
 const SITE_NAME = "法 BLOG";
 const SITE_DESC = "법률, 기술, 비즈니스에 관한 깊이 있는 분석과 인사이트를 제공하는 블로그";
 
+// FinancialProduct: 금융 상품 리치 결과
+interface FinancialProductSchemaProps {
+  name: string;
+  description?: string;
+  category?: string;
+  provider?: string;
+  url: string;
+  image?: string;
+}
+
+export function FinancialProductSchema({
+  name,
+  description,
+  category,
+  provider,
+  url,
+  image,
+}: FinancialProductSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FinancialProduct",
+    name,
+    ...(description && { description }),
+    ...(category && { category }),
+    ...(provider && {
+      provider: {
+        "@type": "Organization",
+        name: provider,
+      },
+    }),
+    url,
+    ...(image && {
+      image: {
+        "@type": "ImageObject",
+        url: image,
+        width: 1200,
+        height: 630,
+      },
+    }),
+    offers: {
+      "@type": "Offer",
+      availability: "https://schema.org/InStock",
+    },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 // Organization: 사이트 정체성, 지식 패널 노출 (GEO/AEO 강화)
 export function OrganizationSchema() {
   const schema = {
@@ -36,7 +88,9 @@ export function OrganizationSchema() {
       name: "대한민국",
     },
     publishingPrinciples: `${SITE_URL}/about`,
-    sameAs: [],
+    sameAs: [
+      "https://www.threads.com/@ilovemom_2026",
+    ],
   };
   return (
     <script
