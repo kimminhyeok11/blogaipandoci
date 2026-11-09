@@ -1,4 +1,5 @@
 // Sitemap Index - 분할된 sitemap들을 참조
+export const dynamic = "force-dynamic";
 export async function GET() {
   const baseUrl = "https://lawtiphub.com";
   const today = new Date().toISOString().split("T")[0];
