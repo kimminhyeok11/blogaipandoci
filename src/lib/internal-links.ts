@@ -12,6 +12,7 @@
 // - money keyword 과삽입 금지
 
 import { cache } from "react";
+import { getServiceSupabase } from "@/lib/supabase";
 
 export interface KeywordLink {
   keyword: string;
@@ -21,7 +22,35 @@ export interface KeywordLink {
   anchorVariants?: string[];
 }
 
+// 단어 경계 검사 — 키워드가 더 긴 단어의 일부(기소장 속 "기소")인지 판별.
+// 왼쪽은 문자·숫자·언더스코어가 아니어야 경계. 오른쪽은 한국어 교착어 특성상
+// 조사가 붙는 정상 사용(기소는·개인회생을)을 허용하되, 조사+키워드가 하나의
+// 완성 토큰을 이룰 때만 인정 — "개인회생나무"처럼 조사로 시작하는 합성어가
+// 뒤따르면 조사 뒤에도 단어가 이어지므로 걸러진다.
+const KOREAN_PARTICLES = [
+  "이라고", "이라도", "이란", "이라", "이며", "이면", "이야", "이나",
+  "에서", "에게", "한테", "으로", "부터", "까지", "조차", "마저",
+  "밖에", "처럼", "보다", "같이", "만큼", "마다", "따라", "뿐만",
+  "라고", "라도", "이고", "다가", "커녕",
+  "은", "는", "이", "가", "을", "를", "의", "에", "께", "와", "과",
+  "도", "만", "로", "나", "란", "라", "며", "면", "야", "뿐", "씩",
+];
+
+const WORD_CHAR = /[\p{L}\p{N}_]/u;
+const isWordChar = (ch: string | undefined) => ch !== undefined && WORD_CHAR.test(ch);
+
+export function isWordBoundary(text: string, start: number, length: number): boolean {
+  if (isWordChar(text[start - 1])) return false;
+  if (!isWordChar(text[start + length])) return true;
+  // 뒤따르는 문자가 단어문자면 조사로 시작하고 조사 뒤가 경계여야 함
+  const rest = start + length;
+  return KOREAN_PARTICLES.some((p) => text.startsWith(p, rest) && !isWordChar(text[rest + p.length]));
+}
+
 // DB에서 키워드 조회 (캐싱 적용)
+// 자기 배포 /api/keywords를 HTTP로 호출하던 것을 직접 DB 조회로 변경 —
+// 서버리스 함수가 자기 자신을 HTTP로 호출하면 지연·비용·localhost:3000
+// 폴백 무력화 문제가 있었다. 조회 조건은 /api/keywords와 동일(is_active).
 export const fetchKeywordsFromDB = cache(async (): Promise<KeywordLink[]> => {
   try {
     // 서버 사이드에서만 실행
@@ -29,17 +58,19 @@ export const fetchKeywordsFromDB = cache(async (): Promise<KeywordLink[]> => {
       return [];
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/keywords`, {
-      next: { revalidate: 3600 }, // 1시간 캐싱
-    });
+    const admin = getServiceSupabase();
+    const { data, error } = await admin
+      .from("internal_link_keywords")
+      .select("keyword, url, priority, category")
+      .eq("is_active", true)
+      .order("priority", { ascending: false })
+      .order("keyword");
 
-    if (!response.ok) {
-      console.error("[Internal Links] Failed to fetch keywords from DB");
+    if (error) {
+      console.error("[Internal Links] Failed to fetch keywords from DB:", error);
       return [];
     }
-
-    const data = await response.json();
-    return data.keywords || [];
+    return data || [];
   } catch (error) {
     console.error("[Internal Links] Error fetching keywords:", error);
     return [];
@@ -121,7 +152,45 @@ export function addInternalLinks(
 
   const linkedKeywords = new Set<string>();
   const linkedPositions: number[] = [];
+  const usedParagraphs = new Set<number>();
   let totalLinks = 0;
+
+  // 매치 후보가 모든 삽입 규칙을 통과하는지 검사 — 위치 기반 규칙은 항상
+  // 현재(삽입이 반영된) 문자열 기준으로 판정한다.
+  const passesGuards = (idx: number, len: number): boolean => {
+    // 단어 경계 — 더 긴 단어의 일부(기소장 속 "기소")는 링크하지 않는다
+    if (!isWordBoundary(result, idx, len)) return false;
+
+    const beforeText = result.slice(0, idx);
+    const lastOpenLink = beforeText.lastIndexOf("[");
+    const lastCloseLink = beforeText.lastIndexOf("]");
+
+    // 이미 링크 앵커 내부
+    if (lastOpenLink > lastCloseLink) return false;
+
+    // 링크 URL 내부 (]( 이후 ) 전 — 중첩 손상 방지)
+    const lastOpenParen = beforeText.lastIndexOf("](");
+    const lastCloseParen = beforeText.lastIndexOf(")");
+    if (lastOpenParen > lastCloseParen) return false;
+
+    // 코드 블록 내부 (``` 페어)
+    const codeBlockCount = (beforeText.match(/```/g) || []).length;
+    if (codeBlockCount % 2 !== 0) return false;
+
+    // 헤딩(#~)·표(|로 시작하는 행) 내부 — 라인 시작 접두사로 판정
+    const lineStart = beforeText.lastIndexOf("\n") + 1;
+    const linePrefix = result.slice(lineStart, idx);
+    if (/^\s*#{1,6}\s/.test(linePrefix) || /^\s*\|/.test(linePrefix)) return false;
+
+    // 문단당 최대 1개 — 빈 줄 기준 문단 번호로 판정
+    const paraIdx = (beforeText.match(/\n\s*\n/g) || []).length;
+    if (usedParagraphs.has(paraIdx)) return false;
+
+    // 주변 100자 내 링크 중복 — 기록된 위치는 삽입 델타로 보정돼 현재 좌표계
+    if (linkedPositions.some((pos) => Math.abs(pos - idx) < 100)) return false;
+
+    return true;
+  };
 
   // 키워드 우선순위 순으로 처리
   for (const item of keywordsToUse) {
@@ -133,57 +202,41 @@ export function addInternalLinks(
       continue;
     }
 
-    // 링크 삽입 (마크다운 형식)
+    // 첫 등장 위치부터 순서대로 규칙을 통과하는 첫 매치에 삽입
     const escapedKeyword = item.keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const keywordRegex = new RegExp(`(${escapedKeyword})`, "i");
+    const keywordRegex = new RegExp(escapedKeyword, "gi");
 
-    const match = result.match(keywordRegex);
-    if (!match || match.index === undefined) continue;
-
-    const keywordIndex = match.index;
-
-    // 이미 링크된 영역 확인
-    const beforeText = result.slice(0, keywordIndex);
-    const lastOpenLink = beforeText.lastIndexOf("[");
-    const lastCloseLink = beforeText.lastIndexOf("]");
-
-    // 이미 링크 내부에 있는지 확인
-    if (lastOpenLink > lastCloseLink) {
-      continue;
+    let chosenIndex = -1;
+    let match: RegExpExecArray | null;
+    while ((match = keywordRegex.exec(result)) !== null) {
+      if (passesGuards(match.index, match[0].length)) {
+        chosenIndex = match.index;
+        break;
+      }
     }
+    if (chosenIndex === -1) continue;
 
-    // 링크 URL 내부에 있는지 확인 (]( 이후 ) 전이면 URL 내부 — URL 안 키워드 링크화로 중첩 손상 방지)
-    const lastOpenParen = beforeText.lastIndexOf("](");
-    const lastCloseParen = beforeText.lastIndexOf(")");
-    if (lastOpenParen > lastCloseParen) {
-      continue;
-    }
-
-    // 코드 블록 내부 확인
-    const codeBlockMatches = beforeText.match(/```/g);
-    const codeBlockCount = codeBlockMatches ? codeBlockMatches.length : 0;
-    if (codeBlockCount % 2 !== 0) {
-      // 홀수면 코드 블록 내부
-      continue;
-    }
-
-    // 주변 100자 내 링크 중복 확인
-    const tooClose = linkedPositions.some(
-      (pos) => Math.abs(pos - keywordIndex) < 100
-    );
-    if (tooClose) continue;
-
-    const anchorText = item.anchorVariants?.[0] || item.keyword;
+    // 앵커 텍스트 다양화 — variants가 있으면 삽입 순서로 순환 (항상 [0]만 쓰던 결함)
+    const variants = item.anchorVariants?.filter((v) => v.trim().length > 0);
+    const anchorText = variants && variants.length > 0 ? variants[totalLinks % variants.length] : item.keyword;
     // 대괄호 제거 (마크다운 링크 형식 깨짐 방지)
     const safeAnchorText = anchorText.replace(/\[/g, '').replace(/\]/g, '');
     // URL은 관리자 테이블의 값을 그대로 사용 — safeSlug의 ASCII 문자 클래스가
     // 한글 카테고리명·%인코딩 앵커를 파괴해 /cases/ 링크가 부식되는 결함 수정
     const replacement = `[${safeAnchorText}](${item.url})`;
 
-    result = result.slice(0, keywordIndex) + replacement + result.slice(keywordIndex + match[0].length);
+    // 삽입 후 그 뒤의 기록 위치들을 델타만큼 이동해 좌표계를 유지한다
+    const delta = replacement.length - match![0].length;
+    for (let i = 0; i < linkedPositions.length; i++) {
+      if (linkedPositions[i] >= chosenIndex) linkedPositions[i] += delta;
+    }
 
+    result = result.slice(0, chosenIndex) + replacement + result.slice(chosenIndex + match![0].length);
+
+    const beforeInserted = result.slice(0, chosenIndex);
+    usedParagraphs.add((beforeInserted.match(/\n\s*\n/g) || []).length);
     linkedKeywords.add(item.keyword);
-    linkedPositions.push(keywordIndex);
+    linkedPositions.push(chosenIndex);
     totalLinks++;
   }
 

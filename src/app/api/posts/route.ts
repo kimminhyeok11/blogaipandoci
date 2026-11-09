@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { notifyIndexNow } from "@/lib/indexnow";
 import { refreshSituationsCache } from "@/lib/situations";
-import { addInternalLinks, getCachedKeywords } from "@/lib/internal-links";
+import { addInternalLinks, getCachedKeywords, isWordBoundary } from "@/lib/internal-links";
 
 const makeAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -208,8 +208,8 @@ async function findRelatedPostsByTitle(
 // - 본문에서 첫 번째 등장 위치에만 링크 삽입 (과도한 링크 방지)
 // - 코드블록·헤딩·이미 링크된 구간 제외
 // - 자기글 제외
-function injectInlineLinks(content: string, relatedPosts: { title: string; slug: string }[], currentSlug: string): string {
-  if (relatedPosts.length === 0) return content;
+function injectInlineLinks(content: string, relatedPosts: { title: string; slug: string }[], currentSlug: string, maxInline: number = 3): string {
+  if (relatedPosts.length === 0 || maxInline <= 0) return content;
 
   // 자기글 제외
   const filteredPosts = relatedPosts.filter(post => post.slug !== currentSlug);
@@ -258,9 +258,15 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
     for (const keyword of keywords) {
       if (usedKeywords.has(keyword)) continue;
 
-      const keywordIdx = result.indexOf(keyword);
+      // 첫 등장부터 순서대로 단어 경계·제외 구간을 통과하는 첫 매치를 찾는다
+      // (기소장 속 "기소"처럼 더 긴 단어 내부 매칭은 건너뛴다)
+      let keywordIdx = -1;
+      let from = 0;
+      while ((keywordIdx = result.indexOf(keyword, from)) !== -1) {
+        if (isWordBoundary(result, keywordIdx, keyword.length) && !isExcluded(keywordIdx)) break;
+        from = keywordIdx + 1;
+      }
       if (keywordIdx === -1) continue;
-      if (isExcluded(keywordIdx)) continue;
 
       // 첫 번째 등장 위치에만 링크 삽입 (마크다운 형식)
       result =
@@ -273,8 +279,8 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
       injected = true;
       break; // 글당 1개 키워드만
     }
-    // 최대 3개 글만 인라인 링크 삽입 (과도한 링크 방지)
-    if (usedKeywords.size >= 3) break;
+    // 최대 maxInline개 글만 인라인 링크 삽입 (과도한 링크 방지)
+    if (usedKeywords.size >= maxInline) break;
     void injected;
   }
 
@@ -314,8 +320,10 @@ function appendRelatedLinks(content: string, relatedPosts: { title: string; slug
   // 이전에 삽입된 인라인 /posts/ 링크 제거 후 재삽입
   const unlinked = removeInjectedInlineLinks(withoutRelatedSection);
 
-  // 본문 인라인 링크 삽입 (자기글 제외)
-  const withInline = injectInlineLinks(unlinked, relatedPosts, currentSlug);
+  // 본문 인라인 링크 삽입 (자기글 제외) — 본문 내 내부링크 총량이
+  // "본문 전체 최대 5개" 규칙을 넘지 않게 잔여 예산을 넘긴다
+  const internalLinkCount = (unlinked.match(/\]\(\/(posts|cases)\//g) || []).length;
+  const withInline = injectInlineLinks(unlinked, relatedPosts, currentSlug, Math.min(3, Math.max(0, 5 - internalLinkCount)));
 
   const links = relatedPosts
     .map(p => `- [${p.title}](/posts/${p.slug})`)
