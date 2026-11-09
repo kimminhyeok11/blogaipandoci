@@ -152,6 +152,13 @@ export function addInternalLinks(
       continue;
     }
 
+    // 링크 URL 내부에 있는지 확인 (]( 이후 ) 전이면 URL 내부 — URL 안 키워드 링크화로 중첩 손상 방지)
+    const lastOpenParen = beforeText.lastIndexOf("](");
+    const lastCloseParen = beforeText.lastIndexOf(")");
+    if (lastOpenParen > lastCloseParen) {
+      continue;
+    }
+
     // 코드 블록 내부 확인
     const codeBlockMatches = beforeText.match(/```/g);
     const codeBlockCount = codeBlockMatches ? codeBlockMatches.length : 0;
