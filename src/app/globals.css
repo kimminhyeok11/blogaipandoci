@@ -34,14 +34,16 @@ body {
 }
 
 /* 링크 및 긴 URL 자동 줄바꿈 - 모바일 가로스크롤 방지 */
-a, p, span {
-  word-break: break-word;
+/* 한글 타이포그래피: keep-all = 공백 단위로만 줄바꿈, 음절 중간 끊김 방지(예: 기/준·사/고) */
+/* 긴 단어·URL이 한 줄을 넘을 때만 overflow-wrap이 비상 줄바꿈을 허용 */
+h1, h2, h3, h4, h5, h6, a, p, li, span, blockquote, figcaption, td, dt, dd {
+  word-break: keep-all;
   overflow-wrap: break-word;
 }
 
 /* excerpt/description 텍스트 특별 처리 */
 .line-clamp-2, .line-clamp-3, .excerpt-text {
-  word-break: break-word;
+  word-break: keep-all;
   overflow-wrap: break-word;
 }
 
@@ -247,7 +249,7 @@ a, p, span {
   line-height: 1.8;
   margin-bottom: 1.5rem;
   color: #2a2420;
-  word-break: break-word;
+  word-break: keep-all;
   overflow-wrap: break-word;
 }
 
@@ -317,7 +319,7 @@ a, p, span {
   margin-bottom: 0.75rem;
   line-height: 1.8;
   display: list-item;
-  word-break: break-word;
+  word-break: keep-all;
   overflow-wrap: break-word;
   font-size: 1.125rem;
 }
@@ -499,7 +501,7 @@ a, p, span {
   text-underline-offset: 3px;
   text-decoration-thickness: 2px;
   transition: color 0.15s, text-decoration-color 0.15s;
-  word-break: break-all;
+  word-break: keep-all;
   overflow-wrap: break-word;
   font-weight: 500;
 }

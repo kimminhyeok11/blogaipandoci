@@ -208,7 +208,7 @@ export default async function HomePage() {
       <main>
         {/* Hero Section - Featured Post */}
         {featuredPost ? (
-          <section className="relative min-h-[60vh] flex items-center justify-center px-4 sm:px-6 py-16 border-b border-rule">
+          <section className="relative min-h-[60vh] flex items-center justify-center px-4 sm:px-6 py-10 sm:py-14 border-b border-rule">
             <div className="max-w-content mx-auto text-center">
               <div className="section-label">심층 분석</div>
               <h1 className="headline">
