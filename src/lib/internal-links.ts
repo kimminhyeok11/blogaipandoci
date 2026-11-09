@@ -176,9 +176,9 @@ export function addInternalLinks(
     const anchorText = item.anchorVariants?.[0] || item.keyword;
     // 대괄호 제거 (마크다운 링크 형식 깨짐 방지)
     const safeAnchorText = anchorText.replace(/\[/g, '').replace(/\]/g, '');
-    // URL 슬러그 안전하게 처리
-    const safeUrl = item.url.replace(/\/cases\/([^/]+)/, (match, slug) => `/cases/${safeSlug(slug)}`);
-    const replacement = `[${safeAnchorText}](${safeUrl})`;
+    // URL은 관리자 테이블의 값을 그대로 사용 — safeSlug의 ASCII 문자 클래스가
+    // 한글 카테고리명·%인코딩 앵커를 파괴해 /cases/ 링크가 부식되는 결함 수정
+    const replacement = `[${safeAnchorText}](${item.url})`;
 
     result = result.slice(0, keywordIndex) + replacement + result.slice(keywordIndex + match[0].length);
 
