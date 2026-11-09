@@ -122,6 +122,12 @@ export default function RootLayout({
       <head>
         <OrganizationSchema />
         <WebSiteSchema />
+        {/* Google AdSense 소유자 검증 코드 — 승인 심사 시 초기 HTML에 반드시 존재해야 함 */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5239497835591112"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className="antialiased min-h-screen font-serif flex flex-col">
         <AuthProvider>
