@@ -340,7 +340,7 @@ export async function POST(request: Request) {
     // 글 조회
     const { data: post, error: postError } = await admin
       .from("posts")
-      .select("id, content, title, slug, published, excerpt, cover_image, cover_image_alt, user_id, current_stage, case_type, estimated_duration, involved_agencies, common_mistakes, expert_level, timeline_steps")
+      .select("id, content, title, slug, published, excerpt, cover_image, cover_image_alt, user_id, current_stage, next_stage, case_type, estimated_duration, involved_agencies, common_mistakes, expert_level, timeline_steps")
       .eq("id", postId)
       .single();
 
@@ -387,11 +387,13 @@ export async function POST(request: Request) {
       id: postId,
       content: contentWithoutRelated,
       title: post.title,
+      slug: post.slug,
       excerpt: post.excerpt,
       cover_image: post.cover_image,
       cover_image_alt: post.cover_image_alt,
       published: post.published,
       current_stage: post.current_stage,
+      next_stage: post.next_stage,
       case_type: post.case_type,
       estimated_duration: post.estimated_duration,
       involved_agencies: post.involved_agencies,

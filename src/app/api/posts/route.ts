@@ -661,7 +661,9 @@ export async function PUT(request: Request) {
       if (!hasRelatedSection) {
         const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
         const queryText = buildEmbeddingText(title, stagePart, excerpt, finalContent);
-        const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug, 5, queryText, case_type);
+        // 자기글 제외는 body.slug가 아니라 DB 실측 slug 기준 — 외부 호출자가
+        // slug를 생략해도 자기 링크가 관련글에 들어가지 않게 한다
+        const relatedPosts = await findRelatedPosts(serviceSupabase, title, existingPost.slug || slug, 5, queryText, case_type);
         console.log('[PUT] findRelatedPosts count:', relatedPosts.length);
         finalContent = appendRelatedLinks(finalContent, relatedPosts, slug);
         console.log('[PUT] finalContent has 관련글:', finalContent.includes('### 📌 관련 글'));
