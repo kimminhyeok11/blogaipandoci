@@ -85,17 +85,10 @@ function sanitizeContent(content: string): string {
   while (prevSan !== result) {
     prevSan = result;
     result = result
-      .replace(/[([^[]]*)]([^()
-]*/(?:posts|cases)/[^()
-]*)/g, "$1")
-      .replace(/[([^[]]*)]([^()
-]*/search?[^()
-]*)/g, "$1")
-      .replace(/[([^[]]*)]([^()
-]*%[0-9A-Fa-f]{2}[^()
-]*)/g, "$1")
-      .replace(/[([^[]]*)](/posts/[0-9A-Fa-f]{8,}[^()
-]*)/g, "$1");
+      .replace(/\[([^\[\]]*)\]\([^()\n]*\/(?:posts|cases)\/[^()\n]*\)/g, "$1")
+      .replace(/\[([^\[\]]*)\]\([^()\n]*\/search\?[^()\n]*\)/g, "$1")
+      .replace(/\[([^\[\]]*)\]\([^()\n]*%[0-9A-Fa-f]{2}[^()\n]*\)/g, "$1")
+      .replace(/\[([^\[\]]*)\]\(\/posts\/[0-9A-Fa-f]{8,}[^()\n]*\)/g, "$1");
   }
 
   return result;
