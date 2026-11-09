@@ -577,7 +577,7 @@ export default async function PostPage({ params }: PostPageProps) {
     // 디코딩 실패 시 원본 유지
   }
   const postUrl = `${SITE_URL}/posts/${canonicalSlug}`;
-  const authorName = post.user?.nickname || post.user?.email?.split('@')[0] || "익명";
+  const authorName = post.user?.nickname || "法 BLOG 편집팀";
   const authorEmail = post.user?.email || undefined;
   const authorAvatar = post.user?.avatar_url || `${SITE_URL}/icon.png`;
 

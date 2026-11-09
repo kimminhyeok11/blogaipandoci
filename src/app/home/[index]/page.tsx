@@ -149,10 +149,10 @@ export default async function HomePage({ params: _params }: { params: { index: s
               <div className="byline">
                 {featuredPost.user?.role === "admin" ? (
                   <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
-                    {featuredPost.user?.nickname || featuredPost.user?.email?.split("@")[0] || "익명"}
+                    {featuredPost.user?.nickname || "法 BLOG 편집팀"}
                   </Link>
                 ) : (
-                  <span>{featuredPost.user?.nickname || featuredPost.user?.email?.split("@")[0] || "익명"}</span>
+                  <span>{featuredPost.user?.nickname || "法 BLOG 편집팀"}</span>
                 )}
                 <span className="byline-sep">|</span>
                 <span suppressHydrationWarning>
@@ -215,10 +215,10 @@ export default async function HomePage({ params: _params }: { params: { index: s
                     <span className="font-sans text-2xs text-muted">
                       {post.user?.role === "admin" ? (
                         <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2">
-                          {post.user?.nickname || post.user?.email?.split("@")[0] || "익명"}
+                          {post.user?.nickname || "法 BLOG 편집팀"}
                         </Link>
                       ) : (
-                        post.user?.nickname || post.user?.email?.split("@")[0] || "익명"
+                        post.user?.nickname || "法 BLOG 편집팀"
                       )}
                     </span>
                   </div>

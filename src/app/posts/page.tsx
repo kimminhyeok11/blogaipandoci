@@ -192,7 +192,7 @@ export default async function PostsPage({ searchParams }: { searchParams: { page
                       ) : null}
                       {(post.current_stage || post.case_type) && <span className="text-rule">·</span>}
                       <span className="font-sans text-2xs text-muted">
-                        {post.user?.nickname || post.user?.email?.split('@')[0] || "익명"}
+                        {post.user?.nickname || "法 BLOG 편집팀"}
                       </span>
                       <span className="text-rule">·</span>
                       <span className="font-sans text-2xs text-muted" suppressHydrationWarning>

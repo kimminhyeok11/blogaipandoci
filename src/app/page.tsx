@@ -218,10 +218,10 @@ export default async function HomePage() {
                 {featuredPost.user ? (
                   featuredPost.user.role === "admin" ? (
                     <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2" title="작성자 정보 보기">
-                      {featuredPost.user.nickname || featuredPost.user.email?.split("@")[0] || "관리자"}
+                      {featuredPost.user.nickname || "法 BLOG 편집팀"}
                     </Link>
                   ) : (
-                    <span>{featuredPost.user.nickname || featuredPost.user.email?.split("@")[0] || "기고가"}</span>
+                    <span>{featuredPost.user.nickname || "기고가"}</span>
                   )
                 ) : (
                   <span className="text-muted">작성자 정보 없음</span>
@@ -318,10 +318,10 @@ export default async function HomePage() {
                     {post.user ? (
                       post.user.role === "admin" ? (
                         <Link href="/author" className="hover:text-rust transition-colors underline underline-offset-2" title="작성자 정보 보기">
-                          {post.user.nickname || post.user.email?.split("@")[0] || "관리자"}
+                          {post.user.nickname || "法 BLOG 편집팀"}
                         </Link>
                       ) : (
-                        post.user.nickname || post.user.email?.split("@")[0] || "기고가"
+                        post.user.nickname || "기고가"
                       )
                     ) : (
                       <span className="text-muted">작성자 미상</span>

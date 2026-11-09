@@ -50,7 +50,7 @@ function extractImages(content: string | null, coverImage: string | null): strin
   return Array.from(new Set(images));
 }
 
-// 최신 100개 게시글 sitemap
+// 전체 게시글 sitemap (50k URL 제한 내 — 단일 파일로 전량 포함)
 export async function GET() {
   const baseUrl = "https://lawtiphub.com";
   const supabase = getServerSupabase();
@@ -59,15 +59,23 @@ export async function GET() {
     return new Response("Supabase connection failed", { status: 500 });
   }
 
-  const { data } = await supabase
-    .from("posts")
-    .select("slug, title, updated_at, published_at, content, cover_image, excerpt")
-    .eq("published", true)
-    .not("published_at", "is", null)
-    .order("published_at", { ascending: false })
-    .limit(100);
-
-  const posts = (data || []) as SitemapPost[];
+  // published_at 동률에 안전한 페이지네이션 (id 보조 정렬 + 페이지 루프)
+  const posts: SitemapPost[] = [];
+  const PAGE = 1000;
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("slug, title, updated_at, published_at, content, cover_image, excerpt")
+      .eq("published", true)
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + PAGE - 1);
+    if (error) return new Response("Sitemap query failed", { status: 500 });
+    if (!data || data.length === 0) break;
+    posts.push(...(data as SitemapPost[]));
+    if (data.length < PAGE) break;
+  }
 
   const postXml = posts
     .map((post) => {
