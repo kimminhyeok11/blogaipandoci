@@ -648,12 +648,10 @@ export async function PUT(request: Request) {
     const serviceSupabase = makeAdmin();
 
     // 서비스롤키인 경우 인증 건너뛰기 (일괄처리용)
+    // 자동화 파이프라인 토큰 — 서버 측 발행 경로 (env AUTOMATION_TOKEN)
+    const isAutomation = Boolean(process.env.AUTOMATION_TOKEN) && token === process.env.AUTOMATION_TOKEN;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    console.log('[PUT] Service key exists:', !!serviceKey);
-    console.log('[PUT] Token starts with:', token.substring(0, 20));
-    console.log('[PUT] Service key starts with:', serviceKey?.substring(0, 20));
-    const isServiceKey = token === serviceKey;
-    console.log('[PUT] Is service key:', isServiceKey);
+    const isServiceKey = isAutomation || (serviceKey && token === serviceKey);
     let authUser = null;
 
     if (!isServiceKey) {
