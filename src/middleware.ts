@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
     const validKey = process.env.INDEXNOW_KEY;
 
     if (!validKey) {
-      return new NextResponse("IndexNow key not configured", { status: 404 });
+      return NextResponse.next(); // env 미설정 시 정적 파일(ads.txt 등)·404로 통과
     }
 
     const requestedKey = pathname.slice(1, -4);
@@ -29,7 +29,7 @@ export function middleware(request: NextRequest) {
       });
     }
 
-    return new NextResponse("Invalid key", { status: 404 });
+    return NextResponse.next(); // IndexNow 키 불일치 — ads.txt 등 정적 .txt 서빙으로 통과
   }
 
   return NextResponse.next();
