@@ -79,6 +79,25 @@ function sanitizeContent(content: string): string {
   // 카테고리 링크 패턴 제거 (예: "학교폭력/cases/학교폭력")
   result = result.replace(/([가-힣a-zA-Z0-9\-]+)\/cases\/\1/g, '$1');
 
+  // 손상된 내부 링크 전체 환원 — /posts/, /cases/, /search 링크는 PUT 재생성으로 복구되므로
+  // 깨진 형태(중첩·절단·hex 인코딩 slug)를 앵커 텍스트만 남기고 제거. 안쪽부터 반복 적용.
+  let prevSan = "";
+  while (prevSan !== result) {
+    prevSan = result;
+    result = result
+      .replace(/[([^[]]*)]([^()
+]*/(?:posts|cases)/[^()
+]*)/g, "$1")
+      .replace(/[([^[]]*)]([^()
+]*/search?[^()
+]*)/g, "$1")
+      .replace(/[([^[]]*)]([^()
+]*%[0-9A-Fa-f]{2}[^()
+]*)/g, "$1")
+      .replace(/[([^[]]*)](/posts/[0-9A-Fa-f]{8,}[^()
+]*)/g, "$1");
+  }
+
   return result;
 }
 
