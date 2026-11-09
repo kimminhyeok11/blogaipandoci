@@ -13,13 +13,20 @@ export async function POST(request: Request) {
     const token = (request.headers.get("Authorization") || "").replace("Bearer ", "").trim();
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // 실제 토큰 검증
-    const anonClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    const { data: { user: authUser }, error: authErr } = await anonClient.auth.getUser(token);
-    if (authErr || !authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 자동화 파이프라인 토큰 — 서버 측 발행 경로 (env AUTOMATION_TOKEN, 관리자 권한 부여)
+    const isAutomation = Boolean(process.env.AUTOMATION_TOKEN) && token === process.env.AUTOMATION_TOKEN;
+
+    // 실제 토큰 검증 (자동화 토큰은 관리자로 간주)
+    let authUser: { id: string } | null = null;
+    if (!isAutomation) {
+      const anonClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { data: { user }, error: authErr } = await anonClient.auth.getUser(token);
+      if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      authUser = user;
+    }
 
     const body = await request.json();
     const { postId, tags } = body;
@@ -38,11 +45,14 @@ export async function POST(request: Request) {
       .single();
     if (postErr || !post) return NextResponse.json({ error: "Post not found" }, { status: 404 });
 
-    const { data: callerProfile } = await serviceSupabase
-      .from("users").select("role").eq("id", authUser.id).single();
-    const isAdmin = callerProfile?.role === "admin";
+    let isAdmin = isAutomation;
+    if (authUser && !isAdmin) {
+      const { data: callerProfile } = await serviceSupabase
+        .from("users").select("role").eq("id", authUser.id).single();
+      isAdmin = callerProfile?.role === "admin";
+    }
 
-    if (post.user_id !== authUser.id && !isAdmin) {
+    if (!isAdmin && post.user_id !== authUser?.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
