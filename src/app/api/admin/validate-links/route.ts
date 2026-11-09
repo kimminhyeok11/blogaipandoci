@@ -16,22 +16,24 @@ function extractInternalLinks(content: string): Array<{ type: "posts" | "cases";
 
   // ?il=1/?ri=1 자동링크 마커·앵커는 slug 판정에서 제거 — 쿼리 파라미터가
   // slug로 오인돼 정상 링크가 "존재하지 않는 slug"로 오탐되던 결함 수정
-  const normalizeSlug = (s: string) => s.split(/[?#]/)[0];
+  const normalizeSlug = (s: string) => s.split(/[?#]/)[0] ?? s;
 
   // /posts/ 형식 링크 추출 (올바른 형식만)
   const postsLinkRegex = /\[([^\]]+)\]\(\/posts\/([^)]+)\)/g;
   let match;
   while ((match = postsLinkRegex.exec(content)) !== null) {
-    if (match[2]) {
-      links.push({ type: "posts", slug: normalizeSlug(match[2]) });
+    const slug = match[2];
+    if (slug) {
+      links.push({ type: "posts", slug: normalizeSlug(slug) });
     }
   }
 
   // /cases/ 형식 링크 추출 (올바른 형식만, 앵커 제외)
   const casesLinkRegex = /\[([^\]]+)\]\(\/cases\/([^)#)]+)\)/g;
   while ((match = casesLinkRegex.exec(content)) !== null) {
-    if (match[2]) {
-      links.push({ type: "cases", slug: normalizeSlug(match[2]) });
+    const slug = match[2];
+    if (slug) {
+      links.push({ type: "cases", slug: normalizeSlug(slug) });
     }
   }
 

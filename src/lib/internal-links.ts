@@ -36,7 +36,9 @@ const KOREAN_PARTICLES = [
   "도", "만", "로", "나", "란", "라", "며", "면", "야", "뿐", "씩",
 ];
 
-const WORD_CHAR = /[\p{L}\p{N}_]/u;
+// tsconfig target 미지정(ES5 기본)이라 u 플래그 \p{} 정규식이 빌드 불가 —
+// 한글 음절·자모·한자(법률 한자어)·ASCII 단어문자를 명시 범위로 지정
+const WORD_CHAR = /[가-힣ㄱ-ㅎㅏ-ㅣ一-鿿\w]/;
 const isWordChar = (ch: string | undefined) => ch !== undefined && WORD_CHAR.test(ch);
 
 export function isWordBoundary(text: string, start: number, length: number): boolean {
@@ -225,7 +227,7 @@ export function addInternalLinks(
 
     // 앵커 텍스트 다양화 — variants가 있으면 삽입 순서로 순환 (항상 [0]만 쓰던 결함)
     const variants = item.anchorVariants?.filter((v) => v.trim().length > 0);
-    const anchorText = variants && variants.length > 0 ? variants[totalLinks % variants.length] : item.keyword;
+    const anchorText = (variants && variants.length > 0 ? variants[totalLinks % variants.length] : undefined) ?? item.keyword;
     // 대괄호 제거 (마크다운 링크 형식 깨짐 방지)
     const safeAnchorText = anchorText.replace(/\[/g, '').replace(/\]/g, '');
     // URL은 관리자 테이블의 값을 그대로 사용 — safeSlug의 ASCII 문자 클래스가
@@ -237,12 +239,14 @@ export function addInternalLinks(
     const replacement = `[${safeAnchorText}](${markedUrl})`;
 
     // 삽입 후 그 뒤의 기록 위치들을 델타만큼 이동해 좌표계를 유지한다
-    const delta = replacement.length - match![0].length;
+    const matchedLen = match?.[0].length ?? 0;
+    const delta = replacement.length - matchedLen;
     for (let i = 0; i < linkedPositions.length; i++) {
-      if (linkedPositions[i] >= chosenIndex) linkedPositions[i] += delta;
+      const pos = linkedPositions[i];
+      if (pos !== undefined && pos >= chosenIndex) linkedPositions[i] = pos + delta;
     }
 
-    result = result.slice(0, chosenIndex) + replacement + result.slice(chosenIndex + match![0].length);
+    result = result.slice(0, chosenIndex) + replacement + result.slice(chosenIndex + matchedLen);
 
     const beforeInserted = result.slice(0, chosenIndex);
     usedParagraphs.add((beforeInserted.match(/\n\s*\n/g) || []).length);
