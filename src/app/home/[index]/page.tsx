@@ -132,8 +132,7 @@ export default async function HomePage({ params: _params }: { params: { index: s
       {/* Client Header with Auth and Scroll Effects */}
       <ClientHeader />
 
-      {/* Spacer for fixed header */}
-      <div className="h-[180px]" />
+      {/* 스페이서는 ClientHeader 내부에서 실측 높이로 자동 처리 */}
 
       <main>
         {/* Hero Section - Featured Post */}

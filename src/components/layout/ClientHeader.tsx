@@ -9,6 +9,20 @@ export function ClientHeader() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
   const { user } = useAuth();
+  const headerRef = useRef<HTMLElement>(null);
+  const [mastheadH, setMastheadH] = useState<number | null>(null);
+
+  // 고정 헤더의 실측 높이를 추적 — 스페이서가 하드코딩된 숫자 대신
+  // 실제 렌더 높이를 따르므로 masthead 구조·폰트·지역화 변경에도 어긋나지 않는다.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const measure = () => setMastheadH(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleScroll = useCallback(() => {
     const currentScrollY = window.scrollY;
@@ -28,7 +42,9 @@ export function ClientHeader() {
   }, [handleScroll]);
 
   return (
+    <>
     <header 
+      ref={headerRef}
       className={`masthead fixed top-0 left-0 right-0 z-50 bg-paper transition-transform duration-300 ${
         isHeaderVisible ? "translate-y-0" : "-translate-y-full"
       }`}
@@ -119,5 +135,8 @@ export function ClientHeader() {
         </ul>
       </nav>
     </header>
+    {/* 고정 헤더 자리 확보 — 측정 전엔 기존값 180px로 렌더 후 실측치로 교정 */}
+    <div aria-hidden="true" style={{ height: mastheadH ?? 180 }} />
+    </>
   );
 }

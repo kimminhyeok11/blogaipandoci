@@ -199,11 +199,8 @@ export default async function HomePage() {
         />
       )}
 
-      {/* Client Header with Auth and Scroll Effects */}
+      {/* Client Header with Auth and Scroll Effects — 스페이서는 헤더 내부에서 실측 높이로 자동 처리 */}
       <ClientHeader />
-
-      {/* Spacer for fixed header */}
-      <div className="h-[180px]" />
 
       <main>
         {/* Hero Section - Featured Post */}
