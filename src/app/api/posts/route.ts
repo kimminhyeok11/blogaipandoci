@@ -215,34 +215,34 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
   const filteredPosts = relatedPosts.filter(post => post.slug !== currentSlug);
   if (filteredPosts.length === 0) return content;
 
-  // 코드블록 위치 수집 (링크 삽입 제외 구간)
-  const codeBlockRanges: [number, number][] = [];
-  const codeBlockRegex = /```[\s\S]*?```/g;
-  let m: RegExpExecArray | null;
-  while ((m = codeBlockRegex.exec(content)) !== null) {
-    codeBlockRanges.push([m.index, m.index + m[0].length]);
-  }
-  const isInCodeBlock = (idx: number) => codeBlockRanges.some(([s, e]) => idx >= s && idx < e);
-
-  // 이미 링크된 구간 수집 ([text](url) 형태)
-  const linkedRanges: [number, number][] = [];
-  const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
-  while ((m = linkRegex.exec(content)) !== null) {
-    linkedRanges.push([m.index, m.index + m[0].length]);
-  }
-  const isAlreadyLinked = (idx: number) => linkedRanges.some(([s, e]) => idx >= s && idx < e);
-
-  // 헤딩 라인 위치 수집
-  const headingRanges: [number, number][] = [];
-  const headingRegex = /^#{1,6} .+$/gm;
-  while ((m = headingRegex.exec(content)) !== null) {
-    headingRanges.push([m.index, m.index + m[0].length]);
-  }
-  const isInHeading = (idx: number) => headingRanges.some(([s, e]) => idx >= s && idx < e);
-
-  const isExcluded = (idx: number) => isInCodeBlock(idx) || isAlreadyLinked(idx) || isInHeading(idx);
+  // 제외 구간(코드블록·기존 링크·헤딩) 계산 — 삽입할 때마다 현재 문자열 기준으로
+  // 재계산한다. 삽입으로 위치가 밀려 기존 범위가 어긋나면 링크 앵커 내부에
+  // 중첩 링크가 삽입되는 부식이 생기므로 고정 범위는 쓰지 않는다.
+  const makeExclusion = (text: string) => {
+    const codeBlockRanges: [number, number][] = [];
+    const codeBlockRegex = /```[\s\S]*?```/g;
+    let m: RegExpExecArray | null;
+    while ((m = codeBlockRegex.exec(text)) !== null) {
+      codeBlockRanges.push([m.index, m.index + m[0].length]);
+    }
+    const linkedRanges: [number, number][] = [];
+    const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
+    while ((m = linkRegex.exec(text)) !== null) {
+      linkedRanges.push([m.index, m.index + m[0].length]);
+    }
+    const headingRanges: [number, number][] = [];
+    const headingRegex = /^#{1,6} .+$/gm;
+    while ((m = headingRegex.exec(text)) !== null) {
+      headingRanges.push([m.index, m.index + m[0].length]);
+    }
+    return (idx: number) =>
+      codeBlockRanges.some(([s, e]) => idx >= s && idx < e) ||
+      linkedRanges.some(([s, e]) => idx >= s && idx < e) ||
+      headingRanges.some(([s, e]) => idx >= s && idx < e);
+  };
 
   let result = content;
+  let isExcluded = makeExclusion(result);
   const usedKeywords = new Set<string>();
 
   // 관련 글마다 핵심 키워드 추출 후 본문 치환 (글당 최대 1개 키워드만)
@@ -268,6 +268,7 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
         `[${keyword}](/posts/${post.slug})` +
         result.slice(keywordIdx + keyword.length);
 
+      isExcluded = makeExclusion(result);
       usedKeywords.add(keyword);
       injected = true;
       break; // 글당 1개 키워드만
