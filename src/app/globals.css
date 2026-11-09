@@ -36,7 +36,7 @@ body {
 /* 링크 및 긴 URL 자동 줄바꿈 - 모바일 가로스크롤 방지 */
 /* 한글 타이포그래피: keep-all = 공백 단위로만 줄바꿈, 음절 중간 끊김 방지(예: 기/준·사/고) */
 /* 긴 단어·URL이 한 줄을 넘을 때만 overflow-wrap이 비상 줄바꿈을 허용 */
-h1, h2, h3, h4, h5, h6, a, p, li, span, blockquote, figcaption, td, dt, dd {
+h1, h2, h3, h4, h5, h6, a, p, li, span, blockquote, figcaption, td, th, dt, dd, button, label {
   word-break: keep-all;
   overflow-wrap: break-word;
 }
