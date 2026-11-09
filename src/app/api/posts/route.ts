@@ -76,71 +76,71 @@ function calculateTitleSimilarity(titleA: string, titleB: string): number {
 }
 
 // 관련 글 찾기: 벡터 검색 기반 (embedding 사용)
-async function findRelatedPosts(
-  serviceSupabase: any,
-  title: string,
-  excludeSlug: string,
-  maxCount: number = 5
-): Promise<{ title: string; slug: string }[]> {
-  try {
-    // OpenAI API 키가 없으면 기존 방식 사용
-    if (!process.env.OPENAI_API_KEY) {
-      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
-    }
+// 발행글 embedding 저장 입력과 동일한 텍스트 조합 — 쿼리 벡터와 저장 벡터의
+// 입력이 일치해야 유사도가 정확하다 (기존엔 쿼리가 제목만 임베딩해 불일치).
+function buildEmbeddingText(title: string, stagePart: string | undefined, excerpt: string | undefined, content: string): string {
+  return [title, stagePart || "", excerpt || "", content.replace(/[#*`\[\]()!]/g, "").slice(0, 5500)]
+    .filter(Boolean)
+    .join(" ");
+}
 
-    // 현재 제목 embedding 생성
-    const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
+async function openaiEmbed(text: string): Promise<number[] | null> {
+  if (!process.env.OPENAI_API_KEY) return null;
+  try {
+    const response = await fetch("https://api.openai.com/v1/embeddings", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ model: "text-embedding-3-small", input: title }),
+      body: JSON.stringify({ model: "text-embedding-3-small", input: text.slice(0, 8000) }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const vec = data?.data?.[0]?.embedding;
+    return Array.isArray(vec) && vec.length === 1536 ? vec : null;
+  } catch {
+    return null;
+  }
+}
+
+// pgvector RPC(match_similar_posts) 기반 관련 글 검색 — 저장 벡터와 같은
+// 복합 입력으로 쿼리하고, 같은 case_type에 소폭 가산점을 줘 법률 수직 일관성을 높인다.
+async function findRelatedPosts(
+  serviceSupabase: any,
+  title: string,
+  excludeSlug: string,
+  maxCount: number = 5,
+  queryText?: string,
+  caseType?: string | null
+): Promise<{ title: string; slug: string }[]> {
+  try {
+    const queryVector = await openaiEmbed(queryText || title);
+    if (!queryVector) {
+      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
+    }
+
+    // 자기글 id 조회 (POST는 아직 insert 전이라 없을 수 있음)
+    const { data: selfPost } = await serviceSupabase
+      .from("posts")
+      .select("id")
+      .eq("slug", excludeSlug)
+      .maybeSingle();
+
+    const { data, error } = await serviceSupabase.rpc("match_similar_posts", {
+      query_embedding: queryVector,
+      exclude_post_id: selfPost?.id ?? "00000000-0000-0000-0000-000000000000",
+      match_count: Math.min(50, maxCount * 4),
     });
 
-    if (!embeddingResponse.ok) {
-      console.error("Embedding 생성 실패, 기존 방식 사용");
+    if (error || !data || data.length === 0) {
       return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
     }
 
-    const embeddingData = await embeddingResponse.json();
-    const queryVector = embeddingData?.data?.[0]?.embedding;
-
-    if (!Array.isArray(queryVector) || queryVector.length !== 1536) {
-      console.error("잘못된 벡터 차원, 기존 방식 사용");
-      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
-    }
-
-    // embedding이 있는 글들 조회
-    const { data: posts, error } = await serviceSupabase
-      .from('posts')
-      .select('title, slug, embedding')
-      .eq('published', true)
-      .not('published_at', 'is', null)
-      .neq('slug', excludeSlug)
-      .not('embedding', 'is', null)
-      .order('published_at', { ascending: false })
-      .limit(200);
-
-    if (error || !posts || posts.length === 0) {
-      return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
-    }
-
-    // 코사인 유사도 계산
-    const scored = posts
-      .map((post: any) => {
-        try {
-          const embedding = JSON.parse(post.embedding);
-          if (!Array.isArray(embedding) || embedding.length !== 1536) return null;
-
-          const similarity = cosineSimilarity(queryVector, embedding);
-          return { ...post, score: similarity };
-        } catch {
-          return null; // JSON 파싱 실패 시 null 반환
-        }
-      })
-      .filter((p: any) => p !== null && p.score >= 0.5) // 유사도 0.5 이상만
-      .sort((a: any, b: any) => b.score - a.score)
+    const scored = (data as any[])
+      .filter((p) => typeof p.similarity === "number" && p.similarity >= 0.5 && p.slug !== excludeSlug)
+      .map((p) => ({ ...p, score: p.similarity + (caseType && p.case_type === caseType ? 0.03 : 0) }))
+      .sort((a, b) => b.score - a.score)
       .slice(0, maxCount)
       .map(({ title, slug }: any) => ({ title, slug }));
 
@@ -149,23 +149,6 @@ async function findRelatedPosts(
     console.error('벡터 검색 실패, 기존 방식 사용:', err);
     return findRelatedPostsByTitle(serviceSupabase, title, excludeSlug, maxCount);
   }
-}
-
-// 코사인 유사도 계산
-function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-
-  for (let i = 0; i < vecA.length; i++) {
-    const a = vecA[i] ?? 0;
-    const b = vecB[i] ?? 0;
-    dotProduct += a * b;
-    normA += a * a;
-    normB += b * b;
-  }
-
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
 // 기존 방식: 제목 유사도 기반 (폴백)
@@ -268,10 +251,10 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
       }
       if (keywordIdx === -1) continue;
 
-      // 첫 번째 등장 위치에만 링크 삽입 (마크다운 형식)
+      // 첫 번째 등장 위치에만 링크 삽입 (마크다운 형식) — ?ri=1 마커로 자동 생성 소유권 표시
       result =
         result.slice(0, keywordIdx) +
-        `[${keyword}](/posts/${post.slug})` +
+        `[${keyword}](/posts/${post.slug}?ri=1)` +
         result.slice(keywordIdx + keyword.length);
 
       isExcluded = makeExclusion(result);
@@ -290,8 +273,9 @@ function injectInlineLinks(content: string, relatedPosts: { title: string; slug:
 // 본문 하단에 관련 글 링크 마크다운 삽입 + 본문 인라인 링크 삽입
 // 이전 발행 시 삽입된 인라인 내부 링크 제거 (재발행 시 최신 슬러그로 교체하기 위해)
 function removeInjectedInlineLinks(content: string): string {
-  // 마크다운 [키워드](/posts/슬러그) 형태의 링크를 키워드 텍스트로만 복원
-  return content.replace(/\[([^\]]+)\]\(\/posts\/[^)]+\)/g, '$1');
+  // ?ri=1 마커가 붙은 자동 삽입 링크만 키워드 텍스트로 복원 —
+  // 마커 없는 /posts/ 링크는 저자 수작업 또는 방금 삽입된 키워드 링크(?il=1)이므로 보존
+  return content.replace(/\[([^\]]+)\]\([^)]*?[?&]ri=1[^)]*\)/g, '$1');
 }
 
 function appendRelatedLinks(content: string, relatedPosts: { title: string; slug: string }[], currentSlug: string): string {
@@ -326,7 +310,7 @@ function appendRelatedLinks(content: string, relatedPosts: { title: string; slug
   const withInline = injectInlineLinks(unlinked, relatedPosts, currentSlug, Math.min(3, Math.max(0, 5 - internalLinkCount)));
 
   const links = relatedPosts
-    .map(p => `- [${p.title}](/posts/${p.slug})`)
+    .map(p => `- [${p.title}](/posts/${p.slug}?ri=1)`)
     .join('\n');
 
   return `${withInline.trimEnd()}\n\n---\n\n### 📌 관련 글\n${links}\n`;
@@ -478,8 +462,10 @@ export async function POST(request: Request) {
       const currentPostUrl = `/posts/${finalSlug}`;
       finalContent = addInternalLinks(content, 5, keywords, currentPostUrl);
 
-      // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식)
-      const relatedPosts = await findRelatedPosts(serviceSupabase, title, finalSlug);
+      // 제목 유사도 기반 관련 글 섹션 추가 (마크다운 형식) — 저장 임베딩과 동일한 복합 입력으로 쿼리
+      const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
+      const queryText = buildEmbeddingText(title, stagePart, excerpt, finalContent);
+      const relatedPosts = await findRelatedPosts(serviceSupabase, title, finalSlug, 5, queryText, case_type);
       finalContent = appendRelatedLinks(finalContent, relatedPosts, finalSlug);
     }
 
@@ -529,79 +515,33 @@ export async function POST(request: Request) {
       );
     }
 
-    // embedding 생성 (비동기, 발행 시에만)
+    // embedding 생성 — await로 완료. 기존 fire-and-forget은 응답 반환 후
+    // 서버리스 프로세스가 종료돼 벡터가 유실됐다(실측 43/234건 미기록).
     if (published && data?.id && process.env.OPENAI_API_KEY) {
       const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
-      const embeddingText = [
-        title,
-        stagePart,
-        excerpt || "",
-        finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 5500),
-      ].filter(Boolean).join(" ");
-      fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
-      }).then(r => r.json()).then(embRes => {
-        if (embRes?.error) {
-          console.error("[embedding/post] OpenAI 오류:", embRes.error.message);
-          return;
-        }
-        const vec = embRes?.data?.[0]?.embedding;
-        if (!Array.isArray(vec) || vec.length !== 1536) {
-          console.error("[embedding/post] 잘못된 벡터 차원:", vec?.length);
-          return;
-        }
-        serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id)
-          .then(({ error: dbErr }) => { if (dbErr) console.error("[embedding/post] DB 저장 실패:", dbErr.message); });
-      }).catch((err) => { console.error("[embedding/post] 네트워크 오류:", err?.message); });
+      const vec = await openaiEmbed(buildEmbeddingText(title, stagePart, excerpt, finalContent));
+      if (vec) {
+        const { error: embErr } = await serviceSupabase
+          .from("posts")
+          .update({ embedding: JSON.stringify(vec) })
+          .eq("id", data.id);
+        if (embErr) console.error("[embedding/post] DB 저장 실패:", embErr.message);
+      } else {
+        console.error("[embedding/post] 벡터 생성 실패 — 관련글 추천이 폴백으로 동작");
+      }
     }
 
-    // IndexNow 알림 (비동기, 발행 시에만)
-    if (published && data?.id && process.env.INDEXNOW_KEY) {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
-      const postUrl = `${siteUrl}/posts/${finalSlug}`;
-      
-      fetch(`${siteUrl}/api/indexnow-notify`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ urls: [postUrl] }),
-      }).then(r => r.json()).then(indexNowRes => {
-        if (indexNowRes.success) {
-          console.log("[IndexNow] 성공:", indexNowRes.message);
-        } else {
-          console.error("[IndexNow] 실패:", indexNowRes.message);
-        }
-      }).catch((err) => { console.error("[IndexNow] 네트워크 오류:", err?.message); });
-    }
-
-    // process_embedding 생성 (절차 데이터가 있을 때만)
+    // process_embedding 생성 (절차 데이터가 있을 때만) — 동일하게 await
     if (published && data?.id && process.env.OPENAI_API_KEY && (current_stage || next_stage || (timeline_steps && timeline_steps.length > 0))) {
-      const processText = [
-        current_stage,
-        next_stage,
-        ...(timeline_steps || []),
-      ].filter(Boolean).join(" → ");
-      fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model: "text-embedding-3-small", input: processText.slice(0, 2000) }),
-      }).then(r => r.json()).then(pEmbRes => {
-        if (pEmbRes?.error) return;
-        const pvec = pEmbRes?.data?.[0]?.embedding;
-        if (!Array.isArray(pvec) || pvec.length !== 1536) return;
-        serviceSupabase.from("posts").update({ process_embedding: JSON.stringify(pvec) }).eq("id", data.id)
-          .then(({ error: dbErr }) => { if (dbErr) console.error("[process-embedding/post] DB 저장 실패:", dbErr.message); });
-      }).catch(() => {});
+      const processText = [current_stage, next_stage, ...(timeline_steps || [])].filter(Boolean).join(" → ");
+      const pvec = await openaiEmbed(processText.slice(0, 2000));
+      if (pvec) {
+        const { error: pErr } = await serviceSupabase
+          .from("posts")
+          .update({ process_embedding: JSON.stringify(pvec) })
+          .eq("id", data.id);
+        if (pErr) console.error("[process-embedding/post] DB 저장 실패:", pErr.message);
+      }
     }
 
     // 캐시 즉시 갱신
@@ -614,11 +554,12 @@ export async function POST(request: Request) {
       revalidatePath("/cases", "page");
       if (case_type) revalidatePath(`/cases/${encodeURIComponent(case_type)}`, "page");
 
-      // IndexNow 알림 (신규 발행)
+      // IndexNow 알림 (신규 발행) — await로 완료해 서버리스 종료 유실 방지
       const { key, host } = getIndexNowConfig();
       if (key) {
         const siteUrl = `https://${host}`;
-        notifyIndexNow([`${siteUrl}/posts/${encodeURIComponent(finalSlug)}`, `${siteUrl}/posts`, siteUrl], key, host).catch(() => {});
+        await notifyIndexNow([`${siteUrl}/posts/${encodeURIComponent(finalSlug)}`, `${siteUrl}/posts`, siteUrl], key, host)
+          .catch((err) => { console.error("[IndexNow POST] 네트워크 오류:", err?.message); });
       }
 
       // situations_cache 갱신 (비동기, 실패해도 발행에 영향 없음)
@@ -718,7 +659,9 @@ export async function PUT(request: Request) {
       // 사용자가 이미 관련글 섹션을 지웠으면 다시 추가하지 않음
       const hasRelatedSection = content.includes('### 📌 관련 글') || content.includes('### 관련 글');
       if (!hasRelatedSection) {
-        const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug);
+        const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
+        const queryText = buildEmbeddingText(title, stagePart, excerpt, finalContent);
+        const relatedPosts = await findRelatedPosts(serviceSupabase, title, slug, 5, queryText, case_type);
         console.log('[PUT] findRelatedPosts count:', relatedPosts.length);
         finalContent = appendRelatedLinks(finalContent, relatedPosts, slug);
         console.log('[PUT] finalContent has 관련글:', finalContent.includes('### 📌 관련 글'));
@@ -817,86 +760,47 @@ export async function PUT(request: Request) {
       revalidateTag("posts");
       revalidateTag(`post-${id}`);
 
-      // IndexNow 알림 (비동기, 발행 시에만)
+      // IndexNow 알림 — await로 완료해 서버리스 종료 유실 방지
       if (process.env.INDEXNOW_KEY) {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lawtiphub.com";
         const postUrl = `${siteUrl}/posts/${slug}`;
         const host = siteUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-        
-        notifyIndexNow([postUrl], process.env.INDEXNOW_KEY, host).then(result => {
-          if (result.success) {
-            console.log("[IndexNow PUT] 성공:", result.message);
-          } else {
-            console.error("[IndexNow PUT] 실패:", result.message);
-          }
-        }).catch((err) => { console.error("[IndexNow PUT] 네트워크 오류:", err?.message); });
+        const idxResult = await notifyIndexNow([postUrl], process.env.INDEXNOW_KEY, host).catch((err) => {
+          console.error("[IndexNow PUT] 네트워크 오류:", err?.message);
+          return null;
+        });
+        if (idxResult?.success) console.log("[IndexNow PUT] 성공:", idxResult.message);
+        else if (idxResult) console.error("[IndexNow PUT] 실패:", idxResult.message);
       }
     }
 
-    // embedding 재생성 (비동기, 발행 상태일 때만, 기존 벡터가 없을 때만)
+    // embedding 재생성 — 발행 상태 PUT은 본문이 바뀌므로 벡터도 항상 갱신해
+    // 임베딩-콘텐츠 드리프트를 막는다. await로 완료(서버리스 종료 유실 방지).
     if (published && data?.id && process.env.OPENAI_API_KEY) {
-      // 기존 벡터 확인
-      const { data: existingPost } = await serviceSupabase
-        .from("posts")
-        .select("embedding")
-        .eq("id", data.id)
-        .single();
-
-      // 기존 벡터가 없을 때만 생성
-      if (!existingPost?.embedding) {
-        const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
-        const embeddingText = [
-          title,
-          stagePart,
-          excerpt || "",
-          finalContent.replace(/[#*`\[\]()!]/g, "").slice(0, 5500),
-        ].filter(Boolean).join(" ");
-        fetch("https://api.openai.com/v1/embeddings", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ model: "text-embedding-3-small", input: embeddingText.slice(0, 8000) }),
-        }).then(r => r.json()).then(embRes => {
-          if (embRes?.error) {
-            console.error("[embedding/post-update] OpenAI 오류:", embRes.error.message);
-            return;
-          }
-          const vec = embRes?.data?.[0]?.embedding;
-          if (!Array.isArray(vec) || vec.length !== 1536) {
-            console.error("[embedding/post-update] 잘못된 벡터 차원:", vec?.length);
-            return;
-          }
-          serviceSupabase.from("posts").update({ embedding: JSON.stringify(vec) }).eq("id", data.id)
-            .then(({ error: dbErr }) => { if (dbErr) console.error("[embedding/post-update] DB 저장 실패:", dbErr.message); });
-        }).catch((err) => { console.error("[embedding/post-update] 네트워크 오류:", err?.message); });
+      const stagePart = [current_stage, next_stage].filter(Boolean).join(" → ");
+      const vec = await openaiEmbed(buildEmbeddingText(title, stagePart, excerpt, finalContent));
+      if (vec) {
+        const { error: embErr } = await serviceSupabase
+          .from("posts")
+          .update({ embedding: JSON.stringify(vec) })
+          .eq("id", data.id);
+        if (embErr) console.error("[embedding/post-update] DB 저장 실패:", embErr.message);
       } else {
-        console.log("[embedding/post-update] 기존 벡터가 있어서 재생성하지 않음");
+        console.error("[embedding/post-update] 벡터 생성 실패");
       }
     }
 
-    // process_embedding 재생성
+    // process_embedding 재생성 — 동일하게 await
     if (published && data?.id && process.env.OPENAI_API_KEY && (current_stage || next_stage || (timeline_steps && timeline_steps.length > 0))) {
-      const processText = [
-        current_stage,
-        next_stage,
-        ...(timeline_steps || []),
-      ].filter(Boolean).join(" → ");
-      fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model: "text-embedding-3-small", input: processText.slice(0, 2000) }),
-      }).then(r => r.json()).then(pEmbRes => {
-        if (pEmbRes?.error) return;
-        const pvec = pEmbRes?.data?.[0]?.embedding;
-        if (!Array.isArray(pvec) || pvec.length !== 1536) return;
-        serviceSupabase.from("posts").update({ process_embedding: JSON.stringify(pvec) }).eq("id", data.id)
-          .then(({ error: dbErr }) => { if (dbErr) console.error("[process-embedding/post-update] DB 저장 실패:", dbErr.message); });
-      }).catch(() => {});
+      const processText = [current_stage, next_stage, ...(timeline_steps || [])].filter(Boolean).join(" → ");
+      const pvec = await openaiEmbed(processText.slice(0, 2000));
+      if (pvec) {
+        const { error: pErr } = await serviceSupabase
+          .from("posts")
+          .update({ process_embedding: JSON.stringify(pvec) })
+          .eq("id", data.id);
+        if (pErr) console.error("[process-embedding/post-update] DB 저장 실패:", pErr.message);
+      }
     }
 
     // 캐시 즉시 갱신

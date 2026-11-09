@@ -144,11 +144,18 @@ export function addInternalLinks(
   // 키워드가 없으면 빈 배열 사용 (링크 생성 안됨)
   const keywordsToUse = keywords && keywords.length > 0 ? keywords : [];
 
-  // 기존 내부링크 제거 (재발행 시 최신 슬러그로 교체하기 위해)
-  // 마크다운 링크 형식: [텍스트](URL)
-  // /posts/ 또는 /cases/로 시작하는 링크만 제거 (안전한 정규식 사용)
-  let result = markdown.replace(/\[([^\]]+)\]\(\/posts\/[^)]+\)/g, '$1');
-  result = result.replace(/\[([^\]]+)\]\(\/cases\/[^)]+\)/g, '$1');
+  // 기존 자동 내부링크만 제거 (재발행 시 최신 슬러그로 교체) — 소유권 규칙:
+  // ① ?il=1/?ri=1 마커가 붙은 링크는 시스템이 생성한 것 → 항상 스트립
+  // ② 마커 없는 레거시 링크는 앵커가 관리 키워드와 일치하거나 /search 대상일
+  //    때만 자동 생성으로 간주해 스트립 — 그 외 /posts/·/cases/ 링크는
+  //    저자 수작업 링크로 보존한다 (기존엔 무조건 다 지워 수작업 링크 소실)
+  let result = markdown.replace(/\[([^\]]+)\]\([^)]*?[?&](?:il|ri)=1[^)]*\)/g, '$1');
+  const managedAnchors = new Set(keywordsToUse.map((k) => k.keyword.trim().toLowerCase()));
+  result = result.replace(/\[([^\]]+)\]\((\/(?:posts|cases|search)[/?][^)]*)\)/g, (m, anchor, url) => {
+    const isSearch = url.startsWith("/search");
+    const isManagedAnchor = managedAnchors.has(String(anchor).trim().toLowerCase());
+    return isSearch || isManagedAnchor ? String(anchor) : m;
+  });
 
   const linkedKeywords = new Set<string>();
   const linkedPositions: number[] = [];
@@ -222,8 +229,12 @@ export function addInternalLinks(
     // 대괄호 제거 (마크다운 링크 형식 깨짐 방지)
     const safeAnchorText = anchorText.replace(/\[/g, '').replace(/\]/g, '');
     // URL은 관리자 테이블의 값을 그대로 사용 — safeSlug의 ASCII 문자 클래스가
-    // 한글 카테고리명·%인코딩 앵커를 파괴해 /cases/ 링크가 부식되는 결함 수정
-    const replacement = `[${safeAnchorText}](${item.url})`;
+    // 한글 카테고리명·%인코딩 앵커를 파괴해 /cases/ 링크가 부식되는 결함 수정.
+    // ?il=1 마커를 URL에 부착해 자동 생성 소유권을 표시 (재발행 시 스트립 대상).
+    const markedUrl = item.url.includes("#")
+      ? item.url.replace("#", `${item.url.includes("?") ? "&" : "?"}il=1#`)
+      : `${item.url}${item.url.includes("?") ? "&" : "?"}il=1`;
+    const replacement = `[${safeAnchorText}](${markedUrl})`;
 
     // 삽입 후 그 뒤의 기록 위치들을 델타만큼 이동해 좌표계를 유지한다
     const delta = replacement.length - match![0].length;

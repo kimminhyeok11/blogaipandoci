@@ -258,72 +258,112 @@ async function getInitialComments(postId: string) {
   }
 }
 
-// 관련 글 가져오기 (태그 기반 또는 최신글)
-async function getRelatedPosts(currentPost: Post): Promise<Post[]> {
+// 관련 글 가져오기 — 다중신호 랭커:
+//   0.62·벡터유사도(글의 저장 embedding, OpenAI 호출 없이 pgvector RPC)
+// + 0.14·공유태그율 + 0.10·같은 case_type + 0.09·인기도(log정규화) + 0.05·최신성
+// SimilarPosts 섹션에 이미 노출된 글은 제외해 두 섹션의 카드 중복을 막는다.
+async function getRelatedPosts(currentPost: Post, excludeIds: string[] = []): Promise<Post[]> {
   try {
     const supabase = getServerSupabase();
     if (!supabase) return [];
 
-    console.log('[getRelatedPosts] post.id:', currentPost.id);
-    console.log('[getRelatedPosts] post.tags:', currentPost.tags);
-
     const tagIds = currentPost.tags?.map((t) => t.id) || [];
+    const similarityMap = new Map<string, number>();
+    const candidateIds = new Set<string>();
+    const excluded = new Set([currentPost.id, ...excludeIds]);
 
-  let relatedPostsRaw: any[] = [];
-
-  // 태그가 있는 경우: 같은 태그를 가진 글 먼저 검색 (post_tags 경유)
-  if (tagIds.length > 0) {
-    const { data: taggedPostIds } = await supabase
-      .from("post_tags")
-      .select("post_id")
-      .in("tag_id", tagIds)
-      .neq("post_id", currentPost.id);
-
-    const relatedIds = Array.from(new Set((taggedPostIds ?? []).map((r: { post_id: string }) => r.post_id))).slice(0, 6);
-
-    if (relatedIds.length > 0) {
-      const { data: taggedPosts } = await supabase
-        .from("posts")
-        .select(`id, title, slug, excerpt, cover_image, cover_image_alt, published_at, view_count, user_id`)
-        .eq("published", true)
-        .not("published_at", "is", null)
-        .in("id", relatedIds)
-        .order("published_at", { ascending: false });
-
-      if (taggedPosts) {
-        relatedPostsRaw = taggedPosts;
+    // 1) 벡터 후보 — 글의 저장 embedding으로 의미 유사도 상위를 가져온다
+    const { data: embRow } = await supabase
+      .from("posts")
+      .select("embedding")
+      .eq("id", currentPost.id)
+      .single();
+    if (embRow?.embedding) {
+      const { data: similar } = await supabase.rpc("match_similar_posts", {
+        query_embedding: embRow.embedding,
+        exclude_post_id: currentPost.id,
+        match_count: 12,
+      });
+      for (const p of similar || []) {
+        if (!excluded.has(p.id)) {
+          similarityMap.set(p.id, p.similarity);
+          candidateIds.add(p.id);
+        }
       }
     }
-  }
 
-  // 태그 기반 결과가 4개 미만이면 최신글로 보충
-  if (relatedPostsRaw.length < 4) {
-    const excludeIds = [currentPost.id, ...relatedPostsRaw.map((p) => p.id)];
-    const needMore = 6 - relatedPostsRaw.length;
-
-    const { data: recentPosts } = await supabase
-      .from("posts")
-      .select(`
-        id,
-        title,
-        slug,
-        excerpt,
-        cover_image,
-        cover_image_alt,
-        published_at,
-        view_count,
-        user_id
-      `)
-      .eq("published", true)
-      .not("published_at", "is", null)
-      .not("id", "in", `(${excludeIds.join(",")})`)
-      .order("published_at", { ascending: false })
-      .limit(needMore);
-
-    if (recentPosts) {
-      relatedPostsRaw = [...relatedPostsRaw, ...recentPosts];
+    // 2) 태그 후보 — 같은 태그를 공유하는 글
+    const tagCountMap = new Map<string, number>();
+    if (tagIds.length > 0) {
+      const { data: tagged } = await supabase
+        .from("post_tags")
+        .select("post_id")
+        .in("tag_id", tagIds)
+        .neq("post_id", currentPost.id);
+      for (const r of tagged || []) {
+        if (excluded.has(r.post_id)) continue;
+        tagCountMap.set(r.post_id, (tagCountMap.get(r.post_id) || 0) + 1);
+        candidateIds.add(r.post_id);
+      }
     }
-  }
+
+    // 3) 같은 case_type 후보 (법률 수직 일관성)
+    if (currentPost.case_type) {
+      const { data: sameCase } = await supabase
+        .from("posts")
+        .select("id")
+        .eq("published", true)
+        .not("published_at", "is", null)
+        .eq("case_type", currentPost.case_type)
+        .order("view_count", { ascending: false })
+        .limit(8);
+      for (const p of sameCase || []) {
+        if (!excluded.has(p.id)) candidateIds.add(p.id);
+      }
+    }
+
+    // 4) 후보의 카드 필드 일괄 조회 후 가중치 스코어링
+    const ids = Array.from(candidateIds).slice(0, 30);
+    const { data: posts } = ids.length > 0
+      ? await supabase
+          .from("posts")
+          .select("id, title, slug, excerpt, cover_image, cover_image_alt, published_at, view_count, user_id, case_type")
+          .eq("published", true)
+          .not("published_at", "is", null)
+          .in("id", ids)
+      : { data: [] as any[] };
+
+    const maxView = Math.max(1, ...(posts || []).map((p: any) => p.view_count || 0));
+    const now = Date.now();
+
+    const scored = (posts || []).map((p: any) => {
+      const similarity = similarityMap.get(p.id) || 0;
+      const tagOverlap = tagIds.length > 0 ? (tagCountMap.get(p.id) || 0) / tagIds.length : 0;
+      const sameCase = currentPost.case_type && p.case_type === currentPost.case_type ? 1 : 0;
+      const popularity = Math.log(1 + (p.view_count || 0)) / Math.log(1 + maxView);
+      const recency = p.published_at ? Math.max(0, 1 - (now - Date.parse(p.published_at)) / (180 * 864e5)) : 0;
+      return {
+        ...p,
+        score: 0.62 * similarity + 0.14 * tagOverlap + 0.10 * sameCase + 0.09 * popularity + 0.05 * recency,
+      };
+    }).sort((a: any, b: any) => b.score - a.score);
+
+    let relatedPostsRaw = scored.slice(0, 6);
+
+    // 후보가 4개 미만이면 최신글로 보충 (정보 접근성 확보 — 무관 글이어도
+    // 관련 섹션을 비우는 것보다 최신 글 노출이 독자 체류에 유리)
+    if (relatedPostsRaw.length < 4) {
+      const fillExclude = [currentPost.id, ...excludeIds, ...relatedPostsRaw.map((p) => p.id)];
+      const { data: recentPosts } = await supabase
+        .from("posts")
+        .select("id, title, slug, excerpt, cover_image, cover_image_alt, published_at, view_count, user_id")
+        .eq("published", true)
+        .not("published_at", "is", null)
+        .not("id", "in", `(${fillExclude.join(",")})`)
+        .order("published_at", { ascending: false })
+        .limit(6 - relatedPostsRaw.length);
+      if (recentPosts) relatedPostsRaw = [...relatedPostsRaw, ...recentPosts];
+    }
 
   // user_id 목록 수집 및 users 조회
   const uniqueUserIds = new Set<string>();
@@ -503,12 +543,9 @@ export default async function PostPage({ params }: PostPageProps) {
       notFound();
     }
 
-  // 관련 글 + 초기 댓글 병렬 fetch (개별 에러 방어)
-  const [relatedPosts, initialComments, similarPosts] = await Promise.all([
-    getRelatedPosts(post).catch(err => {
-      console.error('[PostPage] getRelatedPosts failed:', err);
-      return [];
-    }),
+  // SimilarPosts(벡터 RPC) 먼저 확정한 뒤, 관련글은 그 결과와 중복되지 않게
+  // 다중신호 랭커로 선별 — 두 섹션이 같은 글 카드를 겹쳐 보여주던 결함 제거.
+  const [initialComments, similarPosts] = await Promise.all([
     getInitialComments(post.id).catch(err => {
       console.error('[PostPage] getInitialComments failed:', err);
       return [];
@@ -518,6 +555,10 @@ export default async function PostPage({ params }: PostPageProps) {
       return [];
     }),
   ]);
+  const relatedPosts = await getRelatedPosts(post, similarPosts.map(p => p.id)).catch(err => {
+    console.error('[PostPage] getRelatedPosts failed:', err);
+    return [] as Post[];
+  });
 
   // Null-safe 변수 선언 (모든 후속 코드에서 사용)
   const safeTitle = post.title || "제목 없음";

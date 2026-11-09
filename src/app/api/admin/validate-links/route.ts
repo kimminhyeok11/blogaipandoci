@@ -14,12 +14,16 @@ const makeAdmin = () => createClient(
 function extractInternalLinks(content: string): Array<{ type: "posts" | "cases"; slug: string }> {
   const links: Array<{ type: "posts" | "cases"; slug: string }> = [];
 
+  // ?il=1/?ri=1 자동링크 마커·앵커는 slug 판정에서 제거 — 쿼리 파라미터가
+  // slug로 오인돼 정상 링크가 "존재하지 않는 slug"로 오탐되던 결함 수정
+  const normalizeSlug = (s: string) => s.split(/[?#]/)[0];
+
   // /posts/ 형식 링크 추출 (올바른 형식만)
   const postsLinkRegex = /\[([^\]]+)\]\(\/posts\/([^)]+)\)/g;
   let match;
   while ((match = postsLinkRegex.exec(content)) !== null) {
     if (match[2]) {
-      links.push({ type: "posts", slug: match[2] });
+      links.push({ type: "posts", slug: normalizeSlug(match[2]) });
     }
   }
 
@@ -27,7 +31,7 @@ function extractInternalLinks(content: string): Array<{ type: "posts" | "cases";
   const casesLinkRegex = /\[([^\]]+)\]\(\/cases\/([^)#)]+)\)/g;
   while ((match = casesLinkRegex.exec(content)) !== null) {
     if (match[2]) {
-      links.push({ type: "cases", slug: match[2] });
+      links.push({ type: "cases", slug: normalizeSlug(match[2]) });
     }
   }
 
@@ -79,13 +83,14 @@ function sanitizeContent(content: string): string {
   // 카테고리 링크 패턴 제거 (예: "학교폭력/cases/학교폭력")
   result = result.replace(/([가-힣a-zA-Z0-9\-]+)\/cases\/\1/g, '$1');
 
-  // 손상된 내부 링크 전체 환원 — /posts/, /cases/, /search 링크는 PUT 재생성으로 복구되므로
-  // 깨진 형태(중첩·절단·hex 인코딩 slug)를 앵커 텍스트만 남기고 제거. 안쪽부터 반복 적용.
+  // 손상된 내부 링크 환원 — 깨진 형태(중첩·절단·%hex 인코딩 slug·검색 링크)만
+  // 앵커 텍스트로 복구. 정상 /posts/·/cases/ 링크는 마커 소유권(?il=1/?ri=1 또는
+  // 수작업)으로 PUT이 판정하므로 여기서 일괄 제거하지 않는다 — 수작업 링크가
+  // 재발행마다 지워지던 결함 수정.
   let prevSan = "";
   while (prevSan !== result) {
     prevSan = result;
     result = result
-      .replace(/\[([^\[\]]*)\]\([^()\n]*\/(?:posts|cases)\/[^()\n]*\)/g, "$1")
       .replace(/\[([^\[\]]*)\]\([^()\n]*\/search\?[^()\n]*\)/g, "$1")
       .replace(/\[([^\[\]]*)\]\([^()\n]*%[0-9A-Fa-f]{2}[^()\n]*\)/g, "$1")
       .replace(/\[([^\[\]]*)\]\(\/posts\/[0-9A-Fa-f]{8,}[^()\n]*\)/g, "$1");

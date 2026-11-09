@@ -34,13 +34,19 @@ export async function POST(request: Request) {
     const token = (request.headers.get("authorization") || "").replace("Bearer ", "").trim();
     if (!token) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
-    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-    const { data: { user }, error: authErr } = await anon.auth.getUser(token);
-    if (authErr || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
+    // 자동화 파이프라인 토큰 — 서버 측 백필·관리 경로 (env AUTOMATION_TOKEN)
+    const isAutomation = Boolean(process.env.AUTOMATION_TOKEN) && token === process.env.AUTOMATION_TOKEN;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const isServiceKey = isAutomation || (serviceKey && token === serviceKey);
 
     const admin = makeAdmin();
-    const { data: profile } = await admin.from("users").select("role").eq("id", user.id).single();
-    if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
+    if (!isServiceKey) {
+      const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+      const { data: { user }, error: authErr } = await anon.auth.getUser(token);
+      if (authErr || !user) return NextResponse.json({ error: "인증 실패" }, { status: 401 });
+      const { data: profile } = await admin.from("users").select("role").eq("id", user.id).single();
+      if (profile?.role !== "admin") return NextResponse.json({ error: "관리자만 접근 가능" }, { status: 403 });
+    }
 
     const body = await request.json();
     const { comment_id, text, post_id } = body;
