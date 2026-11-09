@@ -401,26 +401,39 @@ export async function POST(request: Request) {
 
     const serviceSupabase = makeAdmin();
 
-    // 토큰으로 user_id 결정 — body.user_id 우회 차단
-    const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
-    if (!authUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const userId = authUser.id;
+    // 자동화 파이프라인 토큰 — 서버 측 발행 경로 (env AUTOMATION_TOKEN, 관리자 권한 부여)
+    const isAutomation = Boolean(process.env.AUTOMATION_TOKEN) && token === process.env.AUTOMATION_TOKEN;
 
-    // 관리자만 글 작성 가능
-    const { data: profile, error: profileError } = await serviceSupabase
-      .from("users")
-      .select("role")
-      .eq("id", authUser.id)
-      .single();
+    let userId: string | null = null;
+    if (isAutomation) {
+      const { data: adminUser } = await serviceSupabase
+        .from("users").select("id").eq("role", "admin").limit(1).single();
+      userId = adminUser?.id ?? null;
+      if (!userId) {
+        return NextResponse.json({ error: "관리자 계정을 찾을 수 없습니다" }, { status: 500 });
+      }
+    } else {
+      // 토큰으로 user_id 결정 — body.user_id 우회 차단
+      const { data: { user: authUser } } = await serviceSupabase.auth.getUser(token);
+      if (!authUser) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      userId = authUser.id;
 
-    if (profileError || !profile) {
-      return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
-    }
+      // 관리자만 글 작성 가능
+      const { data: profile, error: profileError } = await serviceSupabase
+        .from("users")
+        .select("role")
+        .eq("id", authUser.id)
+        .single();
 
-    if (profile.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden - 관리자만 글을 작성할 수 있습니다" }, { status: 403 });
+      if (profileError || !profile) {
+        return NextResponse.json({ error: "프로필 조회 실패" }, { status: 500 });
+      }
+
+      if (profile.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden - 관리자만 글을 작성할 수 있습니다" }, { status: 403 });
+      }
     }
 
     // slug 중복 확인 후 자동 suffix 추가 (동시 요청 시 충돌 방지)
